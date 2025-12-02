@@ -31,41 +31,6 @@ Inspired by Tornado Cash, I am building a *standard*. zkNull is an ERC-20 token 
 
 At its heart, zkNull uses **zk-SNARKs** (Zero-Knowledge Succinct Non-Interactive Arguments of Knowledge). The concept is elegant: verify that a secret exists, without revealing the secret itself.
 
-The system is built on four core components:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                         Frontend/Client                      │
-│                                                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
-│  │   Wallet    │  │   Crypto    │  │   Merkle    │           │
-│  │ Integration │  │   Utils     │  │   Helper    │           │
-│  └─────────────┘  └─────────────┘  └─────────────┘           │
-│                                                              │
-│     ┌───────────────────────────────────────────────┐        │
-│     │         zk-SNARK Proof Generation             │        │
-│     │         (circomlibjs + snarkjs)               │        │
-│     └───────────────────────────────────────────────┘        |  
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              │ Web3 / ethers.js
-                              ▼
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│                      Ethereum Blockchain                     │
-│  ┌─────────────┐         ┌─────────────┐                     │
-│  │PrivacyToken │◄────────┤ PrivacyPool │                     │
-│  │   (ERC-20)  │         │             │                     │
-│  └─────────────┘         │ ┌─────────┐ │                     │
-│                          │ │ Merkle  │ │                     │
-│                          │ │  Tree   │ │                     │
-│                          │ └─────────┘ │                     │
-│                          │ ┌─────────┐ │                     │
-│                          │ │Verifier │ │                     │
-│                          │ └─────────┘ │                     │
-│                          └─────────────┘                     │
-└──────────────────────────────────────────────────────────────┘
-```
 
 ### The Commitment Scheme (Merkle Trees)
 

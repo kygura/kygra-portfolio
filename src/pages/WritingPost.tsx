@@ -10,11 +10,11 @@ const WritingPost = () => {
 
   // Handle post not found
   if (!post) {
-    return <Navigate 
-    to="/writings" 
-    replace />;
+    return <Navigate
+      to="/writings"
+      replace />;
   }
-  
+
   return (
     <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-3xl animate-fade-in">
       <Link
@@ -51,7 +51,7 @@ const WritingPost = () => {
           </div>
         )}
 
-        <div className="prose prose-lg max-w-none prose-headings:font-display prose-headings:font-light prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-code:text-foreground prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-secondary prose-pre:border prose-pre:border-border">
+        <div className="prose-minimal">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {post.content}
           </ReactMarkdown>
