@@ -1,6 +1,6 @@
 
 
-export const quotes = [
+export const PHRASES = [
     "L'homme est condamné à être libre; parce qu'une fois jeté dans le monde, il est responsable de tout ce qu'il fait. <br />Man is condemned to be free; because once thrown into the world, he is responsible for everything he does.",
     "Livet kan kun forstås baglæns; men det må leves forlæns. <br />Life can only be understood backwards; but it must be lived forwards.",
     "La liberté, c'est ce que vous faites de ce qui a été fait de vous. <br />Freedom is what you do with what's been done to you.",
