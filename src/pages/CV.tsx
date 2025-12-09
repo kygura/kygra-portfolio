@@ -4,10 +4,16 @@ const CV = () => {
 
   const education = [
     {
-      degree: "Bachelor of Science in Computer Engineering",
+      degree: "Bachelor of Science in Computer Engineering (last 2 years)",
       institution: "Universidad de Málaga",
-      period: "2020 - 2025",
-      description: "Foundational knowledge in computer engineering.",
+      period: "2022 - 2024",
+      description: "",
+    },
+    {
+      degree: "Bachelor of Science in Computer Engineering (first 2 years)",
+      institution: "Albert-Ludwigs-Universität Freiburg",
+      period: "2020 - 2022",
+      description: "",
     },
     {
       degree: "High School Diploma",
