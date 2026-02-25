@@ -26,12 +26,12 @@ const projects: Project[] = [
     liveUrl: "https://equilibria.cash",
   },
   {
-    title: "Gaia",
+    title: "Meridian",
     description:
-      "A map app for discovery: Mapping places of interest and planning trips with the assistance of LLM agents.",
+      "A cartographing interface to explore and mark meaningful experiences across the globe.",
     techStack: ["Google Maps", "Deepseek", "Claude", "React"],
-    githubUrl: "https://github.com/kygura/gaia",
-    liveUrl: "https://gaia-flame.vercel.app/",
+    githubUrl: "https://github.com/kygura/meridian",
+    liveUrl: "https://meridian-flame.vercel.app/",
   },
   /*   {
       title: "Nyx",

@@ -73,7 +73,7 @@ const Footer = () => {
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} />
           </button>
-          <span className="hidden sm:block text-[10px] font-['Courier_Prime'] text-muted-foreground font-bold tracking-widest uppercase">
+          <span className="hidden sm:block text-[10px] font-['Courier_Prime'] text-muted-foreground font-bold tracking-widest">
             [A]
           </span>
         </div>
@@ -87,7 +87,7 @@ const Footer = () => {
                 'zoom-in-95'
               } duration-500 ease-out`}
           >
-            <p className="font-['Courier_Prime'] font-light text-sm sm:text-base md:text-lg text-foreground uppercase tracking-widest leading-relaxed max-w-2xl break-words px-4 text-center">
+            <p className="font-['Courier_Prime'] font-light text-sm sm:text-base md:text-lg text-foreground tracking-widest leading-relaxed max-w-2xl break-words px-4 text-center">
               {quote.map((line, i) => (
                 <span key={i} 
                 className="block mb-2 last:mb-0">
@@ -111,7 +111,7 @@ const Footer = () => {
           >
             <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} />
           </button>
-          <span className="hidden sm:block text-[10px] font-['Courier_Prime'] text-muted-foreground font-bold tracking-widest uppercase">
+          <span className="hidden sm:block text-[10px] font-['Courier_Prime'] text-muted-foreground font-bold tracking-widest">
             [D]
           </span>
         </div>

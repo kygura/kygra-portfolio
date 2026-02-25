@@ -226,3 +226,4 @@
     @apply inline-block font-bold text-sm tracking-widest uppercase bg-foreground text-background px-6 py-3 transition-colors hover:bg-secondary hover:text-foreground;
   }
 }
+

@@ -1,7 +1,35 @@
+import { useRef, useEffect } from "react";
 import { NavLink } from "@/components/NavLink";
 import ThemeToggle from "./ThemeToggle";
 
 const Navigation = () => {
+  const shadowRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current || !shadowRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+
+      // Calculate dramatic parallax effect
+      shadowRef.current.style.transform = `translate(${8 + x * 20}px, ${8 + y * 20}px)`;
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener('mousemove', handleMouseMove);
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener('mousemove', handleMouseMove);
+      }
+    };
+  }, []);
+
   const navItems = [
     { path: "/", label: "Home" },
     { path: "/writings", label: "Writings" },
@@ -12,25 +40,28 @@ const Navigation = () => {
   ];
 
   return (
-    <div className="relative p-6 sm:p-8 pb-4 border-b-4 border-foreground overflow-hidden animate-in slide-in-from-top-4 duration-500">
-      <div className="flex justify-between items-start flex-wrap gap-4">
+    <div
+      ref={containerRef}
+      className="relative p-6 sm:p-8 pb-4 border-b-4 border-foreground overflow-hidden animate-in slide-in-from-top-4 duration-500"
+    >
+      <div className="flex justify-center items-center relative w-full pt-4 pb-2">
         {/* LOGO BLOCK */}
-        <div className="relative group select-none cursor-pointer">
-          {/* Bottom layer (NICOLAS) */}
-          <div className="absolute top-0 left-0 font-['UnifrakturMaguntia'] text-[clamp(4rem,12vw,9rem)] leading-[0.85] tracking-[-2px] z-0 opacity-50 text-destructive translate-x-[6px] translate-y-[6px] transition-all duration-500 ease-in-out group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100 group-hover:text-foreground group-hover:z-20">
-            KYGRA
+        <div className="relative group">
+          <div
+            ref={shadowRef}
+            className="absolute top-0 left-0 translate-x-[8px] translate-y-[8px] font-['UnifrakturMaguntia'] text-[clamp(5rem,14vw,9rem)] leading-[0.85] text-destructive tracking-[-2px] z-0 opacity-60"
+            style={{ transition: 'transform 0.1s ease-out' }}
+          >
+           Opus Natura Libertas
           </div>
-          {/* Top layer (KYGRA) */}
-          <div className="font-['UnifrakturMaguntia'] text-[clamp(4rem,12vw,9rem)] leading-[0.85] tracking-[-2px] relative z-10 text-foreground transition-all duration-500 ease-in-out group-hover:translate-x-[6px] group-hover:translate-y-[6px] group-hover:opacity-50 group-hover:text-destructive group-hover:z-0">
-            KYGRA
+          <div className="font-['UnifrakturMaguntia'] text-[clamp(5rem,14vw,9rem)] leading-[0.85] text-foreground tracking-[-2px] relative z-10">
+           Opus Natura Libertas
           </div>
         </div>
 
-        {/* META INFO & THEME TOGGLE */}
-        <div className="text-right text-[0.65rem] tracking-[0.1em] uppercase text-muted-foreground leading-[1.8] pt-2 flex flex-col items-end">
-          <div className="flex items-center gap-4 mb-2">
-            <ThemeToggle />
-          </div>
+        {/* THEME TOGGLE */}
+        <div className="absolute top-0 right-0">
+          <ThemeToggle />
         </div>
       </div>
 
