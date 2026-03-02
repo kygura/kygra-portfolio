@@ -89,8 +89,8 @@ const Footer = () => {
           >
             <p className="font-['Courier_Prime'] font-light text-sm sm:text-base md:text-lg text-foreground tracking-widest leading-relaxed max-w-2xl break-words px-4 text-center">
               {quote.map((line, i) => (
-                <span key={i} 
-                className="block mb-2 last:mb-0">
+                <span key={i}
+                  className="block mb-2 last:mb-0">
                   {line}
                 </span>
               ))}

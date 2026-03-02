@@ -1,5 +1,416 @@
 @import url("https://fonts.googleapis.com/css2?family=Special+Elite&family=Bebas+Neue&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap");
 
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,900;1,400;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Oswald:wght@200;400;700&display=swap');
+
+  :root {
+    --black: #0a0a0a;
+    --white: #f0ede6;
+    --cream: #e8e2d5;
+    --yellow: #f5c842;
+    --coral: #e8553d;
+    --teal: #2ab4b4;
+    --pink: #e8607a;
+    --blue: #3d6ee8;
+    --grey: #8a8a8a;
+  }
+
+  /* Bebop Header */
+  .bebop-header {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .hbg {
+    position: absolute; inset: 0;
+    background: var(--black);
+  }
+  .hbg::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    width: 55%; height: 100%;
+    background: var(--cream);
+    clip-path: polygon(0 0, 100% 0, 78% 100%, 0 100%);
+  }
+
+  .hero-sketch {
+    position: absolute;
+    top: 2.5rem; right: -1.5rem;
+    width: 47%;
+    height: 44%;
+    background: var(--yellow);
+    transform: rotate(-1.8deg);
+    z-index: 3;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hero-sketch .label {
+    position: absolute;
+    bottom: 0.6rem; right: 0.8rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: rgba(10,10,10,0.55);
+  }
+
+  .site-id {
+    position: absolute;
+    top: 2rem; left: 2.5rem;
+    z-index: 10;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(1rem, 1.6vw, 1.4rem);
+    letter-spacing: 0.4em;
+    color: var(--black);
+  }
+
+  .hero-content {
+    position: absolute; inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; /* Horizontally center everything */
+    z-index: 10;
+  }
+  
+  .hero-content--base {
+    z-index: 10;
+  }
+  
+  .hero-content--invert {
+    z-index: 11;
+    pointer-events: none;
+    /* Clip to the black area: right of the diagonal cut.
+       Because hero-content is inset:0, this matches the viewport height
+       and aligns perfectly with the .hbg::before diagonal! */
+    clip-path: polygon(55% 0%, 100% 0%, 100% 100%, 42.9% 100%);
+  }
+
+  /* ── SPLIT HERO NAME ── */
+  .hero-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(6rem, 15vw, 17rem);
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    user-select: none;
+    white-space: nowrap;
+    text-align: center;
+    animation: glitch 9s infinite;
+  }
+
+  /* Base layer — black text */
+  .hero-content--base .hero-name {
+    color: var(--black);
+  }
+
+  /* Invert layer — cream text */
+  .hero-content--invert .hero-name {
+    color: var(--white);
+  }
+
+  @keyframes glitch {
+    0%, 91%, 100% { transform: none; text-shadow: none; }
+    92%  { transform: translateX(-4px); text-shadow: 4px 0 var(--coral); }
+    93%  { transform: translateX(4px);  text-shadow: -4px 0 var(--teal); }
+    94%  { transform: none; text-shadow: none; }
+    95%  { transform: skewX(-3deg) translateX(2px); }
+    96%  { transform: none; }
+  }
+
+  .hero-sub {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: clamp(1rem, 2.2vw, 1.8rem);
+    text-align: center;
+    margin-top: 0.4rem;
+    opacity: 0.65;
+  }
+
+  .hero-content--base .hero-sub {
+    color: var(--black);
+  }
+  
+  .hero-content--invert .hero-sub {
+    color: var(--white);
+  }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .blink { animation: blink 1s step-end infinite; }
+
+  .hstrip {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 5.5rem;
+    background: var(--coral);
+    display: flex; align-items: center;
+    overflow: hidden; z-index: 10;
+  }
+  .hstrip span {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 0.14em;
+    color: var(--black);
+    white-space: nowrap;
+    animation: marquee 20s linear infinite;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Bebop Main Grid */
+  .bebop-main {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 0.55rem;
+    padding: 0.55rem;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .box {
+    overflow: hidden;
+    position: relative;
+    transition: transform 0.25s ease, filter 0.2s ease;
+  }
+  .box:hover { transform: scale(1.008); z-index: 2; }
+
+  /* Brutalist hover: pure invert on all geometric SVG boxes */
+  .b-geo1:hover,
+  .b-geo2:hover,
+  .b-moto:hover,
+  .b-jet:hover,
+  .b-speeder:hover {
+    filter: invert(1);
+    transform: scale(1.008);
+    z-index: 2;
+  }
+
+  .b-manifesto {
+    grid-column: 1 / 6; grid-row: 1;
+    background: var(--cream);
+    color: var(--black);
+    padding: 3rem 2.5rem;
+    min-height: 400px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .b-manifesto h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3.2rem, 5.5vw, 6.5rem);
+    line-height: 0.88; margin-bottom: 1.5rem;
+  }
+  .b-manifesto p {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.05rem; line-height: 1.75;
+    color: #2a2a2a;
+  }
+
+  .b-moto {
+    grid-column: 6 / 10; grid-row: 1;
+    background: var(--black);
+    border: 2px solid var(--yellow);
+    color: var(--yellow);
+    min-height: 400px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .b-moto .spec {
+    position: absolute; bottom: 0.8rem; left: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    color: var(--yellow); opacity: 0.7;
+  }
+
+  .b-geo1 {
+    grid-column: 10 / 13; grid-row: 1;
+    background: var(--teal);
+    color: var(--black);
+    min-height: 400px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .b-geo1 svg { width: 85%; height: 85%; }
+
+  .b-quote {
+    grid-column: 1 / 5; grid-row: 2;
+    background: var(--black);
+    border-left: 6px solid var(--coral);
+    padding: 2.5rem;
+    min-height: 300px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .b-quote .jp {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.3rem, 2.2vw, 2rem);
+    line-height: 1.5; color: var(--yellow); margin-bottom: 1rem;
+  }
+  .b-quote .en {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem; color: var(--grey); letter-spacing: 0.1em;
+  }
+  .b-quote .attr {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.9rem; letter-spacing: 0.3em;
+    color: var(--grey); opacity: 0.6; margin-top: 1.5rem;
+  }
+
+  .b-speeder {
+    grid-column: 5 / 10; grid-row: 2;
+    background: var(--coral);
+    color: var(--black);
+    min-height: 300px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .b-speeder .spec {
+    position: absolute; bottom: 0.8rem; right: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    color: rgba(10,10,10,0.5);
+  }
+
+  .b-text2 {
+    grid-column: 10 / 13; grid-row: 2;
+    background: var(--white);
+    color: var(--black);
+    padding: 2.5rem 2rem;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .b-text2 h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.2rem, 3.8vw, 4.5rem);
+    line-height: 0.95; margin-bottom: 1rem;
+  }
+  .b-text2 p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem; line-height: 1.9; color: #333;
+  }
+
+  .b-geo2 {
+    grid-column: 1 / 4; grid-row: 3;
+    background: var(--yellow);
+    color: var(--black);
+    min-height: 280px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .b-geo2 svg { width: 80%; height: 80%; }
+
+  .b-bigtype {
+    grid-column: 4 / 10; grid-row: 3;
+    background: var(--black);
+    border-top: 3px solid var(--pink);
+    min-height: 280px;
+    display: flex; align-items: center;
+    overflow: hidden; position: relative;
+  }
+  .b-bigtype .bg-t {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(4rem, 9vw, 11rem);
+    line-height: 0.9; white-space: nowrap;
+    color: var(--white); opacity: 0.07;
+    position: absolute; left: 2rem;
+  }
+  .b-bigtype .fg-t {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2rem, 3.8vw, 4.5rem);
+    color: var(--pink);
+    letter-spacing: 0.2em;
+    line-height: 1.1;
+    position: relative; z-index: 1; padding: 3rem;
+  }
+
+  .b-jet {
+    grid-column: 10 / 13; grid-row: 3;
+    background: #0c0c0c;
+    color: var(--white);
+    border: 1px solid rgba(240,237,230,0.1);
+    min-height: 280px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+  }
+  .b-jet .spec {
+    position: absolute; bottom: 0.8rem; left: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    color: var(--grey); opacity: 0.5;
+  }
+
+  .b-manifesto2 {
+    grid-column: 1 / 7; grid-row: 4;
+    background: var(--blue);
+    padding: 3rem;
+    min-height: 320px;
+    color: var(--white);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .b-manifesto2 h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 5.5rem);
+    line-height: 0.93;
+  }
+  .b-manifesto2 p {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.82rem; line-height: 1.9;
+    opacity: 0.85; margin-top: 1.5rem;
+  }
+  .b-manifesto2 .sess {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem; letter-spacing: 0.3em; opacity: 0.35; margin-top: 1.5rem;
+  }
+
+  .b-blueprint {
+    grid-column: 7 / 13; grid-row: 4;
+    background: #050d1a;
+    color: var(--blue);
+    min-height: 320px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .b-blueprint::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(61,110,232,0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,110,232,0.1) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+  .b-blueprint .spec {
+    position: absolute; bottom: 0.8rem; left: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    color: #3d6ee8; opacity: 0.6; z-index: 2;
+  }
+
+  .fi  { animation: fadeUp 0.7s 0.05s ease both; }
+  .fi2 { animation: fadeUp 0.7s 0.2s  ease both; }
+  .fi3 { animation: fadeUp 0.7s 0.4s  ease both; }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  
+  /* SVG geometric sketches animation classes */
+  @keyframes draw { from{stroke-dashoffset:1000} to{stroke-dashoffset:0} }
+  @keyframes draw2 { from{stroke-dashoffset:2000} to{stroke-dashoffset:0} }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .d  { stroke-dasharray:1000; animation:draw 3s ease both; }
+  .d2 { stroke-dasharray:2000; animation:draw2 5s ease both; }
+  .df { stroke-dasharray:500;  animation:draw 1.5s ease both; }
+  
+  @media (max-width: 960px) {
+    .bebop-main { grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: 0.4rem; }
+    .b-manifesto,.b-moto,.b-geo1,
+    .b-quote,.b-speeder,.b-text2,
+    .b-geo2,.b-bigtype,.b-jet,
+    .b-manifesto2,.b-blueprint {
+      grid-column: 1 / -1 !important;
+      grid-row: auto !important;
+    }
+  }
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,39 +418,25 @@
 @layer base {
   :root {
     /* KYGRA ZINE COLORS */
-    --paper: 40 32% 86%;   /* #e8e0d0 */
-    --ink: 24 23% 8%;      /* #1a1410 */
-    --red: 6 63% 46%;      /* #c0392b */
-    --yellow: 44 85% 60%;  /* #f0c040 */
-    --blue: 218 48% 33%;   /* #2c4a7c */
-    --muted: 30 14% 48%;   /* #8a7a6a */
-    --white: 37 32% 94%;   /* #f5f0e8 */
-
-    /* Tailwind Mappings */
+    /* Bebop Mappings */
+    --paper: 0 0% 4%;      /* #0a0a0a */
+    --ink: 43 31% 92%;     /* #f0ede6 */
     --background: var(--paper);
     --foreground: var(--ink);
-
     --card: var(--paper);
     --card-foreground: var(--ink);
-
     --popover: var(--paper);
     --popover-foreground: var(--ink);
-
     --primary: var(--ink);
     --primary-foreground: var(--paper);
-
     --secondary: var(--red);
     --secondary-foreground: var(--paper);
-
     --destructive: var(--red);
     --destructive-foreground: var(--paper);
-
     --border: var(--ink);
     --input: var(--ink);
     --ring: var(--red);
-    
     --radius: 0rem;
-    
     --sidebar-background: var(--paper);
     --sidebar-foreground: var(--ink);
     --sidebar-border: var(--ink);
@@ -47,8 +444,9 @@
 
   .dark {
     /* Retain the exact zine aesthetic even in dark mode requests */
-    --paper: 24 23% 8%;
-    --ink: 40 32% 86%;
+    /* Bebop Mappings */
+    --paper: 0 0% 4%;      /* #0a0a0a */
+    --ink: 43 31% 92%;     /* #f0ede6 */
     --background: var(--paper);
     --foreground: var(--ink);
     --card: var(--paper);
@@ -64,6 +462,7 @@
     --border: var(--ink);
     --input: var(--ink);
     --ring: var(--red);
+    --radius: 0rem;
     --sidebar-background: var(--paper);
     --sidebar-foreground: var(--ink);
     --sidebar-border: var(--ink);
@@ -76,21 +475,20 @@
   }
 
   body {
-    background: hsl(var(--paper));
-    color: hsl(var(--ink));
-    font-family: 'Courier Prime', monospace;
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Space Mono', monospace;
     overflow-x: hidden;
     cursor: crosshair;
   }
 
-  body::before {
+  body::after {
     content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 9999;
-    opacity: 0.6;
+    opacity: 0.5;
   }
 
   h1, h2, h3, h4, h5, h6 {

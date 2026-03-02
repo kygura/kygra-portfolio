@@ -1,984 +1,1005 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>kygra.xyz</title>
-<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Bebas+Neue&family=Share+Tech+Mono&family=Playfair+Display:ital@1&family=Special+Elite&display=swap" rel="stylesheet">
+<meta property="og:title" content="kygra.xyz">
+<meta property="og:description" content="A man out of time.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── RESET & TOKENS ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --black:   #080808;
+  --cream:   #EDE9E2;
+  --warm:    #F5F2EC;
+  --mid:     #141414;
+  --dimmer:  #0F0F0F;
+  --border:  rgba(237,233,226,0.1);
+  --red:     #E8332A;
+  --gold:    #F0A500;
+  --text-dim: rgba(237,233,226,0.38);
+  --text-mid: rgba(237,233,226,0.65);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body:    'Crimson Pro', Georgia, serif;
+  --font-mono:    'Space Mono', monospace;
+}
 
-  :root {
-    --black: #0a0a0a;
-    --white: #f0ede8;
-    --cream: #e8e2d9;
-    --red: #c0392b;
-    --yellow: #e8c84a;
-    --grey: #888;
-    --mid: #444;
-  }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.7;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
 
-  html { background: var(--black); }
+/* ── CUSTOM CURSOR ── */
+#cur {
+  width: 10px; height: 10px;
+  border: 1px solid var(--cream);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%,-50%);
+  mix-blend-mode: difference;
+  transition: width .15s, height .15s, opacity .2s;
+}
+body:hover #cur { opacity:1; }
 
-  body {
-    background: var(--white);
-    color: var(--black);
-    font-family: 'Share Tech Mono', monospace;
-    overflow-x: hidden;
-    cursor: crosshair;
-  }
+a { color: inherit; text-decoration: none; }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.35;
-  }
+/* ── NAV ── */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  padding: 22px 56px;
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,8,8,0.82);
+  backdrop-filter: blur(12px);
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.35em;
+}
+.nav-links {
+  display: flex; gap: 40px; list-style: none;
+}
+.nav-links a {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  transition: color .2s;
+}
+.nav-links a:hover, .nav-links a.active { color: var(--cream); }
+.nav-right {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  padding: 7px 14px;
+  cursor: crosshair;
+  transition: border-color .2s, color .2s;
+}
+.nav-right:hover { border-color: var(--cream); color: var(--cream); }
 
-  /* HERO */
-  .hero {
-    min-height: 100vh;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto 1fr auto;
-    border-bottom: 4px solid var(--black);
-    position: relative;
-    overflow: hidden;
-  }
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-top: 80px;
+}
+.hero-left {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 80px 56px;
+  border-right: 1px solid var(--border);
+}
+.hero-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 36px;
+  display: flex; align-items: center; gap: 14px;
+}
+.hero-tag::before {
+  content:''; display:inline-block;
+  width:28px; height:1px;
+  background: var(--text-dim);
+}
+.hero-h1 {
+  font-family: var(--font-display);
+  font-size: clamp(72px, 9vw, 148px);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  margin-bottom: 40px;
+}
+.hero-h1 em {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 0.72em;
+  display: block;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--cream);
+  letter-spacing: 0.02em;
+}
+.hero-body {
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--text-mid);
+  max-width: 380px;
+  margin-bottom: 52px;
+}
+.hero-actions { display:flex; gap:20px; align-items:center; }
+.btn {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: crosshair;
+  border: none;
+  transition: background .2s, color .2s, opacity .2s;
+}
+.btn-fill {
+  background: var(--cream);
+  color: var(--black);
+  padding: 15px 30px;
+}
+.btn-fill:hover { background: var(--gold); }
+.btn-line {
+  background: none;
+  color: var(--text-dim);
+  padding: 0;
+  display:flex; align-items:center; gap:8px;
+}
+.btn-line:hover { color: var(--cream); }
+.btn-line::after { content:'→'; }
 
-  .hero-nav {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 24px 32px 0;
-    border-bottom: 2px solid var(--black);
-  }
+/* ── HERO RIGHT (globe) ── */
+.hero-right {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.globe-scene {
+  position:relative;
+  width: min(460px,78%); aspect-ratio:1;
+}
+.globe-svg { width:100%; height:100%; animation: spin 60s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-  .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(48px, 8vw, 96px);
-    letter-spacing: -2px;
-    line-height: 1;
-  }
-  .logo::after {
-    content: '_';
-    color: var(--red);
-    animation: blink 1.1s step-end infinite;
-  }
-  @keyframes blink { 50% { opacity: 0; } }
+.ring {
+  position:absolute; border-radius:50%;
+  border:1px solid var(--border);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  animation: ringPulse 9s ease-in-out infinite;
+}
+.ring:nth-child(1){ width:118%; height:118%; animation-delay:0s; }
+.ring:nth-child(2){ width:148%; height:148%; animation-delay:3s; }
+.ring:nth-child(3){ width:178%; height:178%; animation-delay:6s; }
+@keyframes ringPulse { 0%,100%{opacity:.25} 50%{opacity:.07} }
 
-  .nav-links {
-    display: flex;
-    gap: 32px;
-    padding-top: 16px;
-    list-style: none;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
-  .nav-links a { color: var(--black); text-decoration: none; border-bottom: 1px solid transparent; }
-  .nav-links a:hover { border-bottom-color: var(--red); color: var(--red); }
+.orbit-dot {
+  position:absolute; width:6px; height:6px;
+  background:var(--cream); border-radius:50%;
+  top:50%; left:50%;
+  animation: dotOrbit 14s linear infinite;
+  transform-origin: 0 0;
+}
+@keyframes dotOrbit {
+  from { transform: rotate(0deg) translateX(140px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(140px) rotate(-360deg); }
+}
 
-  .hero-left {
-    grid-column: 1;
-    padding: 40px 32px 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 24px;
-    border-right: 2px solid var(--black);
-  }
+/* ── TICKER ── */
+.ticker {
+  background: var(--dimmer);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden; padding: 11px 0;
+}
+.ticker-track {
+  display: inline-flex; gap:56px;
+  animation: tickerMove 28s linear infinite;
+}
+.t-item {
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing:.3em;
+  text-transform: uppercase; color: var(--text-dim);
+  display:flex; align-items:center; gap:14px; white-space:nowrap;
+}
+.t-dot { width:3px; height:3px; border-radius:50%; background:var(--gold); display:inline-block; }
+@keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
-  .tag-line {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(64px, 10vw, 140px);
-    line-height: 0.88;
-    letter-spacing: -4px;
-  }
-  .tag-line .outline {
-    -webkit-text-stroke: 2px var(--black);
-    color: transparent;
-  }
-  .tag-line .red { color: var(--red); }
+/* ── ORBIT BOXES SECTION ── */
+.boxes-section { padding: 120px 56px; }
+.section-head {
+  display:flex; justify-content:space-between; align-items:flex-end;
+  padding-bottom: 28px; border-bottom: 1px solid var(--border);
+  margin-bottom: 72px;
+}
+.section-label {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: .28em; text-transform: uppercase;
+  color: var(--text-dim); margin-bottom: 10px;
+}
+.section-h2 {
+  font-family: var(--font-display); font-size: 52px;
+  letter-spacing: .04em; line-height:1;
+}
+.section-meta { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); letter-spacing:.15em; }
 
-  .sub-text {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: 18px;
-    max-width: 400px;
-    line-height: 1.6;
-    color: var(--mid);
-  }
+/* 3-col orbit boxes */
+.orbit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
 
-  .stamp {
-    display: inline-block;
-    border: 3px solid var(--black);
-    padding: 6px 14px;
-    font-family: 'Special Elite', cursive;
-    font-size: 13px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    width: fit-content;
-    transform: rotate(-1.5deg);
-  }
+/* SHARED BOX */
+.obox {
+  position: relative;
+  aspect-ratio: 1.1;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: crosshair;
+  transition: border-color .35s;
+}
+.obox:hover { border-color: rgba(237,233,226,.35); }
 
-  .hero-right {
-    grid-column: 2;
-    position: relative;
-    background: var(--black);
-    overflow: hidden;
-    min-height: 500px;
-  }
+.obox-inner {
+  position: absolute; inset:0;
+  display: flex; flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 30px;
+  z-index:2;
+}
 
-  .sketch-bike {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px;
-  }
+/* background SVG element */
+.obox-bg {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  transition: opacity .4s, transform .5s;
+}
+.obox-bg svg { width:68%; height:68%; }
 
-  .hero-right .corner-text {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 3px;
-    color: var(--grey);
-    text-transform: uppercase;
-    writing-mode: vertical-rl;
-  }
+/* default + hover color states */
 
-  .hero-right .fig-number {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 72px;
-    color: rgba(255,255,255,0.06);
-    line-height: 1;
-  }
+/* STRATUM — cream bg, black motif */
+.obox-stratum {
+  background: var(--warm);
+  color: #050505;
+}
+.obox-stratum .obox-bg { opacity:.55; }
+.obox-stratum:hover { background: var(--cream); }
+.obox-stratum:hover .obox-bg { opacity:.9; transform: scale(1.04) rotate(4deg); }
+.obox-stratum .obox-title { color:#050505; }
+.obox-stratum .obox-sub { color:rgba(5,5,5,.45); }
+.obox-stratum .obox-icon { border-color:#050505; }
+.obox-stratum .obox-icon svg { stroke:#050505; }
 
-  .ticker {
-    grid-column: 1 / -1;
-    background: var(--black);
-    color: var(--yellow);
-    padding: 10px 0;
-    overflow: hidden;
-    white-space: nowrap;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 3px;
-  }
-  .ticker-inner {
-    display: inline-block;
-    animation: ticker 40s linear infinite;
-  }
-  .ticker span { margin: 0 40px; opacity: 0.7; }
-  .ticker span.sep { color: var(--red); opacity: 1; }
-  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+/* AXIS — black bg, cream motif */
+.obox-axis {
+  background: #0A0A0A;
+  color: var(--cream);
+  border-color: #1E1E1E;
+}
+.obox-axis .obox-bg { opacity:.45; }
+.obox-axis:hover { background: #111; border-color: rgba(237,233,226,.3); }
+.obox-axis:hover .obox-bg { opacity:.85; transform: scale(1.04) rotate(-3deg); }
 
-  /* BENTO */
-  .bento {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    grid-auto-rows: 80px;
-    gap: 0;
-    border-bottom: 4px solid var(--black);
-  }
+/* SOLIS — cream bg, sunburst */
+.obox-solis {
+  background: #EDEBE5;
+  color: #050505;
+}
+.obox-solis .obox-bg { opacity:.5; }
+.obox-solis:hover { background: #F0A500; color: #050505; }
+.obox-solis:hover .obox-bg { opacity:.35; transform: scale(1.06); }
+.obox-solis .obox-title { color:#050505; }
+.obox-solis .obox-sub { color:rgba(5,5,5,.45); }
+.obox-solis .obox-icon { border-color:#050505; }
+.obox-solis .obox-icon svg { stroke:#050505; }
 
-  .box {
-    border: 1px solid var(--black);
-    border-width: 0 1px 1px 0;
-    overflow: hidden;
-    position: relative;
-  }
+/* hover on solis adjusts text */
+.obox-solis:hover .obox-title,
+.obox-solis:hover .obox-sub { color:#050505; }
 
-  .box-about {
-    grid-column: 1 / 5;
-    grid-row: 1 / 7;
-    padding: 32px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background: var(--white);
-  }
-  .box-about h2 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 64px;
-    line-height: 0.9;
-    letter-spacing: -2px;
-  }
-  .box-about p {
-    font-size: 12px;
-    line-height: 1.8;
-    color: var(--mid);
-    max-width: 280px;
-  }
-  .box-about .marker {
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--grey);
-  }
+/* NOVA (bonus dark variant with red accent) */
+.obox-nova {
+  background: #0A0A0A;
+  color: var(--cream);
+  border-color: #1E1E1E;
+}
+.obox-nova .obox-bg { opacity:.4; }
+.obox-nova:hover { background: var(--red); border-color: var(--red); }
+.obox-nova:hover .obox-bg { opacity:.25; transform: scale(1.05); }
+.obox-nova:hover .obox-sub { color: rgba(5,5,5,.5); }
+.obox-nova:hover .obox-title { color: #050505; }
 
-  .box-geo-1 {
-    grid-column: 5 / 8;
-    grid-row: 1 / 4;
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+/* PULSAR — gold on hover */
+.obox-pulsar {
+  background: var(--mid);
+  color: var(--cream);
+}
+.obox-pulsar .obox-bg { opacity:.35; }
+.obox-pulsar:hover { background: var(--gold); border-color: var(--gold); }
+.obox-pulsar:hover .obox-bg { opacity:.2; }
+.obox-pulsar:hover .obox-title,
+.obox-pulsar:hover .obox-sub { color:#050505; }
 
-  .box-geo-2 {
-    grid-column: 8 / 10;
-    grid-row: 1 / 3;
-    background: var(--yellow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+/* DARK ORBIT */
+.obox-dark {
+  background: var(--mid);
+  color: var(--cream);
+}
+.obox-dark .obox-bg { opacity:.3; }
+.obox-dark:hover { background: #1A1A1A; border-color: rgba(237,233,226,.3); }
+.obox-dark:hover .obox-bg { opacity:.7; transform: scale(1.03) rotate(6deg); }
 
-  .box-geo-3 {
-    grid-column: 10 / 13;
-    grid-row: 1 / 5;
-    background: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-right: none;
-  }
+.obox-icon {
+  width:30px; height:30px;
+  border:1px solid var(--cream);
+  display:grid; place-items:center;
+  flex-shrink:0;
+}
+.obox-icon svg { width:14px; height:14px; stroke:var(--cream); fill:none; stroke-width:1.4; }
 
-  .box-label {
-    grid-column: 8 / 10;
-    grid-row: 3 / 5;
-    background: var(--red);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
-  .box-label span {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px;
-    color: var(--white);
-    letter-spacing: 4px;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-  }
+.obox-footer {
+  display:flex; justify-content:space-between; align-items:flex-end;
+}
+.obox-title {
+  font-family: var(--font-display);
+  font-size: 22px; letter-spacing:.06em;
+  line-height:1.1; color: var(--cream);
+  transition: color .3s;
+}
+.obox-sub {
+  font-family: var(--font-mono);
+  font-size: 8px; letter-spacing:.22em;
+  text-transform: uppercase; color: var(--text-dim);
+  margin-top: 4px;
+  transition: color .3s;
+}
+.obox-arrow {
+  font-size:18px; color: var(--text-dim);
+  transition: transform .3s, color .3s;
+}
+.obox:hover .obox-arrow { transform: translate(4px,-4px); color: var(--cream); }
+.obox-solis:hover .obox-arrow,
+.obox-nova:hover .obox-arrow,
+.obox-pulsar:hover .obox-arrow { color: #050505; }
 
-  .box-sketch-engine {
-    grid-column: 5 / 8;
-    grid-row: 4 / 8;
-    background: var(--cream);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-  }
+/* ── SPLIT (about) ── */
+.split {
+  display:grid; grid-template-columns:1fr 1fr;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  min-height:60vh;
+}
+.split-l {
+  padding: 100px 56px;
+  border-right: 1px solid var(--border);
+  display:flex; flex-direction:column; justify-content:center;
+}
+.split-l h2 {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 6vw, 96px);
+  letter-spacing:.03em; line-height:.94;
+}
+.split-l h2 em {
+  font-family: var(--font-body);
+  font-style:italic;
+  -webkit-text-stroke:1px var(--cream);
+  color:transparent; display:block;
+}
+.split-r {
+  padding: 100px 56px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.split-r p {
+  font-size:16px; line-height:1.9;
+  color:var(--text-mid); margin-bottom:28px; max-width:420px;
+}
+.manifesto-list { list-style:none; margin-top:20px; }
+.manifesto-list li {
+  font-family: var(--font-mono);
+  font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+  padding:18px 0; border-bottom:1px solid var(--border);
+  color:var(--text-dim); display:flex; align-items:center; gap:20px;
+  transition: color .2s; cursor:crosshair;
+}
+.manifesto-list li:hover { color:var(--cream); }
+.manifesto-list li::before {
+  font-family: var(--font-body); font-style:italic;
+  font-size:20px; opacity:.35; min-width:24px;
+  content: attr(data-n);
+}
 
-  .box-markets {
-    grid-column: 8 / 10;
-    grid-row: 5 / 8;
-    padding: 20px;
-    background: var(--white);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-  .box-markets .big-num {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 48px;
-    line-height: 1;
-    letter-spacing: -2px;
-  }
-  .box-markets .label {
-    font-size: 9px;
-    letter-spacing: 4px;
-    text-transform: uppercase;
-    color: var(--grey);
-  }
+/* ── WRITINGS ── */
+.writings-section { padding:120px 56px; border-bottom:1px solid var(--border); }
+.writings-list { margin-top:64px; }
+.w-item {
+  display:grid; grid-template-columns:80px 1fr 80px;
+  align-items:center; gap:32px;
+  padding:28px 0; border-bottom:1px solid var(--border);
+  cursor:crosshair; transition:padding-left .25s;
+}
+.w-item:hover { padding-left:12px; }
+.w-num {
+  font-family:var(--font-mono); font-size:9px;
+  letter-spacing:.2em; color:var(--text-dim);
+}
+.w-title {
+  font-family:var(--font-body); font-size:20px;
+  color:var(--text-mid); transition:color .2s;
+}
+.w-item:hover .w-title { color:var(--cream); }
+.w-date {
+  font-family:var(--font-mono); font-size:9px;
+  letter-spacing:.15em; color:var(--text-dim); text-align:right;
+}
 
-  .box-quote {
-    grid-column: 10 / 13;
-    grid-row: 5 / 8;
-    padding: 28px;
-    background: var(--black);
-    color: var(--white);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 12px;
-    border-right: none;
-  }
-  .box-quote blockquote {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    font-size: 14px;
-    line-height: 1.7;
-    color: rgba(240,237,232,0.85);
-  }
-  .box-quote cite {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--yellow);
-  }
+/* ── QUOTE FOOTER ── */
+.quote-zone {
+  padding:80px 56px;
+  display:flex; align-items:center; justify-content:center;
+  gap:48px; border-bottom:1px solid var(--border);
+}
+.quote-nav-btn {
+  background:none; border:1px solid var(--border);
+  width:40px; height:40px; border-radius:50%;
+  color:var(--text-dim); font-size:14px;
+  cursor:crosshair; transition:border-color .2s, color .2s;
+  flex-shrink:0;
+}
+.quote-nav-btn:hover { border-color:var(--cream); color:var(--cream); }
+#quote-text {
+  font-family:var(--font-body); font-style:italic;
+  font-size:clamp(18px,2.2vw,26px); text-align:center;
+  color:var(--text-mid); max-width:640px;
+  line-height:1.6; transition:opacity .4s;
+}
 
-  .box-wide-sketch {
-    grid-column: 1 / 9;
-    grid-row: 8 / 13;
-    background: var(--black);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 32px;
-    position: relative;
-    overflow: hidden;
-  }
-  .box-wide-sketch .annotation {
-    position: absolute;
-    top: 20px;
-    left: 24px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 3px;
-    text-transform: uppercase;
-  }
+/* ── CONTACT ── */
+.contact-section {
+  padding:120px 56px;
+  display:grid; grid-template-columns:1fr 1fr; gap:80px;
+}
+.contact-l h2 {
+  font-family:var(--font-display); font-size:80px;
+  line-height:.92; margin-bottom:48px;
+}
+.contact-l h2 em { font-family:var(--font-body); font-style:italic; -webkit-text-stroke:1px var(--cream); color:transparent; }
+.c-link {
+  display:flex; align-items:center; gap:16px;
+  font-family:var(--font-mono); font-size:10px;
+  letter-spacing:.18em; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:16px;
+  transition:color .2s;
+}
+.c-link::before { content:'—'; opacity:.4; }
+.c-link:hover { color:var(--cream); }
+.contact-r { display:flex; flex-direction:column; justify-content:center; }
+.contact-r p {
+  font-size:15px; line-height:1.85;
+  color:var(--text-dim); margin-bottom:40px; max-width:400px;
+}
 
-  .box-philosophy {
-    grid-column: 9 / 13;
-    grid-row: 8 / 11;
-    padding: 28px;
-    background: var(--cream);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    border-right: none;
-  }
-  .box-philosophy h3 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px;
-    letter-spacing: 2px;
-  }
-  .box-philosophy p {
-    font-size: 11px;
-    line-height: 1.9;
-    color: var(--mid);
-  }
+/* ── FOOTER ── */
+footer {
+  border-top:1px solid var(--border);
+  padding:26px 56px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.footer-logo { font-family:var(--font-display); font-size:18px; letter-spacing:.35em; }
+.footer-meta { font-family:var(--font-mono); font-size:8px; letter-spacing:.2em; text-transform:uppercase; color:var(--text-dim); }
 
-  .box-geo-4 {
-    grid-column: 9 / 11;
-    grid-row: 11 / 13;
-    background: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom: none;
-  }
-  .box-geo-5 {
-    grid-column: 11 / 13;
-    grid-row: 11 / 13;
-    background: var(--yellow);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-right: none;
-    border-bottom: none;
-  }
+/* ── SOUNDTRACK BTN ── */
+.soundtrack-btn {
+  position:fixed; bottom:28px; right:28px; z-index:50;
+  width:42px; height:42px; border-radius:50%;
+  background:rgba(8,8,8,.85); border:1px solid var(--border);
+  color:var(--text-dim); cursor:crosshair;
+  display:grid; place-items:center;
+  backdrop-filter:blur(8px);
+  transition:border-color .2s, color .2s;
+}
+.soundtrack-btn:hover { border-color:var(--cream); color:var(--cream); }
+.soundtrack-btn svg { width:14px; height:14px; stroke:currentColor; fill:none; }
 
-  /* MANIFESTO */
-  .section-manifesto {
-    padding: 80px 32px;
-    border-bottom: 4px solid var(--black);
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0;
-  }
-  .manifesto-giant {
-    grid-column: 1 / 3;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(80px, 12vw, 160px);
-    line-height: 0.85;
-    letter-spacing: -6px;
-  }
-  .manifesto-giant .outline { -webkit-text-stroke: 2px var(--black); color: transparent; }
-  .manifesto-right {
-    grid-column: 3;
-    padding: 40px 0 40px 40px;
-    border-left: 2px solid var(--black);
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 16px;
-  }
-  .manifesto-right p {
-    font-size: 12px;
-    line-height: 1.9;
-    color: var(--mid);
-  }
+/* ── REVEAL ── */
+.reveal { opacity:0; transform:translateY(20px); transition:opacity .7s ease, transform .7s ease; }
+.reveal.in  { opacity:1; transform:translateY(0); }
 
-  footer {
-    background: var(--black);
-    color: var(--white);
-    padding: 40px 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-  footer .foot-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 48px;
-    letter-spacing: -2px;
-  }
-  footer .foot-meta {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--grey);
-    text-align: right;
-    line-height: 2;
-  }
-  footer .foot-meta span { color: var(--red); }
+/* ── GRAIN ── */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:1000;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity:.022;
+}
 
-  .tag-line:hover { animation: glitch 0.3s steps(2) 1; }
-  @keyframes glitch {
-    0% { transform: translate(0); }
-    20% { transform: translate(-3px, 2px); filter: hue-rotate(90deg); }
-    40% { transform: translate(3px, -2px); }
-    60% { transform: translate(-1px, 1px); }
-    100% { transform: translate(0); }
-  }
-  .box-geo-1:hover, .box-geo-2:hover, .box-geo-3:hover,
-  .box-geo-4:hover, .box-geo-5:hover { filter: invert(1); transition: filter 0.1s; }
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .hero, .split, .contact-section { grid-template-columns:1fr; }
+  .hero-right { display:none; }
+  .orbit-grid { grid-template-columns:1fr 1fr; }
+  nav { padding:18px 24px; }
+  .nav-links { display:none; }
+  .hero-left, .boxes-section, .writings-section,
+  .split-l, .split-r, .contact-section { padding-left:24px; padding-right:24px; }
+  .w-item { grid-template-columns:40px 1fr; }
+  .w-date { display:none; }
+}
+@media(max-width:540px){
+  .orbit-grid { grid-template-columns:1fr; }
+}
 </style>
 </head>
 <body>
 
-<section class="hero">
-  <nav class="hero-nav">
-    <div class="logo">KYGRA</div>
-    <ul class="nav-links">
-      <li><a href="#">MARKETS</a></li>
-      <li><a href="#">WRITING</a></li>
-      <li><a href="#">PROJECTS</a></li>
-      <li><a href="#">CONTACT</a></li>
-    </ul>
-  </nav>
+<div id="cur"></div>
 
+<!-- ── NAV ── -->
+<nav>
+  <span class="nav-logo">KYGRA</span>
+  <ul class="nav-links">
+    <li><a href="#home" class="active">Home</a></li>
+    <li><a href="#writings">Writings</a></li>
+    <li><a href="#software">Software</a></li>
+    <li><a href="#artifacts">Artifacts</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <span class="nav-right">Guestbook</span>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="home">
   <div class="hero-left">
-    <div class="tag-line">
-      MAN<br>
-      <span class="outline">OUT OF</span><br>
-      <span class="red">TIME</span>
+    <div class="hero-tag">Man out of time · Málaga</div>
+    <h1 class="hero-h1">
+      WELCOME<br>
+      <em>friend_</em>
+    </h1>
+    <p class="hero-body">
+      I am happily unemployed, refusing to trade my best years for a salary that supports a wasteful existence. I sustain myself by the land and the markets, answering only to necessity.
+    </p>
+    <div class="hero-actions">
+      <button class="btn btn-fill" onclick="document.getElementById('writings').scrollIntoView({behavior:'smooth'})">Explore</button>
+      <button class="btn btn-line" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">About</button>
     </div>
-    <p class="sub-text">Witnessing the world as it was and as it is. Answering only to necessity.</p>
-    <div class="stamp">Kygra ◆ Independent ◆ Unbound</div>
   </div>
-
   <div class="hero-right">
-    <div class="fig-number">01</div>
-    <div class="sketch-bike">
-      <!-- BEBOP-MK.1 — clean technical motorbike side profile -->
-      <svg viewBox="0 0 560 300" width="100%" fill="none" xmlns="http://www.w3.org/2000/svg" style="max-width:560px">
-        <defs>
-          <style>
-            .s1{stroke:#f0ede8;stroke-width:1.4;fill:none;}
-            .s2{stroke:#f0ede8;stroke-width:0.7;fill:none;stroke-dasharray:5 4;}
-            .s3{stroke:#888888;stroke-width:0.6;fill:none;stroke-dasharray:3 4;}
-            .sr{stroke:#c0392b;stroke-width:1;fill:none;}
-            .sr2{stroke:#c0392b;stroke-width:0.7;fill:none;stroke-dasharray:4 3;}
-          </style>
-        </defs>
-
-        <!-- ── REAR WHEEL ── -->
-        <!-- outer tyre -->
-        <circle cx="108" cy="210" r="68" class="s1"/>
-        <!-- tyre inner wall -->
-        <circle cx="108" cy="210" r="55" class="s2"/>
-        <!-- rim -->
-        <circle cx="108" cy="210" r="38" class="s1"/>
-        <!-- hub -->
-        <circle cx="108" cy="210" r="10" class="s1"/>
-        <circle cx="108" cy="210" r="4" fill="#f0ede8"/>
-        <!-- spokes ×6 -->
-        <line x1="108" y1="172" x2="108" y2="248" class="s3"/>
-        <line x1="71"  y1="189" x2="145" y2="231" class="s3"/>
-        <line x1="71"  y1="231" x2="145" y2="189" class="s3"/>
-
-        <!-- ── FRONT WHEEL ── -->
-        <circle cx="452" cy="218" r="60" class="s1"/>
-        <circle cx="452" cy="218" r="48" class="s2"/>
-        <circle cx="452" cy="218" r="32" class="s1"/>
-        <circle cx="452" cy="218" r="9"  class="s1"/>
-        <circle cx="452" cy="218" r="3.5" fill="#f0ede8"/>
-        <line x1="452" y1="186" x2="452" y2="250" class="s3"/>
-        <line x1="421" y1="200" x2="483" y2="236" class="s3"/>
-        <line x1="421" y1="236" x2="483" y2="200" class="s3"/>
-
-        <!-- ── MAIN FRAME — diamond / backbone ── -->
-        <!-- head tube -->
-        <line x1="385" y1="92" x2="400" y2="158" class="s1" stroke-width="2.2"/>
-        <!-- top tube -->
-        <line x1="385" y1="92" x2="220" y2="102" class="s1" stroke-width="1.8"/>
-        <!-- down tube -->
-        <line x1="385" y1="92" x2="255" y2="178" class="s1" stroke-width="1.8"/>
-        <!-- seat tube -->
-        <line x1="220" y1="102" x2="220" y2="190" class="s1" stroke-width="1.8"/>
-        <!-- chain stays -->
-        <line x1="220" y1="190" x2="108" y2="210" class="s1" stroke-width="1.4"/>
-        <line x1="255" y1="178" x2="108" y2="210" class="s1" stroke-width="1.4"/>
-        <!-- seat stay -->
-        <line x1="220" y1="102" x2="108" y2="182" class="s2"/>
-
-        <!-- ── FORK ── -->
-        <line x1="400" y1="158" x2="428" y2="218" class="s1" stroke-width="1.8"/>
-        <line x1="393" y1="162" x2="420" y2="218" class="s1"/>
-        <!-- fork brace -->
-        <line x1="405" y1="195" x2="418" y2="200" class="s2"/>
-
-        <!-- ── HANDLEBAR ── -->
-        <path d="M386 90 Q376 72 360 70 Q345 68 342 78" class="s1"/>
-        <!-- grip end -->
-        <line x1="342" y1="78" x2="335" y2="84" class="s1" stroke-width="2"/>
-
-        <!-- ── SEAT ── -->
-        <path d="M170 95 Q195 82 230 85 Q248 87 255 96" class="s1" stroke-width="1.6"/>
-        <path d="M170 95 Q178 104 188 104 Q210 104 255 96" class="s2"/>
-
-        <!-- ── ENGINE BLOCK ── -->
-        <rect x="228" y="138" width="100" height="64" rx="5" class="s1" stroke-width="1.6"/>
-        <!-- cylinder head fins (horizontal lines) -->
-        <line x1="228" y1="150" x2="328" y2="150" class="s3"/>
-        <line x1="228" y1="160" x2="328" y2="160" class="s3"/>
-        <line x1="228" y1="170" x2="328" y2="170" class="s3"/>
-        <line x1="228" y1="180" x2="328" y2="180" class="s3"/>
-        <!-- cylinder bore circles -->
-        <circle cx="260" cy="158" r="10" class="sr"/>
-        <circle cx="296" cy="158" r="10" class="sr"/>
-        <!-- crankcase bottom -->
-        <rect x="240" y="185" width="78" height="14" rx="3" class="s2"/>
-
-        <!-- ── EXHAUST PIPES ── -->
-        <path d="M328 152 Q365 145 372 168 Q376 185 355 195 Q340 200 328 197" class="s1"/>
-        <path d="M328 162 Q370 155 377 178 Q382 196 360 206 Q344 211 328 206" class="s1"/>
-        <!-- exhaust tip oval -->
-        <ellipse cx="328" cy="200" rx="6" ry="11" class="s1"/>
-        <ellipse cx="328" cy="205" rx="6" ry="11" class="s2"/>
-
-        <!-- ── FUEL TANK ── -->
-        <path d="M220 100 Q270 72 340 78 Q370 80 386 90 L385 108 Q355 118 310 120 Q260 122 220 118 Z" class="s1" stroke-width="1.4"/>
-        <!-- tank highlight line -->
-        <path d="M240 84 Q295 72 355 80" class="sr2"/>
-
-        <!-- ── DIMENSION LINES ── -->
-        <line x1="108" y1="280" x2="452" y2="280" class="s3"/>
-        <line x1="108" y1="275" x2="108" y2="285" class="s3"/>
-        <line x1="452" y1="275" x2="452" y2="285" class="s3"/>
-        <text x="278" y="295" fill="#666" font-family="monospace" font-size="8.5" text-anchor="middle">WHEELBASE — 1380mm</text>
-
-        <!-- vertical height arrow -->
-        <line x1="36" y1="70" x2="36" y2="278" class="s3"/>
-        <line x1="31" y1="70" x2="41" y2="70" class="s3"/>
-        <line x1="31" y1="278" x2="41" y2="278" class="s3"/>
-        <text x="28" y="178" fill="#666" font-family="monospace" font-size="8" text-anchor="middle" transform="rotate(-90 28 178)">HEIGHT 1090mm</text>
-
-        <!-- ── CALLOUT LINES ── -->
-        <line x1="278" y1="155" x2="278" y2="38" class="s3"/>
-        <line x1="278" y1="38" x2="400" y2="24" class="s3"/>
-        <text x="403" y="22" fill="#c0392b" font-family="monospace" font-size="8.5">BEBOP-MK.1 / KYGRA</text>
-
-        <line x1="328" y1="178" x2="420" y2="155" class="s3"/>
-        <text x="422" y="153" fill="#666" font-family="monospace" font-size="8">INLINE-2 / 680cc</text>
-
-        <line x1="220" y1="108" x2="130" y2="70" class="s3"/>
-        <text x="58" y="68" fill="#666" font-family="monospace" font-size="8">SEAT HT.</text>
-
-        <!-- ghost fig number -->
-        <text x="462" y="98" fill="rgba(240,237,232,0.05)" font-family="monospace" font-size="72" font-weight="bold">01</text>
+    <div class="globe-scene">
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <div class="ring"></div>
+      <!-- Wireframe globe — Stratum/Axis motif -->
+      <svg class="globe-svg" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="200" cy="200" r="178" stroke="#EDE9E2" stroke-width="0.6" opacity="0.35"/>
+        <ellipse cx="200" cy="200" rx="178" ry="56"  stroke="#EDE9E2" stroke-width="0.55" opacity="0.28"/>
+        <ellipse cx="200" cy="200" rx="178" ry="98"  stroke="#EDE9E2" stroke-width="0.55" opacity="0.28"/>
+        <ellipse cx="200" cy="200" rx="178" ry="138" stroke="#EDE9E2" stroke-width="0.55" opacity="0.28"/>
+        <ellipse cx="200" cy="200" rx="178" ry="164" stroke="#EDE9E2" stroke-width="0.5"  opacity="0.22"/>
+        <path d="M200 22 Q340 200 200 378 Q60 200 200 22"  stroke="#EDE9E2" stroke-width="0.55" opacity="0.28"/>
+        <path d="M200 22 Q378 200 200 378"                 stroke="#EDE9E2" stroke-width="0.5"  opacity="0.22"/>
+        <path d="M200 22 Q22 200 200 378"                  stroke="#EDE9E2" stroke-width="0.5"  opacity="0.22"/>
+        <path d="M200 22 Q300 90 260 200 Q300 310 200 378 Q100 310 140 200 Q100 90 200 22" stroke="#EDE9E2" stroke-width="0.5" opacity="0.2"/>
+        <path d="M200 22 Q360 110 320 200 Q360 290 200 378 Q40 290 80 200 Q40 110 200 22"  stroke="#EDE9E2" stroke-width="0.45" opacity="0.16"/>
       </svg>
-    </div>
-    <div class="corner-text">TYPE-KYGRA / CONCEPT-01 / 2025</div>
-  </div>
-
-  <div class="ticker">
-    <div class="ticker-inner">
-      <span>INDEPENDENT</span><span class="sep">◆</span>
-      <span>PERPETUAL FUTURES</span><span class="sep">◆</span>
-      <span>IN A MAD WORLD ONLY THE MAD ARE SANE</span><span class="sep">◆</span>
-      <span>NO MASTER</span><span class="sep">◆</span>
-      <span>TECHNICAL ANALYSIS</span><span class="sep">◆</span>
-      <span>MARKET REGIME DETECTION</span><span class="sep">◆</span>
-      <span>狂った世界では、狂った人々だけが正気である</span><span class="sep">◆</span>
-      <span>INDEPENDENT</span><span class="sep">◆</span>
-      <span>PERPETUAL FUTURES</span><span class="sep">◆</span>
-      <span>IN A MAD WORLD ONLY THE MAD ARE SANE</span><span class="sep">◆</span>
-      <span>NO MASTER</span><span class="sep">◆</span>
-      <span>TECHNICAL ANALYSIS</span><span class="sep">◆</span>
-      <span>MARKET REGIME DETECTION</span><span class="sep">◆</span>
-      <span>狂った世界では、狂った人々だけが正気である</span><span class="sep">◆</span>
+      <div class="orbit-dot"></div>
     </div>
   </div>
 </section>
 
-<section class="bento">
-  <div class="box box-about">
-    <span class="marker">// IDENTITY</span>
-    <h2>I AM<br>KNOWN<br>AS KY</h2>
-    <p>A man out of time. Happily unemployed, refusing to trade my best years for a salary that supports a wasteful existence. I sustain myself by the land and the markets.</p>
+<!-- ── TICKER ── -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="t-item"><span class="t-dot"></span>Perpetual Futures</span>
+    <span class="t-item"><span class="t-dot"></span>Regime Detection</span>
+    <span class="t-item"><span class="t-dot"></span>Narrative Intelligence</span>
+    <span class="t-item"><span class="t-dot"></span>Adversarial Strategy</span>
+    <span class="t-item"><span class="t-dot"></span>Asymmetric Returns</span>
+    <span class="t-item"><span class="t-dot"></span>Post-Institutional</span>
+    <span class="t-item"><span class="t-dot"></span>Music · Writing · Code</span>
+    <span class="t-item"><span class="t-dot"></span>kygra.xyz</span>
+    <span class="t-item"><span class="t-dot"></span>Perpetual Futures</span>
+    <span class="t-item"><span class="t-dot"></span>Regime Detection</span>
+    <span class="t-item"><span class="t-dot"></span>Narrative Intelligence</span>
+    <span class="t-item"><span class="t-dot"></span>Adversarial Strategy</span>
+    <span class="t-item"><span class="t-dot"></span>Asymmetric Returns</span>
+    <span class="t-item"><span class="t-dot"></span>Post-Institutional</span>
+    <span class="t-item"><span class="t-dot"></span>Music · Writing · Code</span>
+    <span class="t-item"><span class="t-dot"></span>kygra.xyz</span>
+  </div>
+</div>
+
+<!-- ── ORBIT BOXES ── -->
+<section class="boxes-section" id="software">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-label">Orbit Collection · Active Instruments</div>
+      <h2 class="section-h2">Six Faces</h2>
+    </div>
+    <div class="section-meta">Hover to reveal</div>
   </div>
 
-  <div class="box box-geo-1">
-    <!-- ECLIPSE — dashed orbit + off-center moon, white on black -->
-    <svg viewBox="0 0 200 200" width="170" height="170" fill="none">
-      <!-- orbit ring dashed -->
-      <circle cx="100" cy="100" r="80" stroke="#f0ede8" stroke-width="0.8" stroke-dasharray="5 4"/>
-      <!-- second orbit ring -->
-      <circle cx="100" cy="100" r="64" stroke="#f0ede8" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.4"/>
-      <!-- moon ellipse — offset lower-left of center, slightly tilted -->
-      <ellipse cx="88" cy="112" rx="34" ry="42" fill="#ddd8d0" transform="rotate(-12 88 112)"/>
-      <!-- shadow arc — eclipse dark side -->
-      <ellipse cx="96" cy="108" rx="28" ry="35" fill="#1a1a1a" transform="rotate(-12 96 108)"/>
-      <!-- tiny center cross -->
-      <line x1="97" y1="95" x2="103" y2="95" stroke="#f0ede8" stroke-width="0.6"/>
-      <line x1="100" y1="92" x2="100" y2="98" stroke="#f0ede8" stroke-width="0.6"/>
-      <!-- label -->
-      <text x="100" y="19" fill="#555" font-family="monospace" font-size="7" text-anchor="middle" letter-spacing="3">ECLIPSE</text>
-    </svg>
-  </div>
+  <div class="orbit-grid reveal">
 
-  <div class="box box-geo-2">
-    <!-- STRATUM — geodesic wireframe sphere, black on yellow -->
-    <svg viewBox="0 0 140 140" width="120" height="120" fill="none">
-      <defs>
-        <clipPath id="sphereClip">
-          <circle cx="70" cy="70" r="56"/>
-        </clipPath>
-      </defs>
-      <!-- outer circle -->
-      <circle cx="70" cy="70" r="56" stroke="#0a0a0a" stroke-width="1.4"/>
-      <!-- lat lines clipped to sphere -->
-      <g clip-path="url(#sphereClip)">
-        <!-- latitude parallels — evenly spaced -->
-        <ellipse cx="70" cy="70" rx="56" ry="8"  stroke="#0a0a0a" stroke-width="0.8"/>
-        <ellipse cx="70" cy="70" rx="56" ry="20" stroke="#0a0a0a" stroke-width="0.8"/>
-        <ellipse cx="70" cy="70" rx="56" ry="34" stroke="#0a0a0a" stroke-width="0.8"/>
-        <ellipse cx="70" cy="70" rx="56" ry="46" stroke="#0a0a0a" stroke-width="0.8"/>
-        <!-- equator -->
-        <line x1="14" y1="70" x2="126" y2="70" stroke="#0a0a0a" stroke-width="1"/>
-        <!-- meridians -->
-        <ellipse cx="70" cy="70" rx="10" ry="56" stroke="#0a0a0a" stroke-width="0.8"/>
-        <ellipse cx="70" cy="70" rx="22" ry="56" stroke="#0a0a0a" stroke-width="0.8"/>
-        <ellipse cx="70" cy="70" rx="36" ry="56" stroke="#0a0a0a" stroke-width="0.8"/>
-        <ellipse cx="70" cy="70" rx="48" ry="56" stroke="#0a0a0a" stroke-width="0.8"/>
-        <!-- prime meridian vertical -->
-        <line x1="70" y1="14" x2="70" y2="126" stroke="#0a0a0a" stroke-width="1"/>
-      </g>
-      <text x="70" y="136" fill="#333" font-family="monospace" font-size="7" text-anchor="middle" letter-spacing="3">STRATUM</text>
-    </svg>
-  </div>
+    <!-- 1. STRATUM — wireframe globe, cream, crosshair icon -->
+    <div class="obox obox-stratum" onclick="window.open('#','_blank')">
+      <div class="obox-bg">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="88" stroke="#050505" stroke-width="0.8"/>
+          <ellipse cx="100" cy="100" rx="88" ry="28" stroke="#050505" stroke-width="0.7"/>
+          <ellipse cx="100" cy="100" rx="88" ry="52" stroke="#050505" stroke-width="0.7"/>
+          <ellipse cx="100" cy="100" rx="88" ry="72" stroke="#050505" stroke-width="0.7"/>
+          <path d="M100 12 Q168 100 100 188 Q32 100 100 12" stroke="#050505" stroke-width="0.7"/>
+          <path d="M100 12 Q188 100 100 188" stroke="#050505" stroke-width="0.5"/>
+          <path d="M100 12 Q12 100 100 188"  stroke="#050505" stroke-width="0.5"/>
+          <circle cx="38" cy="48" r="4" fill="#050505"/>
+        </svg>
+      </div>
+      <div class="obox-inner">
+        <div class="obox-icon">
+          <svg viewBox="0 0 14 14"><line x1="7" y1="0" x2="7" y2="14"/><line x1="0" y1="7" x2="14" y2="7"/></svg>
+        </div>
+        <div class="obox-footer">
+          <div>
+            <div class="obox-title">Hyperquant</div>
+            <div class="obox-sub">Trading Dashboard</div>
+          </div>
+          <div class="obox-arrow">↗</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="box box-geo-3">
-    <!-- SOLIS — sunburst radial lines from central circle, black on white -->
-    <svg viewBox="0 0 200 290" width="170" height="255" fill="none">
-      <defs>
-        <!-- clip rays to a circle boundary -->
-        <clipPath id="solisClip">
-          <rect x="0" y="0" width="200" height="290"/>
-        </clipPath>
-      </defs>
-      <!-- radial rays from center (100,150) -->
-      <g clip-path="url(#solisClip)">
-        <!-- 36 rays, every 10° -->
-        <line x1="100" y1="150" x2="100" y2="10"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="127" y2="11"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="152" y2="15"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="174" y2="26"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="190" y2="43"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="200" y2="64"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="203" y2="88"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="200" y2="113"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="190" y2="135"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="200" y2="150"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="190" y2="165"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="200" y2="186"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="203" y2="210"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="200" y2="234"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="190" y2="256"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="174" y2="274"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="152" y2="284"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="127" y2="289"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="100" y2="290"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="73"  y2="289"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="48"  y2="284"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="26"  y2="274"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="10"  y2="256"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="0"   y2="234"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="-3"  y2="210"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="0"   y2="186"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="10"  y2="165"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="0"   y2="150"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="10"  y2="135"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="0"   y2="113"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="-3"  y2="88"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="0"   y2="64"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="10"  y2="43"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="26"  y2="26"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="48"  y2="15"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="100" y1="150" x2="73"  y2="11"   stroke="#0a0a0a" stroke-width="0.7"/>
-      </g>
-      <!-- sun circle — white fill covers ray centers -->
-      <circle cx="100" cy="150" r="46" fill="#f0ede8" stroke="#0a0a0a" stroke-width="1.2"/>
-      <!-- inner ghost ring -->
-      <circle cx="100" cy="150" r="32" stroke="#0a0a0a" stroke-width="0.5" stroke-dasharray="3 3"/>
-      <!-- label -->
-      <text x="100" y="18" fill="#555" font-family="monospace" font-size="7" text-anchor="middle" letter-spacing="3">SOLIS</text>
-    </svg>
-  </div>
+    <!-- 2. AXIS — sparse globe, dark, sparkle icon -->
+    <div class="obox obox-axis" onclick="window.open('#','_blank')">
+      <div class="obox-bg">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="80" stroke="#EDE9E2" stroke-width="0.8"/>
+          <ellipse cx="100" cy="100" rx="80" ry="26" stroke="#EDE9E2" stroke-width="0.7"/>
+          <ellipse cx="100" cy="100" rx="80" ry="50" stroke="#EDE9E2" stroke-width="0.7"/>
+          <ellipse cx="100" cy="100" rx="80" ry="68" stroke="#EDE9E2" stroke-width="0.7"/>
+          <path d="M100 20 Q172 100 100 180 Q28 100 100 20" stroke="#EDE9E2" stroke-width="0.7"/>
+        </svg>
+      </div>
+      <div class="obox-inner">
+        <div class="obox-icon">
+          <svg viewBox="0 0 14 14">
+            <path d="M7 1 L7.8 5.2 L12 6 L7.8 6.8 L7 11 L6.2 6.8 L2 6 L6.2 5.2 Z" stroke-width="1"/>
+            <path d="M3 2 L3.4 3.6 L5 4 L3.4 4.4 L3 6 L2.6 4.4 L1 4 L2.6 3.6 Z" stroke-width="0.8"/>
+          </svg>
+        </div>
+        <div class="obox-footer">
+          <div>
+            <div class="obox-title">Memescope</div>
+            <div class="obox-sub">Narrative AI Engine</div>
+          </div>
+          <div class="obox-arrow">↗</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="box box-label">
-    <span>FREELANCE</span>
-  </div>
+    <!-- 3. SOLIS — sunburst, cream, sun icon -->
+    <div class="obox obox-solis" onclick="window.open('#','_blank')">
+      <div class="obox-bg">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="36" stroke="#050505" stroke-width="0.8"/>
+          <circle cx="100" cy="100" r="30" fill="#EDEBE5"/>
+          <!-- rays -->
+          <line x1="100" y1="20" x2="100" y2="58" stroke="#050505" stroke-width="0.7"/>
+          <line x1="100" y1="142" x2="100" y2="180" stroke="#050505" stroke-width="0.7"/>
+          <line x1="20" y1="100" x2="58" y2="100" stroke="#050505" stroke-width="0.7"/>
+          <line x1="142" y1="100" x2="180" y2="100" stroke="#050505" stroke-width="0.7"/>
+          <line x1="34" y1="34" x2="61" y2="61" stroke="#050505" stroke-width="0.7"/>
+          <line x1="139" y1="139" x2="166" y2="166" stroke="#050505" stroke-width="0.7"/>
+          <line x1="166" y1="34" x2="139" y2="61" stroke="#050505" stroke-width="0.7"/>
+          <line x1="34" y1="166" x2="61" y2="139" stroke="#050505" stroke-width="0.7"/>
+          <line x1="58" y1="22" x2="66" y2="55" stroke="#050505" stroke-width="0.5"/>
+          <line x1="142" y1="22" x2="134" y2="55" stroke="#050505" stroke-width="0.5"/>
+          <line x1="178" y1="58" x2="145" y2="66" stroke="#050505" stroke-width="0.5"/>
+          <line x1="178" y1="142" x2="145" y2="134" stroke="#050505" stroke-width="0.5"/>
+          <line x1="22" y1="58" x2="55" y2="66" stroke="#050505" stroke-width="0.5"/>
+          <line x1="22" y1="142" x2="55" y2="134" stroke="#050505" stroke-width="0.5"/>
+          <line x1="58" y1="178" x2="66" y2="145" stroke="#050505" stroke-width="0.5"/>
+          <line x1="142" y1="178" x2="134" y2="145" stroke="#050505" stroke-width="0.5"/>
+        </svg>
+      </div>
+      <div class="obox-inner">
+        <div class="obox-icon" style="border-color:#050505">
+          <svg viewBox="0 0 14 14" stroke="#050505">
+            <circle cx="7" cy="7" r="2"/>
+            <line x1="7" y1="0" x2="7" y2="3.5"/><line x1="7" y1="10.5" x2="7" y2="14"/>
+            <line x1="0" y1="7" x2="3.5" y2="7"/><line x1="10.5" y1="7" x2="14" y2="7"/>
+            <line x1="2" y1="2" x2="4" y2="4"/><line x1="10" y1="10" x2="12" y2="12"/>
+            <line x1="12" y1="2" x2="10" y2="4"/><line x1="4" y1="10" x2="2" y2="12"/>
+          </svg>
+        </div>
+        <div class="obox-footer">
+          <div>
+            <div class="obox-title">Agent Arena</div>
+            <div class="obox-sub">Solana Prediction</div>
+          </div>
+          <div class="obox-arrow">↗</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="box box-sketch-engine">
-    <!-- AXIS — clean lat/long wireframe globe, dark on cream -->
-    <svg viewBox="0 0 220 260" width="185" fill="none">
-      <defs>
-        <clipPath id="axisClip">
-          <circle cx="110" cy="130" r="88"/>
-        </clipPath>
-      </defs>
-      <!-- outer sphere -->
-      <circle cx="110" cy="130" r="88" stroke="#0a0a0a" stroke-width="1.6"/>
-      <g clip-path="url(#axisClip)">
-        <!-- latitude lines — 7 lines total including equator -->
-        <ellipse cx="110" cy="130" rx="88" ry="14"  stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="110" cy="130" rx="88" ry="30"  stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="110" cy="130" rx="88" ry="52"  stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="110" cy="130" rx="88" ry="70"  stroke="#0a0a0a" stroke-width="0.9"/>
-        <!-- equator — heavier -->
-        <line x1="22" y1="130" x2="198" y2="130" stroke="#0a0a0a" stroke-width="1.4"/>
-        <!-- meridians — 5 ellipses -->
-        <ellipse cx="110" cy="130" rx="15"  ry="88" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="110" cy="130" rx="36"  ry="88" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="110" cy="130" rx="60"  ry="88" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="110" cy="130" rx="80"  ry="88" stroke="#0a0a0a" stroke-width="0.9"/>
-        <!-- prime meridian — heavier -->
-        <line x1="110" y1="42" x2="110" y2="218" stroke="#0a0a0a" stroke-width="1.4"/>
-      </g>
-      <!-- axis tilt line -->
-      <line x1="84" y1="46" x2="136" y2="214" stroke="#c0392b" stroke-width="1" stroke-dasharray="5 4"/>
-      <!-- pole dots -->
-      <circle cx="91"  cy="50"  r="3" fill="#c0392b"/>
-      <circle cx="129" cy="210" r="3" fill="#c0392b"/>
-      <!-- label -->
-      <text x="110" y="245" fill="#555" font-family="monospace" font-size="7" text-anchor="middle" letter-spacing="4">AXIS</text>
-    </svg>
-  </div>
+    <!-- 4. NOVA (red hover) — target/crosshair globe -->
+    <div class="obox obox-nova" onclick="window.open('#','_blank')">
+      <div class="obox-bg">
+        <svg viewBox="0 0 200 200" fill="none">
+          <circle cx="100" cy="100" r="70" stroke="#EDE9E2" stroke-width="0.7"/>
+          <circle cx="100" cy="100" r="45" stroke="#EDE9E2" stroke-width="0.6"/>
+          <circle cx="100" cy="100" r="20" stroke="#EDE9E2" stroke-width="0.5"/>
+          <line x1="100" y1="20" x2="100" y2="74" stroke="#EDE9E2" stroke-width="0.6"/>
+          <line x1="100" y1="126" x2="100" y2="180" stroke="#EDE9E2" stroke-width="0.6"/>
+          <line x1="20" y1="100" x2="74" y2="100" stroke="#EDE9E2" stroke-width="0.6"/>
+          <line x1="126" y1="100" x2="180" y2="100" stroke="#EDE9E2" stroke-width="0.6"/>
+        </svg>
+      </div>
+      <div class="obox-inner">
+        <div class="obox-icon">
+          <svg viewBox="0 0 14 14">
+            <circle cx="7" cy="7" r="4"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+            <line x1="7" y1="0" x2="7" y2="3"/><line x1="7" y1="11" x2="7" y2="14"/>
+            <line x1="0" y1="7" x2="3" y2="7"/><line x1="11" y1="7" x2="14" y2="7"/>
+          </svg>
+        </div>
+        <div class="obox-footer">
+          <div>
+            <div class="obox-title">Writings</div>
+            <div class="obox-sub">Counter-Epistemology</div>
+          </div>
+          <div class="obox-arrow">↗</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="box box-markets">
-    <p class="label">Occupation</p>
-    <div class="big-num">MKTS</div>
-    <p class="label">Perpetual Futures ◆ BTC / ETH</p>
-  </div>
+    <!-- 5. PULSAR (gold hover) — lattice/grid motif -->
+    <div class="obox obox-pulsar" onclick="window.open('#','_blank')">
+      <div class="obox-bg">
+        <svg viewBox="0 0 200 200" fill="none">
+          <!-- lattice grid -->
+          <line x1="20" y1="20" x2="180" y2="180" stroke="#EDE9E2" stroke-width="0.6"/>
+          <line x1="20" y1="180" x2="180" y2="20" stroke="#EDE9E2" stroke-width="0.6"/>
+          <rect x="40" y="40" width="120" height="120" stroke="#EDE9E2" stroke-width="0.7"/>
+          <rect x="70" y="70" width="60" height="60" stroke="#EDE9E2" stroke-width="0.7"/>
+          <line x1="100" y1="20" x2="100" y2="180" stroke="#EDE9E2" stroke-width="0.5" opacity=".6"/>
+          <line x1="20" y1="100" x2="180" y2="100" stroke="#EDE9E2" stroke-width="0.5" opacity=".6"/>
+          <circle cx="100" cy="100" r="6" stroke="#EDE9E2" stroke-width="0.8"/>
+        </svg>
+      </div>
+      <div class="obox-inner">
+        <div class="obox-icon">
+          <svg viewBox="0 0 14 14">
+            <rect x="1" y="1" width="5" height="5"/><rect x="8" y="1" width="5" height="5"/>
+            <rect x="1" y="8" width="5" height="5"/><rect x="8" y="8" width="5" height="5"/>
+          </svg>
+        </div>
+        <div class="obox-footer">
+          <div>
+            <div class="obox-title">Artifacts</div>
+            <div class="obox-sub">Digital Objects</div>
+          </div>
+          <div class="obox-arrow">↗</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="box box-quote">
-    <blockquote>"In a mad world, only the mad are sane."</blockquote>
-    <cite>狂った世界では ◆ Kygra</cite>
-  </div>
+    <!-- 6. DARK ORBIT — orbital wave/flow motif -->
+    <div class="obox obox-dark" onclick="window.open('#','_blank')">
+      <div class="obox-bg">
+        <svg viewBox="0 0 200 200" fill="none">
+          <!-- wave/orbit paths -->
+          <path d="M10 100 Q50 40 100 100 Q150 160 190 100" stroke="#EDE9E2" stroke-width="0.7"/>
+          <path d="M10 100 Q50 60 100 100 Q150 140 190 100" stroke="#EDE9E2" stroke-width="0.5" opacity=".7"/>
+          <path d="M10 100 Q50 20 100 100 Q150 180 190 100" stroke="#EDE9E2" stroke-width="0.5" opacity=".5"/>
+          <path d="M10 80  Q50 40 100 80  Q150 120 190 80"  stroke="#EDE9E2" stroke-width="0.45" opacity=".4"/>
+          <path d="M10 120 Q50 80 100 120 Q150 160 190 120" stroke="#EDE9E2" stroke-width="0.45" opacity=".4"/>
+          <circle cx="100" cy="100" r="5" stroke="#EDE9E2" stroke-width="0.8"/>
+          <circle cx="145" cy="115" r="3" fill="#EDE9E2" opacity=".5"/>
+          <circle cx="55"  cy="85"  r="3" fill="#EDE9E2" opacity=".5"/>
+        </svg>
+      </div>
+      <div class="obox-inner">
+        <div class="obox-icon">
+          <svg viewBox="0 0 14 14">
+            <path d="M1 7 Q3.5 3 7 7 Q10.5 11 13 7"/>
+            <path d="M1 7 Q3.5 4.5 7 7 Q10.5 9.5 13 7" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="obox-footer">
+          <div>
+            <div class="obox-title">Guestbook</div>
+            <div class="obox-sub">Leave a Signal</div>
+          </div>
+          <div class="obox-arrow">↗</div>
+        </div>
+      </div>
+    </div>
 
-  <div class="box box-wide-sketch">
-    <div class="annotation">FIG. 02 / SPEEDER — TOP PLAN VIEW</div>
-    <svg viewBox="0 0 700 240" width="100%" fill="none">
-      <defs>
-        <style>
-          .tw{stroke:#f0ede8;stroke-width:1.1;fill:none;}
-          .td{stroke:#666;stroke-width:0.6;fill:none;stroke-dasharray:5 4;}
-          .tr{stroke:#c0392b;stroke-width:1;fill:none;}
-          .trd{stroke:#c0392b;stroke-width:0.7;fill:none;stroke-dasharray:4 3;}
-        </style>
-      </defs>
-
-      <!-- OUTER HULL — elongated pod, top view -->
-      <path d="M60 120 Q100 60 220 50 L500 50 Q620 50 660 120 Q620 190 500 190 L220 190 Q100 190 60 120 Z" class="tw" stroke-width="1.6"/>
-
-      <!-- INNER HULL — secondary line -->
-      <path d="M95 120 Q125 78 230 68 L490 68 Q590 68 620 120 Q590 172 490 172 L230 172 Q125 162 95 120 Z" class="td"/>
-
-      <!-- CENTER SPINE -->
-      <line x1="60" y1="120" x2="660" y2="120" class="td" stroke-dasharray="8 5"/>
-
-      <!-- COCKPIT CANOPY — teardrop top -->
-      <path d="M240 68 Q300 28 360 24 Q420 24 480 68" class="tw" stroke-width="1.4"/>
-      <path d="M260 68 Q320 40 360 36 Q400 38 440 68" class="td"/>
-      <!-- canopy frame dividers -->
-      <line x1="310" y1="28" x2="308" y2="68" class="td"/>
-      <line x1="360" y1="24" x2="360" y2="68" class="td"/>
-      <line x1="410" y1="28" x2="412" y2="68" class="td"/>
-      <!-- canopy bottom edge arc -->
-      <path d="M240 172 Q300 208 360 212 Q420 210 480 172" class="tw" stroke-width="1.4"/>
-
-      <!-- PORT ENGINE POD -->
-      <rect x="185" y="185" width="120" height="32" rx="16" class="tw"/>
-      <ellipse cx="185" cy="201" rx="11" ry="16" class="tr"/>
-      <ellipse cx="305" cy="201" rx="11" ry="14" class="td"/>
-      <!-- nacelle detail lines -->
-      <line x1="210" y1="187" x2="280" y2="187" class="td"/>
-      <line x1="210" y1="215" x2="280" y2="215" class="td"/>
-
-      <!-- STARBOARD ENGINE POD -->
-      <rect x="415" y="185" width="120" height="32" rx="16" class="tw"/>
-      <ellipse cx="415" cy="201" rx="11" ry="16" class="tr"/>
-      <ellipse cx="535" cy="201" rx="11" ry="14" class="td"/>
-      <line x1="440" y1="187" x2="510" y2="187" class="td"/>
-      <line x1="440" y1="215" x2="510" y2="215" class="td"/>
-
-      <!-- PORT ENGINE POD (top) -->
-      <rect x="185" y="23" width="120" height="32" rx="16" class="tw"/>
-      <ellipse cx="185" cy="39" rx="11" ry="16" class="tr"/>
-      <ellipse cx="305" cy="39" rx="11" ry="14" class="td"/>
-      <line x1="210" y1="25" x2="280" y2="25" class="td"/>
-      <line x1="210" y1="53" x2="280" y2="53" class="td"/>
-
-      <!-- STARBOARD ENGINE POD (top) -->
-      <rect x="415" y="23" width="120" height="32" rx="16" class="tw"/>
-      <ellipse cx="415" cy="39" rx="11" ry="16" class="tr"/>
-      <ellipse cx="535" cy="39" rx="11" ry="14" class="td"/>
-      <line x1="440" y1="25" x2="510" y2="25" class="td"/>
-      <line x1="440" y1="53" x2="510" y2="53" class="td"/>
-
-      <!-- NOSE SENSOR ARRAY -->
-      <path d="M60 120 L32 114 L22 120 L32 126 L60 120" class="tr"/>
-      <circle cx="38" cy="120" r="4" class="tw"/>
-      <!-- sensor whiskers -->
-      <line x1="22" y1="114" x2="12" y2="108" class="td"/>
-      <line x1="22" y1="120" x2="8"  y2="120" class="td"/>
-      <line x1="22" y1="126" x2="12" y2="132" class="td"/>
-
-      <!-- TAIL -->
-      <path d="M660 120 L682 112 L692 120 L682 128 L660 120" class="tw"/>
-
-      <!-- PANEL SEAM LINES -->
-      <line x1="220" y1="52" x2="216" y2="188" class="td"/>
-      <line x1="340" y1="50" x2="340" y2="190" class="td"/>
-      <line x1="460" y1="50" x2="464" y2="190" class="td"/>
-      <line x1="580" y1="56" x2="585" y2="184" class="td"/>
-
-      <!-- DIMENSION LINE — length -->
-      <line x1="60" y1="228" x2="660" y2="228" class="td"/>
-      <line x1="60"  y1="223" x2="60"  y2="233" class="td"/>
-      <line x1="660" y1="223" x2="660" y2="233" class="td"/>
-      <text x="358" y="238" fill="#555" font-family="monospace" font-size="8.5" text-anchor="middle">OVERALL LENGTH — 18.6m</text>
-
-      <!-- DIMENSION LINE — beam -->
-      <line x1="8" y1="50" x2="8" y2="190" class="td"/>
-      <line x1="3" y1="50" x2="13" y2="50" class="td"/>
-      <line x1="3" y1="190" x2="13" y2="190" class="td"/>
-      <text x="5" y="124" fill="#555" font-family="monospace" font-size="7.5" text-anchor="middle" transform="rotate(-90 5 124)">BEAM 8.2m</text>
-
-      <!-- CALLOUT — cockpit -->
-      <line x1="360" y1="24" x2="360" y2="8" class="td"/>
-      <text x="280" y="7" fill="#c0392b" font-family="monospace" font-size="8.5">PRESSURIZED COCKPIT</text>
-
-      <!-- CALLOUT — drives -->
-      <line x1="245" y1="201" x2="230" y2="220" class="td"/>
-      <text x="100" y="222" fill="#555" font-family="monospace" font-size="8">PULSE DRIVE × 4</text>
-
-      <!-- ghost fig number -->
-      <text x="570" y="168" fill="rgba(240,237,232,0.05)" font-family="monospace" font-size="72" font-weight="bold">02</text>
-    </svg>
-  </div>
-
-  <div class="box box-philosophy">
-    <h3>No Master.<br>No Waste.</h3>
-    <p>Technology is a good servant but a terrible master. I sustain myself by the land and the markets, answering only to necessity.</p>
-  </div>
-
-  <div class="box box-geo-4">
-    <!-- Small Solis burst -->
-    <svg viewBox="0 0 130 130" width="110" fill="none">
-      <defs>
-        <clipPath id="burst2Clip"><rect x="0" y="0" width="130" height="130"/></clipPath>
-      </defs>
-      <g clip-path="url(#burst2Clip)">
-        <line x1="65" y1="65" x2="65" y2="0"   stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="98" y2="5"    stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="124" y2="29"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="130" y2="65"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="124" y2="101" stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="98"  y2="125" stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="65"  y2="130" stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="32"  y2="125" stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="6"   y2="101" stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="0"   y2="65"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="6"   y2="29"  stroke="#0a0a0a" stroke-width="0.7"/>
-        <line x1="65" y1="65" x2="32"  y2="5"   stroke="#0a0a0a" stroke-width="0.7"/>
-      </g>
-      <circle cx="65" cy="65" r="26" fill="#f0ede8" stroke="#0a0a0a" stroke-width="1.2"/>
-      <circle cx="65" cy="65" r="16" stroke="#0a0a0a" stroke-width="0.5" stroke-dasharray="3 2"/>
-    </svg>
-  </div>
-
-  <div class="box box-geo-5">
-    <!-- Mini Axis globe, black on yellow -->
-    <svg viewBox="0 0 130 130" width="100" fill="none">
-      <defs>
-        <clipPath id="miniAxis">
-          <circle cx="65" cy="65" r="52"/>
-        </clipPath>
-      </defs>
-      <circle cx="65" cy="65" r="52" stroke="#0a0a0a" stroke-width="1.6"/>
-      <g clip-path="url(#miniAxis)">
-        <ellipse cx="65" cy="65" rx="52" ry="10" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="65" cy="65" rx="52" ry="26" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="65" cy="65" rx="52" ry="42" stroke="#0a0a0a" stroke-width="0.9"/>
-        <line x1="13" y1="65" x2="117" y2="65" stroke="#0a0a0a" stroke-width="1.2"/>
-        <ellipse cx="65" cy="65" rx="12" ry="52" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="65" cy="65" rx="28" ry="52" stroke="#0a0a0a" stroke-width="0.9"/>
-        <ellipse cx="65" cy="65" rx="46" ry="52" stroke="#0a0a0a" stroke-width="0.9"/>
-        <line x1="65" y1="13" x2="65" y2="117" stroke="#0a0a0a" stroke-width="1.2"/>
-      </g>
-      <!-- tilt axis -->
-      <line x1="44" y1="18" x2="86" y2="112" stroke="#c0392b" stroke-width="1" stroke-dasharray="4 3"/>
-    </svg>
   </div>
 </section>
 
-<section class="section-manifesto">
-  <div class="manifesto-giant">
-    FREE<br>
-    <span class="outline">DOM</span><br>
-    NOW.
+<!-- ── ABOUT ── -->
+<section class="split" id="about">
+  <div class="split-l reveal">
+    <div class="section-label" style="margin-bottom:20px">About</div>
+    <h2>
+      POST-<br>INSTI-<br>TUTION<br><em>al edge</em>
+    </h2>
   </div>
-  <div class="manifesto-right">
-    <p>I view technology with skepticism and suspicion. It is a good servant but a terrible master; embedding itself into the fabric of our civilization and souls.</p>
-    <p>I'm betting it will grow to become a force of oppression against our freedoms — and I'm building infrastructure for what comes after.</p>
-    <div class="stamp" style="transform:rotate(1deg)">Anno Domini MMXXV</div>
+  <div class="split-r reveal">
+    <p>
+      I am a man out of time, witnessing the world as it was and as it is. I sustain myself by the land and the markets, answering only to necessity — finding freedom in having few costs and no master.
+    </p>
+    <p>
+      I view technology with skepticism. It is a good servant but a terrible master. I build the infrastructure that routes around institutions, not the ones that strengthen them.
+    </p>
+    <ul class="manifesto-list">
+      <li data-n="I">No master, no salary</li>
+      <li data-n="II">Markets as liberation</li>
+      <li data-n="III">Technology as tool, not fate</li>
+      <li data-n="IV">Adversarial intelligence</li>
+      <li data-n="V">Counter-epistemology</li>
+    </ul>
   </div>
 </section>
 
+<!-- ── WRITINGS ── -->
+<section class="writings-section" id="writings">
+  <div class="section-head reveal">
+    <div>
+      <div class="section-label">Selected Writings</div>
+      <h2 class="section-h2">Dispatches</h2>
+    </div>
+    <div class="section-meta">All writings →</div>
+  </div>
+  <div class="writings-list reveal">
+    <div class="w-item">
+      <span class="w-num">01</span>
+      <span class="w-title">Opus Libertatis — On freedom as infrastructure</span>
+      <span class="w-date">2026</span>
+    </div>
+    <div class="w-item">
+      <span class="w-num">02</span>
+      <span class="w-title">Perpetua Illusio — The market as permanent fiction</span>
+      <span class="w-date">2025</span>
+    </div>
+    <div class="w-item">
+      <span class="w-num">03</span>
+      <span class="w-title">Semper Contra — On adversarial positioning</span>
+      <span class="w-date">2025</span>
+    </div>
+    <div class="w-item">
+      <span class="w-num">04</span>
+      <span class="w-title">On the collapse of institutional epistemology</span>
+      <span class="w-date">2024</span>
+    </div>
+    <div class="w-item">
+      <span class="w-num">05</span>
+      <span class="w-title">Liquidation cascades and regime collapse</span>
+      <span class="w-date">2024</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── ROTATING QUOTE ── -->
+<div class="quote-zone">
+  <button class="quote-nav-btn" id="qPrev">←</button>
+  <p id="quote-text">When we are no longer able to change a situation, we are challenged to change ourselves.</p>
+  <button class="quote-nav-btn" id="qNext">→</button>
+</div>
+
+<!-- ── CONTACT ── -->
+<section class="contact-section" id="contact">
+  <div class="contact-l reveal">
+    <h2>LET'S<br><em>ORBIT</em></h2>
+    <a class="c-link" href="mailto:hello@kygra.xyz">hello@kygra.xyz</a>
+    <a class="c-link" href="https://twitter.com/kygra" target="_blank">@kygra</a>
+    <a class="c-link" href="https://kygra.xyz" target="_blank">kygra.xyz</a>
+  </div>
+  <div class="contact-r reveal">
+    <p>Open to collaborations in trading infrastructure, AI-powered market analysis, and asymmetric opportunities at the intersection of crypto, narrative, and game theory.</p>
+    <button class="btn btn-fill">Start Conversation</button>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
 <footer>
-  <div class="foot-logo">KYGRA</div>
-  <div class="foot-meta">
-    kygra.xyz<br>
-    INDEPENDENT / UNBOUND<br>
-    <span>◆ NO MASTER ◆</span>
-  </div>
+  <span class="footer-logo">KYGRA</span>
+  <span class="footer-meta">© 2026 — Orbit Theme</span>
+  <span class="footer-meta">Málaga, ES</span>
 </footer>
 
+<!-- soundtrack stub -->
+<button class="soundtrack-btn" id="sndBtn" title="Play soundtrack">
+  <svg viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+</button>
+
+<script>
+// cursor
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => {
+  cur.style.left = e.clientX+'px';
+  cur.style.top  = e.clientY+'px';
+});
+
+// scroll reveal
+const items = document.querySelectorAll('.reveal');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); });
+}, {threshold:0.08});
+items.forEach(el => io.observe(el));
+
+// quotes
+const quotes = [
+  "When we are no longer able to change a situation, we are challenged to change ourselves.",
+  "The market can stay irrational longer than you can stay solvent.",
+  "He who has a why to live can bear almost any how.",
+  "Power is not only what you have but what the enemy thinks you have.",
+  "The further a society drifts from truth, the more it will hate those who speak it.",
+  "Freedom is not given. It is taken.",
+  "To live outside the law, you must be honest.",
+];
+let qi = 0;
+const qt = document.getElementById('quote-text');
+function setQuote(n){
+  qt.style.opacity=0;
+  setTimeout(()=>{ qt.textContent=quotes[n]; qt.style.opacity=1; },380);
+}
+document.getElementById('qNext').onclick=()=>{ qi=(qi+1)%quotes.length; setQuote(qi); };
+document.getElementById('qPrev').onclick=()=>{ qi=(qi-1+quotes.length)%quotes.length; setQuote(qi); };
+
+// box tilt
+document.querySelectorAll('.obox').forEach(b=>{
+  b.addEventListener('mousemove',e=>{
+    const r=b.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width-.5;
+    const y=(e.clientY-r.top)/r.height-.5;
+    b.style.transform=`perspective(700px) rotateY(${x*10}deg) rotateX(${-y*7}deg) scale(1.018)`;
+  });
+  b.addEventListener('mouseleave',()=>{ b.style.transform=''; });
+});
+
+// soundtrack btn placeholder
+let sndPlaying=false;
+const sBtn=document.getElementById('sndBtn');
+sBtn.addEventListener('click',()=>{
+  sndPlaying=!sndPlaying;
+  sBtn.innerHTML = sndPlaying
+    ? `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
+    : `<svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none"><polygon points="6 3 20 12 6 21 6 3"/></svg>`;
+});
+
+// nav highlight on scroll
+const sections=['home','writings','about','software','contact'];
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY+100;
+  sections.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const a=document.querySelector(`.nav-links a[href="#${id}"]`);
+    if(!a)return;
+    if(y>=el.offsetTop && y<el.offsetTop+el.offsetHeight) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+});
+</script>
 </body>
 </html>
