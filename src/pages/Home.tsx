@@ -12,12 +12,9 @@ import { Eclipse } from '../components/graphics/Eclipse';
 const Home = () => {
   // --- Quote Rotation State ---
   const phrases = [
-    { prefix: "KNOWN AS A ", highlight: "TRADER" },
-    { prefix: "KNOWN AS A ", highlight: "BUILDER" },
-    { prefix: "KNOWN AS A ", highlight: "TRAVELLER" },
-    { prefix: "KNOWN AS A ", highlight: "MUSICIAN" },
-    { prefix: "KNOWN AS A ", highlight: "PROGRAMMER" },
-    { prefix: "BUT IN TRUTH I AM ", highlight: "JUST A MAN" }
+    { content: "TIME KEEPS PASSING "},
+    {content: "TIME TO LET GO "}
+
   ];
 
   const manifestoSegments = [
@@ -95,7 +92,7 @@ const Home = () => {
           <div className="flex flex-col h-full justify-between pb-4">
             <div>
               <h2 className="mb-6">
-                <TypewriterEffect text="It's time" typingDelay={70} deletingDelay={30} cursor={true} cursorCharacter="_" />
+                <TypewriterEffect text="time to lock in brother" typingDelay={70} deletingDelay={30} cursor={true} cursorCharacter="_" />
               </h2>
 
               <div className="text-[0.95rem] leading-[1.7] max-w-[520px] italic min-h-[1.5em] font-['Space_Mono'] text-black">
@@ -127,8 +124,8 @@ const Home = () => {
 
             <div className="pt-4 border-t border-dashed border-muted/30">
               <div className={`transition-all duration-300 font-bold ${isFading ? 'opacity-0 translate-y-1' : 'opacity-100 translate-y-0'}`}>
-                <span>{phrases[currentWordIndex].prefix}</span>
-                <span className="text-destructive">{phrases[currentWordIndex].highlight}</span>
+                <span>{phrases[currentWordIndex].content}</span>
+                
               </div>
             </div>
           </div>
@@ -200,8 +197,10 @@ const Home = () => {
 
         {/* AXIS */}
         <Axis />
-        <Header />
+
+
       </main>
+        <Header />
     </div>
   );
 };
