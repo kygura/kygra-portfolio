@@ -13,8 +13,8 @@ const Navigation = () => {
 
   return (
     <nav className="py-8 px-6 md:px-12 lg:px-16">
-      <div className="flex justify-between items-center">
-        <ul className="flex gap-6 md:gap-8 items-center">
+      <div className="flex justify-between items-center gap-4 md:gap-8">
+        <ul className="flex flex-wrap md:flex-nowrap gap-4 md:gap-8 items-center">
           {navItems.map((item) => (
             <li key={item.path}>
               <NavLink
