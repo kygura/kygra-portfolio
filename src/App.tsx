@@ -13,7 +13,7 @@ import NotFound from "./pages/NotFound";
 import Guestbook from "./pages/Guestbook";
 import Artifacts from "./pages/Artifacts";
 import CV from "./pages/CV";
-import { SoundtrackPlayer } from "./components/SoundtrackPlayer";
+
 
 import { Terminal } from "./components/Terminal";
 
@@ -26,7 +26,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <SoundtrackPlayer />
         <Terminal />
         <Routes>
           <Route path="/" element={<Index />} />
@@ -81,7 +80,7 @@ const App = () => (
               }
             />
           )}
-          <Route path="*" element={<NotFound />} />
+          {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
