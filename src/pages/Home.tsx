@@ -20,34 +20,34 @@ const Home = () => {
   const manifestoSegments = [
     <>
       <p className="mb-4">
-        There's a kind of person who comes to understand... that the game being played on the surface is not the actual game. That life as it is currently being presented is not an active state of living, but a slow erasure and annihilation of the humane; as it is replaced by the machine-like.
+        "Music is your own experience, your thoughts, your wisdom. If you don't live it, it won't come out of your horn. They teach you there's a boundary line to music. But, man, there's no boundary line to art."
       </p>
       <p>
-        What we inherited was its husk. The form without the substance. Democracy as a marketing term. Freedom as the freedom to choose the size of your cage. Meaning as something you're supposed to find on your own time, after your shift.
+        — CHARLIE PARKER
       </p>
     </>,
     <>
       <p className="mb-4">
-        Meaning used to be an experience and state of being inherit in a simpler lifestyle guided by the need for survival. Now it is surrogated as an external and commodified into a product one must buy.
+        "Don't play what's there, play what's not there. It's not about standing still and becoming safe. If you're not making mistakes, you're not trying anything new."
       </p>
       <p>
-        The promise is: You'll find your meaning on a subscription plan... a new job... a new relationship... Meaning is understood as this external source of fulfillment, something that you can't create for yourself, but must seek out.
+        — MILES DAVIS
       </p>
     </>,
     <>
       <p className="mb-4">
-        You cannot vote your way out of this. You cannot hustle your way out of it either — the hustle is part of the same machine, repackaged as resistance. Three side incomes and a growth mindset is not emancipation. It is participation with extra steps.
+        "I say, play your own way. Don't play what the public wants. You play what you want and let the public pick up on what you're doing — even if it does take them fifteen, twenty years."
       </p>
       <p>
-        Posed differently: <em>how do I live?</em> Not "how do I succeed" — success does not mean much if you remain confined and captive in the system.
+        — THELONIOUS MONK
       </p>
     </>,
     <>
       <p className="mb-4">
-        Treat life as a game you didn't design but have to play. Not with cynicism, but positive indifference. With clarity. The rules are visible if you stop pretending they're natural.
+        "Jazz is the only music in which the same note can be played night after night but differently each time. It is the risk of not knowing what to play."
       </p>
       <p>
-        You learn to read the structure of what surrounds you — the market, the institution, the social system — and you find the degrees of freedom that the structure inadvertently permits.
+        — ORNETTE COLEMAN
       </p>
     </>
   ];
@@ -83,7 +83,7 @@ const Home = () => {
 
   return (
     <div className="bebop-theme-root">
-      {/*  <Header /> */}
+      <Header />
 
       <main className="bebop-main">
 
@@ -92,7 +92,7 @@ const Home = () => {
           <div className="flex flex-col h-full justify-between pb-4">
             <div>
               <h2 className="mb-6">
-                <TypewriterEffect text="time to lock in brother" typingDelay={70} deletingDelay={30} cursor={true} cursorCharacter="_" />
+                <TypewriterEffect text="time to lock in" typingDelay={70} deletingDelay={30} cursor={true} cursorCharacter="_" />
               </h2>
 
               <div className="text-[0.95rem] leading-[1.7] max-w-[520px] italic min-h-[1.5em] font-['Space_Mono'] text-black">
@@ -149,15 +149,15 @@ const Home = () => {
 
         {/* TEXT 2 */}
         <div className="box b-text2 fi">
-          <h3>TECHNOLOGY<br />IS A<br />SERVANT.</h3>
+          <h3>SHIPWRECK<br />BY<br />DESIGN.</h3>
           <p>
-            A terrible master;<br />
-            embedding itself<br />
-            into the fabric<br />
-            of civilization.<br /><br />
-            I view it with<br />
-            skepticism<br />
-            and suspicion.
+            "The invention<br />
+            of the ship<br />
+            is also the<br />
+            invention<br />
+            of the<br />
+            shipwreck."<br /><br />
+            — PAUL VIRILIO
           </p>
         </div>
 
@@ -176,20 +176,17 @@ const Home = () => {
         {/* MANIFESTO 2 — Blue Box */}
         <div className="box b-manifesto2 fi">
           <div>
-            <h2>ON THE STATE<br />OF THINGS.</h2>
+            <h2>NO BOUNDARY<br />LINE.</h2>
 
             <div className={`transition-opacity duration-300 font-['Space_Mono'] text-[0.8rem] leading-[1.8] mb-8 ${isSegmentFading ? 'opacity-0' : 'opacity-100'}`}>
               {manifestoSegments[currentSegmentIndex]}
             </div>
 
             <p className="border-t border-white/20 pt-4 opacity-80 mt-auto">
-              "...by breaking traditional styles.<br />
-              They are sick and tired of<br />
-              conventional fixed style.<br />
-              The work, which becomes a new<br />
-              genre itself, will play without<br />
-              fear of risky things."<br /><br />
-              — COWBOY BEBOP MANIFESTO, 2071
+              "There are decades where nothing<br />
+              happens; and there are weeks<br />
+              where decades happen."<br /><br />
+              — V.I. LENIN (ATTR.)
             </p>
           </div>
           <div className="sess">SESSION 01 / 26</div>
@@ -200,7 +197,7 @@ const Home = () => {
 
 
       </main>
-        <Header />
+        
     </div>
   );
 };

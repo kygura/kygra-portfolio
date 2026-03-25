@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import { NavLink } from "@/components/NavLink";
 import ThemeToggle from "./ThemeToggle";
+import Header from "./Header";
 
 const Navigation = () => {
   const shadowRef = useRef<HTMLDivElement>(null);
@@ -34,7 +35,6 @@ const Navigation = () => {
     { path: "/", label: "Home" },
     { path: "/writings", label: "Writings" },
     { path: "/projects", label: "Software" },
-    /* { path: "/artifacts", label: "Artifacts" }, */
     { path: "/guestbook", label: "Guestbook" },
     { path: "/cv", label: "CV" }
   ];
@@ -45,6 +45,7 @@ const Navigation = () => {
       className="relative p-6 sm:p-8 pb-4 border-b-4 border-foreground overflow-hidden animate-in slide-in-from-top-4 duration-500"
     >
       <div className="flex justify-center items-center relative w-full pt-4 pb-2">
+        
         {/* LOGO BLOCK */}
         <div className="relative group">
           <div
@@ -52,17 +53,18 @@ const Navigation = () => {
             className="absolute top-0 left-0 translate-x-[8px] translate-y-[8px] font-['UnifrakturMaguntia'] text-[clamp(5rem,14vw,9rem)] leading-[0.85] text-destructive tracking-[-2px] z-0 opacity-60"
             style={{ transition: 'transform 0.1s ease-out' }}
           >
-            Opus Libertatis
+           Ars Libera
           </div>
           <div className="font-['UnifrakturMaguntia'] text-[clamp(5rem,14vw,9rem)] leading-[0.85] text-foreground tracking-[-2px] relative z-10">
-            Opus Libertatis
+           Ars Libera
           </div>
+        </div> 
+        <div className="absolute top-0 right-0">
+          {/* <ThemeToggle /> */}
         </div>
+       
 
-        {/* THEME TOGGLE */}
-        {/* <div className="absolute top-0 right-0">
-          <ThemeToggle />
-        </div> */}
+
       </div>
 
       {/* NAVIGATION BAR */}
@@ -82,6 +84,8 @@ const Navigation = () => {
           ))}
         </ul>
       </nav>
+
+      
     </div>
   );
 };

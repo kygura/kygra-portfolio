@@ -21,12 +21,12 @@ export default function Header() {
         <div className="hero-sub fi2">I AM FROM THE FUTURE</div>
       </div>
 
-      <div className="hstrip">
+      {/* <div className="hstrip">
         <span>
           BOUNTY HUNTER · DIGITAL MERCENARY · MARKET OPERATOR · FREE AGENT · NO MASTERS · NO FIXED ORBIT · PERPETUAL FUTURES · SEE YOU SPACE COWBOY ·&nbsp;&nbsp;
           BOUNTY HUNTER · DIGITAL MERCENARY · MARKET OPERATOR · FREE AGENT · NO MASTERS · NO FIXED ORBIT · PERPETUAL FUTURES · SEE YOU SPACE COWBOY ·&nbsp;&nbsp;
         </span>
-      </div>
+      </div> */}
     </header>
   )
 }
