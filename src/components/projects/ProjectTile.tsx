@@ -1,37 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { Project, ProjectParticleMode } from "@/lib/projects";
-import ProjectParticleField from "./ProjectParticleField";
+import type { Project } from "@/lib/projects";
 import ProjectVisual from "./ProjectVisual";
-
-interface Particle {
-  id: number;
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  size: number;
-  color: string;
-}
-
-const particlePalettes: Record<Project["palette"], string[]> = {
-  meridian: ["#0a0a0a", "#2ab4b4", "#3d6ee8"],
-  zknull: ["#f0ede6", "#3d6ee8", "#e8553d"],
-  equilibria: ["#0a0a0a", "#e8553d", "#3d6ee8"],
-  lexis: ["#0a0a0a", "#e8553d", "#f0ede6"],
-};
 
 interface ProjectTileProps {
   project: Project;
-  particleMode: ProjectParticleMode;
 }
 
-const ProjectTile = ({ project, particleMode }: ProjectTileProps) => {
+interface Trail {
+  id: number;
+  x: number;
+  y: number;
+  life: number;
+  size: number;
+}
+
+const ProjectTile = ({ project }: ProjectTileProps) => {
+  const articleRef = useRef<HTMLElement>(null);
   const frameRef = useRef<number | null>(null);
   const lastEmitRef = useRef(0);
-  const [particles, setParticles] = useState<Particle[]>([]);
+  const [trails, setTrails] = useState<Trail[]>([]);
 
   const externalLinks = useMemo(
     () => project.links.filter((link) => !link.href.startsWith("/")),
@@ -39,28 +28,19 @@ const ProjectTile = ({ project, particleMode }: ProjectTileProps) => {
   );
 
   useEffect(() => {
-    if (!particles.length || frameRef.current) {
-      return;
-    }
+    if (!trails.length || frameRef.current) return;
 
     const tick = () => {
-      setParticles((current) => {
+      setTrails((current) => {
         const next = current
-          .map((particle) => ({
-            ...particle,
-            x: particle.x + particle.vx,
-            y: particle.y + particle.vy,
-            vy: particle.vy + 0.08,
-            life: particle.life - 0.045,
-          }))
-          .filter((particle) => particle.life > 0);
+          .map((t) => ({ ...t, life: t.life - 0.028 }))
+          .filter((t) => t.life > 0);
 
         if (next.length) {
           frameRef.current = window.requestAnimationFrame(tick);
         } else {
           frameRef.current = null;
         }
-
         return next;
       });
     };
@@ -73,60 +53,41 @@ const ProjectTile = ({ project, particleMode }: ProjectTileProps) => {
         frameRef.current = null;
       }
     };
-  }, [particles.length]);
+  }, [trails.length]);
 
-  const emitParticles = (x: number, y: number) => {
-    const colors = particlePalettes[project.palette];
-    const config =
-      particleMode === "neon"
-        ? {
-            count: 4,
-            limit: 40,
-            sizeMin: 4,
-            sizeSpread: 7,
-            speed: 2.1,
-            lift: 2.2,
-          }
-        : {
-            count: 2,
-            limit: 28,
-            sizeMin: 6,
-            sizeSpread: 8,
-            speed: 0.9,
-            lift: 0.9,
-          };
+  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
+    const el = articleRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
 
-    setParticles((current) => [
-      ...current.slice(-config.limit),
-      ...Array.from({ length: config.count }, (_, index) => ({
-        id: Date.now() + index + Math.random(),
+    const now = performance.now();
+    if (now - lastEmitRef.current < 28) return;
+    lastEmitRef.current = now;
+
+    setTrails((current) => [
+      ...current.slice(-22),
+      {
+        id: now + Math.random(),
         x,
         y,
-        vx: (Math.random() - 0.5) * config.speed,
-        vy: -config.lift - Math.random() * config.speed,
         life: 1,
-        size: config.sizeMin + Math.random() * config.sizeSpread,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      })),
+        size: 10 + Math.random() * 6,
+      },
     ]);
   };
 
-  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    const now = performance.now();
-    if (now - lastEmitRef.current < 38) {
-      return;
-    }
-
-    lastEmitRef.current = now;
-
-    const rect = event.currentTarget.getBoundingClientRect();
-    emitParticles(event.clientX - rect.left, event.clientY - rect.top);
+  const handlePointerLeave = () => {
+    lastEmitRef.current = 0;
   };
 
   return (
     <article
+      ref={articleRef}
       className={`project-tile project-tile--${project.palette} project-tile--${project.layout}`}
       onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
     >
       <Link
         to={`/projects/${project.slug}`}
@@ -134,18 +95,26 @@ const ProjectTile = ({ project, particleMode }: ProjectTileProps) => {
         aria-label={`Open ${project.title} project details`}
       />
 
-      <ProjectParticleField
-        mode={particleMode}
-        particles={particles.map((particle) => ({
-          id: particle.id,
-          x: particle.x,
-          y: particle.y,
-          size: particle.size,
-          opacity: Math.max(particle.life, 0),
-          scale: 0.7 + particle.life * 0.6,
-          color: particle.color,
-        }))}
-      />
+      <div className="project-tile__trail" aria-hidden="true">
+        {trails.map((t) => {
+          const life = Math.max(t.life, 0);
+          const scale = 0.5 + life * 0.9;
+          return (
+            <span
+              key={t.id}
+              className="project-tile__trail-dot"
+              style={{
+                left: t.x,
+                top: t.y,
+                width: t.size,
+                height: t.size,
+                opacity: life * 0.7,
+                transform: `translate(-50%, -50%) scale(${scale})`,
+              }}
+            />
+          );
+        })}
+      </div>
 
       <div className="project-tile__visual">
         <ProjectVisual palette={project.palette} />

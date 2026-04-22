@@ -1,4 +1,5 @@
 import { NavLink } from "@/components/NavLink";
+
 const Navigation = () => {
   const navItems = [
     { path: "/", label: "Home" },

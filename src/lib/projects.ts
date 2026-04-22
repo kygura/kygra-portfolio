@@ -42,7 +42,7 @@ export const projects: Project[] = [
     techStack: ["React", "Google Maps", "Deepseek", "Claude"],
     links: [
       { label: "Open dossier", href: "/projects/meridian" },
-      { label: "Live demo", href: "https://meridian-flame.vercel.app/" },
+      { label: "Live demo", href: "https://meridian-map.vercel.app/" },
       { label: "GitHub", href: "https://github.com/kygura/meridian" },
     ],
     palette: "meridian",

@@ -139,7 +139,7 @@ const CV = () => {
             <div key={index} className="border-l-2 border-border pl-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                 <h3 className="text-xl font-display">{project.title}</h3>
-                <span className="text-sm px-2 py-0.5 bg-secondary text-secondary-foreground rounded rounded-full w-fit">
+                <span className="text-sm px-2 py-0.5 border border-foreground/40 text-foreground bg-foreground/5 w-fit">
                   {project.tech}
                 </span>
               </div>
@@ -178,7 +178,7 @@ const CV = () => {
                 {items.map((skill) => (
                   <span
                     key={skill}
-                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-sm text-sm"
+                    className="px-4 py-2 text-sm border border-foreground/40 text-foreground bg-foreground/5"
                   >
                     {skill}
                   </span>

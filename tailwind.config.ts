@@ -15,15 +15,18 @@ export default {
   	extend: {
   		fontFamily: {
   			display: [
-  				'Crimson Pro',
-  				'serif'
+  				'Bebas Neue',
+  				'Space Grotesk',
+  				'sans-serif'
   			],
   			body: [
-  				'Inter',
+  				'Space Grotesk',
+  				'ui-sans-serif',
+  				'system-ui',
   				'sans-serif'
   			],
   			sans: [
-  				'Work Sans',
+  				'Space Grotesk',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
