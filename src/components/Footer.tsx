@@ -87,7 +87,7 @@ const Footer = () => {
                 'zoom-in-95'
               } duration-500 ease-out`}
           >
-            <p className="font-['Courier_Prime'] font-light text-sm sm:text-base md:text-lg text-foreground tracking-widest leading-relaxed max-w-2xl break-words px-4 text-center">
+            <p className="font-['Roboto_Slab'] font-normal text-lg sm:text-xl md:text-2xl text-foreground tracking-[0.08em] leading-relaxed max-w-3xl break-words px-4 text-center">
               {quote.map((line, i) => (
                 <span key={i}
                   className="block mb-2 last:mb-0">

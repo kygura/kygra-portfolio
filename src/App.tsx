@@ -8,12 +8,12 @@ import Index from "./pages/Index";
 import Writings from "./pages/Writings";
 import Post from "./pages/Post";
 import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
 
 import NotFound from "./pages/NotFound";
 import Guestbook from "./pages/Guestbook";
 import Artifacts from "./pages/Artifacts";
 import CV from "./pages/CV";
-import { SoundtrackPlayer } from "./components/SoundtrackPlayer";
 
 import { Terminal } from "./components/Terminal";
 
@@ -26,7 +26,6 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <SoundtrackPlayer />
         <Terminal />
         <Routes>
           <Route path="/" element={<Index />} />
@@ -59,6 +58,14 @@ const App = () => (
             element={
               <Layout>
                 <Projects />
+              </Layout>
+            }
+          />
+          <Route
+            path="/projects/:slug"
+            element={
+              <Layout>
+                <ProjectDetail />
               </Layout>
             }
           />
