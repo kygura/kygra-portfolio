@@ -7,9 +7,9 @@ const {
   NOTION_SECRET,
   NOTION_DATABASE_ID,
   GITHUB_TOKEN,
-  GITHUB_OWNER = "kygura",
-  GITHUB_REPO  = "kygra-portfolio",
-  GITHUB_BRANCH,
+  GITHUB_OWNER  ,
+  GITHUB_REPO   ,
+  GITHUB_BRANCH ,
   WEBHOOK_SECRET,
 } = process.env;
 
