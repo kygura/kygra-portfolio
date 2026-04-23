@@ -15,7 +15,7 @@ const Writings = () => {
     : posts;
 
   return (
-    <div className="px-6 md:px-12 lg:px-16 py-16 max-w-[1000px] mx-auto animate-fade-in font-['Courier_Prime']">
+    <div className="px-6 md:px-12 lg:px-16 py-16 max-w-[1000px] mx-auto animate-fade-in">
       <div className="mb-16 pb-8 border-b-[4px] border-foreground relative">
         <h1 className="text-5xl md:text-7xl font-['Bebas_Neue'] text-foreground tracking-widest uppercase mb-4 relative z-10">Writings</h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
@@ -58,7 +58,7 @@ const Writings = () => {
                   {post.title}
                 </h2>
 
-                <p className="text-[0.95rem] text-foreground leading-[1.7] max-w-3xl">
+                <p className="text-[1.05rem] text-foreground leading-[1.75] max-w-3xl">
                   {post.excerpt}
                 </p>
               </header>

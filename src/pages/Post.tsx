@@ -43,7 +43,7 @@ const Post = () => {
   }
 
   return (
-    <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-3xl mx-auto animate-fade-in font-['Courier_Prime']">
+    <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-3xl mx-auto animate-fade-in">
       <div className="mb-12 pb-6 border-b-[4px] border-foreground relative">
         <Link
           to="/writings"

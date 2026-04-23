@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=UnifrakturCook:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Serif+Text:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500;1,9..144,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,700&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=UnifrakturCook:wght@700&display=swap');
 
   :root {
-    --black: #141414;
+    --black: #1c1c1e;
     --white: #f0ede6;
     --cream: #e8e2d5;
     --yellow: #f5c842;
@@ -14,6 +14,7 @@
 
   /* Bebop Header */
   .bebop-header {
+    --sp: 0;
     position: relative;
     height: 100vh;
     overflow: hidden;
@@ -25,10 +26,14 @@
   }
   .hbg::before {
     content: '';
-    position: absolute; top: 0; left: 0;
-    width: 55%; height: 100%;
+    position: absolute; inset: 0;
     background: var(--cream);
-    clip-path: polygon(0 0, 100% 0, 78% 100%, 0 100%);
+    clip-path: polygon(
+      calc(45% * var(--sp))           0,
+      calc(55% + 45% * var(--sp))     0,
+      calc(42.9% + 57.1% * var(--sp)) 100%,
+      calc(57.1% * var(--sp))         100%
+    );
   }
 
   .hero-sketch {
@@ -102,10 +107,12 @@
   .hero-content--invert {
     z-index: 11;
     pointer-events: none;
-    /* Clip to the black area: right of the diagonal cut.
-       Because hero-content is inset:0, this matches the viewport height
-       and aligns perfectly with the .hbg::before diagonal! */
-    clip-path: polygon(55% 0%, 100% 0%, 100% 100%, 42.9% 100%);
+    clip-path: polygon(
+      calc(55% * (1 - var(--sp)))          0,
+      calc(100% - 55% * var(--sp))         0,
+      calc(100% - 42.9% * var(--sp))       100%,
+      calc(42.9% * (1 - var(--sp)))        100%
+    );
   }
 
   /* ── SPLIT HERO NAME ── */
@@ -1121,7 +1128,7 @@
   :root {
     /* KYGRA ZINE COLORS */
     /* Bebop Mappings */
-    --paper: 0 0% 8%;      /* #141414 */
+    --paper: 240 5% 11.4%;  /* #1c1c1e */
     --ink: 43 31% 92%;     /* #f0ede6 */
     --background: var(--paper);
     --foreground: var(--ink);
@@ -1152,7 +1159,7 @@
   .dark {
     /* Retain the exact zine aesthetic even in dark mode requests */
     /* Bebop Mappings */
-    --paper: 0 0% 8%;      /* #141414 */
+    --paper: 240 5% 11.4%;  /* #1c1c1e */
     --ink: 43 31% 92%;     /* #f0ede6 */
     --background: var(--paper);
     --foreground: var(--ink);
@@ -1189,7 +1196,7 @@
   body {
     background: var(--black);
     color: var(--white);
-    font-family: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-family: 'Fraunces', Georgia, serif;
     font-size: 1.0625rem;
     line-height: 1.65;
     letter-spacing: 0.005em;
@@ -1296,7 +1303,6 @@
   }
   .prose-minimal p {
     @apply mb-6 text-foreground;
-    font-family: 'Lora', Georgia, serif;
     font-size: 1.125rem;
     line-height: 1.78;
     letter-spacing: 0.005em;
@@ -1385,7 +1391,7 @@
   line-height: 1;
   letter-spacing: 0.01em;
   color: var(--cream, #e8e2d5);
-  text-shadow: 0.35em 0.35em 0 rgba(10, 10, 10, 0.6);
+  text-shadow: 0.18em 0.18em 0 rgba(120, 116, 112, 0.35);
   transition: text-shadow 120ms ease-out;
   display: inline-block;
   will-change: text-shadow;

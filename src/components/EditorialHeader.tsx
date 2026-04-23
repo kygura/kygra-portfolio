@@ -15,10 +15,10 @@ const EditorialHeader = () => {
       const dx = (e.clientX - cx) / window.innerWidth;
       const dy = (e.clientY - cy) / window.innerHeight;
 
-      const maxOffset = 0.55;
+      const maxOffset = 0.28;
       setOffset({
-        x: Math.max(-maxOffset, Math.min(maxOffset, -dx * 1.4)),
-        y: Math.max(-maxOffset, Math.min(maxOffset, -dy * 1.4)),
+        x: Math.max(-maxOffset, Math.min(maxOffset, -dx * 0.8)),
+        y: Math.max(-maxOffset, Math.min(maxOffset, -dy * 0.8)),
       });
     };
 
@@ -26,14 +26,7 @@ const EditorialHeader = () => {
     return () => window.removeEventListener("mousemove", handleMove);
   }, []);
 
-  const steps = 16;
-  const shadowLayers = Array.from({ length: steps }, (_, i) => {
-    const t = (i + 1) / steps;
-    const sx = offset.x * t;
-    const sy = offset.y * t;
-    const opacity = 0.85 - t * 0.55;
-    return `${sx.toFixed(3)}em ${sy.toFixed(3)}em 0 rgba(10, 10, 10, ${opacity.toFixed(3)})`;
-  }).join(", ");
+  const shadow = `${offset.x.toFixed(3)}em ${offset.y.toFixed(3)}em 0 rgba(120, 116, 112, 0.35)`;
 
   return (
     <div
@@ -43,7 +36,7 @@ const EditorialHeader = () => {
     >
       <span
         className="editorial-header__text"
-        style={{ textShadow: shadowLayers }}
+        style={{ textShadow: shadow }}
       >
         Ars Libera
       </span>
