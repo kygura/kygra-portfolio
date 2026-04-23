@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface TypewriterEffectProps {
@@ -35,7 +35,7 @@ export const TypewriterEffect = ({
   const [textIndex, setTextIndex] = useState(0);
   const [started, setStarted] = useState(false);
 
-  const texts = Array.isArray(text) ? text : [text];
+  const texts = useMemo(() => (Array.isArray(text) ? text : [text]), [text]);
   const currentText = texts[textIndex % texts.length];
 
   useEffect(() => {

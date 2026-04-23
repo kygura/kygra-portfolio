@@ -12,6 +12,8 @@ export interface Post {
 }
 
 // Simple frontmatter parser (browser-compatible)
+type FrontmatterValue = string | string[];
+
 function parseFrontmatter(text: string) {
   const frontmatterRegex = /^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/;
   const match = text.match(frontmatterRegex);
@@ -23,14 +25,14 @@ function parseFrontmatter(text: string) {
   const frontmatter = match[1];
   const content = match[2];
   
-  const data: Record<string, any> = {};
+  const data: Record<string, FrontmatterValue> = {};
   
   // Parse YAML-like frontmatter
   frontmatter.split('\n').forEach(line => {
     const colonIndex = line.indexOf(':');
     if (colonIndex > 0) {
       const key = line.substring(0, colonIndex).trim();
-      let value: any = line.substring(colonIndex + 1).trim();
+      let value: FrontmatterValue = line.substring(colonIndex + 1).trim();
       
       // Remove quotes
       value = value.replace(/^["']|["']$/g, '');
@@ -40,7 +42,7 @@ function parseFrontmatter(text: string) {
         value = value
           .slice(1, -1)
           .split(',')
-          .map(v => v.trim().replace(/^["']|["']$/g, ''));
+          .map((v) => v.trim().replace(/^["']|["']$/g, ''));
       }
       
       data[key] = value;
@@ -74,9 +76,9 @@ export const useMarkdownPosts = () => {
         excerpt: data.description || data.excerpt || "", // Fallback to description if excerpt missing
         date: data.date || "2023-01-01",
         category: data.category || "General",
-        tags: data.tags || [],
+        tags: Array.isArray(data.tags) ? data.tags : [],
         content: markdownContent,
-        readTime: data.readTime || 10,
+        readTime: Number(data.readTime) || 10,
       });
     }
 

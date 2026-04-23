@@ -8,6 +8,29 @@ import CodeBlock from "../components/CodeBlock";
 import PostImage from "../components/PostImage";
 import Alert from "../components/Alert";
 
+type MarkdownCodeProps = React.ComponentPropsWithoutRef<"code"> & {
+  inline?: boolean;
+  node?: unknown;
+};
+
+type MarkdownImageProps = React.ComponentPropsWithoutRef<"img"> & {
+  node?: unknown;
+};
+
+type MarkdownBlockquoteProps = React.ComponentPropsWithoutRef<"blockquote"> & {
+  node?: unknown;
+};
+
+type AlertType = "NOTE" | "TIP" | "IMPORTANT" | "WARNING" | "CAUTION";
+
+const alertTypes: Record<AlertType, AlertType> = {
+  NOTE: "NOTE",
+  TIP: "TIP",
+  IMPORTANT: "IMPORTANT",
+  WARNING: "WARNING",
+  CAUTION: "CAUTION",
+};
+
 const Post = () => {
   const { slug } = useParams();
   const post = useMarkdownPost(slug);
@@ -60,31 +83,30 @@ const Post = () => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            pre({ children }: any) {
+            pre({ children }) {
               // Return a fragment or unstyled div to avoid double styling by prose-minimal pre
               return <div className="not-prose my-6">{children}</div>;
             },
-            code({ node, inline, className, children, ...props }: any) {
-              const match = /language-(\w+)/.exec(className || '')
+            code({ inline, className, children, ...props }: MarkdownCodeProps) {
+              const match = /language-(\w+)/.exec(className || "");
 
               if (!inline) {
                 return (
                   <CodeBlock
                     language={match ? match[1] : undefined}
-                    value={String(children).replace(/\n$/, '')}
+                    value={String(children).replace(/\n$/, "")}
                     className={className}
-                    {...props}
                   />
-                )
+                );
               }
 
               return (
                 <code className={className} {...props}>
                   {children}
                 </code>
-              )
+              );
             },
-            img({ node, ...props }: any) {
+            img(props: MarkdownImageProps) {
               return (
                 <PostImage
                   {...props}
@@ -92,13 +114,15 @@ const Post = () => {
                 />
               );
             },
-            blockquote({ children, ...props }: any) {
+            blockquote({ children, ...props }: MarkdownBlockquoteProps) {
               // Helper to recursively extract text content from React nodes
-              const extractText = (node: any): string => {
+              const extractText = (node: React.ReactNode): string => {
                 if (!node) return "";
                 if (typeof node === "string") return node;
                 if (Array.isArray(node)) return node.map(extractText).join("");
-                if (node.props && node.props.children) return extractText(node.props.children);
+                if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+                  return extractText(node.props.children);
+                }
                 return "";
               };
 
@@ -118,7 +142,7 @@ const Post = () => {
                   // Relaxed regex to handle potential leading whitespace or newlines
                   const match = textContent.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/);
                   if (match) {
-                    const type = match[1] as any;
+                    const type = alertTypes[match[1] as AlertType];
                     const pattern = /^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*/;
 
                     const processChildren = (nodes: React.ReactNode): React.ReactNode => {
@@ -134,8 +158,8 @@ const Post = () => {
                           return child;
                         }
 
-                        if (React.isValidElement(child) && (child.props as any).children) {
-                          const processed = processChildren((child.props as any).children);
+                        if (React.isValidElement<{ children?: React.ReactNode }>(child) && child.props.children) {
+                          const processed = processChildren(child.props.children);
                           return React.cloneElement(child, {}, processed);
                         }
                         return child;

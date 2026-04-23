@@ -1,4 +1,4 @@
-import { ArrowUpRight, ExternalLink, Github } from "lucide-react";
+import { ArrowUpRight, ExternalLink, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 import { projects } from "@/lib/projects";
 
@@ -71,7 +71,7 @@ const Projects = () => {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 hover:text-foreground transition-colors duration-300"
                 >
-                  <Github className="w-4 h-4" />
+                  <GitBranch className="w-4 h-4" />
                   View Code
                 </a>
               )}

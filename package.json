@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
+    "@notionhq/client": "^5.20.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-aspect-ratio": "^1.1.7",
@@ -41,6 +42,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/supabase-js": "^2.95.3",
     "@tanstack/react-query": "^5.83.0",
+    "@vercel/functions": "^3.4.4",
     "caniuse-lite": "^1.0.30001757",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
@@ -52,6 +54,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^1.8.0",
     "next-themes": "^0.3.0",
+    "notion-to-md": "^3.1.9",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",

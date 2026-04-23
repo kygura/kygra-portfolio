@@ -1,6 +1,6 @@
 import {
   Download, MapPin, Mail, Globe,
-  Github, Linkedin, Phone
+  GitBranch, Link2, Phone
 } from "lucide-react";
 
 const CV = () => {
@@ -108,10 +108,10 @@ const CV = () => {
                 <Globe className="w-4 h-4" /> {contact.website}
               </a>
               <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Github className="w-4 h-4" /> github.com/kygura
+                <GitBranch className="w-4 h-4" /> github.com/kygura
               </a>
               <a href={`https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Linkedin className="w-4 h-4" /> linkedin.com/in/nca
+                <Link2 className="w-4 h-4" /> linkedin.com/in/nca
               </a>
             </div>
           </div>
