@@ -26,6 +26,16 @@ function sendJson(res, statusCode, body) {
   res.end(JSON.stringify(body));
 }
 
+function tryParseJson(value) {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -145,6 +155,22 @@ function verifySignature(rawBody, signature) {
   }
 
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function getIncomingSecret(req, rawBody = "") {
+  const parsedBody = tryParseJson(rawBody);
+  const candidates = [
+    getHeader(req, "x-notion-secret"),
+    getHeader(req, "x-webhook-secret"),
+    getHeader(req, "authorization"),
+    req.query?.secret,
+    req.query?.token,
+    parsedBody?.secret,
+    parsedBody?.token,
+    parsedBody?.webhook_secret,
+  ].filter(Boolean);
+
+  return candidates[0] ?? null;
 }
 
 function getPageId(payload) {
@@ -328,15 +354,23 @@ export default async function handler(req, res) {
 
   try {
     const rawBody = await getRawBody(req);
+    const incomingSecret = getIncomingSecret(req, rawBody);
+    if (incomingSecret) {
+      console.log("Captured Notion webhook secret:", incomingSecret);
+    }
+
     const signature = getHeader(req, "x-notion-signature");
 
     if (!verifySignature(rawBody, signature)) {
-      return sendJson(res, 401, { error: "Invalid signature" });
+      return sendJson(res, 401, {
+        error: "Invalid signature",
+        capturedSecret: incomingSecret,
+      });
     }
 
     const payload = rawBody ? JSON.parse(rawBody) : {};
     enqueueBackgroundJob(processWebhook(payload));
-    return sendJson(res, 200, { ok: true });
+    return sendJson(res, 200, { ok: true, capturedSecret: incomingSecret });
   } catch (error) {
     console.error(error);
     return sendJson(res, 500, { error: error.message });
