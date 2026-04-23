@@ -8,8 +8,8 @@ const {
   NOTION_DATABASE_ID,
   GITHUB_TOKEN,
   GITHUB_OWNER = "kygura",
-  GITHUB_REPO = "kygra-portfolio",
-  GITHUB_BRANCH = "master",
+  GITHUB_REPO  = "kygra-portfolio",
+  GITHUB_BRANCH,
   WEBHOOK_SECRET,
 } = process.env;
 
@@ -24,6 +24,16 @@ function getHeader(req, name) {
 function sendJson(res, statusCode, body) {
   res.status(statusCode).setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(body));
+}
+
+function tryParseJson(value) {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
 }
 
 function getRawBody(req) {
@@ -145,6 +155,22 @@ function verifySignature(rawBody, signature) {
   }
 
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+function getIncomingSecret(req, rawBody = "") {
+  const parsedBody = tryParseJson(rawBody);
+  const candidates = [
+    getHeader(req, "x-notion-secret"),
+    getHeader(req, "x-webhook-secret"),
+    getHeader(req, "authorization"),
+    req.query?.secret,
+    req.query?.token,
+    parsedBody?.secret,
+    parsedBody?.token,
+    parsedBody?.webhook_secret,
+  ].filter(Boolean);
+
+  return candidates[0] ?? null;
 }
 
 function getPageId(payload) {
@@ -328,13 +354,28 @@ export default async function handler(req, res) {
 
   try {
     const rawBody = await getRawBody(req);
+    const payload = rawBody ? JSON.parse(rawBody) : {};
+
+    // Quick hack: capture Notion's verification_token during webhook setup.
+    // Notion sends a POST with { verification_token: "secret_..." } and expects 200.
+    // Log it and return it so we can paste it into the Notion verification modal,
+    // then set it as WEBHOOK_SECRET for future signature validation.
+    if (payload.verification_token) {
+      console.log("=== NOTION VERIFICATION TOKEN ===");
+      console.log(payload.verification_token);
+      console.log("=================================");
+      return sendJson(res, 200, {
+        ok: true,
+        verification_token: payload.verification_token,
+      });
+    }
+
     const signature = getHeader(req, "x-notion-signature");
 
     if (!verifySignature(rawBody, signature)) {
       return sendJson(res, 401, { error: "Invalid signature" });
     }
 
-    const payload = rawBody ? JSON.parse(rawBody) : {};
     enqueueBackgroundJob(processWebhook(payload));
     return sendJson(res, 200, { ok: true });
   } catch (error) {
