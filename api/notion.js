@@ -18,6 +18,12 @@ import {
 const notion = new Client({ auth: process.env.NOTION_SECRET });
 const n2m = new NotionToMarkdown({ notionClient: notion });
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 function verifySignature(rawBody, signature, secret) {
   if (!signature || !secret) {
     return false;
@@ -195,49 +201,64 @@ async function syncNotionPage(pageId, eventType) {
   return { slug, published: true };
 }
 
-export async function POST(request) {
+async function readRawBody(request) {
+  if (!request) {
+    return "";
+  }
+
+  if (typeof request.body === "string") {
+    return request.body;
+  }
+
+  if (Buffer.isBuffer(request.body)) {
+    return request.body.toString("utf8");
+  }
+
+  const chunks = [];
+
+  for await (const chunk of request) {
+    chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+export default async function handler(request, response) {
+  if (request.method !== "POST") {
+    response.setHeader("Allow", "POST");
+    return response.status(405).json({ error: "Method not allowed" });
+  }
+
   try {
     if (!process.env.NOTION_SECRET) {
       throw new Error("NOTION_SECRET is not configured");
     }
 
-    const rawBody = await request.text();
+    const rawBody = await readRawBody(request);
     const payload = rawBody ? JSON.parse(rawBody) : {};
 
     if (payload?.verification_token) {
-      return Response.json({ ok: true });
+      return response.status(200).json({ ok: true });
     }
 
-    const signature = request.headers.get("x-notion-signature");
+    const signature = request.headers["x-notion-signature"];
 
     if (!verifySignature(rawBody, signature, process.env.WEBHOOK_SECRET)) {
-      return Response.json({ error: "Invalid signature" }, { status: 401 });
+      return response.status(401).json({ error: "Invalid signature" });
     }
 
     const pageId = extractPageId(payload);
 
     if (!pageId) {
-      return Response.json({ ok: true, skipped: true });
+      return response.status(200).json({ ok: true, skipped: true });
     }
 
     const result = await syncNotionPage(pageId, payload?.type);
-    return Response.json({ ok: true, ...result });
+    return response.status(200).json({ ok: true, ...result });
   } catch (error) {
     console.error("Failed to process Notion webhook", error);
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to process Notion webhook",
-      },
-      { status: 500 },
-    );
+    return response.status(500).json({
+      error: error instanceof Error ? error.message : "Failed to process Notion webhook",
+    });
   }
-}
-
-export async function GET() {
-  return Response.json({ error: "Method not allowed" }, {
-    status: 405,
-    headers: {
-      Allow: "POST",
-    },
-  });
 }
