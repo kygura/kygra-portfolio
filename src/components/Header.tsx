@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform, type Variants, type Transition } from "framer-motion";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
+
+const HeroCrystal = lazy(() => import("./HeroCrystal"));
 
 export default function Header() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -28,6 +30,8 @@ export default function Header() {
   const shapeBY = useTransform(springY, (v) => v * 35);
   const shapeCX = useTransform(springX, (v) => v * -25);
   const shapeCY = useTransform(springY, (v) => v * 20);
+  const crystalX = useTransform(springX, (v) => v * 14);
+  const crystalY = useTransform(springY, (v) => v * 10);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -85,6 +89,16 @@ export default function Header() {
       <motion.div className="kinetic-hero__bg-shape kinetic-hero__bg-shape--a" style={{ x: shapeAX, y: shapeAY }} />
       <motion.div className="kinetic-hero__bg-shape kinetic-hero__bg-shape--b" style={{ x: shapeBX, y: shapeBY }} />
       <motion.div className="kinetic-hero__bg-shape kinetic-hero__bg-shape--c" style={{ x: shapeCX, y: shapeCY }} />
+
+      {/* 3D Crystal above hero text */}
+      <motion.div
+        className="kinetic-hero__crystal"
+        style={{ x: crystalX, y: crystalY }}
+      >
+        <Suspense fallback={null}>
+          <HeroCrystal />
+        </Suspense>
+      </motion.div>
 
       {/* Content layers */}
       <div ref={contentRef} className="kinetic-hero__content">

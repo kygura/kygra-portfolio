@@ -80,6 +80,71 @@
   pointer-events: none;
 }
 
+/* ── 3D Crystal overlay ────────────────────────────────────────────────── */
+.kinetic-hero__crystal {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.hero-crystal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-crystal canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.hero-crystal--static {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-crystal__static {
+  width: min(50%, 280px);
+  height: auto;
+  opacity: 0.5;
+}
+
+/* ── ASCII trace fragments ─────────────────────────────────────────────── */
+.hero-crystal__ascii {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.hero-crystal__ascii-frag {
+  position: absolute;
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(0.55rem, 1vw, 0.78rem);
+  letter-spacing: 0.08em;
+  color: var(--accent-amber);
+  opacity: 0;
+  animation: asciiFade 6s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+@keyframes asciiFade {
+  0%   { opacity: 0; transform: translateY(4px); }
+  15%  { opacity: 0.35; transform: translateY(0); }
+  50%  { opacity: 0.22; transform: translateY(-2px); }
+  85%  { opacity: 0.35; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(4px); }
+}
+
+/* Hide crystal on very small screens to preserve LCP */
+@media (max-width: 640px) {
+  .kinetic-hero__crystal { display: none; }
+}
+
 .kinetic-hero__eyebrow {
   font-family: 'Space Mono', monospace;
   font-size: clamp(0.65rem, 1.2vw, 0.82rem);
