@@ -1,19 +1,11 @@
 import Header from "../components/Header";
-import ProjectTile from "@/components/projects/ProjectTile";
-import { projects } from "@/lib/projects";
+import BentoCanvas from "../components/BentoCanvas";
 
 const Home = () => {
   return (
-    <div className="bebop-theme-root">
+    <div>
       <Header />
-
-      <div className="home-projects">
-        <section className="home-projects__grid" aria-label="Featured projects">
-          {projects.map((project) => (
-            <ProjectTile key={project.slug} project={project} />
-          ))}
-        </section>
-      </div>
+      <BentoCanvas />
     </div>
   );
 };

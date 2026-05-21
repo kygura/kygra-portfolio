@@ -9,76 +9,77 @@ import Writings from "./pages/Writings";
 import Post from "./pages/Post";
 import Projects from "./pages/Projects";
 import ProjectDetail from "./pages/ProjectDetail";
-
 import NotFound from "./pages/NotFound";
 import Guestbook from "./pages/Guestbook";
 import Artifacts from "./pages/Artifacts";
 import CV from "./pages/CV";
-
 import { Terminal } from "./components/Terminal";
+import SmoothScroll from "./components/SmoothScroll";
+import CustomCursor from "./components/CustomCursor";
+import ScrollProgress from "./components/ScrollProgress";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Terminal />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route
-            path="/writings"
-            element={
-              <Layout>
-                <Writings />
-              </Layout>
-            }
-          />
-          <Route
-            path="/writings/:slug"
-            element={
-              <Layout>
-                <Post />
-              </Layout>
-            }
-          />
-          <Route
-            path="/artifacts"
-            element={
-              <Layout>
-                <Artifacts />
-              </Layout>
-            }
-          />
-          <Route
-            path="/projects"
-            element={
-              <Layout>
-                <Projects />
-              </Layout>
-            }
-          />
-          <Route
-            path="/projects/:slug"
-            element={
-              <Layout>
-                <ProjectDetail />
-              </Layout>
-            }
-          />
-
-          <Route
-            path="/guestbook"
-            element={
-              <Layout>
-                <Guestbook />
-              </Layout>
-            }
-          />
-          
+        <SmoothScroll>
+          <CustomCursor />
+          <ScrollProgress />
+          <Terminal />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route
+              path="/writings"
+              element={
+                <Layout>
+                  <Writings />
+                </Layout>
+              }
+            />
+            <Route
+              path="/writings/:slug"
+              element={
+                <Layout>
+                  <Post />
+                </Layout>
+              }
+            />
+            <Route
+              path="/artifacts"
+              element={
+                <Layout>
+                  <Artifacts />
+                </Layout>
+              }
+            />
+            <Route
+              path="/projects"
+              element={
+                <Layout>
+                  <Projects />
+                </Layout>
+              }
+            />
+            <Route
+              path="/projects/:slug"
+              element={
+                <Layout>
+                  <ProjectDetail />
+                </Layout>
+              }
+            />
+            <Route
+              path="/guestbook"
+              element={
+                <Layout>
+                  <Guestbook />
+                </Layout>
+              }
+            />
             <Route
               path="/cv"
               element={
@@ -87,9 +88,9 @@ const App = () => (
                 </Layout>
               }
             />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </SmoothScroll>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

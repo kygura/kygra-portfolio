@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import type { Project } from "@/lib/projects";
 import ProjectVisual from "./ProjectVisual";
 
@@ -8,86 +9,39 @@ interface ProjectTileProps {
   project: Project;
 }
 
-interface Trail {
-  id: number;
-  x: number;
-  y: number;
-  life: number;
-  size: number;
-}
-
 const ProjectTile = ({ project }: ProjectTileProps) => {
-  const articleRef = useRef<HTMLElement>(null);
-  const frameRef = useRef<number | null>(null);
-  const lastEmitRef = useRef(0);
-  const [trails, setTrails] = useState<Trail[]>([]);
-
   const externalLinks = useMemo(
     () => project.links.filter((link) => !link.href.startsWith("/")),
     [project.links],
   );
 
-  useEffect(() => {
-    if (!trails.length || frameRef.current) return;
+  const mouseX = useMotionValue(0.5);
+  const mouseY = useMotionValue(0.5);
 
-    const tick = () => {
-      setTrails((current) => {
-        const next = current
-          .map((t) => ({ ...t, life: t.life - 0.028 }))
-          .filter((t) => t.life > 0);
+  const rotateX = useSpring(useTransform(mouseY, [0, 1], [8, -8]), { stiffness: 300, damping: 28 });
+  const rotateY = useSpring(useTransform(mouseX, [0, 1], [-8, 8]), { stiffness: 300, damping: 28 });
+  const glareX = useTransform(mouseX, [0, 1], [0, 100]);
+  const glareY = useTransform(mouseY, [0, 1], [0, 100]);
 
-        if (next.length) {
-          frameRef.current = window.requestAnimationFrame(tick);
-        } else {
-          frameRef.current = null;
-        }
-        return next;
-      });
-    };
-
-    frameRef.current = window.requestAnimationFrame(tick);
-
-    return () => {
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
-    };
-  }, [trails.length]);
-
-  const handlePointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    const el = articleRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    const now = performance.now();
-    if (now - lastEmitRef.current < 28) return;
-    lastEmitRef.current = now;
-
-    setTrails((current) => [
-      ...current.slice(-22),
-      {
-        id: now + Math.random(),
-        x,
-        y,
-        life: 1,
-        size: 10 + Math.random() * 6,
-      },
-    ]);
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - rect.left) / rect.width);
+    mouseY.set((e.clientY - rect.top) / rect.height);
   };
 
-  const handlePointerLeave = () => {
-    lastEmitRef.current = 0;
+  const handleMouseLeave = () => {
+    mouseX.set(0.5);
+    mouseY.set(0.5);
   };
 
   return (
-    <article
-      ref={articleRef}
+    <motion.article
       className={`project-tile project-tile--${project.palette} project-tile--${project.layout}`}
-      onPointerMove={handlePointerMove}
-      onPointerLeave={handlePointerLeave}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      whileHover={{ scale: 1.012 }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
     >
       <Link
         to={`/projects/${project.slug}`}
@@ -95,26 +49,14 @@ const ProjectTile = ({ project }: ProjectTileProps) => {
         aria-label={`Open ${project.title} project details`}
       />
 
-      <div className="project-tile__trail" aria-hidden="true">
-        {trails.map((t) => {
-          const life = Math.max(t.life, 0);
-          const scale = 0.5 + life * 0.9;
-          return (
-            <span
-              key={t.id}
-              className="project-tile__trail-dot"
-              style={{
-                left: t.x,
-                top: t.y,
-                width: t.size,
-                height: t.size,
-                opacity: life * 0.7,
-                transform: `translate(-50%, -50%) scale(${scale})`,
-              }}
-            />
-          );
-        })}
-      </div>
+      {/* Glare overlay */}
+      <motion.div
+        className="project-tile__tilt-inner"
+        style={{
+          background: `radial-gradient(circle at ${glareX}% ${glareY}%, rgba(242,237,228,0.06) 0%, transparent 55%)`,
+        }}
+        aria-hidden
+      />
 
       <div className="project-tile__visual">
         <ProjectVisual palette={project.palette} />
@@ -155,7 +97,7 @@ const ProjectTile = ({ project }: ProjectTileProps) => {
           ))}
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 };
 

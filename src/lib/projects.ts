@@ -15,7 +15,7 @@ export interface Project {
   highlights: string[];
   techStack: string[];
   links: ProjectLink[];
-  palette: "meridian" | "zknull" | "equilibria" | "lexis";
+  palette: "meridian" | "zknull" | "equilibria" | "lexis" | "hyperagent" | "airmy" | "colony" | "gaia";
   layout: "wide" | "standard" | "full";
   status: string;
   year: string;
@@ -131,6 +131,110 @@ export const projects: Project[] = [
     palette: "lexis",
     layout: "wide",
     status: "Concept study",
+    year: "2026",
+  },
+  {
+    slug: "hyperagent",
+    title: "Hyperagent",
+    subtitle: "Autonomous Systems",
+    summary:
+      "An autonomous agent framework for composing, orchestrating, and deploying intelligent system workflows at scale.",
+    description:
+      "Hyperagent is a systems project building toward fully autonomous multi-agent orchestration. It treats agents as composable primitives rather than monolithic endpoints.",
+    overview: [
+      "The architecture models agent behavior as a directed graph of capabilities, enabling dynamic reconfiguration and real-time adaptation.",
+      "Its visual language draws on hexagonal network topology — nodes of agency connected by pathways of intent.",
+    ],
+    highlights: [
+      "Multi-agent orchestration framework",
+      "Dynamic capability graph composition",
+      "Designed for real-time system adaptation",
+    ],
+    techStack: ["TypeScript", "LangGraph", "WebSockets"],
+    links: [
+      { label: "Open dossier", href: "/projects/hyperagent" },
+    ],
+    palette: "hyperagent",
+    layout: "standard",
+    status: "Research",
+    year: "2026",
+  },
+  {
+    slug: "airmy",
+    title: "Airmy",
+    subtitle: "Defense Intelligence",
+    summary:
+      "A defense intelligence platform for aggregating, filtering, and acting on multi-source threat signals in real time.",
+    description:
+      "Airmy processes heterogeneous intelligence streams into actionable situational awareness. The interface is designed for clarity under pressure.",
+    overview: [
+      "The system ingests and correlates signals across domains, surfacing patterns that demand attention without overwhelming the operator.",
+      "Its visual identity uses concentric radar-like sweeps to convey persistent scanning and decisive detection.",
+    ],
+    highlights: [
+      "Multi-source signal aggregation",
+      "Real-time threat pattern detection",
+      "Operator-first interface design",
+    ],
+    techStack: ["React", "Python", "Kafka"],
+    links: [
+      { label: "Open dossier", href: "/projects/airmy" },
+    ],
+    palette: "airmy",
+    layout: "standard",
+    status: "Prototype",
+    year: "2026",
+  },
+  {
+    slug: "colony",
+    title: "Colony",
+    subtitle: "Collective Infrastructure",
+    summary:
+      "A decentralized infrastructure coordination layer for collective resource allocation and governance.",
+    description:
+      "Colony explores how decentralized collectives can coordinate shared infrastructure without central authority. It treats governance as an engineering problem.",
+    overview: [
+      "The protocol models collective action as a mesh of interconnected nodes, each contributing and consuming resources based on locally optimal decisions.",
+      "Its visual motif — a grid of connected dots — represents the distributed lattice of participants in a self-organizing system.",
+    ],
+    highlights: [
+      "Decentralized resource coordination",
+      "Local-first governance primitives",
+      "Mesh-based consensus model",
+    ],
+    techStack: ["Solidity", "Rust", "libp2p"],
+    links: [
+      { label: "Open dossier", href: "/projects/colony" },
+    ],
+    palette: "colony",
+    layout: "standard",
+    status: "Research",
+    year: "2026",
+  },
+  {
+    slug: "gaia",
+    title: "Gaia",
+    subtitle: "Earth Systems",
+    summary:
+      "An earth systems observatory for modeling, visualizing, and predicting planetary-scale environmental dynamics.",
+    description:
+      "Gaia synthesizes environmental data streams into a coherent planetary model. The interface treats the earth as a living system rather than a collection of datasets.",
+    overview: [
+      "The platform integrates atmospheric, oceanic, and terrestrial data into unified simulation views, enabling both retrospective analysis and forward projection.",
+      "Its identity uses latitude and longitude arcs across a sphere — the fundamental coordinate system of planetary observation.",
+    ],
+    highlights: [
+      "Planetary-scale data integration",
+      "Unified environmental simulation",
+      "Predictive earth systems modeling",
+    ],
+    techStack: ["Python", "WebGL", "TensorFlow"],
+    links: [
+      { label: "Open dossier", href: "/projects/gaia" },
+    ],
+    palette: "gaia",
+    layout: "standard",
+    status: "Concept",
     year: "2026",
   },
 ];

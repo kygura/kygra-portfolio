@@ -87,6 +87,122 @@ const ProjectVisual = ({ palette }: ProjectVisualProps) => {
     );
   }
 
+  if (palette === "hyperagent") return null;
+
+  if (palette === "airmy") {
+    // Radar sweep / concentric rings — defense intelligence identity
+    return (
+      <svg viewBox="0 0 220 220" fill="none" className="project-visual__svg" aria-hidden="true">
+        <g stroke="currentColor" strokeWidth="1.8">
+          <circle cx="110" cy="110" r="85" />
+          <circle cx="110" cy="110" r="60" />
+          <circle cx="110" cy="110" r="35" />
+          <line x1="25" y1="110" x2="195" y2="110" />
+          <line x1="110" y1="25" x2="110" y2="195" />
+          <line x1="50" y1="50" x2="170" y2="170" strokeDasharray="5 5" />
+          <line x1="170" y1="50" x2="50" y2="170" strokeDasharray="5 5" />
+        </g>
+        <g fill="currentColor" opacity="0.12">
+          <path d="M110,110 L110,25 A85,85 0 0,1 195,110 Z" />
+        </g>
+        <g fill="currentColor">
+          <circle cx="110" cy="110" r="5" />
+          <circle cx="155" cy="75" r="4" opacity="0.8" />
+          <circle cx="130" cy="55" r="3" opacity="0.6" />
+          <circle cx="170" cy="100" r="3" opacity="0.5" />
+          <rect x="106" y="18" width="8" height="8" opacity="0.7" />
+        </g>
+        <g stroke="currentColor" strokeWidth="1.2" opacity="0.4">
+          <line x1="110" y1="110" x2="155" y2="75" />
+          <line x1="110" y1="110" x2="130" y2="55" />
+          <line x1="110" y1="110" x2="170" y2="100" />
+        </g>
+      </svg>
+    );
+  }
+
+  if (palette === "colony") {
+    // Grid of connected dots — collective infrastructure identity
+    return (
+      <svg viewBox="0 0 220 220" fill="none" className="project-visual__svg" aria-hidden="true">
+        <g stroke="currentColor" strokeWidth="1" opacity="0.35">
+          <line x1="40" y1="40" x2="90" y2="40" />
+          <line x1="90" y1="40" x2="140" y2="40" />
+          <line x1="140" y1="40" x2="190" y2="40" />
+          <line x1="40" y1="90" x2="90" y2="90" />
+          <line x1="90" y1="90" x2="140" y2="90" />
+          <line x1="140" y1="90" x2="190" y2="90" />
+          <line x1="40" y1="140" x2="90" y2="140" />
+          <line x1="90" y1="140" x2="140" y2="140" />
+          <line x1="140" y1="140" x2="190" y2="140" />
+          <line x1="40" y1="190" x2="90" y2="190" />
+          <line x1="90" y1="190" x2="140" y2="190" />
+          <line x1="40" y1="40" x2="40" y2="90" />
+          <line x1="90" y1="40" x2="90" y2="90" />
+          <line x1="140" y1="40" x2="140" y2="90" />
+          <line x1="190" y1="40" x2="190" y2="90" />
+          <line x1="40" y1="90" x2="40" y2="140" />
+          <line x1="90" y1="90" x2="90" y2="140" />
+          <line x1="140" y1="90" x2="140" y2="140" />
+          <line x1="190" y1="90" x2="190" y2="140" />
+          <line x1="40" y1="140" x2="40" y2="190" />
+          <line x1="90" y1="140" x2="90" y2="190" />
+          <line x1="140" y1="140" x2="140" y2="190" />
+          <line x1="90" y1="90" x2="140" y2="140" />
+          <line x1="40" y1="140" x2="90" y2="90" />
+        </g>
+        <g fill="currentColor">
+          <circle cx="40" cy="40" r="5" />
+          <circle cx="90" cy="40" r="5" />
+          <circle cx="140" cy="40" r="4" opacity="0.6" />
+          <circle cx="190" cy="40" r="3" opacity="0.4" />
+          <circle cx="40" cy="90" r="4" opacity="0.6" />
+          <circle cx="90" cy="90" r="6" />
+          <circle cx="140" cy="90" r="5" />
+          <circle cx="190" cy="90" r="3" opacity="0.4" />
+          <circle cx="40" cy="140" r="5" />
+          <circle cx="90" cy="140" r="4" opacity="0.7" />
+          <circle cx="140" cy="140" r="6" />
+          <circle cx="190" cy="140" r="4" opacity="0.5" />
+          <circle cx="40" cy="190" r="3" opacity="0.4" />
+          <circle cx="90" cy="190" r="5" />
+          <circle cx="140" cy="190" r="4" opacity="0.6" />
+        </g>
+      </svg>
+    );
+  }
+
+  if (palette === "gaia") {
+    // Circle with latitude/longitude arcs — earth systems identity
+    return (
+      <svg viewBox="0 0 220 220" fill="none" className="project-visual__svg" aria-hidden="true">
+        <g stroke="currentColor" strokeWidth="1.8">
+          <circle cx="110" cy="110" r="85" />
+          <ellipse cx="110" cy="110" rx="85" ry="35" />
+          <ellipse cx="110" cy="110" rx="85" ry="60" />
+          <line x1="110" y1="25" x2="110" y2="195" />
+          <ellipse cx="110" cy="70" rx="55" ry="18" />
+          <ellipse cx="110" cy="150" rx="55" ry="18" />
+        </g>
+        <g stroke="currentColor" strokeWidth="1" opacity="0.35">
+          <ellipse cx="110" cy="110" rx="35" ry="85" />
+        </g>
+        <g fill="currentColor" opacity="0.08">
+          <path d="M25,110 A85,85 0 0,1 110,25 L110,110 Z" />
+        </g>
+        <g fill="currentColor">
+          <circle cx="110" cy="110" r="4" />
+          <circle cx="110" cy="25" r="3" />
+          <circle cx="110" cy="195" r="3" />
+          <circle cx="25" cy="110" r="3" />
+          <circle cx="195" cy="110" r="3" />
+          <rect x="14" y="106" width="10" height="8" opacity="0.6" />
+          <rect x="196" y="106" width="10" height="8" opacity="0.6" />
+        </g>
+      </svg>
+    );
+  }
+
   // lexis — Brutalist editorial document / margin notes
   return (
     <svg viewBox="0 0 220 220" fill="none" className="project-visual__svg" aria-hidden="true">
