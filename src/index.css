@@ -16,6 +16,12 @@
   .bebop-header {
     --sp: 0;
     position: relative;
+    height: 200vh;
+  }
+
+  .bebop-header__sticky {
+    position: sticky;
+    top: 0;
     height: 100vh;
     overflow: hidden;
   }
@@ -124,6 +130,9 @@
     user-select: none;
     white-space: nowrap;
     text-align: center;
+    text-shadow: 0.18em 0.18em 0 rgba(120, 116, 112, 0.35);
+    transition: text-shadow 120ms ease-out;
+    will-change: text-shadow;
     animation: glitch 9s infinite;
   }
 
@@ -138,10 +147,10 @@
   }
 
   @keyframes glitch {
-    0%, 91%, 100% { transform: none; text-shadow: none; }
+    0%, 91%, 100% { transform: none; }
     92%  { transform: translateX(-4px); text-shadow: 4px 0 var(--coral); }
     93%  { transform: translateX(4px);  text-shadow: -4px 0 var(--teal); }
-    94%  { transform: none; text-shadow: none; }
+    94%  { transform: none; }
     95%  { transform: skewX(-3deg) translateX(2px); }
     96%  { transform: none; }
   }
