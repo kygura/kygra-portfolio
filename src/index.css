@@ -113,33 +113,6 @@
   opacity: 0.5;
 }
 
-/* ── ASCII trace fragments ─────────────────────────────────────────────── */
-.hero-crystal__ascii {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.hero-crystal__ascii-frag {
-  position: absolute;
-  font-family: 'Space Mono', monospace;
-  font-size: clamp(0.55rem, 1vw, 0.78rem);
-  letter-spacing: 0.08em;
-  color: var(--accent-amber);
-  opacity: 0;
-  animation: asciiFade 6s ease-in-out infinite;
-  white-space: nowrap;
-}
-
-@keyframes asciiFade {
-  0%   { opacity: 0; transform: translateY(4px); }
-  15%  { opacity: 0.35; transform: translateY(0); }
-  50%  { opacity: 0.22; transform: translateY(-2px); }
-  85%  { opacity: 0.35; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(4px); }
-}
-
 /* Hide crystal on very small screens to preserve LCP */
 @media (max-width: 640px) {
   .kinetic-hero__crystal { display: none; }
