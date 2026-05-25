@@ -42,11 +42,11 @@ function generateChromaticPalette(): THREE.Vector3[] {
   const colors: THREE.Vector3[] = [];
   const golden = 0.618033988749895;
   let hue = Math.random();
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 8; i++) {
     hue += golden;
     hue %= 1;
-    const s = 0.75 + Math.random() * 0.25;
-    const l = 0.45 + Math.random() * 0.25;
+    const s = 0.7 + Math.random() * 0.3;
+    const l = 0.42 + Math.random() * 0.28;
     const [r, g, b] = hslToRgb(hue, s, l);
     colors.push(new THREE.Vector3(r, g, b));
   }
@@ -63,6 +63,18 @@ interface MouseState {
   hoverPoint: THREE.Vector3;
   hoverActive: number;
   hoverTarget: number;
+  // drag rotate
+  isDragging: boolean;
+  lastDragX: number;
+  lastDragY: number;
+  // accumulated world-space Euler offsets applied to the group
+  accRotX: number; // pitch (x-axis)
+  accRotZ: number; // roll/yaw (z-axis, driven by horizontal drag)
+  // inertia velocities (radians per frame at 60 fps)
+  inertiaX: number;
+  inertiaZ: number;
+  // whether user has ever dragged (suppresses default mouse-tilt)
+  everDragged: boolean;
 }
 
 // ── Crystal shaders ───────────────────────────────────────────────────────
@@ -86,7 +98,7 @@ uniform float uHoverActive;
 uniform float uTime;
 uniform vec3 uHoverNormal;
 uniform vec3 uHoverPoint;
-uniform vec3 uChromatic[4];
+uniform vec3 uChromatic[8];
 uniform float uLightBoost;
 
 varying vec3 vNormal;
@@ -95,11 +107,15 @@ varying vec3 vObjectNormal;
 
 // ── Random chromatic palette ───────────────────────────────────────
 vec3 getChromaticColor(float i) {
-  int idx = int(floor(mod(i, 4.0)));
+  int idx = int(floor(mod(i, 8.0)));
   if (idx == 0) return uChromatic[0];
   if (idx == 1) return uChromatic[1];
   if (idx == 2) return uChromatic[2];
-  return uChromatic[3];
+  if (idx == 3) return uChromatic[3];
+  if (idx == 4) return uChromatic[4];
+  if (idx == 5) return uChromatic[5];
+  if (idx == 6) return uChromatic[6];
+  return uChromatic[7];
 }
 
 // Slight dimming so faces don't blow out at rest
@@ -133,7 +149,7 @@ void main() {
 
   // ── Randomised chromatic palette selection ──────────────────────────
   float faceRand = hash3(objN * 10.0);
-  float paletteIndex = floor(mod(faceRand * 4.0, 4.0));
+  float paletteIndex = floor(mod(faceRand * 8.0, 8.0));
   vec3 baseColor = getChromaticColor(paletteIndex) * DIM;
 
   // Per-face random brightness (0.6 – 1.0)
@@ -266,7 +282,7 @@ function CrystalMesh({ mouseState, chromatic }: { mouseState: React.MutableRefOb
       uTime: { value: 0 },
       uHoverNormal: { value: new THREE.Vector3(0, 0, 0) },
       uHoverPoint: { value: new THREE.Vector3(0, 0, 0) },
-      uChromatic: { value: chromatic },
+      uChromatic: { value: chromatic.slice(0, 8) },
       uLightBoost: { value: 1.0 },
     }),
     [chromatic],
@@ -275,21 +291,37 @@ function CrystalMesh({ mouseState, chromatic }: { mouseState: React.MutableRefOb
   useFrame((state, delta) => {
     const ms = mouseState.current;
 
-    // ── Micro-interactions: tilt toward mouse, scale pulse, faster spin ─
+    // ── Inertia decay (runs only when not dragging) ───────────────────
+    if (!ms.isDragging) {
+      ms.inertiaX *= 0.88;
+      ms.inertiaZ *= 0.88;
+      ms.accRotX += ms.inertiaX;
+      ms.accRotZ += ms.inertiaZ;
+    }
+
+    // ── Group rotation ────────────────────────────────────────────────
     if (groupRef.current) {
       const targetScale = 1 + ms.hoverActive * 0.1;
       groupRef.current.scale.lerp(
         new THREE.Vector3(targetScale, targetScale, targetScale),
         Math.min(delta * 4, 1),
       );
-      const targetTiltX = ms.ndcY * 0.2;
-      const targetTiltZ = -ms.ndcX * 0.2;
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetTiltX, delta * 3);
-      groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetTiltZ, delta * 3);
+
+      if (ms.everDragged) {
+        // After first drag: always use accumulated drag rotation
+        groupRef.current.rotation.x = ms.accRotX;
+        groupRef.current.rotation.z = ms.accRotZ;
+      } else {
+        // Before any drag: gentle mouse-tilt
+        const targetTiltX = ms.ndcY * 0.2;
+        const targetTiltZ = -ms.ndcX * 0.2;
+        groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetTiltX, delta * 3);
+        groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, targetTiltZ, delta * 3);
+      }
     }
 
     if (meshRef.current) {
-      const spinSpeed = 0.12 + ms.hoverActive * 0.35;
+      const spinSpeed = ms.isDragging ? 0 : 0.12 + ms.hoverActive * 0.35;
       meshRef.current.rotation.y += delta * spinSpeed;
     }
 
@@ -397,6 +429,14 @@ export default function HeroCrystal() {
     hoverPoint: new THREE.Vector3(0, 0, 0),
     hoverActive: 0,
     hoverTarget: 0,
+    isDragging: false,
+    lastDragX: 0,
+    lastDragY: 0,
+    accRotX: 0,
+    accRotZ: 0,
+    inertiaX: 0,
+    inertiaZ: 0,
+    everDragged: false,
   });
   const chromatic = useMemo(() => generateChromaticPalette(), []);
 
@@ -406,19 +446,59 @@ export default function HeroCrystal() {
 
     const onMove = (e: PointerEvent) => {
       const rect = el.getBoundingClientRect();
-      mouseState.current.ndcX = (e.clientX / window.innerWidth) * 2 - 1;
-      mouseState.current.ndcY = -(e.clientY / window.innerHeight) * 2 + 1;
-      mouseState.current.relX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouseState.current.relY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      const ms = mouseState.current;
+      ms.ndcX = (e.clientX / window.innerWidth) * 2 - 1;
+      ms.ndcY = -(e.clientY / window.innerHeight) * 2 + 1;
+      ms.relX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      ms.relY = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (ms.isDragging) {
+        const dx = e.clientX - ms.lastDragX;
+        const dy = e.clientY - ms.lastDragY;
+        const dRotX = dy * 0.008;
+        const dRotZ = -dx * 0.008;
+        ms.accRotX += dRotX;
+        ms.accRotZ += dRotZ;
+        // track velocity for inertia (smoothed)
+        ms.inertiaX = ms.inertiaX * 0.6 + dRotX * 0.4;
+        ms.inertiaZ = ms.inertiaZ * 0.6 + dRotZ * 0.4;
+        ms.lastDragX = e.clientX;
+        ms.lastDragY = e.clientY;
+      }
+    };
+
+    const onDown = (e: PointerEvent) => {
+      const ms = mouseState.current;
+      ms.isDragging = true;
+      ms.everDragged = true;
+      ms.lastDragX = e.clientX;
+      ms.lastDragY = e.clientY;
+      ms.inertiaX = 0;
+      ms.inertiaZ = 0;
+      el.setPointerCapture(e.pointerId);
+      el.style.cursor = "grabbing";
+    };
+
+    const onUp = (e: PointerEvent) => {
+      mouseState.current.isDragging = false;
+      el.releasePointerCapture(e.pointerId);
+      el.style.cursor = "grab";
     };
 
     const onLeave = () => {
       mouseState.current.hoverTarget = 0;
     };
 
+    el.style.cursor = "grab";
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onUp);
     window.addEventListener("pointermove", onMove, { passive: true });
     document.addEventListener("mouseleave", onLeave);
     return () => {
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onUp);
       window.removeEventListener("pointermove", onMove);
       document.removeEventListener("mouseleave", onLeave);
     };

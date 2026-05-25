@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Post, PostSummary } from "../../content/posts";
+import { localFallbackSummaries, localFallbackPosts } from "../posts/localFallback";
 
 interface UsePostsResult {
   posts: PostSummary[];
@@ -64,8 +65,14 @@ export const useMarkdownPosts = (): UsePostsResult => {
           return;
         }
 
-        setPosts([]);
-        setError(caughtError instanceof Error ? caughtError.message : "Failed to load posts");
+        // Fall back to local markdown files bundled at build time
+        if (localFallbackSummaries.length > 0) {
+          setPosts(localFallbackSummaries);
+          setError(null);
+        } else {
+          setPosts([]);
+          setError(caughtError instanceof Error ? caughtError.message : "Failed to load posts");
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -107,7 +114,8 @@ export const useMarkdownPost = (slug: string | undefined): UsePostResult => {
 
         if (response.status === 404) {
           if (!cancelled) {
-            setPost(null);
+            const local = localFallbackPosts.find((p) => p.slug === slug) ?? null;
+            setPost(local);
           }
           return;
         }
@@ -122,8 +130,13 @@ export const useMarkdownPost = (slug: string | undefined): UsePostResult => {
         }
       } catch (caughtError) {
         if (!cancelled) {
-          setPost(null);
-          setError(caughtError instanceof Error ? caughtError.message : "Failed to load post");
+          const local = localFallbackPosts.find((p) => p.slug === slug) ?? null;
+          setPost(local);
+          if (!local) {
+            setError(caughtError instanceof Error ? caughtError.message : "Failed to load post");
+          } else {
+            setError(null);
+          }
         }
       } finally {
         if (!cancelled) {

@@ -57,16 +57,8 @@ const GRID_CELLS: GridCellDef[] = [
   { id: "geo2", type: "graphic", colSpan: "canvas-col-6", component: Geo2, colorVar: "var(--bg-primary)", bg: "var(--accent-amber)" },
 ];
 
-const INITIAL_PROJECT_ORDER: string[] = [
-  "meridian",
-  "hyperagent",
-  "zknull",
-  "equilibria",
-  "airmy",
-  "lexis-editorial-companion",
-  "colony",
-  "gaia",
-];
+// Derived from the canonical projects list — no manual sync needed
+const INITIAL_PROJECT_ORDER: string[] = projects.map((p) => p.slug).slice(0, 8);
 
 // ── Tilt wrapper for project cells ─────────────────────────────────────────
 function TiltProject({
