@@ -10,6 +10,9 @@ const HeroCrystal = lazy(() => import("./HeroCrystal"));
 export default function Header() {
   const sectionRef = useRef<HTMLElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const primaryRef = useRef<HTMLSpanElement>(null);
+  const secondaryRef = useRef<HTMLSpanElement>(null);
+  const scrollHintRef = useRef<HTMLDivElement>(null);
 
   // Mouse parallax values
   const mouseX = useMotionValue(0);
@@ -44,23 +47,39 @@ export default function Header() {
     return () => window.removeEventListener("mousemove", onMove);
   }, [mouseX, mouseY]);
 
-  // GSAP scroll fade-out
+  // GSAP scroll fade-out + background color inversion
   useEffect(() => {
     const ctx = gsap.context(() => {
+      const section = sectionRef.current;
       const content = contentRef.current;
-      if (!content) return;
+      if (!section || !content) return;
+
+      const stConfig = {
+        trigger: section,
+        start: "top top",
+        end: "bottom top",
+        scrub: 0.6,
+      };
+
+      // Fade out content
       gsap.to(content, {
         opacity: 0,
         y: -40,
         scale: 0.96,
         ease: "none",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "bottom top",
-          scrub: 0.6,
-        },
+        scrollTrigger: stConfig,
       });
+
+      // Background: dark -> light
+      gsap.fromTo(
+        section,
+        { backgroundColor: "#121117" },
+        {
+          backgroundColor: "#f2ede4",
+          ease: "none",
+          scrollTrigger: stConfig,
+        },
+      );
     });
     return () => ctx.revert();
   }, []);
@@ -81,7 +100,7 @@ export default function Header() {
   };
 
   const primaryText = "Ventures by NCA";
-  const secondaryText = "Working on the Frontier";
+  const secondaryText = "Frontier Software Studio";
 
   return (
     <section ref={sectionRef} className="kinetic-hero">
@@ -103,15 +122,7 @@ export default function Header() {
       {/* Content layers */}
       <div ref={contentRef} className="kinetic-hero__content">
         {/* Eyebrow */}
-        <motion.span
-          className="kinetic-hero__eyebrow"
-          style={{ x: eyebrowX, y: eyebrowY }}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        >
-          kygra.xyz — 2026
-        </motion.span>
+        
 
         {/* Primary headline — letter by letter */}
         <motion.div
@@ -119,44 +130,60 @@ export default function Header() {
           style={{ x: primaryX, y: primaryY }}
         >
           <motion.span
-            className="kinetic-hero__primary"
-            initial="hidden"
-            animate="visible"
-            aria-label={primaryText}
+            animate={{ y: [0, -6, 0] }}
+            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
           >
-            {primaryText.split("").map((char, i) => (
-              <motion.span
-                key={i}
-                custom={i}
-                variants={letterVariants}
-                style={{ display: "inline-block", whiteSpace: char === " " ? "pre" : "normal" }}
-              >
-                {char}
-              </motion.span>
-            ))}
+            <motion.span
+              ref={primaryRef}
+              className="kinetic-hero__primary"
+              initial="hidden"
+              animate="visible"
+              aria-label={primaryText}
+              style={{ mixBlendMode: "difference" }}
+            >
+              <i>
+                {primaryText.split("").map((char, i) => (
+                  <motion.span
+                    key={i}
+                    custom={i}
+                    variants={letterVariants}
+                    style={{ display: "inline-block", whiteSpace: char === " " ? "pre" : "normal" }}
+                  >
+                    {char}
+                  </motion.span>
+                ))}
+              </i>
+            </motion.span>
           </motion.span>
         </motion.div>
 
         {/* Secondary line */}
         <motion.span
+          ref={secondaryRef}
           className="kinetic-hero__secondary"
-          style={{ x: secondaryX, y: secondaryY }}
+          style={{ x: secondaryX, y: secondaryY, mixBlendMode: "difference" }}
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.65, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          {secondaryText}
+          <motion.span
+            animate={{ y: [0, -4, 0], opacity: [1, 0.85, 1] }}
+            transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
+          >
+            {secondaryText}
+          </motion.span>
         </motion.span>
       </div>
 
       {/* Scroll hint */}
       <motion.div
+        ref={scrollHintRef}
         className="kinetic-hero__scroll-hint"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.1, duration: 0.8 }}
       >
-        <span>scroll</span>
+        <span style={{ mixBlendMode: "difference" }}>scroll</span>
         <div className="kinetic-hero__scroll-line" />
       </motion.div>
     </section>

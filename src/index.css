@@ -151,6 +151,13 @@
   will-change: transform;
 }
 
+/* Glow on hero text when crystal is hovered */
+.kinetic-hero__primary,
+.kinetic-hero__secondary {
+  transition: filter 0.4s ease;
+  filter: drop-shadow(0 0 calc(var(--crystal-hover, 0) * 24px) rgba(255, 255, 255, 0.25));
+}
+
 .kinetic-hero__scroll-hint {
   position: absolute;
   bottom: 2.5rem;
