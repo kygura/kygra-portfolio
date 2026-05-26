@@ -69,17 +69,6 @@ export default function Header() {
         ease: "none",
         scrollTrigger: stConfig,
       });
-
-      // Background: dark -> light
-      gsap.fromTo(
-        section,
-        { backgroundColor: "#121117" },
-        {
-          backgroundColor: "#f2ede4",
-          ease: "none",
-          scrollTrigger: stConfig,
-        },
-      );
     });
     return () => ctx.revert();
   }, []);

@@ -1,4 +1,4 @@
-import { ArrowUpRight, ExternalLink, GitBranch } from "lucide-react";
+import { ExternalLink, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 import { projects } from "@/lib/projects";
 
@@ -31,18 +31,12 @@ const Projects = () => {
                   <p className="text-[0.72rem] uppercase tracking-[0.24em] text-muted-foreground mb-3">
                     {project.subtitle}
                   </p>
-                  <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover:text-destructive transition-colors leading-[0.9] mb-4">
-                    {project.title}
-                  </h2>
+                  <Link to={`/projects/${project.slug}`}>
+                    <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover:text-destructive transition-colors leading-[0.9] mb-4">
+                      {project.title}
+                    </h2>
+                  </Link>
                 </div>
-
-                <Link
-                  to={`/projects/${project.slug}`}
-                  className="inline-flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.24em] text-foreground hover:text-destructive transition-colors"
-                >
-                  Open dossier
-                  <ArrowUpRight className="w-4 h-4" />
-                </Link>
               </div>
 
               <p className="text-[0.95rem] text-foreground leading-[1.7] max-w-3xl mb-6">

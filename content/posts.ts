@@ -3,13 +3,17 @@ import { z } from "zod";
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export const postTagSchema = z.string().trim().min(1);
+const optionalDateSchema = z.preprocess(
+  (value) => (value == null ? "" : value),
+  z.string().trim(),
+);
 
 export const notionPostMetadataSchema = z.object({
   pageId: z.string().trim().min(1),
   title: z.string().trim().min(1),
   slug: z.string().trim().min(1),
   excerpt: z.string().trim().default(""),
-  date: z.string().trim().min(1),
+  date: optionalDateSchema,
   tags: z.array(postTagSchema).default([]),
   published: z.boolean(),
   createdTime: z.string().trim().min(1),
@@ -20,7 +24,7 @@ export const postSummarySchema = z.object({
   slug: z.string().regex(slugPattern),
   title: z.string().trim().min(1),
   excerpt: z.string().trim().default(""),
-  date: z.string().trim().min(1),
+  date: optionalDateSchema,
   tags: z.array(postTagSchema).default([]),
   readTime: z.number().int().positive(),
 });
@@ -82,8 +86,22 @@ export function createExcerpt(markdown: string, maxLength = 220): string {
   return `${plainText.slice(0, maxLength).trimEnd()}...`;
 }
 
-export function sortPostsByDateDesc<T extends { date: string }>(posts: T[]): T[] {
-  return [...posts].sort(
-    (left, right) => new Date(right.date).getTime() - new Date(left.date).getTime(),
-  );
+function postTimestamp(post: { date?: string; createdTime?: string; lastEditedTime?: string }): number {
+  const timestamp = new Date(post.date || post.createdTime || post.lastEditedTime || "").getTime();
+
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+export function sortPostsByDateDesc<T extends { date?: string; createdTime?: string; lastEditedTime?: string; title?: string }>(
+  posts: T[],
+): T[] {
+  return [...posts].sort((left, right) => {
+    const dateComparison = postTimestamp(right) - postTimestamp(left);
+
+    if (dateComparison !== 0) {
+      return dateComparison;
+    }
+
+    return String(left.title ?? "").localeCompare(String(right.title ?? ""));
+  });
 }

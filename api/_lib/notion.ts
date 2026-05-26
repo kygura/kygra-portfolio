@@ -45,6 +45,14 @@ function extractDate(property?: NotionProperty): string {
   return property && property.type === "date" ? property.date?.start ?? "" : "";
 }
 
+function extractCreatedTime(property?: NotionProperty): string {
+  return property && property.type === "created_time" ? property.created_time : "";
+}
+
+function extractLastEditedTime(property?: NotionProperty): string {
+  return property && property.type === "last_edited_time" ? property.last_edited_time : "";
+}
+
 function extractMultiSelect(property?: NotionProperty): string[] {
   return property && property.type === "multi_select"
     ? property.multi_select.map((item) => item.name).filter(Boolean)
@@ -124,8 +132,18 @@ export function extractNotionPostMetadata(page: PageObjectResponse): NotionPostM
     extractTitle(properties.slug);
   const excerpt =
     extractRichText(properties.Description) || extractRichText(properties.description) || "";
+  const createdTime = page.created_time || extractCreatedTime(properties.Created) || extractCreatedTime(properties.created);
+  const lastEditedTime =
+    page.last_edited_time ||
+    extractLastEditedTime(properties["Last edited time"]) ||
+    extractLastEditedTime(properties.lastEditedTime);
   const date =
-    extractDate(properties.Date) || extractDate(properties.date) || page.created_time;
+    extractDate(properties.Date) ||
+    extractDate(properties.date) ||
+    extractCreatedTime(properties.Created) ||
+    extractCreatedTime(properties.created) ||
+    createdTime ||
+    lastEditedTime;
   const tags = primaryTags.length > 0 ? primaryTags : secondaryTags;
   const published = extractCheckbox(properties.Published) || extractCheckbox(properties.published);
 
@@ -137,7 +155,7 @@ export function extractNotionPostMetadata(page: PageObjectResponse): NotionPostM
     date,
     tags,
     published,
-    createdTime: page.created_time,
-    lastEditedTime: page.last_edited_time,
+    createdTime,
+    lastEditedTime,
   });
 }

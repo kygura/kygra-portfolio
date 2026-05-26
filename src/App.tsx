@@ -81,7 +81,7 @@ const App = () => (
               }
             />
             <Route
-              path="/cv"
+              path="/credentials"
               element={
                 <Layout>
                   <CV />

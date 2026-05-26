@@ -36,6 +36,7 @@ import {
   retrieveNotionPage,
 } from "./notion.ts";
 import type { PageObjectResponse } from "@notionhq/client";
+import type { ListBlockChildrenResponseResult } from "notion-to-md/build/types";
 
 type PreparedPost = {
   frontmatter: PostFrontmatter;
@@ -129,10 +130,63 @@ function getDuplicateSlugs(slugs: string[]): string[] {
     .map(([slug]) => slug);
 }
 
+type FileLikeBlockType = "file" | "pdf" | "video";
+
+type FileLikeContent = {
+  caption?: Array<{ plain_text?: string }>;
+  type?: "external" | "file";
+  external?: { url?: string };
+  file?: { url?: string };
+};
+
+function getFileLikeContent(
+  block: ListBlockChildrenResponseResult,
+  type: FileLikeBlockType,
+): FileLikeContent | null {
+  const candidate = (block as Record<string, unknown>)[type];
+
+  return candidate && typeof candidate === "object" ? (candidate as FileLikeContent) : null;
+}
+
+function filenameFromUrl(url: string, fallback: string): string {
+  try {
+    const parsedUrl = new URL(url);
+    const pathname = decodeURIComponent(parsedUrl.pathname);
+    const filename = pathname.split("/").filter(Boolean).at(-1);
+
+    return filename || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function transformFileLikeBlock(
+  block: ListBlockChildrenResponseResult,
+  type: FileLikeBlockType,
+): string {
+  const content = getFileLikeContent(block, type);
+  const caption = content?.caption?.map((item) => item.plain_text ?? "").join("").trim() ?? "";
+  const url =
+    content?.type === "external" ? content.external?.url : content?.type === "file" ? content.file?.url : "";
+
+  if (!url) {
+    return caption;
+  }
+
+  const title = caption || filenameFromUrl(url, type);
+  return `[${title}](${url})`;
+}
+
 function createNotionToMarkdown() {
-  return new NotionToMarkdown({
+  const n2m = new NotionToMarkdown({
     notionClient: getNotionClient(),
   });
+
+  for (const type of ["file", "pdf", "video"] as const) {
+    n2m.setCustomTransformer(type, (block) => transformFileLikeBlock(block, type));
+  }
+
+  return n2m;
 }
 
 async function assertSlugOwnership(pageId: string, slug: string): Promise<void> {

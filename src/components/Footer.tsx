@@ -12,6 +12,10 @@ const Footer = () => {
   const [currentQuote, setCurrentQuote] = useState(() => initQuote(QUOTES_ARRAY));
   const [direction, setDirection] = useState<-1 | 1>(1);
 
+  const longestQuote = QUOTES_ARRAY.reduce((longest, q) =>
+    q.length > longest.length ? q : longest
+  ).split("<br>");
+
   const handlePrev = useCallback(() => {
     setCurrentQuote((prev) => {
       if (prev.index <= 0) return prev;
@@ -60,7 +64,7 @@ const Footer = () => {
         }}
       />
 
-      <div className="relative w-full max-w-4xl mx-auto py-12 sm:py-16 px-6 flex items-center justify-center">
+      <div className="relative w-full max-w-4xl mx-auto py-8 sm:py-10 px-6 flex items-center justify-center">
         {/* Left */}
         <div className="absolute left-6 z-10 flex flex-col items-center gap-2">
           <button
@@ -68,7 +72,7 @@ const Footer = () => {
             disabled={!hasPrev}
             className={`p-2 border border-transparent transition-all duration-300 ${
               hasPrev
-                ? "hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] cursor-pointer"
+                ? "hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Previous quote"
@@ -81,7 +85,34 @@ const Footer = () => {
         </div>
 
         {/* Quote */}
-        <div className="w-full px-16 sm:px-24 overflow-hidden relative z-0 min-h-[80px] flex items-center">
+        <div className="w-full px-16 sm:px-24 overflow-hidden relative z-0 flex items-center">
+          {/* Hidden sizer: renders the tallest quote to reserve consistent height */}
+          <div
+            className="w-full flex flex-col items-center invisible"
+            aria-hidden="true"
+          >
+            <p
+              className="font-['Fraunces'] font-normal text-lg sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-4 text-center"
+              style={{ fontStyle: "italic" }}
+            >
+              {longestQuote.map((line, i) => (
+                <span
+                  key={i}
+                  className={`block last:mb-0 ${
+                      i === 0 && longestQuote.length > 1
+                        ? "mb-4"
+                        : i > 0
+                          ? "text-muted-foreground font-light text-base sm:text-lg md:text-xl"
+                          : ""
+                    }`}
+                >
+                  {line}
+                </span>
+              ))}
+            </p>
+          </div>
+
+          {/* Animated quote overlay */}
           <AnimatePresence mode="wait" custom={direction} initial={false}>
             <motion.div
               key={currentQuote.index}
@@ -91,14 +122,23 @@ const Footer = () => {
               animate="center"
               exit="exit"
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
-              className="w-full flex flex-col items-center"
+              className="absolute inset-0 w-full flex flex-col items-center justify-center"
             >
               <p
                 className="font-['Fraunces'] font-normal text-lg sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-4 text-center"
                 style={{ fontStyle: "italic" }}
               >
                 {lines.map((line, i) => (
-                  <span key={i} className="block mb-1 last:mb-0">
+                  <span
+                    key={i}
+                    className={`block last:mb-0 ${
+                      i === 0 && lines.length > 1
+                        ? "mb-4"
+                        : i > 0
+                          ? "text-muted-foreground font-light text-base sm:text-lg md:text-xl"
+                          : ""
+                    }`}
+                  >
                     {line}
                   </span>
                 ))}
@@ -114,7 +154,7 @@ const Footer = () => {
             disabled={!hasNext}
             className={`p-2 border border-transparent transition-all duration-300 ${
               hasNext
-                ? "hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] cursor-pointer"
+                ? "hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Next quote"
@@ -127,7 +167,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="pb-6 text-center font-['Space_Mono'] text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
+      <div className="pb-3 text-center font-['Space_Mono'] text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
         kygra.xyz — {new Date().getFullYear()}
       </div>
     </footer>

@@ -3,6 +3,20 @@ import { Link } from "react-router-dom";
 import { Calendar, Clock } from "lucide-react";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
 
+function formatPostDate(date: string): string | null {
+  const parsedDate = new Date(date);
+
+  if (!date || Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 const Writings = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -56,48 +70,50 @@ const Writings = () => {
       )}
 
       <div className="space-y-16">
-        {filteredPosts.map((post, index) => (
-          <article key={post.slug} className="relative group border-b-2 border-dashed border-muted pb-12 last:border-0" style={{ animationDelay: `${index * 100}ms` }}>
-            <Link to={`/writings/${post.slug}`} className="block group/link no-underline text-foreground">
-              <header className="mb-4">
-                <div className="flex items-center gap-3 mb-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  <span>{new Date(post.date).getFullYear()}</span>
-                </div>
+        {filteredPosts.map((post, index) => {
+          const formattedDate = formatPostDate(post.date);
 
-                <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover/link:text-destructive transition-colors leading-[0.9] mb-4">
-                  {post.title}
-                </h2>
+          return (
+            <article key={post.slug} className="relative group border-b-2 border-dashed border-muted pb-12 last:border-0" style={{ animationDelay: `${index * 100}ms` }}>
+              <Link to={`/writings/${post.slug}`} className="block group/link no-underline text-foreground">
+                <header className="mb-4">
+                  {formattedDate && (
+                    <div className="flex items-center gap-3 mb-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                      <span>{new Date(post.date).getFullYear()}</span>
+                    </div>
+                  )}
 
-                <p className="text-[1.05rem] text-foreground leading-[1.75] max-w-3xl">
-                  {post.excerpt}
-                </p>
-              </header>
+                  <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover/link:text-destructive transition-colors leading-[0.9] mb-4">
+                    {post.title}
+                  </h2>
 
-              <div className="mt-6 flex flex-wrap items-center gap-6 text-[0.7rem] text-muted-foreground uppercase tracking-widest font-bold">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-foreground/50" />
-                  <span>
-                    {new Date(post.date).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric"
-                    })}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-foreground/50" />
-                  <span>{post.readTime} min read</span>
-                </div>
+                  <p className="text-[1.05rem] text-foreground leading-[1.75] max-w-3xl">
+                    {post.excerpt}
+                  </p>
+                </header>
 
-                <div className="flex items-center gap-2">
-                  {post.tags.slice(0, 3).map(tag => (
-                    <span key={tag} className="border border-foreground/30 px-2 py-0.5 text-[0.65rem] tracking-[0.1em]">{tag}</span>
-                  ))}
+                <div className="mt-6 flex flex-wrap items-center gap-6 text-[0.7rem] text-muted-foreground uppercase tracking-widest font-bold">
+                  {formattedDate && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-foreground/50" />
+                      <span>{formattedDate}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-foreground/50" />
+                    <span>{post.readTime} min read</span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {post.tags.slice(0, 3).map(tag => (
+                      <span key={tag} className="border border-foreground/30 px-2 py-0.5 text-[0.65rem] tracking-[0.1em]">{tag}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </Link>
-          </article>
-        ))}
+              </Link>
+            </article>
+          );
+        })}
 
         {!loading && !error && filteredPosts.length === 0 && (
           <div className="border-2 border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">

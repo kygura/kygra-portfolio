@@ -31,6 +31,20 @@ const alertTypes: Record<AlertType, AlertType> = {
   CAUTION: "CAUTION",
 };
 
+function formatPostDate(date: string): string | null {
+  const parsedDate = new Date(date);
+
+  if (!date || Number.isNaN(parsedDate.getTime())) {
+    return null;
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 const Post = () => {
   const { slug } = useParams();
   const { post, loading, error } = useMarkdownPost(slug);
@@ -62,6 +76,8 @@ const Post = () => {
       replace />;
   }
 
+  const formattedDate = formatPostDate(post.date);
+
   return (
     <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-3xl mx-auto animate-fade-in">
       <div className="mb-12 pb-6 border-b-[4px] border-foreground relative">
@@ -77,16 +93,12 @@ const Post = () => {
           {post.title}
         </h1>
 
-        {(post.date || post.readTime) && (
+        {(formattedDate || post.readTime) && (
           <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {post.date && (
+            {formattedDate && (
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                {new Date(post.date).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {formattedDate}
               </span>
             )}
             {post.readTime && (

@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
-import { Readable } from "node:stream";
 import test from "node:test";
 
 import { setBlobClientForTesting } from "../_lib/posts.ts";
 import { GET } from "./[slug].ts";
 
+type TestBlobClient = NonNullable<Parameters<typeof setBlobClientForTesting>[0]>;
+type TestBlobGetResult = Awaited<ReturnType<NonNullable<TestBlobClient["get"]>>>;
+
 function createStream(text: string) {
-  return Readable.from([text]);
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(text));
+      controller.close();
+    },
+  });
 }
 
 test("/api/post/[slug] returns parsed markdown content for a valid blob", async (t) => {
@@ -37,8 +44,8 @@ test("/api/post/[slug] returns parsed markdown content for a valid blob", async 
           "",
         ].join("\n"),
       ),
-      blob: {} as any,
-    } as any),
+      blob: {},
+    } as TestBlobGetResult),
   });
   t.after(() => setBlobClientForTesting(null));
 
@@ -61,8 +68,8 @@ test("/api/post/[slug] returns an error when the markdown blob is empty", async 
         "content-type": "text/markdown; charset=utf-8",
       }),
       stream: createStream("   \n"),
-      blob: {} as any,
-    } as any),
+      blob: {},
+    } as TestBlobGetResult),
   });
   t.after(() => setBlobClientForTesting(null));
 
@@ -83,8 +90,8 @@ test("/api/post/[slug] returns an error when the markdown blob contains HTML", a
         "content-type": "text/html; charset=utf-8",
       }),
       stream: createStream("<!doctype html><html><body><div id=\"root\"></div></body></html>"),
-      blob: {} as any,
-    } as any),
+      blob: {},
+    } as TestBlobGetResult),
   });
   t.after(() => setBlobClientForTesting(null));
 

@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { Readable } from "node:stream";
 import test from "node:test";
 
 import {
@@ -8,8 +7,17 @@ import {
   setBlobClientForTesting,
 } from "./posts.ts";
 
+type TestBlobClient = NonNullable<Parameters<typeof setBlobClientForTesting>[0]>;
+type TestBlobGetResult = Awaited<ReturnType<NonNullable<TestBlobClient["get"]>>>;
+type TestBlobPutResult = Awaited<ReturnType<NonNullable<TestBlobClient["put"]>>>;
+
 function createStream(text: string) {
-  return Readable.from([text]);
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode(text));
+      controller.close();
+    },
+  });
 }
 
 test("putVerifiedTextBlob uploads non-empty markdown and verifies the readback", async (t) => {
@@ -27,7 +35,7 @@ test("putVerifiedTextBlob uploads non-empty markdown and verifies the readback",
       return {
         pathname,
         url: `https://blob.example/${pathname}`,
-      } as any;
+      } as TestBlobPutResult;
     },
     get: async (pathname) => {
       const entry = store.get(pathname);
@@ -42,8 +50,8 @@ test("putVerifiedTextBlob uploads non-empty markdown and verifies the readback",
           "content-type": entry.contentType,
         }),
         stream: createStream(entry.text),
-        blob: {} as any,
-      } as any;
+        blob: {},
+      } as TestBlobGetResult;
     },
   });
   t.after(() => setBlobClientForTesting(null));
@@ -70,7 +78,7 @@ test("putVerifiedTextBlob rejects empty markdown before upload", async (t) => {
       return {
         pathname: "posts/empty.md",
         url: "https://blob.example/posts/empty.md",
-      } as any;
+      } as TestBlobPutResult;
     },
   });
   t.after(() => setBlobClientForTesting(null));
@@ -92,8 +100,8 @@ test("readBlobText decodes blob SDK streams", async (t) => {
         "content-type": "text/markdown; charset=utf-8",
       }),
       stream: createStream("---\ntitle: \"Decoded\"\n---\n\nBody\n"),
-      blob: {} as any,
-    } as any),
+      blob: {},
+    } as TestBlobGetResult),
   });
   t.after(() => setBlobClientForTesting(null));
 
@@ -112,8 +120,8 @@ test("readBlobText rejects HTML payloads for markdown blobs", async (t) => {
         "content-type": "text/html; charset=utf-8",
       }),
       stream: createStream("<!doctype html><html><body><div id=\"root\"></div></body></html>"),
-      blob: {} as any,
-    } as any),
+      blob: {},
+    } as TestBlobGetResult),
   });
   t.after(() => setBlobClientForTesting(null));
 

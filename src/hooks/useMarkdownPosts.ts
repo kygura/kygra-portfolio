@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Post, PostSummary } from "../../content/posts";
+import { sortPostsByDateDesc, type Post, type PostSummary } from "../../content/posts";
 import { localFallbackSummaries, localFallbackPosts } from "../posts/localFallback";
 
 interface UsePostsResult {
@@ -55,9 +55,7 @@ export const useMarkdownPosts = (): UsePostsResult => {
           return;
         }
 
-        const sortedPosts = data
-          .map(normalizePostSummary)
-          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const sortedPosts = sortPostsByDateDesc(data.map(normalizePostSummary));
 
         setPosts(sortedPosts);
       } catch (caughtError) {

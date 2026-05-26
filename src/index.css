@@ -816,6 +816,149 @@
 }
 
 /* ─────────────────────────────────────────────
+   MANIFESTO
+   ───────────────────────────────────────────── */
+.manifesto {
+  padding: 4rem 1.5rem 6rem;
+  background: var(--bg-primary);
+}
+
+.manifesto__inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.manifesto__eyebrow {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent-amber);
+  margin-bottom: 2.5rem;
+}
+
+.manifesto__hero-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  min-height: 3.5rem;
+}
+
+.manifesto__hero-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--text-primary);
+}
+
+.manifesto__hero-cursor {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  line-height: 1;
+  color: var(--accent-amber);
+  animation: cursorBlink 0.7s step-end infinite;
+  margin-left: 0.05em;
+  font-weight: 200;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.manifesto__hero-line {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-amber), var(--accent-terracotta), transparent);
+  transform-origin: left center;
+  margin-bottom: 2.5rem;
+}
+
+.manifesto__p {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.1rem;
+  line-height: 1.78;
+  letter-spacing: 0.005em;
+  color: rgba(242, 237, 228, 0.82);
+  margin-bottom: 1.6rem;
+}
+
+.manifesto__p:first-of-type {
+  font-size: 1.25rem;
+  line-height: 1.7;
+  color: var(--text-primary);
+}
+
+.manifesto__quote {
+  margin: 2.2rem 0 2rem;
+  padding: 0.8rem 0 0.8rem 1.5rem;
+  border-left: 3px solid var(--accent-amber);
+}
+
+.manifesto__quote p {
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.72;
+  color: var(--accent-amber);
+}
+
+.manifesto__signature {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  color: rgba(242, 237, 228, 0.45);
+  margin-top: 2.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.manifesto__cta {
+  margin-top: 2rem;
+}
+
+.manifesto__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-muted);
+  padding-bottom: 0.35rem;
+  transition: color 0.22s ease, border-color 0.22s ease;
+}
+
+.manifesto__link:hover {
+  color: var(--accent-amber);
+  border-color: var(--accent-amber);
+}
+
+@media (max-width: 640px) {
+  .manifesto {
+    padding: 2.5rem 1rem 4rem;
+  }
+
+  .manifesto__p {
+    font-size: 1rem;
+    line-height: 1.72;
+  }
+
+  .manifesto__p:first-of-type {
+    font-size: 1.12rem;
+  }
+
+  .manifesto__quote p {
+    font-size: 1.05rem;
+  }
+}
+
+/* ─────────────────────────────────────────────
    RESPONSIVE
    ───────────────────────────────────────────── */
 @media (max-width: 960px) {
@@ -951,9 +1094,22 @@
     color: var(--bg-primary);
   }
 
+  /* No native pointer cursor — custom cursor handles hover feedback */
+  a, button, [data-cursor],
+  [role="button"], input[type="submit"], input[type="button"],
+  summary, select, [tabindex]:not([tabindex="-1"]),
+  .project-tile[draggable="true"], .project-tile[draggable="true"]:active {
+    cursor: none !important;
+  }
+
   /* restore pointer on mobile / touch devices */
   @media (pointer: coarse) {
     body { cursor: auto; }
+    a, button, [data-cursor],
+    [role="button"], input[type="submit"], input[type="button"],
+    summary, select, [tabindex]:not([tabindex="-1"]) {
+      cursor: auto !important;
+    }
   }
 }
 

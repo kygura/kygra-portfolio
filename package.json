@@ -9,12 +9,15 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "sync-posts": "node --experimental-strip-types scripts/sync-notion-posts.ts",
+    "project:dossier": "node --experimental-strip-types scripts/repo-to-project-dossier.ts",
     "test": "node --test --experimental-strip-types \"api/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.api.json"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@hookform/resolvers": "^3.10.0",
+    "@inquirer/prompts": "^8.5.0",
     "@notionhq/client": "^5.20.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
