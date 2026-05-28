@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "sync-posts": "node --experimental-strip-types scripts/sync-notion-posts.ts",
-    "project:dossier": "node --experimental-strip-types scripts/repo-to-project-dossier.ts",
+    "fetch-projects": "node --experimental-strip-types scripts/fetch-projects.ts",
     "test": "node --test --experimental-strip-types \"api/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.api.json"
   },

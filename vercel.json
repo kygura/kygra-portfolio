@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run sync-posts && npm run build",
+  "buildCommand": "bun run build",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
