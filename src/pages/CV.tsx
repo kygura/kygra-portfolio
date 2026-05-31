@@ -92,7 +92,7 @@ const CV = () => {
   const downloadPDF = () => {
     // Create a link element and trigger download
     const link = document.createElement('a');
-    link.href = '/CV.pdf';
+    link.href = '/CV_NCA.pdf';
     link.download = 'CV_NCA.pdf';
     document.body.appendChild(link);
     link.click();

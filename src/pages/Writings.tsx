@@ -87,7 +87,7 @@ const Writings = () => {
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* left border sweep */}
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" />
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 ease-&lsqb;cubic-bezier(0.4,0,0.2,1)&rsqb" />
 
               <Link to={`/writings/${post.slug}`} className="block no-underline text-foreground">
                 <header className="mb-4">
