@@ -37,6 +37,24 @@ export function getWebhookVerificationToken(): string {
   return required("NOTION_WEBHOOK_VERIFICATION_TOKEN", ["WEBHOOK_SECRET"]);
 }
 
+/**
+ * Non-throwing variant: the verification token if one is configured under any
+ * accepted name, else `null`. Used by the webhook so a missing token degrades
+ * to a warning rather than a 500.
+ */
+export function getOptionalWebhookVerificationToken(): string | null {
+  return firstConfigured(["NOTION_WEBHOOK_VERIFICATION_TOKEN", "WEBHOOK_SECRET"]);
+}
+
+/**
+ * When `true`, the webhook rejects events whose signature is missing or invalid.
+ * Defaults to `false` so an already-registered subscription keeps delivering
+ * without re-running the Notion-side setup.
+ */
+export function isWebhookSignatureRequired(): boolean {
+  return process.env.NOTION_WEBHOOK_REQUIRE_SIGNATURE === "true";
+}
+
 /** Bearer secret guarding the manual full-sync endpoint. */
 export function getSyncTriggerSecret(): string {
   return required("NOTION_SYNC_TRIGGER_SECRET");

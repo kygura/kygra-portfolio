@@ -1,6 +1,9 @@
 import crypto from "node:crypto";
 import { z } from "zod";
-import { getWebhookVerificationToken } from "../_lib/env.ts";
+import {
+  getOptionalWebhookVerificationToken,
+  isWebhookSignatureRequired,
+} from "../_lib/env.ts";
 import { DuplicatePublishedSlugError, syncPageById } from "../_lib/sync.ts";
 
 const verificationSchema = z.object({
@@ -38,18 +41,20 @@ function safeEqual(expected: string, actual: string): boolean {
 }
 
 /**
- * Verify the `X-Notion-Signature` header. Accepts both the bare hex digest and
- * the `sha256=<hex>` prefixed form so we are resilient to header formatting.
+ * Verify the `X-Notion-Signature` header against the configured token. Accepts
+ * both the bare hex digest and the `sha256=<hex>` prefixed form so we are
+ * resilient to header formatting.
  */
-function isValidSignature(rawBody: string, signature: string | null): boolean {
+function isValidSignature(
+  rawBody: string,
+  signature: string | null,
+  token: string,
+): boolean {
   if (!signature) {
     return false;
   }
 
-  const digest = crypto
-    .createHmac("sha256", getWebhookVerificationToken())
-    .update(rawBody)
-    .digest("hex");
+  const digest = crypto.createHmac("sha256", token).update(rawBody).digest("hex");
 
   return [digest, `sha256=${digest}`].some((candidate) =>
     safeEqual(candidate, signature),
@@ -89,8 +94,23 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  if (!isValidSignature(rawBody, signature)) {
-    return Response.json({ error: "Invalid Notion signature" }, { status: 401 });
+  // Graceful verification: enforce only when a token is configured AND strict
+  // mode is on. Otherwise log and process, so an already-registered webhook
+  // keeps working without re-running the Notion-side setup.
+  const verificationToken = getOptionalWebhookVerificationToken();
+  const verified = verificationToken
+    ? isValidSignature(rawBody, signature, verificationToken)
+    : false;
+
+  if (!verified) {
+    if (isWebhookSignatureRequired()) {
+      return Response.json({ error: "Invalid Notion signature" }, { status: 401 });
+    }
+    console.warn(
+      verificationToken
+        ? "Notion webhook signature missing/invalid — processing anyway. Set NOTION_WEBHOOK_REQUIRE_SIGNATURE=true to enforce."
+        : "Notion webhook signature verification disabled — no verification token configured (WEBHOOK_SECRET / NOTION_WEBHOOK_VERIFICATION_TOKEN).",
+    );
   }
 
   const event = webhookEventSchema.safeParse(parsedBody);
