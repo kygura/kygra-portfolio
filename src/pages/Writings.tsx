@@ -41,8 +41,11 @@ const Writings = () => {
       <div className="mb-16 flex flex-wrap gap-3">
         <button
           onClick={() => setSelectedTag(null)}
-          className={`font-['Bebas_Neue'] text-sm tracking-[0.2em] px-3 py-1 border-[2.5px] border-foreground hover:bg-foreground hover:text-background transition-colors uppercase ${selectedTag === null ? "bg-foreground text-background" : "bg-transparent text-foreground"
-            }`}
+          className={`font-['Bebas_Neue'] text-sm tracking-[0.2em] px-3 py-1 border-[2.5px] transition-colors uppercase ${
+            selectedTag === null
+              ? "bg-accent border-accent text-accent-foreground"
+              : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
+          }`}
         >
           ALL
         </button>
@@ -50,8 +53,11 @@ const Writings = () => {
           <button
             key={tag}
             onClick={() => setSelectedTag(tag)}
-            className={`font-['Bebas_Neue'] text-sm tracking-[0.2em] px-3 py-1 border-[2.5px] border-foreground hover:bg-foreground hover:text-background transition-colors uppercase ${selectedTag === tag ? "bg-foreground text-background" : "bg-transparent text-foreground"
-              }`}
+            className={`font-['Bebas_Neue'] text-sm tracking-[0.2em] px-3 py-1 border-[2.5px] transition-colors uppercase ${
+              selectedTag === tag
+                ? "bg-accent border-accent text-accent-foreground"
+                : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
+            }`}
           >
             {tag}
           </button>
