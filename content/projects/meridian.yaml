@@ -1,0 +1,30 @@
+accent: "#4cb862"
+title: Meridian
+subtitle: A cartographic interface
+summary: >-
+  A globe-scale map interface for comparing and visualizing global metrics and generating city intelligence briefs
+description: >-
+  Meridian visualizes global metrics as overlays on a 3D MapLibre globe so you
+  can compare cities at a glance. An OpenAI-powered agent generates city
+  intelligence briefs and builds multi-city itineraries from a chat interface.
+overview:
+  - >-
+    Each metric is a surface layer on the globe. MapLibre GL JS handles the
+    cartographic rendering, deck.gl composes data overlays, and a Hono
+    backend serves normalized metric surfaces. You get geographic context and
+    metric distribution in one view instead of static comparison tables.
+  - >-
+    The atlas is the primary interface. An OpenAI-powered chat agent can
+    generate city briefs, compare regions, and build itineraries. Zustand
+    keeps the globe, overlays, and chat state in sync across a single
+    session.
+repo: https://github.com/kygura/meridian
+techStack:
+  - MapLibre GL JS
+  - deck.gl
+  - Hono
+  - OpenAI
+  - Zustand
+layout: wide
+status: In development
+year: "2026"

@@ -72,7 +72,7 @@ const Footer = () => {
             disabled={!hasPrev}
             className={`p-2 border border-transparent transition-all duration-300 ${
               hasPrev
-                ? "hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)]"
+                ? "hover:border-[var(--accent-terracotta)] hover:text-[var(--accent-terracotta)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Previous quote"
@@ -154,7 +154,7 @@ const Footer = () => {
             disabled={!hasNext}
             className={`p-2 border border-transparent transition-all duration-300 ${
               hasNext
-                ? "hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)]"
+                ? "hover:border-[var(--accent-sage)] hover:text-[var(--accent-sage)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Next quote"
@@ -168,7 +168,7 @@ const Footer = () => {
       </div>
 
       <div className="pb-3 text-center font-['Space_Mono'] text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
-        kygra.xyz — {new Date().getFullYear()}
+        Today is {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
       </div>
     </footer>
   );

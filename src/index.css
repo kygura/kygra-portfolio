@@ -499,6 +499,94 @@
   border-color: var(--text-primary);
 }
 
+/* ── Project entry: accent color + links ─────────────────────────────── */
+
+.project-entry {
+  --project-accent: var(--accent-amber);
+}
+
+.project-entry__title {
+  color: var(--text-primary);
+  transition: color 0.35s ease;
+}
+
+.project-entry:hover .project-entry__title {
+  color: var(--project-accent);
+}
+
+.project-entry__links {
+  flex-shrink: 0;
+}
+
+.project-entry__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border: 1.5px solid color-mix(in srgb, var(--project-accent) 50%, transparent);
+  border-radius: 2px;
+  color: var(--project-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--project-accent) 8%, transparent);
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-entry__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--project-accent);
+  transform: translateX(-101%);
+  transition: transform 0.35s cubic-bezier(0.42, 0, 0.58, 1);
+  z-index: 0;
+}
+
+.project-entry__link:hover::after,
+.project-entry__link:focus-visible::after {
+  transform: translateX(0);
+}
+
+.project-entry__link:hover,
+.project-entry__link:focus-visible {
+  border-color: var(--project-accent);
+  border-radius: 100px;
+  color: var(--bg-primary);
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--project-accent) 30%, transparent);
+}
+
+.project-entry__link:hover .project-entry__link-icon,
+.project-entry__link:focus-visible .project-entry__link-icon {
+  color: var(--bg-primary);
+}
+
+.project-entry__link > * {
+  position: relative;
+  z-index: 1;
+}
+
+.project-entry__link-text {
+  display: inline;
+  white-space: nowrap;
+}
+
+.project-entry__link-icon {
+  display: inline-flex;
+  transition: color 0.35s cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+/* ── End project entry styles ───────────────────────────────────────── */
+
 .project-tile--meridian {
   --project-bg: #131e1e;
   --project-fg: var(--text-primary);

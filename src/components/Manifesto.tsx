@@ -12,7 +12,7 @@ const fadeUp = {
   }),
 };
 
-const typewriterText = "On Living Deliberately";
+const typewriterText = "On Software Craft";
 
 function TypewriterHeading({ inView }: { inView: boolean }) {
   const [displayed, setDisplayed] = useState("");
@@ -47,18 +47,18 @@ function TypewriterHeading({ inView }: { inView: boolean }) {
 }
 
 const paragraphs = [
-  "A dissertation on my methodology for building software.",
+  "A dissertation on my rationale and methodology for building software.",
 
   "The systems we inhabit are not designed for human flourishing. They are designed to extract attention, pacify ambition, and replace inner life with a curated performance of it. The interface has become the world, and it surveils you while selling you back to yourself. This is not a political crisis — every tribe has failed, in sequence, with conviction. What is broken runs deeper than policy. It is in the texture of daily life. The atomization. The screen-mediated loneliness. The feeling of being a node in a network that has forgotten about the individual node. The only way out is through. To build new tools, new interfaces, new ways of living and working that are not complicit in the machinery of control, but that reshape it from the inside out.",
 
 
-  "My work sits at the intersection of financial apparatus and software craft. I'm of the opinion software can not only be purely functional, but beautiful: Interfaces that reduce the friction of modern information systems and do so in an elegant matter, making the experience of using computers an actual strategic advantage, not a modern hassle. An honest attempt to reduce screen time and touch more grass. Each project is an attempt to build something true within the machinery; Not to escape it, not to comply with it, but to reshape it from the inside.",
+  "My work sits at the intersection of financial apparatus and software craft. I'm of the opinion software can not only be purely functional, but beautiful: Interfaces that reduce the friction of modern information systems and do so in an elegant matter, making the experience of using computers an actual strategic advantage, not a modern hassle. Each project is an attempt to build something true within the machinery; Not to escape it, not to comply with it, but to reshape it from the inside. I just wanna touch grass while the computer does stuff",
 
 
 ];
 
 const blockquote = {
-  text:   "These are not products. They are tools, interfaces to view and understand reality, never to replace it. This work, is an ongoing effort for simplicity, for clarity, for beauty. To build tools that serve us, not tools that withdraw our attention to control us. It is an effort to live and work deliberately, to find the things worth doing and doing with the conviction and passion.",
+  text:   "These are not products. They are tools, interfaces to view and understand reality, never to replace it. This work, is an ongoing effort for simplicity, for clarity, for beauty. To build tools that serve us, not tools that withdraw our attention to control us. It is an effort to live and work deliberately, to find the things worth doing.",
   follow: "History is not something that happens to us. It is something we do. Every moment collapses infinite possibilities into a single path. The work we do now reverberates into the future. Each generation inherits the spirit of its ancestors and is tasked with confronting the corruption, decay, and evil of its age with courage.",
 };
 
@@ -79,7 +79,8 @@ export default function Manifesto() {
           animate={inView ? "visible" : "hidden"}
           variants={fadeUp}
         >
-          <span className="manifesto__eyebrow">A Manifesto</span>
+          
+          
           <TypewriterHeading inView={inView} />
           <motion.div
             className="manifesto__hero-line"
@@ -132,7 +133,7 @@ export default function Manifesto() {
           animate={inView ? "visible" : "hidden"}
           variants={fadeUp}
         >
-          —K.
+        -Nicolas
         </motion.p>
 
         {/* Divider */}

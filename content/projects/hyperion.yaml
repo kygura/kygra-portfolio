@@ -1,0 +1,43 @@
+accent: "#3bb5a5"
+title: Hyperion
+subtitle: Agentic Trading
+summary: >-
+  An agentic trading system for Hyperliquid that translates plain-language
+  strategies into executable orders, bounded by deterministic risk guards,
+  paper-trade verification, and a real-time signal terminal.
+description: >-
+  Hyperion is a full-stack trading platform. An LLM agent translates natural
+  language into strategy JSON, a deterministic interpreter executes with seven
+  pre-execution risk guards and emergency unwind, and a signal terminal
+  aggregates live market data from Hyperliquid and Bybit with
+  conviction-scored alerts via WebSocket and Telegram. It supports
+  paper-trading against live data before committing real capital and can run
+  unattended.
+overview:
+  - >-
+    The architecture is a three-layer control model. The LLM agent parses
+    intent and generates strategy JSON. The human confirms, or delegates to
+    unattended mode. The deterministic interpreter owns execution. Paper-trade
+    mode lets users validate strategies against live market data before
+    committing real capital. Seven pre-execution risk guards and an emergency
+    unwind function ensure the agent cannot bypass safety constraints.
+  - >-
+    The signal terminal continuously scans market data from Hyperliquid and
+    Bybit, applies technical indicators, and produces conviction-scored alerts
+    via WebSocket and Telegram. Portfolio branches let traders simulate
+    hypothetical positions alongside their actual portfolio with full margin
+    math. The monorepo spans workspace packages for shared types, SDK
+    wrappers, strategy interpretation, risk checks, market surveillance,
+    paper-trade simulation, a React web cockpit, a TUI dashboard, and an
+    Astro marketing site. The daemon communicates over Unix sockets with a
+    WebSocket bridge for the web frontend.
+repo: https://github.com/kygura/hyperagent
+techStack:
+  - TypeScript
+  - React
+  - Hono
+  - Bun
+  - WebSocket
+layout: standard
+status: Active build
+year: "2026"

@@ -1,0 +1,20 @@
+accent: "#e4a853"
+title: Equilibria
+subtitle: Algorithmic Flatcoin
+summary: An algorithmic flatcoin with built-in tranching and supply-sensitive stability mechanics.
+description: >-
+  Equilibria is a monetary systems project about balance, incentives, and
+  structural resilience. Stability is a designed mechanism, not a branding claim.
+overview:
+  - >-
+    The system pairs market-aware behavior with tranche design so exposure can
+    be shaped instead of flattened into a single risk profile.
+  - >-
+    Its presentation emphasizes symmetry, measured movement, and engineered
+    equilibrium without losing the site's visual edge.
+repo: https://github.com/kygura/equilibria-protocol
+live: https://equilibria.cash
+techStack: []
+layout: standard
+status: In development
+year: "2026"

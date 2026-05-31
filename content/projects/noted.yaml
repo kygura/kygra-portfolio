@@ -1,0 +1,38 @@
+accent: "#e4c853"
+title: Noted
+subtitle: Knowledge Graph
+summary: >-
+  A client-side knowledge graph that writes Markdown notes, auto-embeds them
+  via OpenAI, and infers semantic relationships to build a navigable graph
+  visualization.
+description: >-
+  Noted v2 is a knowledge graph and note-taking system where notes are
+  connected via directed edges, supports, contradicts, elaborates,
+  references, relates-to, and grouped into regions. An agent pipeline runs
+  after each save to embed content via OpenAI and infer semantic edges
+  automatically.
+overview:
+  - >-
+    The system treats knowledge as a graph of interconnected atomic notes,
+    not a flat file hierarchy. Each note is typed, thought or source,
+    connected via directed semantic edges, and grouped into regions. After
+    each save, an agent pipeline embeds the content via OpenAI's
+    text-embedding-3-small model and infers semantic edges, building the
+    graph automatically as you write.
+  - >-
+    The editor is built on TipTap, ProseMirror, with rich extensions for
+    links, tasks, markdown, and drag handling. Graph visualization uses
+    React Flow and react-force-graph-2d for navigating the knowledge space.
+    All data lives locally in IndexedDB via Dexie. No server required. The
+    application runs as a client-side Vite SPA deployed on Vercel.
+repo: https://github.com/kygura/noted
+techStack:
+  - React
+  - TipTap
+  - React Flow
+  - OpenAI
+  - Dexie
+  - Vite
+layout: standard
+status: In development
+year: "2026"
