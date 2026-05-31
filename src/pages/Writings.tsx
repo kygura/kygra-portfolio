@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Calendar, Clock } from "lucide-react";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { resolvePostTags } from "../lib/postTagFallbacks";
 
 function formatPostDate(date: string): string | null {
   const parsedDate = new Date(date);
@@ -22,10 +23,10 @@ const Writings = () => {
 
   const { posts, loading, error } = useMarkdownPosts();
 
-  const allTags = Array.from(new Set(posts.flatMap((post) => post.tags)));
+  const allTags = Array.from(new Set(posts.flatMap((post) => resolvePostTags(post))));
 
   const filteredPosts = selectedTag
-    ? posts.filter((post) => post.tags.includes(selectedTag))
+    ? posts.filter((post) => resolvePostTags(post).includes(selectedTag))
     : posts;
 
   return (
