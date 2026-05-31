@@ -81,7 +81,14 @@ const Writings = () => {
           const formattedDate = formatPostDate(post.date);
 
           return (
-            <article key={post.slug} className="relative group border-b-2 border-dashed border-muted pb-12 last:border-0" style={{ animationDelay: `${index * 100}ms` }}>
+            <article
+              key={post.slug}
+              className="relative group border-b-2 border-dashed border-muted pb-12 last:border-0 pl-4 transition-colors duration-300 hover:bg-accent/[0.04]"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              {/* left border sweep */}
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" />
+
               <Link to={`/writings/${post.slug}`} className="block group/link no-underline text-foreground">
                 <header className="mb-4">
                   {formattedDate && (
@@ -90,7 +97,7 @@ const Writings = () => {
                     </div>
                   )}
 
-                  <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover/link:text-destructive transition-colors leading-[0.9] mb-4">
+                  <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
                     {post.title}
                   </h2>
 
@@ -112,8 +119,13 @@ const Writings = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {post.tags.slice(0, 3).map(tag => (
-                      <span key={tag} className="border border-foreground/30 px-2 py-0.5 text-[0.65rem] tracking-[0.1em]">{tag}</span>
+                    {resolvePostTags(post).slice(0, 3).map(tag => (
+                      <span
+                        key={tag}
+                        className="border border-foreground/30 px-2 py-0.5 text-[0.65rem] tracking-[0.1em] transition-colors duration-300 group-hover:border-accent/50 group-hover:text-accent"
+                      >
+                        {tag}
+                      </span>
                     ))}
                   </div>
                 </div>
