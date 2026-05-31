@@ -89,7 +89,7 @@ const Writings = () => {
               {/* left border sweep */}
               <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]" />
 
-              <Link to={`/writings/${post.slug}`} className="block group/link no-underline text-foreground">
+              <Link to={`/writings/${post.slug}`} className="block no-underline text-foreground">
                 <header className="mb-4">
                   {formattedDate && (
                     <div className="flex items-center gap-3 mb-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
