@@ -10,10 +10,10 @@ export const projectDossiers = defineProjects(
     "title": "Hyperion",
     "subtitle": "Agentic Trading",
     "summary": "An agentic trading system for Hyperliquid that translates plain-language strategies into executable orders, bounded by deterministic risk guards, paper-trade verification, and a real-time signal terminal.",
-    "description": "Hyperion is a full-stack trading platform. An LLM agent translates natural language into strategy JSON, a deterministic interpreter executes with seven pre-execution risk guards and emergency unwind, and a signal terminal aggregates live market data from Hyperliquid and Bybit with conviction-scored alerts via WebSocket and Telegram. It supports paper-trading against live data before committing real capital and can run unattended.",
+    "description": "A full-stack trading platform where an LLM agent translates plain language into strategy JSON, a deterministic interpreter executes it with seven risk guards and emergency unwind, and a signal terminal streams conviction-scored alerts from Hyperliquid and Bybit. Runs unattended or with a human in the loop.",
     "overview": [
-      "The architecture is a three-layer control model. The LLM agent parses intent and generates strategy JSON. The human confirms, or delegates to unattended mode. The deterministic interpreter owns execution. Paper-trade mode lets users validate strategies against live market data before committing real capital. Seven pre-execution risk guards and an emergency unwind function ensure the agent cannot bypass safety constraints.",
-      "The signal terminal continuously scans market data from Hyperliquid and Bybit, applies technical indicators, and produces conviction-scored alerts via WebSocket and Telegram. Portfolio branches let traders simulate hypothetical positions alongside their actual portfolio with full margin math. The monorepo spans workspace packages for shared types, SDK wrappers, strategy interpretation, risk checks, market surveillance, paper-trade simulation, a React web cockpit, a TUI dashboard, and an Astro marketing site. The daemon communicates over Unix sockets with a WebSocket bridge for the web frontend."
+      "Three-layer control model: the agent parses intent, the human confirms or steps aside, the deterministic interpreter owns execution. Seven pre-execution guards and an emergency unwind sit between the agent and real capital. Paper-trade mode runs strategies against live data before any money moves.",
+      "The signal terminal scans Hyperliquid and Bybit continuously, scores alerts by conviction, and pushes them over WebSocket and Telegram. Portfolio branches let you simulate hypothetical positions against your actual book with full margin math. The monorepo covers shared types, SDK wrappers, strategy interpretation, risk checks, market surveillance, paper-trade simulation, a React cockpit, a TUI dashboard, and an Astro site. Daemon communicates over Unix sockets with a WebSocket bridge for the web frontend."
     ],
     "links": [
       {
@@ -40,12 +40,12 @@ export const projectDossiers = defineProjects(
     "slug": "meridian",
     "accent": "#4cb862",
     "title": "Meridian",
-    "subtitle": "Nomadic Intelligence",
-    "summary": "A globe-scale discovery tool that maps weather comfort, cost of living, internet speed, and other metrics onto an interactive 3D globe, with an AI agent that writes city briefs and trip plans.",
-    "description": "Meridian visualizes global metrics as overlays on a 3D MapLibre globe so you can compare cities at a glance. An OpenAI-powered agent generates city intelligence briefs and builds multi-city itineraries from a chat interface.",
+    "subtitle": "A cartographic interface",
+    "summary": "A globe-scale map interface for comparing and visualizing global metrics and generating city intelligence briefs",
+    "description": "Global metrics as overlays on a 3D MapLibre globe — compare cities at a glance. An OpenAI-powered agent generates city intelligence briefs and builds multi-city itineraries from a chat interface.",
     "overview": [
-      "Each metric is a surface layer on the globe. MapLibre GL JS handles the cartographic rendering, deck.gl composes data overlays, and a Hono backend serves normalized metric surfaces. You get geographic context and metric distribution in one view instead of static comparison tables.",
-      "The atlas is the primary interface. An OpenAI-powered chat agent can generate city briefs, compare regions, and build itineraries. Zustand keeps the globe, overlays, and chat state in sync across a single session."
+      "Each metric is a surface layer on the globe. MapLibre GL JS handles cartographic rendering, deck.gl composes data overlays, and a Hono backend serves normalized metric surfaces. Geographic context and metric distribution in one view instead of static comparison tables.",
+      "The atlas is the primary interface. A chat agent generates city briefs, compares regions, and builds itineraries. Zustand keeps the globe, overlays, and chat state in sync across a session."
     ],
     "links": [
       {
@@ -53,12 +53,12 @@ export const projectDossiers = defineProjects(
         "href": "/projects/meridian"
       },
       {
-        "label": "GitHub",
-        "href": "https://github.com/kygura/meridian"
+        "label": "Live demo",
+        "href": "https://meridian.onrender.com"
       },
       {
-        "label": "Live demo",
-        "href": "https://meridian-cartography.onrender.com"
+        "label": "GitHub",
+        "href": "https://github.com/kygura/meridian"
       }
     ],
     "techStack": [
@@ -122,6 +122,10 @@ export const projectDossiers = defineProjects(
       {
         "label": "Open dossier",
         "href": "/projects/swarm"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/kygura/swarm"
       }
     ],
     "techStack": [
@@ -141,10 +145,9 @@ export const projectDossiers = defineProjects(
     "title": "Equilibria",
     "subtitle": "Algorithmic Flatcoin",
     "summary": "An algorithmic flatcoin with built-in tranching and supply-sensitive stability mechanics.",
-    "description": "Equilibria is a monetary systems project about balance, incentives, and structural resilience. Stability is a designed mechanism, not a branding claim.",
+    "description": "A monetary systems project about balance, incentives, and structural resilience. Stability is a designed mechanism, not a branding claim.",
     "overview": [
-      "The system pairs market-aware behavior with tranche design so exposure can be shaped instead of flattened into a single risk profile.",
-      "Its presentation emphasizes symmetry, measured movement, and engineered equilibrium without losing the site's visual edge."
+      "Market-aware behavior paired with tranche design — exposure gets shaped instead of flattened into a single risk profile."
     ],
     "links": [
       {
@@ -166,37 +169,6 @@ export const projectDossiers = defineProjects(
     "year": "2026"
   },
   {
-    "slug": "routines",
-    "accent": "#9b8ab8",
-    "title": "Routines",
-    "subtitle": "Life Operating System",
-    "summary": "A personal life operating system combining a CLI bridge for Claude Routines, a deterministic decision engine across seven quality-of-life dimensions, and an LLM-maintained knowledge wiki.",
-    "description": "Routines is a triad of personal productivity tools. claude-routiner, cr, triggers Claude Code Routines from the terminal. lifeOS evaluates life decisions by scoring them against seven dimensions, health, wealth, relationships, growth, environment, time freedom, meaning, and comparing against future-self attractor states. The wiki maintains a persistent knowledge base in Obsidian-compatible markdown.",
-    "overview": [
-      "The system orchestrates an autonomous life-improvement pipeline. claude-routiner triggers Claude Code Routines from the terminal. lifeOS evaluates life decisions by scoring them against seven dimensions and comparing against future-self attractor states. The wiki maintains a persistent knowledge base in Obsidian-compatible markdown with wikilinks and Dataview queries.",
-      "Results surface via Telegram so insights arrive without active monitoring. The decision engine uses a deterministic scoring model, no LLM hallucination in the evaluation itself, while the wiki leverages LLM maintenance for keeping knowledge current. Together they form a continuous loop: observe, evaluate, act, record."
-    ],
-    "links": [
-      {
-        "label": "Open dossier",
-        "href": "/projects/routines"
-      },
-      {
-        "label": "GitHub",
-        "href": "https://github.com/kygura/life-os"
-      }
-    ],
-    "techStack": [
-      "TypeScript",
-      "Claude",
-      "Telegram",
-      "Obsidian"
-    ],
-    "layout": "standard",
-    "status": "Active build",
-    "year": "2026"
-  },
-  {
     "slug": "noted",
     "accent": "#e4c853",
     "title": "Noted",
@@ -211,6 +183,10 @@ export const projectDossiers = defineProjects(
       {
         "label": "Open dossier",
         "href": "/projects/noted"
+      },
+      {
+        "label": "Live demo",
+        "href": "https://noted-two-azure.vercel.app/"
       },
       {
         "label": "GitHub",

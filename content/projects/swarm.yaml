@@ -27,6 +27,7 @@ overview:
     event persistence. The monorepo separates core interfaces, CLI adapters,
     daemon server, dashboard SPA, and CLI binary into isolated workspace
     packages.
+repo: https://github.com/kygura/swarm
 techStack:
   - TypeScript
   - React Flow

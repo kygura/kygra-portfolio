@@ -26,6 +26,7 @@ overview:
     All data lives locally in IndexedDB via Dexie. No server required. The
     application runs as a client-side Vite SPA deployed on Vercel.
 repo: https://github.com/kygura/noted
+live: https://noted-two-azure.vercel.app/
 techStack:
   - React
   - TipTap
