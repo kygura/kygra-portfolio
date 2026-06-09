@@ -18,7 +18,7 @@ overview:
     compares regions, and builds itineraries. Zustand keeps the globe,
     overlays, and chat state in sync across a session.
 repo: https://github.com/kygura/meridian
-live: https://meridian.onrender.com
+live: https://meridian-cartography.onrender.com
 techStack:
   - MapLibre GL JS
   - deck.gl
