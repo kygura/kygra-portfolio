@@ -103,7 +103,16 @@ const Guestbook = () => {
     };
   }, [fetchEntries, guestbookAvailable]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      if (guestbookAvailable && !submitting && !cooldown && message.trim()) {
+        handleSubmit(e);
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent | React.KeyboardEvent) => {
     e.preventDefault();
 
     if (!guestbookAvailable) {
@@ -136,20 +145,31 @@ const Guestbook = () => {
     setSubmitting(true);
 
     try {
+      const optimisticEntry: Entry = {
+        id: `optimistic-${Date.now()}`,
+        name: name.trim() || "Anon",
+        message: message.trim(),
+        created_at: new Date().toISOString(),
+      };
+
+      setEntries(prev => [optimisticEntry, ...prev]);
+      setMessage("");
+      setCooldown(true);
+      setTimeout(() => setCooldown(false), 30000);
+
       const { error } = await guestbookAvailable
         .from('guestbook')
         .insert([
           {
-            name: name.trim() || "Anonymous",
+            name: name.trim() || "Anon",
             message: message.trim()
           }
         ]);
 
-      if (error) throw error;
-
-      setMessage("");
-      setCooldown(true);
-      setTimeout(() => setCooldown(false), 30000); // 30s cooldown
+      if (error) {
+        setEntries(prev => prev.filter(e => e.id !== optimisticEntry.id));
+        throw error;
+      }
 
       toast({
         title: "Signed!",
@@ -204,6 +224,7 @@ const Guestbook = () => {
                   placeholder="Leave a message..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   maxLength={MAX_CHARS}
                   minRows={3}
                   maxRows={8}
@@ -221,9 +242,9 @@ const Guestbook = () => {
                   className="w-full sm:w-auto px-8"
                 >
                   {submitting ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Publishing...</>
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...</>
                   ) : (
-                    <><SendHorizontal className="mr-2 h-4 w-4" /> Post Entry</>
+                    <><SendHorizontal className="mr-2 h-4 w-4" /> Sign</>
                   )}
                 </Button>
               </div>

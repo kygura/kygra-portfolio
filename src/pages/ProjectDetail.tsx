@@ -58,29 +58,11 @@ const ProjectDetail = () => {
       </section>
 
       <section className="project-detail__grid">
-        <article className="project-detail__panel">
+        <article className="project-detail__panel project-detail__panel--stack">
           <p className="project-detail__label">Overview</p>
           <div className="project-detail__copy">
             {project.overview.map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </article>
-
-        <article className="project-detail__panel">
-          <p className="project-detail__label">Highlights</p>
-          <ul className="project-detail__list">
-            {project.highlights.map((highlight) => (
-              <li key={highlight}>{highlight}</li>
-            ))}
-          </ul>
-        </article>
-
-        <article className="project-detail__panel project-detail__panel--stack">
-          <p className="project-detail__label">Stack</p>
-          <div className="project-detail__stack">
-            {project.techStack.map((tech) => (
-              <span key={tech}>{tech}</span>
             ))}
           </div>
         </article>

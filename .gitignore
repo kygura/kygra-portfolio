@@ -25,4 +25,8 @@ dist-ssr
 .vercel
 .env
 .env*.local
-PIPELINE.md
+
+# Claude stuff
+.claude/
+.superpowers/
+docs/

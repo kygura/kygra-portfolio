@@ -1,0 +1,39 @@
+accent: "#6b8fb5"
+title: Swarm
+subtitle: Agent Orchestrator
+summary: >-
+  A provider- and harness-agnostic AI agent orchestrator that lets you define
+  DAG-based workflows of AI agents across any combination of agentic CLIs
+  and a native ReAct loop.
+description: >-
+  Swarm lets you define directed acyclic graphs of AI agents that run on any
+  combination of external agentic CLI runtimes, Claude Code, Droid, OpenCode,
+  aider, codex, or a built-in native ReAct loop, with parallel scheduling,
+  cancellation propagation, a real-time web dashboard, and SQLite-backed
+  event logging with time-travel replay.
+overview:
+  - >-
+    The architecture is provider- and harness-agnostic. Agents in a DAG can
+    run on different CLI runtimes simultaneously, and the orchestrator
+    handles scheduling, dependency resolution, and cancellation propagation
+    across the graph. A built-in ReAct loop provides a fallback when no
+    external harness is available. The event bus and projection system
+    capture every agent action for real-time dashboard rendering and
+    historical replay.
+  - >-
+    The web dashboard uses React Flow for DAG visualization with a terminal
+    panel for live output and a time-travel scrubber for replaying past runs.
+    The daemon exposes an HTTP and WebSocket API backed by bun:sqlite for
+    event persistence. The monorepo separates core interfaces, CLI adapters,
+    daemon server, dashboard SPA, and CLI binary into isolated workspace
+    packages.
+repo: https://github.com/kygura/swarm
+techStack:
+  - TypeScript
+  - React Flow
+  - SQLite
+  - WebSocket
+  - Bun
+layout: standard
+status: Prototype
+year: "2026"

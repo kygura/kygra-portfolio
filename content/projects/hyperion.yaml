@@ -1,0 +1,39 @@
+accent: "#3bb5a5"
+title: Hyperion
+subtitle: Agentic Trading
+summary: >-
+  An agentic trading system for Hyperliquid that translates plain-language
+  strategies into executable orders, bounded by deterministic risk guards,
+  paper-trade verification, and a real-time signal terminal.
+description: >-
+  A full-stack trading platform where an LLM agent translates plain language
+  into strategy JSON, a deterministic interpreter executes it with seven
+  risk guards and emergency unwind, and a signal terminal streams
+  conviction-scored alerts from Hyperliquid and Bybit. Runs unattended or
+  with a human in the loop.
+overview:
+  - >-
+    Three-layer control model: the agent parses intent, the human confirms
+    or steps aside, the deterministic interpreter owns execution. Seven
+    pre-execution guards and an emergency unwind sit between the agent and
+    real capital. Paper-trade mode runs strategies against live data before
+    any money moves.
+  - >-
+    The signal terminal scans Hyperliquid and Bybit continuously, scores
+    alerts by conviction, and pushes them over WebSocket and Telegram.
+    Portfolio branches let you simulate hypothetical positions against your
+    actual book with full margin math. The monorepo covers shared types,
+    SDK wrappers, strategy interpretation, risk checks, market surveillance,
+    paper-trade simulation, a React cockpit, a TUI dashboard, and an Astro
+    site. Daemon communicates over Unix sockets with a WebSocket bridge
+    for the web frontend.
+repo: https://github.com/kygura/hyperagent
+techStack:
+  - TypeScript
+  - React
+  - Hono
+  - Bun
+  - WebSocket
+layout: standard
+status: Active build
+year: "2026"

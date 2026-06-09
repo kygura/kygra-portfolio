@@ -17,46 +17,32 @@ export default {
   		fontFamily: {
   			display: [
   				'Bebas Neue',
-  				'Space Grotesk',
   				'sans-serif'
   			],
   			body: [
-  				'Space Grotesk',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'sans-serif'
+  				'Fraunces',
+  				'Georgia',
+  				'serif'
   			],
   			sans: [
-  				'Space Grotesk',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'-apple-system',
-  				'BlinkMacSystemFont',
-  				'Segoe UI',
-  				'Roboto',
-  				'Helvetica Neue',
-  				'Arial',
-  				'Noto Sans',
-  				'sans-serif'
+  				'Fraunces',
+  				'Georgia',
+  				'ui-serif',
+  				'serif'
   			],
   			serif: [
-  				'Lora',
-  				'ui-serif',
+  				'Fraunces',
   				'Georgia',
-  				'Cambria',
-  				'Times New Roman',
-  				'Times',
+  				'ui-serif',
   				'serif'
   			],
   			mono: [
-  				'Inconsolata',
+  				'Space Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
   				'Monaco',
   				'Consolas',
-  				'Liberation Mono',
-  				'Courier New',
   				'monospace'
   			]
   		},
@@ -112,25 +98,27 @@ export default {
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: {
-  					height: '0'
-  				},
-  				to: {
-  					height: 'var(--radix-accordion-content-height)'
-  				}
+  				from: { height: '0' },
+  				to: { height: 'var(--radix-accordion-content-height)' }
   			},
   			'accordion-up': {
-  				from: {
-  					height: 'var(--radix-accordion-content-height)'
-  				},
-  				to: {
-  					height: '0'
-  				}
-  			}
+  				from: { height: 'var(--radix-accordion-content-height)' },
+  				to: { height: '0' }
+  			},
+  			'cursor-enter': {
+  				from: { transform: 'scale(0)', opacity: '0' },
+  				to: { transform: 'scale(1)', opacity: '1' }
+  			},
+  			'fade-up': {
+  				from: { opacity: '0', transform: 'translateY(24px)' },
+  				to: { opacity: '1', transform: 'translateY(0)' }
+  			},
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'cursor-enter': 'cursor-enter 0.3s ease-out forwards',
+  			'fade-up': 'fade-up 0.6s ease-out forwards',
   		},
   		boxShadow: {
   			'2xs': 'var(--shadow-2xs)',

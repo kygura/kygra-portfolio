@@ -1,6 +1,8 @@
-import { ArrowUpRight, ExternalLink, GitBranch } from "lucide-react";
+import { ExternalLink, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 import { projects } from "@/lib/projects";
+
+const DEFAULT_ACCENT = "var(--accent-amber)";
 
 const Projects = () => {
   return (
@@ -17,76 +19,60 @@ const Projects = () => {
       <div className="space-y-16">
         {projects.map((project, index) => {
           const githubUrl = project.links.find((link) => link.label === "GitHub")?.href;
-          const liveUrl = project.links.find((link) => link.label === "Live demo")?.href;
+          const deployment = project.links.find((link) => link.label === "Live demo")?.href;
 
           return (
           <article
             key={project.slug}
-            className="relative group border-b-2 border-dashed border-muted pb-12 last:border-0"
-            style={{ animationDelay: `${index * 100}ms` }}
+            className="project-entry relative group border-b-2 border-dashed border-muted pb-12 last:border-0"
+            style={{
+              "--project-accent": project.accent ?? DEFAULT_ACCENT,
+              animationDelay: `${index * 100}ms`,
+            } as React.CSSProperties}
           >
             <header className="mb-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <p className="text-[0.72rem] uppercase tracking-[0.24em] text-muted-foreground mb-3">
-                    {project.subtitle}
-                  </p>
-                  <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover:text-destructive transition-colors leading-[0.9] mb-4">
-                    {project.title}
-                  </h2>
-                </div>
+              <div>
+                <p className="text-[0.72rem] uppercase tracking-[0.24em] text-muted-foreground mb-3">
+                  {project.subtitle}
+                </p>
+                <div className="flex flex-col gap-3 md:flex-row md:items-baseline md:gap-8">
+                  <Link to={`/projects/${project.slug}`}>
+                    <h2 className="project-entry__title text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground leading-[0.9]">
+                      {project.title}
+                    </h2>
+                  </Link>
 
-                <Link
-                  to={`/projects/${project.slug}`}
-                  className="inline-flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.24em] text-foreground hover:text-destructive transition-colors"
-                >
-                  Open dossier
-                  <ArrowUpRight className="w-4 h-4" />
-                </Link>
+                  <div className="project-entry__links flex gap-3 md:self-start">
+                    {githubUrl && (
+                      <a
+                        href={githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="project-entry__link"
+                      >
+                        <span className="project-entry__link-icon"><GitBranch className="w-4 h-4" /></span>
+                        <span className="project-entry__link-text">View Code</span>
+                      </a>
+                    )}
+                    {deployment && (
+                      <a
+                        href={deployment}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="project-entry__link"
+                      >
+                        <span className="project-entry__link-icon"><ExternalLink className="w-4 h-4" /></span>
+                        <span className="project-entry__link-text">Live Demo</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <p className="text-[0.95rem] text-foreground leading-[1.7] max-w-3xl mb-6">
                 {project.summary}
               </p>
             </header>
-
-            <div className="flex flex-wrap items-center gap-6 mt-6">
-              <div className="flex flex-wrap gap-2">
-                {project.techStack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="border border-foreground/30 px-2 py-0.5 text-[0.65rem] tracking-[0.1em] uppercase text-foreground font-bold"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex gap-6 mt-6 pt-4 text-[0.7rem] text-muted-foreground uppercase tracking-widest font-bold">
-              {githubUrl && (
-                <a
-                  href={githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 hover:text-foreground transition-colors duration-300"
-                >
-                  <GitBranch className="w-4 h-4" />
-                  View Code
-                </a>
-              )}
-              {liveUrl && (
-                <a
-                  href={liveUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 hover:text-foreground transition-colors duration-300"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  Live Demo
-                </a>
-              )}
-            </div>
           </article>
         )})}
       </div>

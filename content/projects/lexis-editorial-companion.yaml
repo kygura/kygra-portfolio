@@ -1,0 +1,33 @@
+accent: "#e08a3c"
+title: Lexis
+subtitle: Editorial Intelligence
+summary: >-
+  An AI-powered editorial rewriting tool that streams improved prose with
+  inline change highlighting, alternative phrasings, and interactive editing
+  workflows.
+description: >-
+  Lexis takes prose input and streams a stylistically improved rewrite using
+  OpenAI or Anthropic models. Every change shows up inline with visual diffs,
+  alternative phrasings, and full undo/redo. It is an editorial partner for
+  serious drafting, not an autocomplete layer.
+overview:
+  - >-
+    The project is an editorial system, not a generic assistant. It supports
+    rewrites, tonal calibration, structural decisions, and sharper
+    sentence-level judgment. Each change is surfaced inline with visual diffs
+    so the writer can accept, reject, or refine every edit.
+  - >-
+    Its personality is companionable but exacting: a discerning editor in the
+    room rather than a soft productivity wrapper. A React frontend pairs with
+    a FastAPI backend that streams rewrites in real time, deployed as a
+    unified Vercel application.
+repo: https://github.com/kygura/lexis-editorial
+live: https://lexis-main.vercel.app/
+techStack:
+  - React
+  - FastAPI
+  - OpenAI
+  - Vercel
+layout: standard
+status: Active build
+year: "2026"

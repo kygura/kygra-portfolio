@@ -1,19 +1,11 @@
 import Header from "../components/Header";
-import ProjectTile from "@/components/projects/ProjectTile";
-import { projects } from "@/lib/projects";
+import Manifesto from "../components/Manifesto";
 
 const Home = () => {
   return (
-    <div className="bebop-theme-root">
+    <div style={{ background: "var(--bg-primary)" }}>
       <Header />
-
-      <div className="home-projects">
-        <section className="home-projects__grid" aria-label="Featured projects">
-          {projects.map((project) => (
-            <ProjectTile key={project.slug} project={project} />
-          ))}
-        </section>
-      </div>
+      <Manifesto />
     </div>
   );
 };

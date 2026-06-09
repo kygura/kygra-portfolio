@@ -11,10 +11,10 @@ const CV = () => {
     email: "ncerratoanton@gmail.com",
     website: "kygra.xyz",
     github: "github.com/kygura",
-    linkedin: "linkedin.com/in/nca"
+    linkedin: "https://www.linkedin.com/in/nicolas-cerrato-anton-746bb1412/"
   };
 
-  const summary = "Software Engineer with a strong foundation in Computer Science and international academic background (Spain/Germany). Specialized in Web Development, Backend development, Blockchain technologies (Solidity), and AI integration. Proven track record of building autonomous trading systems and fine-tuning LLMs. Trilingual professional (English, German, Spanish).";
+  const summary = "Software Engineer with a strong foundation in Computer Science and an international academic background (Spain/Germany). Focused on agentic systems, full-stack web development, algorithmic trading, and blockchain protocols. Builds production-grade tooling across TypeScript, Python, and Solidity — from LLM-powered trading cockpits and agent orchestrators to editorial AI and on-chain monetary systems. Trilingual professional (English, German, Spanish).";
 
   const education = [
     {
@@ -39,28 +39,37 @@ const CV = () => {
 
   const projects = [
     {
-      title: "Algorithmic Trading System",
-      tech: "Python, Pandas, APIs",
+      title: "Agentic Systems",
+      tech: "TypeScript, Bun, WebSocket, SQLite",
       points: [
-        "Designed and deployed a systemic trading model incorporating heuristic algorithms and macro-economic data analysis.",
-        "Engineered automated execution strategies based on discretionary inputs and risk management protocols.",
-        "Optimized data processing pipelines to handle real-time market inputs efficiently."
+        "Designed multi-agent architectures with DAG-based scheduling, dependency resolution, cancellation propagation, and event-sourced audit trails.",
+        "Built deterministic execution layers that constrain LLM-generated intent — separating what the agent decides from what the system allows.",
+        "Implemented real-time dashboards and terminal UIs for monitoring agent state, live output, and historical replay."
       ]
     },
     {
-      title: "LLM Fine-Tuning & AI Integration",
-      tech: "Python, PyTorch",
+      title: "AI Integration & LLM Tooling",
+      tech: "OpenAI API, Anthropic API, FastAPI, Python",
       points: [
-        "Trained and fine-tuned Large Language Models (LLMs) using PyTorch for specialized reasoning tasks.",
-        "Integrated emergent AI technologies to enhance backend logic and data processing capabilities."
+        "Integrated streaming LLM responses with structured output parsing across OpenAI and Anthropic models.",
+        "Built embedding pipelines for semantic search and automatic relationship inference over user-generated content.",
+        "Developed editorial and rewriting workflows with inline diff rendering and interactive acceptance flows."
       ]
     },
     {
-      title: "Multiple Web Applications",
-      tech: "Varying across projects",
+      title: "Full-Stack Web Applications",
+      tech: "React, Hono, Next.js, Tailwind CSS",
       points: [
-        "Developed multiple web & applications tackling friction in the software and finance world.",
-        "Implemented modern UI/UX principles and optimized frontend performance."
+        "Built production-grade SPAs and full-stack applications with real-time data, complex state management, and rich interactive UIs.",
+        "Designed and implemented REST and WebSocket APIs with typed contracts shared across monorepo packages."
+      ]
+    },
+    {
+      title: "Blockchain & Protocol Design",
+      tech: "Solidity, Smart Contracts",
+      points: [
+        "Designed on-chain monetary mechanisms with supply-sensitive stability and tranche-based risk exposure.",
+        "Approached protocol design as a systems engineering problem: incentive alignment, edge-case resilience, and deterministic behavior under adversarial conditions."
       ]
     }
   ];
@@ -72,18 +81,19 @@ const CV = () => {
   ];
 
   const skills = {
-    "Languages": ["Python", "Go", "C", "JavaScript", "TypeScript", "Solidity"],
-    "Backend": ["Node.js", "Express", "Hono", "SQL"],
-    "Frontend": ["React", "Next.js", "Tailwind CSS", "HTML/CSS"],
-    "AI/Data": ["PyTorch", "LLM Fine-tuning", "Pandas", "NumPy"],
-    "Tools": ["Git", "Docker", "Linux", "Bash"],
+    "Languages": ["TypeScript", "Python", "Go", "C", "JavaScript", "Solidity"],
+    "Backend": ["Hono", "FastAPI", "Node.js", "Express", "SQLite", "WebSocket"],
+    "Frontend": ["React", "Next.js", "Tailwind CSS", "React Flow", "MapLibre GL JS"],
+    "AI / Agents": ["OpenAI API", "Anthropic API", "LLM Agents", "ReAct", "Embeddings"],
+    "Blockchain": ["Solidity", "Smart Contracts", "Algorithmic Stablecoins"],
+    "Tools": ["Bun", "Git", "Docker", "Linux", "Bash", "Vercel"],
   };
 
   const downloadPDF = () => {
     // Create a link element and trigger download
     const link = document.createElement('a');
-    link.href = '/CV.pdf';
-    link.download = 'NCA_CV.pdf';
+    link.href = '/CV_NCA.pdf';
+    link.download = 'CV_NCA.pdf';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -110,9 +120,9 @@ const CV = () => {
               <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
                 <GitBranch className="w-4 h-4" /> github.com/kygura
               </a>
-              <a href={`https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Link2 className="w-4 h-4" /> linkedin.com/in/nca
-              </a>
+              {/* <a href={`https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
+                <Link2 className="w-4 h-4" /> ${contact.linkedin.replace('https://', '')}
+              </a> */}
             </div>
           </div>
         </div>
