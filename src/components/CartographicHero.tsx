@@ -97,10 +97,18 @@ const CartographicHero = () => {
         ? window.matchMedia("(prefers-reduced-motion: reduce)")
         : null;
     let reduced = mq ? mq.matches : false;
+    let isVisible = true;
     const onReduced = () => {
       reduced = mq ? mq.matches : false;
     };
     mq?.addEventListener?.("change", onReduced);
+
+    // Stop animation when hero is out of view to save performance
+    const observer = new IntersectionObserver(
+      ([entry]) => { isVisible = entry.isIntersecting; },
+      { threshold: 0 }
+    );
+    observer.observe(root);
     const perm = buildPermutation();
 
     // value noise + fBm
@@ -420,8 +428,13 @@ const CartographicHero = () => {
     };
 
     const frame = (now: number) => {
-      draw(now);
-      raf = requestAnimationFrame(frame);
+      // Only draw if visible and motion is not reduced
+      if (isVisible && !reduced) {
+        draw(now);
+      }
+      if (isVisible && !reduced) {
+        raf = requestAnimationFrame(frame);
+      }
     };
 
     const onPtr = (e: PointerEvent) => {
@@ -467,14 +480,16 @@ const CartographicHero = () => {
       window.removeEventListener("scroll", onScroll);
       document.removeEventListener("visibilitychange", onVis);
       mq?.removeEventListener?.("change", onReduced);
+      observer.disconnect();
     };
   }, []);
 
   return (
     <div
       ref={rootRef}
-      className="relative h-[200vh] font-mono md:-mt-[72px]"
+      className="relative font-mono md:-mt-[72px] sm:h-[150vh] md:h-[200vh]"
       style={{
+        height: "120vh",
         background: "var(--bg, #14110a)",
         color: "var(--ink, #eae3cf)",
         transition: "background 0.6s ease",
@@ -521,7 +536,7 @@ const CartographicHero = () => {
           <h1
             className="m-0 font-display font-normal"
             style={{
-              fontSize: "clamp(72px,16vw,300px)",
+              fontSize: "clamp(48px,13vw,300px)",
               lineHeight: 0.82,
               animation:
                 "cartoFadeUp 1s ease 0.35s both, cartoNameReveal 1.15s cubic-bezier(0.22,1,0.36,1) 0.35s both",

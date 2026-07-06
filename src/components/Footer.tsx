@@ -65,28 +65,28 @@ const Footer = () => {
         }}
       />
 
-      <div className="relative w-full max-w-4xl mx-auto py-8 sm:py-10 px-6 flex items-center justify-center">
+      <div className="relative w-full max-w-4xl mx-auto py-6 sm:py-8 md:py-10 px-4 sm:px-6 flex items-center justify-center">
         {/* Left */}
-        <div className="absolute left-6 z-10 flex flex-col items-center gap-2">
+        <div className="absolute left-2 sm:left-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
           <button
             onClick={hasPrev ? handlePrev : undefined}
             disabled={!hasPrev}
-            className={`p-2 border border-transparent transition-all duration-300 ${
+            className={`p-1.5 sm:p-2 border border-transparent transition-all duration-300 ${
               hasPrev
                 ? "hover:border-[var(--accent-terracotta)] hover:text-[var(--accent-terracotta)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Previous quote"
           >
-            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} />
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" strokeWidth={1.5} />
           </button>
-          <span className="hidden sm:block text-[10px] font-mono text-muted-foreground tracking-widest">
+          <span className="hidden sm:block text-[9px] font-mono text-muted-foreground tracking-widest">
             [A]
           </span>
         </div>
 
         {/* Quote */}
-        <div className="w-full px-16 sm:px-24 overflow-hidden relative z-0 flex items-center">
+        <div className="w-full px-10 sm:px-16 md:px-24 overflow-hidden relative z-0 flex items-center">
           {/* Hidden sizer: renders the tallest quote to reserve consistent height */}
           <div
             className="w-full flex flex-col items-center invisible"
@@ -149,20 +149,20 @@ const Footer = () => {
         </div>
 
         {/* Right */}
-        <div className="absolute right-6 z-10 flex flex-col items-center gap-2">
+        <div className="absolute right-2 sm:right-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
           <button
             onClick={hasNext ? handleNext : undefined}
             disabled={!hasNext}
-            className={`p-2 border border-transparent transition-all duration-300 ${
+            className={`p-1.5 sm:p-2 border border-transparent transition-all duration-300 ${
               hasNext
                 ? "hover:border-[var(--accent-sage)] hover:text-[var(--accent-sage)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Next quote"
           >
-            <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" strokeWidth={1.5} />
           </button>
-          <span className="hidden sm:block text-[10px] font-mono text-muted-foreground tracking-widest">
+          <span className="hidden sm:block text-[9px] font-mono text-muted-foreground tracking-widest">
             [D]
           </span>
         </div>

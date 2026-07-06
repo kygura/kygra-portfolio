@@ -45,7 +45,7 @@ function MagneticNavLink({ path, label, end }: { path: string; label: string; en
         <NavLink
           to={path}
           end={end}
-          className="nav-link uppercase whitespace-nowrap font-mono text-[11px] tracking-[0.16em]"
+          className="nav-link uppercase whitespace-nowrap font-mono text-[9px] sm:text-[11px] tracking-[0.16em]"
           activeClassName="nav-link--active"
         >
           {label}
@@ -112,7 +112,7 @@ const Navigation = () => {
 
   return (
     <nav
-      className={`py-5 px-6 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
+      className={`py-3 px-4 sm:py-5 sm:px-6 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
         scrolled ? "backdrop-blur-md border-[var(--border-subtle)]" : "border-transparent"
       }`}
       style={{
@@ -121,13 +121,13 @@ const Navigation = () => {
           : "transparent",
       }}
     >
-      <div className="flex justify-between items-center gap-4 md:gap-8">
-        <div className="flex items-baseline gap-2.5 font-mono text-[11px] tracking-[0.16em] font-medium whitespace-nowrap">
+      <div className="flex justify-between items-center gap-2 sm:gap-4 md:gap-8">
+        <div className="flex items-baseline gap-1.5 sm:gap-2.5 font-mono text-[9px] sm:text-[11px] tracking-[0.16em] font-medium whitespace-nowrap">
           <span className="text-foreground">N.CA</span>
-          <span className="text-[var(--text-secondary)]">&copy;2026</span>
+          <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
-        <ul className="flex flex-wrap md:flex-nowrap gap-1 md:gap-3 items-center">
+        <ul className="flex flex-wrap md:flex-nowrap gap-0.5 sm:gap-1 md:gap-3 items-center">
           {NAV_ITEMS.map((item) => (
             <MagneticNavLink
               key={item.path}
@@ -138,13 +138,13 @@ const Navigation = () => {
           ))}
         </ul>
 
-        <div className="flex items-center gap-3 md:gap-5">
+        <div className="flex items-center gap-2 md:gap-5 flex-shrink-0">
           <span className="hidden lg:inline font-mono text-[11px] tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock} &mdash; MALAGA, ES
           </span>
           <button
             onClick={toggleTheme}
-            className="font-mono text-[10px] tracking-[0.18em] uppercase px-3.5 py-1.5 rounded-full border border-[var(--border-muted)] bg-transparent text-foreground transition-[color,border-color,transform,background-color] duration-200 hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] hover:bg-[color-mix(in_srgb,var(--accent-amber)_8%,transparent)] active:translate-y-[1px]"
+            className="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-[var(--border-muted)] bg-transparent text-foreground transition-[color,border-color,transform,background-color] duration-200 hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] hover:bg-[color-mix(in_srgb,var(--accent-amber)_8%,transparent)] active:translate-y-[1px]"
             aria-label="Toggle theme"
           >
             {isNight ? "DAY" : "NIGHT"}
