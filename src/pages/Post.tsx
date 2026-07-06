@@ -80,7 +80,7 @@ const Post = () => {
 
   return (
     <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-3xl mx-auto animate-fade-in">
-      <div className="mb-12 pb-6 border-b-[4px] border-foreground relative">
+      <div className="mb-12 pb-6 border-b border-[var(--border-muted)] relative">
         <Link
           to="/writings"
           className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-300 mb-8 mt-2"
@@ -89,7 +89,7 @@ const Post = () => {
           BACK TO WRITINGS
         </Link>
 
-        <h1 className="text-4xl md:text-6xl font-['Bebas_Neue'] tracking-widest text-foreground uppercase leading-[0.9] mb-8">
+        <h1 className="text-4xl md:text-6xl font-display tracking-[-0.01em] text-foreground uppercase leading-[0.9] mb-8">
           {post.title}
         </h1>
 

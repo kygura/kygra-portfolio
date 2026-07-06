@@ -31,8 +31,11 @@ const Writings = () => {
 
   return (
     <div className="px-6 md:px-12 lg:px-16 py-16 max-w-[1000px] mx-auto animate-fade-in">
-      <div className="mb-16 pb-8 border-b-[4px] border-foreground relative">
-        <h1 className="text-5xl md:text-7xl font-['Bebas_Neue'] text-foreground tracking-widest uppercase mb-4 relative z-10">Writings</h1>
+      <div className="mb-16 pb-8 border-b border-[var(--border-muted)] relative">
+        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+          ( 01 &mdash; WRITINGS )
+        </p>
+        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">Writings</h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
           Thoughts on the arts, engineering, the esoteric and the existential.
         </p>
@@ -41,7 +44,7 @@ const Writings = () => {
       <div className="mb-16 flex flex-wrap gap-3">
         <button
           onClick={() => setSelectedTag(null)}
-          className={`font-['Bebas_Neue'] text-sm tracking-[0.2em] px-3 py-1 border-[2.5px] transition-colors uppercase ${
+          className={`font-mono text-[11px] tracking-[0.16em] px-3 py-1 border transition-colors uppercase ${
             selectedTag === null
               ? "bg-accent border-accent text-accent-foreground"
               : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
@@ -53,7 +56,7 @@ const Writings = () => {
           <button
             key={tag}
             onClick={() => setSelectedTag(tag)}
-            className={`font-['Bebas_Neue'] text-sm tracking-[0.2em] px-3 py-1 border-[2.5px] transition-colors uppercase ${
+            className={`font-mono text-[11px] tracking-[0.16em] px-3 py-1 border transition-colors uppercase ${
               selectedTag === tag
                 ? "bg-accent border-accent text-accent-foreground"
                 : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
@@ -97,7 +100,7 @@ const Writings = () => {
                     </div>
                   )}
 
-                  <h2 className="text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
+                  <h2 className="text-3xl md:text-5xl font-display uppercase tracking-[-0.01em] text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
                     {post.title}
                   </h2>
 

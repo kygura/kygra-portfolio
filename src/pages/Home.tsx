@@ -1,10 +1,10 @@
-import Header from "../components/Header";
+import CartographicHero from "../components/CartographicHero";
 import Manifesto from "../components/Manifesto";
 
 const Home = () => {
   return (
     <div style={{ background: "var(--bg-primary)" }}>
-      <Header />
+      <CartographicHero />
       <Manifesto />
     </div>
   );

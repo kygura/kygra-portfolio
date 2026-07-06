@@ -88,7 +88,7 @@ export default function CustomCursor() {
           style={{
             width: "100%",
             height: "100%",
-            border: "1px solid rgba(242, 237, 228, 0.35)",
+            border: "1px solid color-mix(in srgb, var(--text-primary) 35%, transparent)",
             opacity: isHovering ? 0 : 1,
             transition: "opacity 0.3s ease",
           }}

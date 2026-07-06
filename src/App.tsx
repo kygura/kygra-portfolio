@@ -1,19 +1,20 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
-import Writings from "./pages/Writings";
-import Post from "./pages/Post";
-import Projects from "./pages/Projects";
-import ProjectDetail from "./pages/ProjectDetail";
-import NotFound from "./pages/NotFound";
-import Guestbook from "./pages/Guestbook";
-import Artifacts from "./pages/Artifacts";
-import CV from "./pages/CV";
 import { Terminal } from "./components/Terminal";
+
+const Writings = lazy(() => import("./pages/Writings"));
+const Post = lazy(() => import("./pages/Post"));
+const Projects = lazy(() => import("./pages/Projects"));
+const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Guestbook = lazy(() => import("./pages/Guestbook"));
+const Artifacts = lazy(() => import("./pages/Artifacts"));
 import SmoothScroll from "./components/SmoothScroll";
 import CustomCursor from "./components/CustomCursor";
 import ScrollProgress from "./components/ScrollProgress";
@@ -30,7 +31,8 @@ const App = () => (
           <CustomCursor />
           <ScrollProgress />
           <Terminal />
-          <Routes>
+          <Suspense fallback={null}>
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route
               path="/writings"
@@ -80,16 +82,9 @@ const App = () => (
                 </Layout>
               }
             />
-            <Route
-              path="/credentials"
-              element={
-                <Layout>
-                  <CV />
-                </Layout>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </SmoothScroll>
       </BrowserRouter>
     </TooltipProvider>

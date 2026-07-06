@@ -191,7 +191,10 @@ const Guestbook = () => {
   return (
     <div className="px-6 md:px-12 lg:px-16 py-12 max-w-3xl mx-auto flex flex-col min-h-screen">
       <div className="prose-minimal animate-fade-in flex-grow">
-        <h1 className="text-5xl md:text-6xl font-display font-light mb-4">
+        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+          ( 03 &mdash; GUESTBOOK )
+        </p>
+        <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
           Guestbook
         </h1>
 

@@ -59,7 +59,8 @@ const Footer = () => {
       <div
         className="w-full h-px mx-auto"
         style={{
-          background: "linear-gradient(90deg, transparent, rgba(242,237,228,0.12) 20%, rgba(242,237,228,0.12) 80%, transparent)",
+          background:
+            "linear-gradient(90deg, transparent, var(--border-muted) 20%, var(--border-muted) 80%, transparent)",
           maxWidth: "900px",
         }}
       />
@@ -79,7 +80,7 @@ const Footer = () => {
           >
             <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} />
           </button>
-          <span className="hidden sm:block text-[10px] font-['Space_Mono'] text-muted-foreground tracking-widest">
+          <span className="hidden sm:block text-[10px] font-mono text-muted-foreground tracking-widest">
             [A]
           </span>
         </div>
@@ -92,7 +93,7 @@ const Footer = () => {
             aria-hidden="true"
           >
             <p
-              className="font-['Fraunces'] font-normal text-lg sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-4 text-center"
+              className="font-serif font-normal text-lg sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-4 text-center"
               style={{ fontStyle: "italic" }}
             >
               {longestQuote.map((line, i) => (
@@ -125,7 +126,7 @@ const Footer = () => {
               className="absolute inset-0 w-full flex flex-col items-center justify-center"
             >
               <p
-                className="font-['Fraunces'] font-normal text-lg sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-4 text-center"
+                className="font-serif font-normal text-lg sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-4 text-center"
                 style={{ fontStyle: "italic" }}
               >
                 {lines.map((line, i) => (
@@ -161,13 +162,13 @@ const Footer = () => {
           >
             <ArrowRight className="w-5 h-5 sm:w-6 sm:h-6" strokeWidth={1.5} />
           </button>
-          <span className="hidden sm:block text-[10px] font-['Space_Mono'] text-muted-foreground tracking-widest">
+          <span className="hidden sm:block text-[10px] font-mono text-muted-foreground tracking-widest">
             [D]
           </span>
         </div>
       </div>
 
-      <div className="pb-3 text-center font-['Space_Mono'] text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
+      <div className="pb-3 text-center font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
         Today is {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
       </div>
     </footer>

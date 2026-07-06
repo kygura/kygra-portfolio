@@ -54,7 +54,7 @@ export const projectDossiers = defineProjects(
       },
       {
         "label": "Live demo",
-        "href": "https://meridian.onrender.com"
+        "href": "https://meridian-cartography.onrender.com"
       },
       {
         "label": "GitHub",
@@ -75,7 +75,7 @@ export const projectDossiers = defineProjects(
   {
     "slug": "lexis-editorial-companion",
     "accent": "#e08a3c",
-    "title": "Lexis Editorial Companion",
+    "title": "Lexis",
     "subtitle": "Editorial Intelligence",
     "summary": "An AI-powered editorial rewriting tool that streams improved prose with inline change highlighting, alternative phrasings, and interactive editing workflows.",
     "description": "Lexis takes prose input and streams a stylistically improved rewrite using OpenAI or Anthropic models. Every change shows up inline with visual diffs, alternative phrasings, and full undo/redo. It is an editorial partner for serious drafting, not an autocomplete layer.",

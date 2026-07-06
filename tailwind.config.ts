@@ -16,28 +16,29 @@ export default {
   	extend: {
   		fontFamily: {
   			display: [
-  				'Bebas Neue',
-  				'sans-serif'
+  				'Instrument Serif',
+  				'Georgia',
+  				'serif'
   			],
   			body: [
-  				'Fraunces',
+  				'Newsreader',
   				'Georgia',
   				'serif'
   			],
   			sans: [
-  				'Fraunces',
+  				'Newsreader',
   				'Georgia',
   				'ui-serif',
   				'serif'
   			],
   			serif: [
-  				'Fraunces',
+  				'Newsreader',
   				'Georgia',
   				'ui-serif',
   				'serif'
   			],
   			mono: [
-  				'Space Mono',
+  				'IBM Plex Mono',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',

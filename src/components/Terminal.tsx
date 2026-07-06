@@ -113,7 +113,7 @@ export const Terminal = () => {
       type: "output",
       content: (
         <span>
-          Welcome to <span className={themes[theme].accent}>kygra.xyz</span> terminal{" "}
+          Welcome to the <span className={themes[theme].accent}>N.CA</span> terminal{" "}
           <span className={themes[theme].warning}>v1.0.0</span>
         </span>
       ),
@@ -462,7 +462,7 @@ export const Terminal = () => {
           <div className={`h-8 ${themes[theme].header} border-b ${themes[theme].border} flex items-center justify-between px-3 select-none`}>
             <div className={`flex items-center gap-2 ${themes[theme].info}`}>
               <TerminalIcon size={14} />
-              <span className="text-xs">guest@kygra.xyz:~</span>
+              <span className="text-xs">guest@nca:~</span>
             </div>
             <div className="flex items-center gap-2">
               <button

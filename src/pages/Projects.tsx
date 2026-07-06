@@ -7,8 +7,11 @@ const DEFAULT_ACCENT = "var(--accent-amber)";
 const Projects = () => {
   return (
     <div className="px-6 md:px-12 lg:px-16 py-16 max-w-[1000px] mx-auto animate-fade-in">
-      <div className="mb-16 pb-8 border-b-[4px] border-foreground relative">
-        <h1 className="text-5xl md:text-7xl font-['Bebas_Neue'] text-foreground tracking-widest uppercase mb-4 relative z-10">
+      <div className="mb-16 pb-8 border-b border-[var(--border-muted)] relative">
+        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+          ( 02 &mdash; SOFTWARE )
+        </p>
+        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">
           Software Projects
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
@@ -37,7 +40,7 @@ const Projects = () => {
                 </p>
                 <div className="flex flex-col gap-3 md:flex-row md:items-baseline md:gap-8">
                   <Link to={`/projects/${project.slug}`}>
-                    <h2 className="project-entry__title text-3xl md:text-5xl font-['Bebas_Neue'] uppercase tracking-wide text-foreground leading-[0.9]">
+                    <h2 className="project-entry__title text-3xl md:text-5xl font-display uppercase tracking-[-0.01em] text-foreground leading-[0.9]">
                       {project.title}
                     </h2>
                   </Link>
