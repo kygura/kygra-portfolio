@@ -821,15 +821,6 @@
   color: var(--accent-amber);
 }
 
-.manifesto__signature {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.78rem;
-  letter-spacing: 0.18em;
-  color: color-mix(in srgb, var(--text-primary) 45%, transparent);
-  margin-top: 2.5rem;
-  margin-bottom: 2.5rem;
-}
-
 .manifesto__cta {
   margin-top: 2rem;
 }

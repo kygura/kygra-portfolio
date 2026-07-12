@@ -56,7 +56,6 @@ const CartographicHero = () => {
   const nameRef = useRef<HTMLDivElement>(null);
   const caRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLDivElement>(null);
-  const eyebrowRef = useRef<HTMLDivElement>(null);
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const nightRef = useRef(true);
@@ -103,9 +102,17 @@ const CartographicHero = () => {
     };
     mq?.addEventListener?.("change", onReduced);
 
-    // Stop animation when hero is out of view to save performance
+    // Pause animation when hero is out of view; restart the rAF chain on
+    // re-entry — the loop stops itself and cannot self-revive.
     const observer = new IntersectionObserver(
-      ([entry]) => { isVisible = entry.isIntersecting; },
+      ([entry]) => {
+        const wasVisible = isVisible;
+        isVisible = entry.isIntersecting;
+        if (isVisible && !wasVisible) {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(frame);
+        }
+      },
       { threshold: 0 }
     );
     observer.observe(root);
@@ -261,7 +268,6 @@ const CartographicHero = () => {
           caRef.current.style.opacity = Math.max(0, 1 - s * 1.25).toFixed(3);
         }
         const early = Math.max(0, 1 - s * 2.4);
-        if (eyebrowRef.current) eyebrowRef.current.style.opacity = early.toFixed(3);
         if (taglineRef.current) taglineRef.current.style.opacity = early.toFixed(3);
         if (footerRef.current) footerRef.current.style.opacity = Math.max(0, 1 - s * 1.7).toFixed(3);
         if (cueRef.current) cueRef.current.style.opacity = Math.max(0, 1 - s * 5).toFixed(3);
@@ -428,13 +434,12 @@ const CartographicHero = () => {
     };
 
     const frame = (now: number) => {
-      // Only draw if visible and motion is not reduced
-      if (isVisible && !reduced) {
-        draw(now);
-      }
-      if (isVisible && !reduced) {
-        raf = requestAnimationFrame(frame);
-      }
+      // Paused while off-screen; the IntersectionObserver restarts us.
+      // draw() handles reduced motion itself (paints once, then skips
+      // repaints unless scroll/theme is still settling).
+      if (!isVisible) return;
+      draw(now);
+      raf = requestAnimationFrame(frame);
     };
 
     const onPtr = (e: PointerEvent) => {
@@ -460,6 +465,9 @@ const CartographicHero = () => {
       if (document.hidden) {
         cancelAnimationFrame(raf);
       } else {
+        // Cancel first — the IntersectionObserver path may have queued a
+        // frame while hidden; overwriting raf would leak a second loop.
+        cancelAnimationFrame(raf);
         raf = requestAnimationFrame(frame);
       }
     };
@@ -487,9 +495,8 @@ const CartographicHero = () => {
   return (
     <div
       ref={rootRef}
-      className="relative font-mono md:-mt-[72px] sm:h-[150vh] md:h-[200vh]"
+      className="relative font-mono md:-mt-[72px] h-[120vh] sm:h-[150vh] md:h-[200vh]"
       style={{
-        height: "120vh",
         background: "var(--bg, #14110a)",
         color: "var(--ink, #eae3cf)",
         transition: "background 0.6s ease",
@@ -504,23 +511,6 @@ const CartographicHero = () => {
               "radial-gradient(120% 100% at 50% 40%, transparent 55%, var(--vig, rgba(0,0,0,0.42)))",
           }}
         />
-
-        {/* Eyebrow */}
-        <div
-          ref={eyebrowRef}
-          className="pointer-events-none absolute flex items-center gap-2.5 text-[11px] tracking-[0.2em] will-change-[opacity]"
-          style={{
-            left: EDGE_PAD,
-            top: "23vh",
-            animation: "cartoFadeUp 0.8s ease 0.25s both",
-          }}
-        >
-          <span
-            className="h-1.5 w-1.5 rounded-[1px]"
-            style={{ background: "var(--accent, #c3a561)", transition: "background 0.6s ease" }}
-          />
-          <span>FRONTIER SOFTWARE STUDIO &mdash; VENTURES BY NCA</span>
-        </div>
 
         {/* Display name */}
         <div
@@ -588,7 +578,7 @@ const CartographicHero = () => {
         {/* Hairline footer strip */}
         <footer
           ref={footerRef}
-          className="absolute bottom-0 left-0 right-0 flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-[10.5px] tracking-[0.16em] will-change-[opacity]"
+          className="absolute bottom-0 left-0 right-0 flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-[10.5px] tracking-[0.16em] will-change-[opacity]"
           style={{
             padding: `14px ${EDGE_PAD}`,
             borderTop: "1px solid var(--line, rgba(234,227,207,0.22))",
@@ -596,17 +586,6 @@ const CartographicHero = () => {
             animation: "cartoFadeUp 0.8s ease 0.8s both",
           }}
         >
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{
-                background: "var(--accent, #c3a561)",
-                animation: "cartoPulse 2.4s ease-in-out infinite",
-                transition: "background 0.6s ease",
-              }}
-            />
-            <span>VENTURES &mdash; 2026</span>
-          </div>
           <div ref={cueRef} className="flex items-center gap-2 whitespace-nowrap">
             <span>SCROLL</span>
             <span
@@ -619,9 +598,11 @@ const CartographicHero = () => {
         </footer>
       </div>
 
-      {/* Trailing section marker leading into the Manifesto */}
+      {/* Trailing section marker leading into the Manifesto.
+          Height must equal container height minus the 100vh sticky block,
+          or the marker overflows into the next section. */}
       <div
-        className="flex h-[100vh] items-end justify-center pb-12 text-[10.5px] tracking-[0.2em]"
+        className="flex h-[20vh] sm:h-[50vh] md:h-[100vh] items-end justify-center pb-12 text-[10.5px] tracking-[0.2em]"
         style={{ color: "var(--soft, rgba(234,227,207,0.55))", transition: "color 0.6s ease" }}
       >
         ( 02 &mdash; ON SOFTWARE CRAFT &middot; NEXT )

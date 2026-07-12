@@ -47,9 +47,9 @@ function TypewriterHeading({ inView }: { inView: boolean }) {
 }
 
 const paragraphs = [
-  "Notes on how I build software, and why it looks the way it does.",
+  "I spend most of my waking hours talking to machines. These notes are about how I try to do that without becoming one: why the software I build looks the way it does, and what I refuse to automate away.",
 
-  "I build software the way a cabinetmaker builds a chair: material first, ornament last. Most of what I know came from unmaking things — pulling a system apart until its assumptions sit on the bench, then rebuilding it with fewer parts and better joints. A good tool disappears into the hand. The craft is in what you leave out.",
+  "I build software the way a cabinetmaker builds a chair: material first, ornament last. Most of what I know came from unmaking things, pulling a system apart until its assumptions sit on the bench, then rebuilding it with fewer parts and better joints. A good tool disappears into the hand. The craft is in what you leave out.",
 
   "My work sits at the intersection of financial apparatus and software craft. I hold that software can be beautiful as well as functional: interfaces that reduce the friction of modern information systems and do it with elegance, making the experience of using computers a strategic advantage rather than a modern hassle. Each project is an attempt to build something true within the machinery. I just wanna touch grass while the computer does stuff.",
 ];
@@ -59,7 +59,7 @@ const blockquote = {
   follow: "History is not something that happens to us. It is something we do. Every moment collapses infinite possibilities into a single path. The work we do now reverberates into the future.",
 };
 
-const closer = "Reason enough to work with care.";
+const closer = "The ghost in the machine must remain human.";
 
 export default function Manifesto() {
   const ref = useRef<HTMLElement>(null);
@@ -135,21 +135,10 @@ export default function Manifesto() {
           {closer}
         </motion.p>
 
-        {/* Signature */}
-        <motion.p
-          className="manifesto__signature"
-          custom={paragraphs.length + 4}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        >
-        -Nicolas
-        </motion.p>
-
         {/* Divider */}
         <motion.hr
           className="smear"
-          custom={paragraphs.length + 5}
+          custom={paragraphs.length + 4}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
           variants={fadeUp}
@@ -158,7 +147,7 @@ export default function Manifesto() {
         {/* CTA to projects */}
         <motion.div
           className="manifesto__cta"
-          custom={paragraphs.length + 6}
+          custom={paragraphs.length + 5}
           initial="hidden"
           animate={inView ? "visible" : "hidden"}
           variants={fadeUp}

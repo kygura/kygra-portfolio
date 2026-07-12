@@ -10,13 +10,6 @@ const NAV_ITEMS = [
   { path: "/guestbook", label: "Guestbook" },
 ];
 
-const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-  timeZone: "Europe/Madrid",
-});
-
 function MagneticNavLink({ path, label, end }: { path: string; label: string; end?: boolean }) {
   const ref = useRef<HTMLLIElement>(null);
   const rawX = useMotionValue(0);
@@ -57,26 +50,12 @@ function MagneticNavLink({ path, label, end }: { path: string; label: string; en
 
 const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [clock, setClock] = useState("--:--");
   const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const tick = () => {
-      try {
-        setClock(CLOCK_FORMAT.format(new Date()));
-      } catch {
-        setClock("--:--");
-      }
-    };
-    tick();
-    const interval = setInterval(tick, 20000);
-    return () => clearInterval(interval);
   }, []);
 
   // Pure CSR — next-themes resolves synchronously; derive directly.
@@ -113,11 +92,13 @@ const Navigation = () => {
   return (
     <nav
       className={`py-3 px-4 sm:py-5 sm:px-6 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
-        scrolled ? "backdrop-blur-md border-[var(--border-subtle)]" : "border-transparent"
+        scrolled ? "border-[var(--border-subtle)]" : "border-transparent"
       }`}
       style={{
+        // No backdrop-blur: re-blurring the animating hero canvas every
+        // frame was the main scroll-jank source. Near-opaque bg instead.
         backgroundColor: scrolled
-          ? "color-mix(in srgb, var(--bg-primary) 88%, transparent)"
+          ? "color-mix(in srgb, var(--bg-primary) 96%, transparent)"
           : "transparent",
       }}
     >
@@ -139,9 +120,6 @@ const Navigation = () => {
         </ul>
 
         <div className="flex items-center gap-2 md:gap-5 flex-shrink-0">
-          <span className="hidden lg:inline font-mono text-[11px] tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
-            {clock} &mdash; MALAGA, ES
-          </span>
           <button
             onClick={toggleTheme}
             className="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-[var(--border-muted)] bg-transparent text-foreground transition-[color,border-color,transform,background-color] duration-200 hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] hover:bg-[color-mix(in_srgb,var(--accent-amber)_8%,transparent)] active:translate-y-[1px]"
