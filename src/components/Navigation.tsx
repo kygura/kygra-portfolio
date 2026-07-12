@@ -3,6 +3,13 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
 
+const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+  timeZone: "Europe/Madrid",
+});
+
 const NAV_ITEMS = [
   { path: "/", label: "Home" },
   { path: "/writings", label: "Writings" },
@@ -50,12 +57,26 @@ function MagneticNavLink({ path, label, end }: { path: string; label: string; en
 
 const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [clock, setClock] = useState("--:--");
   const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const tick = () => {
+      try {
+        setClock(CLOCK_FORMAT.format(new Date()));
+      } catch {
+        setClock("--:--");
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 20000);
+    return () => clearInterval(interval);
   }, []);
 
   // Pure CSR — next-themes resolves synchronously; derive directly.
@@ -120,6 +141,9 @@ const Navigation = () => {
         </ul>
 
         <div className="flex items-center gap-2 md:gap-5 flex-shrink-0">
+          <span className="hidden lg:inline font-mono text-[11px] tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
+            {clock}
+          </span>
           <button
             onClick={toggleTheme}
             className="font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-[var(--border-muted)] bg-transparent text-foreground transition-[color,border-color,transform,background-color] duration-200 hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] hover:bg-[color-mix(in_srgb,var(--accent-amber)_8%,transparent)] active:translate-y-[1px]"
