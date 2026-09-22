@@ -24,6 +24,7 @@ const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Guestbook = lazy(() => import("./pages/Guestbook"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
+const CV = lazy(() => import("./pages/CV"));
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,14 @@ const App = () => (
               element={
                 <Layout>
                   <Guestbook />
+                </Layout>
+              }
+            />
+            <Route
+              path="/cv"
+              element={
+                <Layout>
+                  <CV />
                 </Layout>
               }
             />
