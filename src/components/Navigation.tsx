@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { path: "/writings", label: "Writings" },
   { path: "/projects", label: "Software" },
   { path: "/guestbook", label: "Guestbook" },
+  { path: "/cv", label: "CV" },
 ];
 
 function MagneticNavLink({ path, label, end }: { path: string; label: string; end?: boolean }) {
