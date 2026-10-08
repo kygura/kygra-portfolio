@@ -55,6 +55,8 @@ export function useKeyboardNav() {
         setHelpOpen(false);
         return;
       }
+      // The help overlay is modal: only "?" and Escape work while it is up.
+      if (helpOpen && e.key !== "?") return;
       if (shouldIgnoreKey(e)) return;
 
       const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;

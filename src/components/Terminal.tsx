@@ -139,6 +139,7 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
               <span className={c.success}>projects</span>
               <span className={c.success}>artifacts</span>
               <span className={c.success}>guestbook</span>
+              <span className={c.success}>cv</span>
             </div>
           ),
         });
@@ -164,6 +165,7 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
             artifacts: "/artifacts",
             gallery: "/artifacts",
             guestbook: "/guestbook",
+            cv: "/cv",
           };
 
           if (routes[target]) {

@@ -1,5 +1,5 @@
 /* Hero: contour field stage. The hero sets --bg, --ink, --soft, --line,
-   --vig and --accent on its own element; they are scoped to .hero and do
+   --accent on its own element; they are scoped to .hero and do
    not collide with the global tokens. Complete at rest: no reveal
    animations, no vignette. */
 

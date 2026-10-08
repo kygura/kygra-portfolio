@@ -22,7 +22,6 @@ export default defineConfig(({ mode }) => ({
         // a page that used a tooltip also downloaded accordion, dialog,
         // select and the rest. Rollup splits them per-route on its own.
         manualChunks: {
-          "framer-motion": ["framer-motion"],
           "react-query": ["@tanstack/react-query"],
         },
       },

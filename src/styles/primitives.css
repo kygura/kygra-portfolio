@@ -340,10 +340,8 @@ kbd {
   color: var(--text-secondary);
 }
 
-/* ── Prose: Newsreader long form ──
-   .prose-minimal is a temporary alias until the pages are renamed. */
-.prose,
-.prose-minimal {
+/* ── Prose: Newsreader long form ── */
+.prose {
   font-family: 'Newsreader', Georgia, serif;
   font-size: 18px;
   line-height: 1.6;
@@ -351,8 +349,7 @@ kbd {
   color: var(--text-primary);
 }
 
-.prose :is(h1, h2, h3, h4),
-.prose-minimal :is(h1, h2, h3, h4) {
+.prose :is(h1, h2, h3, h4) {
   font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   font-weight: 700;
   text-transform: uppercase;
@@ -360,59 +357,51 @@ kbd {
   line-height: 1;
 }
 
-.prose h1, .prose-minimal h1 { font-size: 40px; margin: 0 0 24px; }
-.prose h2, .prose-minimal h2 { font-size: 30px; margin: 48px 0 16px; }
-.prose h3, .prose-minimal h3 { font-size: 24px; margin: 32px 0 12px; }
-.prose h4, .prose-minimal h4 { font-size: 20px; margin: 24px 0 8px; }
+.prose h1 { font-size: 40px; margin: 0 0 24px; }
+.prose h2 { font-size: 30px; margin: 48px 0 16px; }
+.prose h3 { font-size: 24px; margin: 32px 0 12px; }
+.prose h4 { font-size: 20px; margin: 24px 0 8px; }
 
-.prose p,
-.prose-minimal p {
+.prose p {
   margin: 0 0 1.2em;
 }
 
-.prose ul,
-.prose-minimal ul {
+.prose ul {
   margin: 0 0 1.2em;
   padding-left: 1.4em;
   list-style: none;
 }
 
-.prose ul li,
-.prose-minimal ul li {
+.prose ul li {
   position: relative;
   margin-bottom: 0.4em;
 }
 
-.prose ul li::before,
-.prose-minimal ul li::before {
+.prose ul li::before {
   content: '—';
   position: absolute;
   left: -1.4em;
   color: var(--draft-ink);
 }
 
-.prose ol,
-.prose-minimal ol {
+.prose ol {
   margin: 0 0 1.2em;
   padding-left: 1.4em;
   list-style: decimal;
 }
 
-.prose ol li,
-.prose-minimal ol li {
+.prose ol li {
   margin-bottom: 0.4em;
   padding-left: 0.3em;
 }
 
-.prose ol li::marker,
-.prose-minimal ol li::marker {
+.prose ol li::marker {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.75em;
   color: var(--draft-ink);
 }
 
-.prose blockquote,
-.prose-minimal blockquote {
+.prose blockquote {
   margin: 2em 0;
   padding: 0.2em 0 0.2em 1.2em;
   border-left: 2px solid var(--draft-ink);
@@ -420,21 +409,18 @@ kbd {
   color: var(--draft-ink);
 }
 
-.prose blockquote p:last-child,
-.prose-minimal blockquote p:last-child {
+.prose blockquote p:last-child {
   margin-bottom: 0;
 }
 
-.prose code,
-.prose-minimal code {
+.prose code {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.8em;
   padding: 0.1em 0.35em;
   background: var(--bg-secondary);
 }
 
-.prose pre,
-.prose-minimal pre {
+.prose pre {
   margin: 0 0 1.6em;
   padding: 14px 16px;
   overflow-x: auto;
@@ -445,27 +431,23 @@ kbd {
   border-left: 2px solid var(--draft-ink);
 }
 
-.prose pre code,
-.prose-minimal pre code {
+.prose pre code {
   padding: 0;
   font-size: inherit;
   background: transparent;
 }
 
-.prose img,
-.prose-minimal img {
+.prose img {
   max-width: 100%;
   height: auto;
   border: 1px solid var(--rule);
 }
 
-.prose figure,
-.prose-minimal figure {
+.prose figure {
   margin: 2em 0;
 }
 
-.prose figcaption,
-.prose-minimal figcaption {
+.prose figcaption {
   margin-top: 8px;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 11px;
@@ -474,28 +456,23 @@ kbd {
   color: var(--text-secondary);
 }
 
-.prose a,
-.prose-minimal a {
+.prose a {
   text-decoration-color: var(--draft-ink);
 }
 
 .prose a:hover,
-.prose a:focus-visible,
-.prose-minimal a:hover,
-.prose-minimal a:focus-visible {
+.prose a:focus-visible {
   color: var(--accent);
   text-decoration-color: var(--accent);
 }
 
-.prose hr,
-.prose-minimal hr {
+.prose hr {
   margin: 3em 0;
   border: 0;
   border-top: 1px solid var(--rule);
 }
 
-.prose table,
-.prose-minimal table {
+.prose table {
   width: 100%;
   margin: 0 0 1.6em;
   border-collapse: collapse;
@@ -503,8 +480,7 @@ kbd {
   font-size: 13px;
 }
 
-.prose :is(th, td),
-.prose-minimal :is(th, td) {
+.prose :is(th, td) {
   padding: 8px 12px;
   border-bottom: 1px solid var(--rule);
   text-align: left;

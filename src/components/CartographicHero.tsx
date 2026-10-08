@@ -147,13 +147,11 @@ const CartographicHero = () => {
       set("--ink", "#e6dfcc");
       set("--soft", "rgba(230,223,204,0.55)");
       set("--line", "rgba(230,223,204,0.22)");
-      set("--vig", "rgba(0,0,0,0.42)");
     } else {
       set("--bg", "#ece3cd");
       set("--ink", "#1b1a17");
       set("--soft", "rgba(27,26,23,0.55)");
       set("--line", "rgba(27,26,23,0.22)");
-      set("--vig", "rgba(66,50,22,0.12)");
     }
     // Retint on theme change and whenever the picker rewrites
     // html[data-accent] (or next-themes lands its class a tick later).

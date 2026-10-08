@@ -28,6 +28,7 @@ const HelpOverlay = ({ open, onClose }: HelpOverlayProps) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="help-title"
+        onClick={(e) => e.stopPropagation()}
         // The close button is the only focusable element: keep Tab on it.
         onKeyDown={(e) => {
           if (e.key === "Tab") e.preventDefault();
