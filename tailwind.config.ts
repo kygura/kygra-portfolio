@@ -16,9 +16,9 @@ export default {
   	extend: {
   		fontFamily: {
   			display: [
-  				'Instrument Serif',
-  				'Georgia',
-  				'serif'
+  				'Barlow Condensed',
+  				'Arial Narrow',
+  				'sans-serif'
   			],
   			body: [
   				'Newsreader',
@@ -26,10 +26,11 @@ export default {
   				'serif'
   			],
   			sans: [
-  				'Newsreader',
-  				'Georgia',
-  				'ui-serif',
-  				'serif'
+  				'IBM Plex Mono',
+  				'ui-monospace',
+  				'SFMono-Regular',
+  				'Menlo',
+  				'monospace'
   			],
   			serif: [
   				'Newsreader',
@@ -70,7 +71,7 @@ export default {
   				foreground: 'hsl(var(--muted-foreground))'
   			},
   			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
+  				DEFAULT: 'hsl(var(--accent-hsl))',
   				foreground: 'hsl(var(--accent-foreground))'
   			},
   			popover: {

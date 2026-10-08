@@ -1,0 +1,57 @@
+/* Element defaults for the Sheet type roles. Imported after Tailwind's
+   preflight (see index.css), so these plain rules win over it. */
+
+* { @apply border-border; }
+
+html {
+  background: var(--bg-primary);
+}
+
+/* Chrome and short copy: IBM Plex Mono 14px. Long prose opts into
+   Newsreader through .prose. */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.55;
+  font-feature-settings: "kern";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* Display: Barlow Condensed 700, uppercase. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+h1 { font-size: clamp(34px, 4.6vw, 60px); }
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+[hidden] { display: none !important; }
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reduced motion: global safety net. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

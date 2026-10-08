@@ -1,0 +1,279 @@
+/* Pages: page-level rules. project-entry/project-detail moved verbatim from index.css; T4 replaces them. */
+
+/* ── Project entry: accent color + links ─────────────────────────────── */
+
+.project-entry {
+  --project-accent: var(--accent-amber);
+  position: relative;
+  padding-left: 1.1rem;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-entry::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  bottom: 3rem;
+  width: 3px;
+  background: var(--project-accent);
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.project-entry:hover {
+  transform: translateX(4px);
+}
+
+.project-entry:hover::before {
+  transform: scaleY(1);
+}
+
+.project-entry__title {
+  color: var(--text-primary);
+  transition: color 0.35s ease;
+}
+
+.project-entry:hover .project-entry__title {
+  color: var(--project-accent);
+}
+
+.project-entry__links {
+  flex-shrink: 0;
+}
+
+.project-entry__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border: 1.5px solid color-mix(in srgb, var(--project-accent) 50%, transparent);
+  border-radius: 2px;
+  color: var(--project-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--project-accent) 8%, transparent);
+  position: relative;
+  overflow: hidden;
+  transition:
+    border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-entry__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--project-accent);
+  transform: translateX(-101%);
+  transition: transform 0.35s cubic-bezier(0.42, 0, 0.58, 1);
+  z-index: 0;
+}
+
+.project-entry__link:hover::after,
+.project-entry__link:focus-visible::after {
+  transform: translateX(0);
+}
+
+.project-entry__link:hover,
+.project-entry__link:focus-visible {
+  border-color: var(--project-accent);
+  border-radius: 100px;
+  color: var(--bg-primary);
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--project-accent) 30%, transparent);
+}
+
+.project-entry__link:hover .project-entry__link-icon,
+.project-entry__link:focus-visible .project-entry__link-icon {
+  color: var(--bg-primary);
+}
+
+.project-entry__link > * {
+  position: relative;
+  z-index: 1;
+}
+
+.project-entry__link-text {
+  display: inline;
+  white-space: nowrap;
+}
+
+.project-entry__link-icon {
+  display: inline-flex;
+  transition: color 0.35s cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+/* ── End project entry styles ───────────────────────────────────────── */
+
+.project-detail__stack span {
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  padding: 0.35rem 0.6rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.project-detail__button,
+.project-detail__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  padding: 0.55rem 0.75rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  transition: background 0.24s ease, color 0.24s ease, border-color 0.24s ease;
+}
+
+.project-detail__button:hover,
+.project-detail__back:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.project-detail {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem var(--page-gutter) clamp(3rem, 10vw, 5rem);
+}
+
+.project-detail__hero {
+  padding: clamp(1.5rem, 6vw, 2.5rem) 0 clamp(1.5rem, 5vw, 2rem);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.project-detail__hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-primary) 55%, transparent);
+}
+
+.project-detail__eyebrow,
+.project-detail__label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-primary) 50%, transparent);
+}
+
+.project-detail__title {
+  font-size: clamp(4rem, 9vw, 8rem);
+  line-height: 0.9;
+  margin: 0.9rem 0 1rem;
+}
+
+.project-detail__summary {
+  max-width: 48rem;
+  font-size: 1.08rem;
+  line-height: 1.9;
+  color: color-mix(in srgb, var(--text-primary) 75%, transparent);
+}
+
+.project-detail__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.project-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+}
+
+.project-detail__panel {
+  grid-column: span 6;
+  padding: clamp(1.1rem, 4vw, 1.5rem);
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--text-primary) 2%, transparent);
+}
+
+.project-detail__panel--stack { grid-column: 1 / -1; }
+
+.project-detail__copy,
+.project-detail__list { margin-top: 1rem; }
+
+.project-detail__copy p,
+.project-detail__list li {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: color-mix(in srgb, var(--text-primary) 72%, transparent);
+}
+
+.project-detail__copy p + p { margin-top: 1rem; }
+
+.project-detail__list {
+  list-style: none;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.project-detail__list li {
+  padding-left: 1rem;
+  position: relative;
+}
+
+.project-detail__list li::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  color: var(--accent-amber);
+}
+
+.project-detail__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 960px) {
+  .project-detail__grid { grid-template-columns: 1fr; }
+  .project-detail__panel,
+  .project-detail__panel--stack { grid-column: 1 / -1; }
+  .project-detail__summary { font-size: 0.96rem; }
+  .project-detail__title { font-size: clamp(2.75rem, 12vw, 5rem); }
+}
+
+/* CV download control: moved verbatim from index.css; T4 replaces it with .btn. */
+.cv-download-btn {
+  @apply inline-flex items-center gap-2 font-bold text-sm tracking-widest uppercase px-6 py-3;
+  background-color: var(--accent-amber);
+  color: var(--bg-primary);
+  border: 2px solid var(--accent-amber);
+  position: relative;
+  transition: all 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: none;
+}
+.cv-download-btn:hover {
+  background-color: transparent;
+  color: var(--accent-amber);
+  transform: translate(-3px, -3px);
+  box-shadow:
+    1px 1px 0 var(--accent-amber),
+    2px 2px 0 var(--accent-amber),
+    3px 3px 0 var(--accent-amber),
+    4px 4px 0 var(--accent-amber),
+    5px 5px 0 var(--accent-amber),
+    6px 6px 0 var(--accent-amber);
+}
