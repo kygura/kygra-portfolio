@@ -1,0 +1,364 @@
+<title>Deskmat Redesign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wght@400;500;600&family=Silkscreen&display=swap">
+<style>
+/* Layout: 12-col board on a dark desk mat; left thumb cluster nav, right content, tmux status line at bottom. */
+:root{
+  --mat:#2a2c31; --mat-2:#333640; --legend:#ece7da; --legend-2:#a8a498;
+  --line:#4a4d57; --link:#7eb2ff; --visited:#c99cff; --hot:#ff6e7f;
+  --mono:"Martian Mono",ui-monospace,Menlo,Consolas,monospace;
+  --pix:"Silkscreen",var(--mono);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--mat);color:var(--legend);font:14px/1.6 var(--mono);padding-inline:16px;padding-block:0 56px}
+a{color:var(--link);text-underline-offset:3px}
+a:visited{color:var(--visited)}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--hot);outline-offset:2px}
+h1,h2,h3{text-wrap:balance;margin:0}
+kbd,.cap{
+  display:inline-grid;place-items:center;min-width:1.9em;height:1.9em;padding:0 .45em;
+  background:var(--mat-2);border:1px solid var(--line);border-bottom-width:3px;
+  font:10px/1 var(--pix);color:var(--legend);text-transform:uppercase;letter-spacing:.04em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08)
+}
+kbd.hot{border-color:var(--hot);color:var(--hot)}
+.eyebrow{font:10px/1.4 var(--pix);text-transform:uppercase;letter-spacing:.12em;color:var(--legend-2)}
+
+.board{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:repeat(12,1fr);column-gap:0;position:relative}
+@media(min-width:1100px){
+  .board{background:repeating-linear-gradient(to right,var(--line) 0 1px,transparent 1px calc(100%/12))}
+}
+.thumb{grid-column:1/3;position:sticky;top:0;align-self:start;padding:28px 16px 0 0;display:flex;flex-direction:column;gap:14px;background:var(--mat)}
+.thumb .nav{display:flex;flex-direction:column;gap:8px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap}
+.sw{width:18px;height:18px;border:1px solid var(--line);border-bottom-width:3px;background:var(--c);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{outline:2px solid var(--legend);outline-offset:1px}
+.scene .modes{position:absolute;right:8px;top:6px;display:flex;gap:4px}
+.scene .modes button{all:unset;cursor:pointer;font:10px var(--pix);text-transform:uppercase;color:var(--legend-2);padding:2px 6px;border:1px solid transparent}
+.scene .modes button[aria-pressed="true"]{color:var(--hot);border-color:var(--hot)}
+.thumb a.key{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;color:var(--legend);text-decoration:none;padding:4px 0}
+.thumb a.key:visited{color:var(--legend)}
+.thumb a.key .chord{display:inline-flex;gap:3px}
+.thumb a.key:hover kbd,.thumb a.key[aria-current] kbd{border-color:var(--hot);color:var(--hot)}
+main{grid-column:3/13;padding:28px 0 0 32px;min-width:0;display:flex;flex-direction:column;gap:64px}
+
+.hero{display:grid;grid-template-columns:5fr 5fr;gap:32px;align-items:center;min-height:380px}
+.hero h1{font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-.03em;line-height:1.1}
+.hero p{max-width:34em;color:var(--legend-2);margin:18px 0 0}
+.hero .links{margin-top:22px;display:flex;gap:18px;flex-wrap:wrap}
+.scene{position:relative;aspect-ratio:1;max-width:100%;border:1px solid var(--line)}
+.scene canvas{display:block;width:100%;height:100%}
+.scene .tag{position:absolute;left:8px;top:6px}
+.scene .tag2{position:absolute;right:8px;bottom:6px}
+
+.now{display:grid;grid-template-columns:auto 1fr;gap:4px 24px;border-top:1px solid var(--line);padding-top:12px}
+.now dt{color:var(--legend-2)}
+.now dd{margin:0}
+
+.section>header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:4px}
+.section h2{font-size:14px;font-weight:500;letter-spacing:.02em}
+.rows{list-style:none;margin:0;padding:0}
+.row{display:grid;grid-template-columns:2.4em 1fr auto;gap:14px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line)}
+.row[data-focus] {box-shadow:inset 3px 0 0 var(--hot);padding-left:12px}
+.row .idx{color:var(--legend-2);font-size:12px}
+.row .t{font-weight:500}
+.row .d{color:var(--legend-2);display:block}
+.row .tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.row .tags .cap{font-size:8px;height:1.7em}
+.row .date{color:var(--legend-2);font-size:12px;font-variant-numeric:tabular-nums}
+
+footer.foot{border-top:1px solid var(--line);padding:20px 0 40px;display:flex;flex-direction:column;gap:16px;color:var(--legend-2);font-size:12px}
+.ring{display:flex;gap:16px;flex-wrap:wrap}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{width:88px;height:31px;border:1px solid var(--line);background:var(--mat-2);display:grid;place-items:center;font:8px var(--pix);color:var(--legend-2);text-transform:uppercase}
+.badge.b1{color:var(--link)} .badge.b2{color:var(--hot)}
+
+.status{position:fixed;left:0;right:0;bottom:0;height:40px;padding:0 16px;padding-bottom:env(safe-area-inset-bottom,0px);background:var(--mat-2);border-top:1px solid var(--line);display:flex;align-items:center;gap:0;font-size:12px;z-index:5}
+.status span{padding:0 12px;border-right:1px solid var(--line);white-space:nowrap}
+.status span:first-child{background:var(--hot);color:var(--mat);font:10px var(--pix);text-transform:uppercase;height:100%;display:grid;place-items:center;padding:0 14px}
+.status span:last-child{border:0;margin-left:auto;display:flex;gap:6px;align-items:center}
+.status .scroll{overflow:hidden;display:flex;min-width:0}
+
+.help{position:fixed;inset:0;background:rgba(42,44,49,.92);display:grid;place-items:center;z-index:10;padding:16px}
+.help .panel{border:1px solid var(--line);background:var(--mat);padding:24px;max-width:520px;width:100%}
+.help table{border-collapse:collapse;width:100%;margin-top:12px}
+.help td{padding:6px 0;border-bottom:1px solid var(--line)}
+.help td:first-child{width:40%}
+
+@media(max-width:900px){
+  .board{display:block}
+  .thumb{position:static;padding:20px 0 0;flex-direction:row;flex-wrap:wrap;align-items:center;gap:12px}
+  .thumb .nav{flex-direction:row;flex-wrap:wrap;gap:12px}
+  .thumb a.key{padding:0}
+  main{padding:28px 0 0;gap:48px}
+  .hero{grid-template-columns:1fr;min-height:0}
+  .row{grid-template-columns:2.4em 1fr}
+  .row .tags{grid-column:2;justify-content:flex-start}
+  .status span.hide{display:none}
+}
+@media(prefers-reduced-motion:reduce){.scene canvas{animation:none}}
+</style>
+
+<div class="board">
+  <aside class="thumb" aria-label="Primary">
+    <div class="eyebrow">kygra.dev</div>
+    <nav class="nav">
+      <a class="key" href="#home" aria-current="page"><span class="chord"><kbd>g</kbd><kbd>h</kbd></span>home</a>
+      <a class="key" href="#work"><span class="chord"><kbd>g</kbd><kbd>w</kbd></span>work</a>
+      <a class="key" href="#posts"><span class="chord"><kbd>g</kbd><kbd>p</kbd></span>posts</a>
+      <a class="key" href="#about"><span class="chord"><kbd>g</kbd><kbd>a</kbd></span>about</a>
+      <a class="key" href="#search"><span class="chord"><kbd>/</kbd></span>search</a>
+      <a class="key" href="#help" id="helpLink"><span class="chord"><kbd>?</kbd></span>help</a>
+    </nav>
+    <div class="eyebrow" style="margin-top:12px">accent · <kbd>1</kbd>–<kbd>6</kbd></div>
+    <div class="swatches" id="swatches"></div>
+    <div class="eyebrow" style="margin-top:12px">layout · split 3×6+3</div>
+  </aside>
+
+  <main id="home">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">// nicolás cerrato · kygra</div>
+        <h1 style="margin-top:10px">I build small, fast things for the web and think too much about where my thumbs go.</h1>
+        <p>Front-end engineer. Vite, React, the occasional shader. Currently open to contract work. This whole site is driven from the keyboard; press <kbd>?</kbd> to see how.</p>
+        <div class="links"><a href="#work">selected work</a><a href="#posts">writing</a><a href="#about">hello@kygra.dev</a></div>
+      </div>
+      <div class="scene" aria-label="Wireframe keyboard that reacts to keypresses">
+        <span class="tag eyebrow">scene · <kbd>s</kbd> switch</span>
+        <div class="modes" id="modes"></div>
+        <canvas id="c" width="640" height="640"></canvas>
+        <span class="tag2 eyebrow" id="lastKey">press any key</span>
+      </div>
+    </section>
+
+    <dl class="now">
+      <dt>building</dt><dd>a tiny ergo-layout trainer, mostly for myself</dd>
+      <dt>reading</dt><dd><a href="#r">A Pattern Language</a>, slowly</dd>
+      <dt>listening</dt><dd>Boards of Canada · Geogaddi</dd>
+    </dl>
+
+    <section class="section" id="work">
+      <header><h2>work</h2><span class="eyebrow"><kbd>j</kbd> <kbd>k</kbd> move · <kbd>⏎</kbd> open</span></header>
+      <ul class="rows">
+        <li class="row" data-focus><span class="idx">01</span><span><span class="t">Keyclaw</span><span class="d">Layout trainer for 36-key boards. Sub-100ms feedback loop, runs offline.</span></span><span class="tags"><span class="cap">ts</span><span class="cap">vite</span><span class="cap">wasm</span></span></li>
+        <li class="row"><span class="idx">02</span><span><span class="t">Lanterns</span><span class="d">Procedural paper-lantern scene for a theatre's season launch. 3D, under 90kb.</span></span><span class="tags"><span class="cap">three</span><span class="cap">glsl</span></span></li>
+        <li class="row"><span class="idx">03</span><span><span class="t">Fieldnotes</span><span class="d">Notion-to-static publishing pipeline. The thing this site's posts run on.</span></span><span class="tags"><span class="cap">node</span><span class="cap">notion</span></span></li>
+        <li class="row"><span class="idx">04</span><span><span class="t">Overtone</span><span class="d">Guitar tuner that shows harmonics instead of a needle.</span></span><span class="tags"><span class="cap">audio</span><span class="cap">canvas</span></span></li>
+      </ul>
+    </section>
+
+    <section class="section" id="posts">
+      <header><h2>posts</h2><a href="#rss" class="eyebrow">rss</a></header>
+      <ul class="rows">
+        <li class="row"><span class="date">09.14</span><span><span class="t">Chords beat shortcuts</span><span class="d">Why two-key sequences scale and modifier stacks don't.</span></span><span class="tags"><span class="cap">ux</span></span></li>
+        <li class="row"><span class="date">08.02</span><span><span class="t">Orthographic is honest</span><span class="d">Notes from building a CAD-looking web scene without a CAD budget.</span></span><span class="tags"><span class="cap">3d</span></span></li>
+        <li class="row"><span class="date">06.21</span><span><span class="t">A webring in 2026</span><span class="d">It still works. Here's who's in mine.</span></span><span class="tags"><span class="cap">indieweb</span></span></li>
+      </ul>
+    </section>
+
+    <section class="section" id="about">
+      <header><h2>about</h2></header>
+      <p style="max-width:62ch;color:var(--legend-2);margin:12px 0 0">Based in Madrid. I type on a Corne with Colemak-DH, which explains the navigation. Before front-end I did stage lighting, which explains the 3D. Say hi: <a href="#m">hello@kygra.dev</a>, or sign the <a href="#g">guestbook</a>.</p>
+    </section>
+
+    <footer class="foot">
+      <div class="ring"><a href="#p">← prev</a><a href="#r">random</a><a href="#n">next →</a><span>· the ergo-web ring</span></div>
+      <div class="badges"><span class="badge b1">made by hand</span><span class="badge">no cookies</span><span class="badge b2">36 keys</span><span class="badge">vite</span><span class="badge">rss ok</span></div>
+      <div>built with vite · hosted on vercel · last build 2026-10-08 14:02 · <a href="#c">colophon</a> · <a href="#src">source</a></div>
+    </footer>
+  </main>
+</div>
+
+<div class="status" role="status">
+  <span>normal</span>
+  <span class="hide">~/home</span>
+  <span class="hide" id="pos">1/4</span>
+  <span class="hide">utf-8</span>
+  <span><kbd>g</kbd>+key go · <kbd>/</kbd> search · <kbd>?</kbd> help</span>
+</div>
+
+<div class="help" id="help" hidden>
+  <div class="panel">
+    <div class="eyebrow">keymap</div>
+    <table>
+      <tr><td><kbd>g</kbd> <kbd>h</kbd></td><td>home</td></tr>
+      <tr><td><kbd>g</kbd> <kbd>w</kbd></td><td>work</td></tr>
+      <tr><td><kbd>g</kbd> <kbd>p</kbd></td><td>posts</td></tr>
+      <tr><td><kbd>g</kbd> <kbd>a</kbd></td><td>about</td></tr>
+      <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>next / previous row</td></tr>
+      <tr><td><kbd>⏎</kbd></td><td>open focused row</td></tr>
+      <tr><td><kbd>/</kbd></td><td>search (cmdk)</td></tr>
+      <tr><td><kbd>s</kbd></td><td>switch scene (keycloud → galaxy → bird)</td></tr>
+      <tr><td><kbd>1</kbd>–<kbd>6</kbd></td><td>try an accent colour</td></tr>
+      <tr><td><kbd>?</kbd> / <kbd>esc</kbd></td><td>toggle this</td></tr>
+    </table>
+  </div>
+</div>
+
+<script>
+(function(){
+  const root=document.documentElement, css=k=>getComputedStyle(root).getPropertyValue(k).trim();
+  const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- accent variants (derived from the current site palette + two outsiders) ---------- */
+  const ACCENTS=[
+    {n:'coral',  c:'#ff6e7f', note:'proposal default'},
+    {n:'amber',  c:'#e3b85e', note:'current --accent-amber, lifted for dark'},
+    {n:'sage',   c:'#7fd1c3', note:'current --accent-sage, lifted'},
+    {n:'terra',  c:'#ff8a5b', note:'current --accent-terracotta, lifted'},
+    {n:'lilac',  c:'#c99cff', note:'visited-link purple doubling as accent'},
+    {n:'mono',   c:'#7eb2ff', note:'no second colour; link blue does everything'},
+  ];
+  let hot=css('--hot');
+  const swEl=document.getElementById('swatches');
+  function setAccent(i,save=true){
+    const a=ACCENTS[i]; root.style.setProperty('--hot',a.c); hot=a.c;
+    [...swEl.children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===i)));
+    if(save){try{localStorage.setItem('deskmat-accent',i)}catch(e){}}
+  }
+  ACCENTS.forEach((a,i)=>{const b=document.createElement('button');b.className='sw';b.style.setProperty('--c',a.c);b.title=(i+1)+' · '+a.n+' · '+a.note;b.setAttribute('aria-label',a.n);b.setAttribute('aria-pressed','false');b.onclick=()=>setAccent(i);swEl.appendChild(b);});
+  let saved=0;try{saved=+localStorage.getItem('deskmat-accent')||0}catch(e){}
+  setAccent(saved,false);
+
+  /* ---------- scene: one particle set, three constructs, eased morph between them ---------- */
+  const N=42, P=[];
+  for(let i=0;i<N;i++)P.push({x:0,y:0,z:0,s:.45,t:0});
+  const MODES=['keycloud','galaxy','bird'];
+  let mode=0, t=0, burst=0, flap=0, bank=0;
+
+  // keycloud layout (split 3x6 + 3 thumbs per side) -------------
+  const stag=[0,.25,.5,.25,0,-.25], keyPos=[], keyMeta=[];
+  for(const side of[-1,1]){
+    for(let r=0;r<3;r++)for(let c=0;c<6;c++){keyPos.push([side*(1.2+c*1.05),(r-1)*1.05-stag[c]*.9,0]);keyMeta.push({side,r,c});}
+    for(let i=0;i<3;i++){keyPos.push([side*(1.6+i*1.05),2.2+i*.18,-0.25*i]);keyMeta.push({side,r:3,c:i});}
+  }
+  const rows=["qwfpbjluy;","arstgmneio","zxcdvkh,./"];
+  function keyIndex(ch){for(let r=0;r<3;r++){const i=rows[r].indexOf(ch);if(i>=0)return keyMeta.findIndex(k=>k.r===r&&k.side===(i<5?-1:1)&&k.c===(i<5?5-i:i-5));}return -1;}
+
+  // galaxy: 1 core + 4 rings ------------------------------------
+  function galaxy(i,T){
+    if(i===0)return{p:[0,0,0],s:.6};
+    const ring=(i-1)%4, k=Math.floor((i-1)/4), per=[8,10,11,12][ring];
+    const a=T*(.9-ring*.18)+k*(Math.PI*2/per)+ring*.7;
+    const r=1.6+ring*1.15, tilt=.35*ring;
+    return{p:[Math.cos(a)*r,Math.sin(a)*Math.sin(tilt)*r*.4+Math.sin(a*3+ring)*.08,Math.sin(a)*r*Math.cos(tilt)],s:.16+ (ring===0?.1:0)};
+  }
+  // bird: spine 6, head 3, tail 5, wings 2 x (2 rows x 7) = 42 ----
+  const BE=[]; // bird edges, built once
+  (function(){
+    for(let i=0;i<5;i++)BE.push([i,i+1]);          // spine 0..5 (0 tail root, 5 neck)
+    BE.push([5,6],[6,7],[7,8],[8,6]);               // head 6,7,8
+    for(let i=0;i<5;i++)BE.push([0,9+i]);           // tail 9..13 fan
+    for(let i=0;i<4;i++)BE.push([9+i,10+i]);
+    for(const base of[14,28]){                      // wings: row A base..base+6, row B base+7..base+13
+      BE.push([3,base],[2,base+7]);
+      for(let j=0;j<6;j++){BE.push([base+j,base+j+1]);BE.push([base+7+j,base+8+j]);}
+      for(let j=0;j<7;j++)BE.push([base+j,base+7+j]);
+      BE.push([base+6,base+13]);
+    }
+  })();
+  function bird(i,T){
+    const f=Math.sin(flap), up=f*1.4;
+    const ox=Math.sin(T*.35)*1.6, oy=Math.cos(T*.5)*.6, oz=Math.sin(T*.25)*.8; // flight path
+    let p;
+    if(i<=5)p=[0,0,-1.4+i*.6];
+    else if(i===6)p=[0,.15,1.9]; else if(i===7)p=[0,-.1,2.4]; else if(i===8)p=[0,.3,2.3];
+    else if(i<=13){const k=i-9-2;p=[k*.42,.1-Math.abs(k)*.12,-2.1-Math.abs(k)*.2];}
+    else{
+      const w=i<28?i-14:i-28, side=i<28?-1:1, row=w<7?0:1, j=w%7;
+      const span=(.5+j*.55)*(row?.85:1), lift=Math.pow(j/6,1.4)*up, droop=Math.pow(j/6,2)*.35;
+      p=[side*span, lift-droop+(row?-.05:0), (row?-.75:-.1)+j*.06];
+    }
+    // bank with lateral velocity, then translate
+    const b=bank, cb=Math.cos(b), sb=Math.sin(b);
+    const x=p[0]*cb-p[1]*sb, y=p[0]*sb+p[1]*cb;
+    return{p:[x+ox,y+oy,p[2]+oz],s:.1};
+  }
+
+  function targets(i,T){
+    if(mode===0){const k=keyPos[i];return{p:k,s:.45};}
+    if(mode===1)return galaxy(i,T);
+    return bird(i,T);
+  }
+
+  function project(p,rot){
+    const cy=Math.cos(rot),sy=Math.sin(rot);
+    const x=p.x*cy-p.z*sy, z=p.x*sy+p.z*cy, y=p.y;
+    const tilt=mode===2?.55:.95, ct=Math.cos(tilt),st=Math.sin(tilt);
+    const y2=y*ct-z*st, z2=y*st+z*ct, s=cv.width/18;
+    return[cv.width/2+x*s,cv.height/2+y2*s,z2];
+  }
+  const CE=[[0,1],[0,2],[1,3],[2,3],[4,5],[4,6],[5,7],[6,7],[0,4],[1,5],[2,6],[3,7]];
+  function cube(p,h,s){const o=[];for(const dx of[-s,s])for(const dy of[-s,s])for(const dz of[0,.35*(s/.45)+h])o.push({x:p.x+dx,y:p.y+dy,z:p.z+dz});return o;}
+
+  let birdW=0, rotT=0;
+  function draw(){
+    if(!reduce){t+=.008; flap+=.09+burst*.25; burst*=.96; bank+= (Math.cos(t*.35)*.6*(mode===2?1:0)-bank)*.05;}
+    const line=css('--line'), legend=css('--legend');
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle=line;ctx.lineWidth=1;ctx.globalAlpha=.35;
+    for(let i=0;i<=16;i++){const g=i*cv.width/16;ctx.beginPath();ctx.moveTo(g,0);ctx.lineTo(g,cv.height);ctx.moveTo(0,g);ctx.lineTo(cv.width,g);ctx.stroke();}
+    ctx.globalAlpha=1;
+    birdW+=((mode===2?1:0)-birdW)*.06;
+    const rot=mode===1?t*.6:Math.sin(t)*.5+.3;
+    const pts=[];
+    P.forEach((q,i)=>{
+      const tg=targets(i,t); q.t*=.9;
+      q.x+=(tg.p[0]-q.x)*.08; q.y+=(tg.p[1]-q.y)*.08; q.z+=(tg.p[2]-q.z)*.08; q.s+=(tg.s-q.s)*.08;
+      const c=cube(q,q.t*.8,q.s).map(p=>project(p,rot)); pts.push(c);
+      const col=q.t>.05?hot:legend;
+      ctx.strokeStyle=col;ctx.fillStyle=col;ctx.globalAlpha=(q.t>.05?1:.55)*(1-birdW*.7);
+      if(q.s>.12){ctx.beginPath();for(const[a,b]of CE){ctx.moveTo(c[a][0],c[a][1]);ctx.lineTo(c[b][0],c[b][1]);}ctx.stroke();}
+      ctx.globalAlpha=q.t>.05?1:.7;
+      for(const p of c){ctx.fillRect(p[0]-1,p[1]-1,2,2);}
+    });
+    // bird skeleton edges (fade in with birdW), galaxy orbit rings
+    if(birdW>.02){
+      ctx.globalAlpha=birdW;ctx.strokeStyle=burst>.3?hot:legend;ctx.beginPath();
+      for(const[a,b]of BE){const A=project(P[a],rot),B=project(P[b],rot);ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);}
+      ctx.stroke();
+    }
+    if(mode===1){
+      ctx.globalAlpha=.25+burst*.5;ctx.strokeStyle=burst>.3?hot:line;
+      for(let r=0;r<4;r++){ctx.beginPath();for(let a=0;a<=64;a++){const g=galaxy(1+r,0),an=a/64*Math.PI*2,rad=1.6+r*1.15,tilt=.35*r;const p=project({x:Math.cos(an)*rad,y:Math.sin(an)*Math.sin(tilt)*rad*.4,z:Math.sin(an)*rad*Math.cos(tilt)},rot);a?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}ctx.stroke();}
+    }
+    ctx.globalAlpha=1;
+    if(!reduce)requestAnimationFrame(draw);
+  }
+  draw();
+
+  const modesEl=document.getElementById('modes');
+  function setMode(m){mode=m;[...modesEl.children].forEach((b,j)=>b.setAttribute('aria-pressed',String(j===m)));}
+  MODES.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.setAttribute('aria-pressed',String(i===0));b.onclick=()=>setMode(i);modesEl.appendChild(b);});
+
+  function hit(ch){ // what a keypress does to the construct
+    burst=1;
+    if(mode===0){const k=keyIndex(ch);if(k>=0)P[k].t=1;}
+    else if(mode===1){const ring=(ch.charCodeAt(0)||0)%4;P.forEach((q,i)=>{if(i>0&&(i-1)%4===ring)q.t=1;});}
+    else{P.forEach((q,i)=>{if(i>=14)q.t=.6;});}
+  }
+
+  /* ---------- chords, list focus, help ---------- */
+  let pending=null,focus=0;const rowsEl=[...document.querySelectorAll('#work .row')];
+  const help=document.getElementById('help'),lk=document.getElementById('lastKey'),pos=document.getElementById('pos');
+  function setFocus(i){rowsEl[focus].removeAttribute('data-focus');focus=(i+rowsEl.length)%rowsEl.length;rowsEl[focus].setAttribute('data-focus','');pos.textContent=(focus+1)+'/'+rowsEl.length;}
+  addEventListener('keydown',e=>{
+    if(e.metaKey||e.ctrlKey||e.altKey)return;
+    const ch=e.key.toLowerCase();
+    if(ch.length===1)hit(ch);
+    lk.textContent='key · '+(e.key===' '?'space':e.key)+' · '+MODES[mode];
+    if(ch==='?'){help.hidden=!help.hidden;return;}
+    if(ch==='escape'){help.hidden=true;pending=null;return;}
+    if(ch==='s'&&pending!=='g'){setMode((mode+1)%3);return;}
+    if(/^[1-6]$/.test(ch)){setAccent(+ch-1);return;}
+    if(pending==='g'){pending=null;const m={h:'#home',w:'#work',p:'#posts',a:'#about'}[ch];if(m)location.hash=m;return;}
+    if(ch==='g'){pending='g';return;}
+    if(ch==='j'){setFocus(focus+1);e.preventDefault();}
+    if(ch==='k'){setFocus(focus-1);e.preventDefault();}
+  });
+  document.getElementById('helpLink').addEventListener('click',e=>{e.preventDefault();help.hidden=false;});
+  help.addEventListener('click',()=>help.hidden=true);
+})();
+</script>
