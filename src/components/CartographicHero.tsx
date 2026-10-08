@@ -19,12 +19,21 @@ import { useTheme } from "next-themes";
  */
 
 const MOTION = 0.9;
-// Flat page background — matches --bg-primary (day #ece7db / night #14110a).
-const DAY = { bg: [236, 231, 219], ink: [33, 28, 18] };
-const NIGHT = { bg: [20, 17, 10], ink: [234, 227, 207] };
-// Accent #a9853b; night variant lifted toward warm paper (mix 0.35 to 242/223/168)
-const ACC_DAY = [169, 133, 59];
-const ACC_NIGHT = [195, 165, 97];
+// Flat page background — matches --bg-primary (Codex #ece3cd / Hangar #0f1114).
+const DAY = { bg: [236, 227, 205], ink: [27, 26, 23] };
+const NIGHT = { bg: [15, 17, 20], ink: [230, 223, 204] };
+// Fallback accents (session ochre per base) when the root --accent can't be read.
+const ACC_DAY = [185, 133, 14];
+const ACC_NIGHT = [233, 179, 43];
+
+/** The active accent from the root's computed --accent, as [r, g, b]. */
+function readRootAccent(): number[] | null {
+  const v = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  const m = /^#([0-9a-f]{6})$/i.exec(v);
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [n >> 16, (n >> 8) & 255, n & 255];
+}
 
 const NAME = "NICOLAS";
 // Peak extra tracking, in em, at full scroll — applied as per-letter
@@ -121,6 +130,8 @@ const CartographicHero = () => {
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const nightRef = useRef(true);
+  // Live accent from the root; null falls back to the per-base constants.
+  const accRef = useRef<number[] | null>(null);
 
   // Site default theme is dark (night)
   const isNight = resolvedTheme !== "light";
@@ -131,21 +142,30 @@ const CartographicHero = () => {
     const el = rootRef.current;
     if (!el) return;
     const set = (k: string, v: string) => el.style.setProperty(k, v);
-    const a = isNight ? ACC_NIGHT : ACC_DAY;
     if (isNight) {
-      set("--bg", "#14110a");
-      set("--ink", "#eae3cf");
-      set("--soft", "rgba(234,227,207,0.55)");
-      set("--line", "rgba(234,227,207,0.22)");
+      set("--bg", "#0f1114");
+      set("--ink", "#e6dfcc");
+      set("--soft", "rgba(230,223,204,0.55)");
+      set("--line", "rgba(230,223,204,0.22)");
       set("--vig", "rgba(0,0,0,0.42)");
     } else {
-      set("--bg", "#ece7db");
-      set("--ink", "#211c12");
-      set("--soft", "rgba(33,28,18,0.55)");
-      set("--line", "rgba(33,28,18,0.22)");
+      set("--bg", "#ece3cd");
+      set("--ink", "#1b1a17");
+      set("--soft", "rgba(27,26,23,0.55)");
+      set("--line", "rgba(27,26,23,0.22)");
       set("--vig", "rgba(66,50,22,0.12)");
     }
-    set("--accent", `rgb(${a[0]},${a[1]},${a[2]})`);
+    // Retint on theme change and whenever the picker rewrites
+    // html[data-accent] (or next-themes lands its class a tick later).
+    const applyAccent = () => {
+      accRef.current = readRootAccent();
+      const a = accRef.current ?? (nightRef.current ? ACC_NIGHT : ACC_DAY);
+      set("--accent", `rgb(${a[0]},${a[1]},${a[2]})`);
+    };
+    applyAccent();
+    const mo = new MutationObserver(applyAccent);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-accent", "class"] });
+    return () => mo.disconnect();
   }, [isNight]);
 
   useEffect(() => {
@@ -210,6 +230,7 @@ const CartographicHero = () => {
     let onScreen = true;
     let lastDraw = -1e9;
     let mix = nightRef.current ? 1 : 0;
+    const acc = (accRef.current ?? (nightRef.current ? ACC_NIGHT : ACC_DAY)).slice();
     let scroll = 0;
     let sp = 0;
     let drawnOnce = false;
@@ -338,13 +359,21 @@ const CartographicHero = () => {
       // day/night mix
       const target = nightRef.current ? 1 : 0;
       mix += (target - mix) * 0.08;
+      // accent eases toward the root's live value, like the day/night mix
+      const accT = accRef.current ?? (nightRef.current ? ACC_NIGHT : ACC_DAY);
+      let accGap = 0;
+      for (let i = 0; i < 3; i++) {
+        acc[i] += (accT[i] - acc[i]) * 0.08;
+        accGap += Math.abs(accT[i] - acc[i]);
+      }
 
       // Reduced motion: repaint only when scroll or theme mix is still moving.
       if (
         reduced &&
         drawnOnce &&
         Math.abs(sp - scroll) < 0.0005 &&
-        Math.abs(mix - target) < 0.0025
+        Math.abs(mix - target) < 0.0025 &&
+        accGap < 1
       ) {
         return;
       }
@@ -361,7 +390,6 @@ const CartographicHero = () => {
       ];
       const bg = m3(DAY.bg, NIGHT.bg);
       const ink = m3(DAY.ink, NIGHT.ink);
-      const acc = m3(ACC_DAY, ACC_NIGHT);
 
       // flat background — same surface as the rest of the site
       ctx.fillStyle = `rgb(${bg[0] | 0},${bg[1] | 0},${bg[2] | 0})`;
@@ -692,11 +720,11 @@ const CartographicHero = () => {
     <div ref={rootRef} className="hero">
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" />
-        <div className="hero__vignette" />
 
         {/* Display name + tagline share one column so their left edge and
             vertical gap hold at every width. */}
         <div className="hero__intro">
+          <p className="eyebrow hero__eyebrow">Fig. 1 — General arrangement</p>
           <div ref={nameRef} className="hero__name">
             <h1 ref={headingRef} className="hero__name-text">
               {NAME.split("").map((ch, i) => (
@@ -717,11 +745,16 @@ const CartographicHero = () => {
           <div className="hero__mark-text">C.A</div>
         </div>
 
-        {/* Hairline footer strip */}
-        <footer ref={footerRef} className="hero__strip">
-          <div ref={cueRef} className="hero__cue">
-            <span>SCROLL</span>
-            <span className="hero__cue-arrow">&darr;</span>
+        {/* Title block over the hairline strip with the scroll cue */}
+        <footer ref={footerRef} className="hero__foot">
+          <div className="titleblock hero__titleblock">
+            <div><b>Drawn</b>N. Cerrato</div>
+            <div><b>Checked</b>—</div>
+            <div><b>Scale</b>1 : 1</div>
+            <div><b>Sheet</b>01</div>
+          </div>
+          <div className="hero__strip">
+            <div ref={cueRef} className="hero__cue">scroll &darr;</div>
           </div>
         </footer>
       </div>
@@ -729,7 +762,7 @@ const CartographicHero = () => {
       {/* Scroll runway for the sticky stage, and the marker leading into
           the Manifesto. The shell height is the sum of this and the stage,
           so the two can never drift out of sync. */}
-      <div className="hero__marker">( 02 &mdash; ON SOFTWARE CRAFT &middot; NEXT )</div>
+      <div className="hero__marker">Plate I &mdash; On software craft</div>
     </div>
   );
 };

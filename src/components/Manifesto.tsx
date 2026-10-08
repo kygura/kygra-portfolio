@@ -1,50 +1,5 @@
-import { useRef, useState, useEffect } from "react";
-import { motion, useInView } from "framer-motion";
 import { Link } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 32 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.1 + i * 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
-  }),
-};
-
-const typewriterText = "On Software Craft";
-
-function TypewriterHeading({ inView }: { inView: boolean }) {
-  const [displayed, setDisplayed] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
-  const hasStarted = useRef(false);
-
-  useEffect(() => {
-    if (!inView || hasStarted.current) return;
-    hasStarted.current = true;
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < typewriterText.length) {
-        setDisplayed(typewriterText.slice(0, i + 1));
-        i++;
-      } else {
-        clearInterval(interval);
-        // blink cursor for a bit then hide
-        setTimeout(() => setShowCursor(false), 2400);
-      }
-    }, 75);
-
-    return () => clearInterval(interval);
-  }, [inView]);
-
-  return (
-    <h2 className="manifesto__hero-title">
-      <span className="manifesto__hero-text">{displayed}</span>
-      {showCursor && <span className="manifesto__hero-cursor" aria-hidden="true">|</span>}
-    </h2>
-  );
-}
+import Plate from "./Plate";
 
 const paragraphs = [
   "I spend most of my waking hours talking to machines. These notes are about how I try to do that without becoming one: why the software I build looks the way it does, and what I refuse to automate away.",
@@ -62,101 +17,43 @@ const blockquote = {
 const closer = "The ghost in the machine must remain human.";
 
 export default function Manifesto() {
-  const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-120px" });
-
   return (
-    <section
-      ref={ref}
-      className="manifesto"
-    >
-      <div className="manifesto__inner">
-        <motion.header
-          className="manifesto__header"
-          custom={0}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        >
-          
-          
-          <TypewriterHeading inView={inView} />
-          <motion.div
-            className="manifesto__hero-line"
-            initial={{ scaleX: 0 }}
-            animate={inView ? { scaleX: 1 } : { scaleX: 0 }}
-            transition={{ delay: 2.2, duration: 0.9, ease: [0.22, 1, 0.36, 1] as const }}
-          />
-        </motion.header>
+    <section className="plate frontis" aria-labelledby="manifesto-title">
+      <figure className="frontis__fig">
+        <Plate name="switch" />
+        <figcaption className="frontis__caption">
+          <b>Fig. 1b — Frontispiece</b>
+          Exploded switch stack, 1 : 2
+        </figcaption>
+      </figure>
 
-        {/* Body paragraphs */}
-        {paragraphs.map((text, i) => (
-          <motion.p
-            key={i}
-            className="manifesto__p"
-            custom={i + 1}
-            initial="hidden"
-            animate={inView ? "visible" : "hidden"}
-            variants={fadeUp}
-          >
-            {text}
-          </motion.p>
-        ))}
+      <div className="frontis__text">
+        <div className="session">
+          <span className="session__num">
+            Plate <em>I</em>
+          </span>
+          <h2 id="manifesto-title">On software craft</h2>
+        </div>
 
-        {/* Blockquote */}
-        <motion.blockquote
-          className="manifesto__quote"
-          custom={paragraphs.length + 1}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        >
-          <p>{blockquote.text}</p>
-        </motion.blockquote>
+        <div className="prose">
+          {paragraphs.map((text, i) => (
+            <p key={i}>{text}</p>
+          ))}
 
-        <motion.p
-          className="manifesto__p"
-          custom={paragraphs.length + 2}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        >
-          {blockquote.follow}
-        </motion.p>
+          <blockquote>
+            <p>{blockquote.text}</p>
+          </blockquote>
 
-        {/* Artisan closer */}
-        <motion.p
-          className="manifesto__p manifesto__closer"
-          custom={paragraphs.length + 3}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        >
-          {closer}
-        </motion.p>
+          <p>{blockquote.follow}</p>
 
-        {/* Divider */}
-        <motion.hr
-          className="smear"
-          custom={paragraphs.length + 4}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        />
+          <p className="frontis__closer">{closer}</p>
+        </div>
 
-        {/* CTA to projects */}
-        <motion.div
-          className="manifesto__cta"
-          custom={paragraphs.length + 5}
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={fadeUp}
-        >
-          <Link to="/projects" className="manifesto__link">
-            Explore the work
-            <ArrowUpRight className="w-4 h-4" />
+        <p className="frontis__cta">
+          <Link to="/projects">
+            <kbd>3</kbd>Explore the work
           </Link>
-        </motion.div>
+        </p>
       </div>
     </section>
   );
