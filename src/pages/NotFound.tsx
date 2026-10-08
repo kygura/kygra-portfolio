@@ -1,5 +1,6 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import Layout from "@/components/Layout";
 
 const NotFound = () => {
   const location = useLocation();
@@ -9,18 +10,19 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
-          ( 404 &mdash; OFF THE MAP )
-        </p>
-        <h1 className="mb-4 text-6xl font-display leading-[0.9]">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
+    <Layout>
+      <div className="sheet page">
+        <div className="session">
+          <span className="session__num">Sheet <em>—</em></span>
+          <h2>Sheet not found</h2>
+        </div>
+        <section className="plate notfound">
+          <h1>404</h1>
+          <p className="page-lede">Nothing is drawn at {location.pathname}.</p>
+          <Link to="/"><kbd>1</kbd>Return home</Link>
+        </section>
       </div>
-    </div>
+    </Layout>
   );
 };
 

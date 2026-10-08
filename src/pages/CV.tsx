@@ -1,7 +1,4 @@
-import {
-  Download, MapPin, Mail, Globe,
-  GitBranch, Link2, Phone
-} from "lucide-react";
+import { Fragment } from "react";
 
 const CV = () => {
 
@@ -100,118 +97,108 @@ const CV = () => {
   };
 
   return (
-    <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-4xl animate-fade-in mx-auto">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
-        <div>
-          <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
-            ( 04 &mdash; CREDENTIALS )
-          </p>
-          <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
-            Curriculum Vitae
-          </h1>
-          <div className="text-lg text-muted-foreground space-y-2">
-            <p className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> {contact.location}
-            </p>
-            <div className="flex flex-wrap gap-4 text-sm md:text-base">
-              <a href={`mailto:${contact.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Mail className="w-4 h-4" /> {contact.email}
-              </a>
-              <a href={`https://${contact.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Globe className="w-4 h-4" /> {contact.website}
-              </a>
-              <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <GitBranch className="w-4 h-4" /> github.com/kygura
-              </a>
-              {/* <a href={`https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Link2 className="w-4 h-4" /> ${contact.linkedin.replace('https://', '')}
-              </a> */}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={downloadPDF}
-          className="cv-download-btn mt-4 md:mt-0 self-start shrink-0"
-        >
-          <Download className="w-4 h-4" />
-          Download PDF
-        </button>
+    <div className="sheet page">
+      <div className="session">
+        <span className="session__num">Sheet <em>05</em></span>
+        <h1>Curriculum</h1>
+        <span className="session__hint">
+          <button type="button" onClick={downloadPDF} className="btn">
+            Download PDF
+          </button>
+        </span>
       </div>
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-display font-light mb-4 text-foreground/90">Professional Summary</h2>
-        <p className="text-muted-foreground leading-relaxed">
-          {summary}
-        </p>
-      </section>
+      <div className="titleblock">
+        <div><b>Location</b>{contact.location}</div>
+        <div><b>Email</b><a href={`mailto:${contact.email}`}>{contact.email}</a></div>
+        <div>
+          <b>Web</b>
+          <a href={`https://${contact.website}`} target="_blank" rel="noopener noreferrer">{contact.website}</a>
+        </div>
+        <div>
+          <b>GitHub</b>
+          <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer">github.com/kygura</a>
+        </div>
+      </div>
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Technical Projects</h2>
-        <div className="space-y-8">
-          {projects.map((project, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <h3 className="text-xl font-display">{project.title}</h3>
-                <span className="text-sm px-2 py-0.5 border border-foreground/40 text-foreground bg-foreground/5 w-fit">
-                  {project.tech}
-                </span>
-              </div>
-              <ul className="list-disc list-outside ml-4 text-muted-foreground space-y-1">
-                {project.points.map((point, i) => (
-                  <li key={i}>{point}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      <div className="session">
+        <span className="session__num">Sec. <em>1</em></span>
+        <h2>Professional Summary</h2>
+      </div>
+      <section className="plate cv-summary">
+        <div className="prose">
+          <p>{summary}</p>
         </div>
       </section>
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Education</h2>
-        <div className="space-y-8">
-          {education.map((edu, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
-              <h3 className="text-xl font-display mb-2">{edu.degree}</h3>
-              <p className="text-muted-foreground mb-2">
-                {edu.institution} • {edu.period}
-              </p>
-              {edu.description && <p className="text-muted-foreground italic text-sm">{edu.description}</p>}
-            </div>
+      <div className="session">
+        <span className="session__num">Sec. <em>2</em></span>
+        <h2>Technical Projects</h2>
+      </div>
+      <section className="plate">
+        <dl className="deflist">
+          {projects.map((project) => (
+            <Fragment key={project.title}>
+              <dt>{project.title}<small>{project.tech}</small></dt>
+              <dd>
+                <ul>
+                  {project.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+              </dd>
+            </Fragment>
           ))}
-        </div>
+        </dl>
       </section>
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Technical Skills</h2>
-        <div className="space-y-8">
+      <div className="session">
+        <span className="session__num">Sec. <em>3</em></span>
+        <h2>Education</h2>
+      </div>
+      <section className="plate">
+        <dl className="deflist">
+          {education.map((edu) => (
+            <Fragment key={edu.degree}>
+              <dt>{edu.period}</dt>
+              <dd>
+                <p>{edu.degree}</p>
+                <p className="muted">{edu.institution}</p>
+                {edu.description && <p className="muted">{edu.description}</p>}
+              </dd>
+            </Fragment>
+          ))}
+        </dl>
+      </section>
+
+      <div className="session">
+        <span className="session__num">Sec. <em>4</em></span>
+        <h2>Technical Skills</h2>
+      </div>
+      <section className="plate">
+        <dl className="deflist">
           {Object.entries(skills).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="text-xl font-display mb-4">{category}</h3>
-              <div className="flex flex-wrap gap-2">
-                {items.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-4 py-2 text-sm border border-foreground/40 text-foreground bg-foreground/5"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
+            <Fragment key={category}>
+              <dt>{category}</dt>
+              <dd>{items.join(" · ")}</dd>
+            </Fragment>
           ))}
-        </div>
+        </dl>
       </section>
 
-      <section className="mb-16">
-        <h2 className="text-3xl font-display font-light mb-8">Languages</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {languages.map((lang, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
-              <h3 className="text-xl font-display mb-1">{lang.name}</h3>
-              <p className="text-muted-foreground">{lang.proficiency}</p>
-            </div>
+      <div className="session">
+        <span className="session__num">Sec. <em>5</em></span>
+        <h2>Languages</h2>
+      </div>
+      <section className="plate">
+        <dl className="deflist">
+          {languages.map((lang) => (
+            <Fragment key={lang.name}>
+              <dt>{lang.name}</dt>
+              <dd>{lang.proficiency}</dd>
+            </Fragment>
           ))}
-        </div>
+        </dl>
       </section>
     </div>
   );

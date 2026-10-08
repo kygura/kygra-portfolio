@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
 import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
 import diff from "react-syntax-highlighter/dist/esm/languages/prism/diff";
@@ -18,7 +16,6 @@ import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
 import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
 import yaml from "react-syntax-highlighter/dist/esm/languages/prism/yaml";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 /**
  * The full `Prism` export bundles every language refractor ships with —
@@ -41,13 +38,34 @@ SyntaxHighlighter.registerLanguage("html", markup);
 SyntaxHighlighter.registerLanguage("xml", markup);
 SyntaxHighlighter.registerLanguage("yml", yaml);
 
+// Token colours read the Sheet palette, so both bases and every accent
+// retint highlighted code without a second theme.
+const sheetStyle: Record<string, React.CSSProperties> = {
+  'code[class*="language-"]': { color: "var(--text-primary)" },
+  'pre[class*="language-"]': { color: "var(--text-primary)" },
+  comment: { color: "var(--text-secondary)", fontStyle: "italic" },
+  prolog: { color: "var(--text-secondary)" },
+  punctuation: { color: "var(--text-secondary)" },
+  keyword: { color: "var(--accent)" },
+  operator: { color: "var(--text-secondary)" },
+  string: { color: "var(--draft-ink)" },
+  char: { color: "var(--draft-ink)" },
+  "attr-value": { color: "var(--draft-ink)" },
+  number: { color: "var(--accent-sage)" },
+  boolean: { color: "var(--accent-sage)" },
+  function: { color: "var(--text-primary)", fontWeight: 500 },
+  "class-name": { color: "var(--accent-sage)" },
+  tag: { color: "var(--accent)" },
+  inserted: { color: "var(--accent-sage)" },
+  deleted: { color: "var(--accent-terracotta)" },
+};
+
 interface CodeBlockProps {
   language?: string;
   value: string;
-  className?: string;
 }
 
-const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
+const CodeBlock = ({ language, value }: CodeBlockProps) => {
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -62,26 +80,16 @@ const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
   };
 
   return (
-    <div className={cn("relative group rounded-lg overflow-hidden my-6 border border-border bg-[#1e1e1e]", className)}>
-      <div className="absolute right-4 top-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          onClick={handleCopy}
-          className="p-2 rounded-md bg-secondary/10 hover:bg-secondary/20 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Copy code"
-        >
-          {isCopied ? (
-            <Check className="w-4 h-4 text-green-500" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
+    <div className="codeblock">
+      <div className="codeblock__bar">
+        <span>{language || "text"}</span>
+        <button type="button" onClick={handleCopy} aria-label="Copy code">
+          {isCopied ? "copied" : "copy"}
         </button>
-      </div>
-      <div className="pt-2 pl-4 text-xs text-muted-foreground select-none uppercase tracking-wider font-mono">
-        {language || "text"}
       </div>
       <SyntaxHighlighter
         language={language || "text"}
-        style={vscDarkPlus}
+        style={sheetStyle}
         PreTag="div"
         codeTagProps={{
           style: {
@@ -91,16 +99,18 @@ const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
         }}
         customStyle={{
           margin: 0,
-          padding: "1.5rem",
+          padding: "8px 16px 14px",
+          overflowX: "auto",
           background: "transparent",
-          fontSize: "0.875rem",
-          lineHeight: "1.6",
+          fontFamily: "'IBM Plex Mono', ui-monospace, monospace",
+          fontSize: "13px",
+          lineHeight: "1.55",
         }}
         showLineNumbers={true}
         lineNumberStyle={{
           minWidth: "2.5em",
           paddingRight: "1em",
-          color: "#6e7681",
+          color: "var(--text-secondary)",
           textAlign: "right",
         }}
         wrapLines={true}
