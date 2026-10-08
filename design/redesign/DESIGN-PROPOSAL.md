@@ -45,6 +45,12 @@ Accent variants (pick one, or ship the picker as a site feature on `t`):
 
 My pick: Session on Hangar, Swordfish as the secondary for live/danger states. Session is the only one that makes the base read as Bebop rather than generic dark-mode.
 
+## Imagery
+
+Plates, not photos or screenshots. Four generated engraving-style drawings ship with the mock: a gear train with a hatched shaft section, a crank and slider in three phases, an exploded keyboard switch stack, and a worm and wheel in section. They are inline SVG from `plates/generate.py`: strokes use the drafting ink, dimension lines use the accent, labels use the mono face, and a small deterministic wobble keeps the lines from reading as CAD output. They re-tint with the base and the accent picker, cost no licensing, and can be regenerated per project in the build.
+
+Real period engravings (Agostino Ramelli's machine plates, Leonardo's codices, 19th century patent drawings) fit the same slot and are public domain. The cloud environment's network policy denies Wikimedia, the Met, the Library of Congress and archive.org, so none could be pulled in here. Allowing `upload.wikimedia.org` and `commons.wikimedia.org` in the environment's network settings would let the build fetch them.
+
 ## Mapping to existing routes
 
 | Route | Plate |
