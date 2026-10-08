@@ -1,21 +1,24 @@
+import { Link } from "react-router-dom";
+import SectionHead from "@/components/SectionHead";
 
 const Artifacts = () => {
   return (
-    <div className="page-shell page-shell--mid">
-      <div className="prose-minimal animate-fade-in">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
-          ( 05 &mdash; ARTIFACTS )
-        </p>
-        <h1>Artifacts</h1>
-        <p className="text-xl text-muted-foreground mb-12">
-          A collection of digital objects and experiments.
-        </p>
-
-        <div className="p-12 border border-dashed border-primary/20 rounded-lg text-center text-muted-foreground bg-card/50">
-          <p className="italic">The gallery is currently empty.</p>
-        </div>
+    <>
+      <div className="ptitle">
+        <p className="mono mute" style={{ marginTop: 0 }}>§03 — Artifacts</p>
+        <h1 className="disp">Objects</h1>
+        <p>Digital objects and experiments. Things kept rather than shipped.</p>
       </div>
-    </div>
+
+      <SectionHead n="03" title="Gallery" right="00 entries" />
+      <div className="empty">
+        <p className="mono mute">Nothing on the shelf yet</p>
+        <h2 className="disp">Empty</h2>
+        <p className="mono" style={{ marginTop: 20 }}>
+          <Link to="/projects" className="u">Meanwhile, the software index →</Link>
+        </p>
+      </div>
+    </>
   );
 };
 
