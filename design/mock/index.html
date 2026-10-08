@@ -1,0 +1,902 @@
+<title>Kygra Codex</title>
+<meta name="description" content="Portfolio redesign mock: an engineer's drawing sheet with a PS1-rendered Leonardo aerial screw, Cowboy Bebop title-card colour plates and a keyboard-first index.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800;900&family=IM+Fell+English:ital@0;1&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   KYGRA CODEX — design plan
+   Concept : the portfolio is an engineer's drawing sheet. Zone
+             markers on the frame, title block bottom-right,
+             hard 1–2px ink rules, square corners, no shadows.
+   Layout  : sheet frame > [rail 184px | content 1fr] > title block.
+             Below 760px the rail becomes a keycap row above content.
+   Themes  : light = drafting vellum, dark = night shift.
+   Plates  : MARS / CALLISTO / GANYMEDE / VENUS (data-plate on :root).
+             --plate  = flat title-card block colour (constant)
+             --accent = text/line-safe tone (per theme)
+   ============================================================ */
+:root{
+  color-scheme:light;
+  --paper:#E4DBC3; --paper-2:#D9CFB3; --ink:#1D1B17; --ink-2:#5A5546;
+  --graphite:#7A7464; --hatch:#BFB49A; --rule:#1D1B17;
+  --mars:#B5401F; --callisto:#C9962A; --ganymede:#2F6E6A; --venus:#34508F;
+  /* plate: MARS (default) */
+  --plate:#B5401F; --plate-2:#C9962A; --on-plate:#E8DFC8;
+  --accent-light:#A3391A; --accent-dark:#E0683F; --accent:var(--accent-light);
+  /* type scale */
+  --fs-0:11px; --fs-1:13px; --fs-2:15px; --fs-3:19px; --fs-4:26px; --fs-5:40px;
+  --fs-6:clamp(64px,11vw,148px);
+  --f-display:"Big Shoulders Display",Impact,"Arial Narrow",sans-serif;
+  --f-fell:"IM Fell English",Georgia,"Times New Roman",serif;
+  --f-mono:"Courier Prime","Courier New",Courier,monospace;
+  --zone:22px; --gut:16px;
+}
+:root[data-plate="callisto"]{--plate:#C9962A;--plate-2:#B5401F;--on-plate:#1D1B17;--accent-light:#7B5A10;--accent-dark:#D9A63A}
+:root[data-plate="ganymede"]{--plate:#2F6E6A;--plate-2:#C9962A;--on-plate:#E8DFC8;--accent-light:#2A605C;--accent-dark:#5FA39E}
+:root[data-plate="venus"]{--plate:#34508F;--plate-2:#B5401F;--on-plate:#E8DFC8;--accent-light:#34508F;--accent-dark:#7F98D6}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#16161A; --paper-2:#1E1E24; --ink:#D9CFB6; --ink-2:#A89E86;
+    --graphite:#55535C; --hatch:#2C2C34; --rule:#D9CFB6; --accent:var(--accent-dark);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#16161A; --paper-2:#1E1E24; --ink:#D9CFB6; --ink-2:#A89E86;
+  --graphite:#55535C; --hatch:#2C2C34; --rule:#D9CFB6; --accent:var(--accent-dark);
+}
+*{box-sizing:border-box;margin:0;padding:0;border-radius:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--paper);color:var(--ink);font:400 var(--fs-1)/1.5 var(--f-mono);padding:var(--gut) var(--gut) 60px;min-height:100vh;-webkit-font-smoothing:auto}
+a{color:inherit;text-decoration:none;border-bottom:1px solid var(--accent)}
+a:hover{background:var(--accent);color:var(--paper)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.fell{font-family:var(--f-fell);font-style:italic;font-size:var(--fs-3);line-height:1.3}
+.lbl{font-size:var(--fs-0);letter-spacing:.16em;text-transform:uppercase}
+
+/* ---- sheet frame ---- */
+.sheet{border:2px solid var(--rule);display:grid;grid-template-columns:var(--zone) minmax(0,1fr) var(--zone);grid-template-rows:var(--zone) minmax(0,1fr) var(--zone)}
+.corner{border:1px solid var(--rule)}
+.zone{display:flex;font-size:9px;letter-spacing:.1em;color:var(--ink-2)}
+.zone span{flex:1;display:flex;align-items:center;justify-content:center}
+.zone-top,.zone-bot{flex-direction:row}
+.zone-top{border-bottom:1px solid var(--rule)} .zone-bot{border-top:1px solid var(--rule)}
+.zone-top span,.zone-bot span{border-right:1px solid var(--rule)} .zone-top span:last-child,.zone-bot span:last-child{border-right:0}
+.zone-l,.zone-r{flex-direction:column}
+.zone-l{border-right:1px solid var(--rule)} .zone-r{border-left:1px solid var(--rule)}
+.zone-l span,.zone-r span{border-bottom:1px solid var(--rule)} .zone-l span:last-child,.zone-r span:last-child{border-bottom:0}
+.field{min-width:0}
+
+/* ---- header ---- */
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:18px 24px 14px;border-bottom:2px solid var(--rule);align-items:end}
+.head-title{font:900 var(--fs-6)/.82 var(--f-display);letter-spacing:-.01em;text-transform:uppercase;grid-row:1/3}
+.head-title span{display:block;color:var(--accent)}
+.head-meta{text-align:right;font-size:var(--fs-0);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.head-meta b{display:block;font-size:var(--fs-2);color:var(--ink);letter-spacing:.1em}
+.head-sub{max-width:34ch;text-align:right;color:var(--ink-2);align-self:end}
+
+/* ---- body: rail + content ---- */
+.body{display:grid;grid-template-columns:184px minmax(0,1fr)}
+.rail{border-right:1px solid var(--rule)}
+.rail-in{position:sticky;top:0;padding:18px 16px}
+.rail-h{display:flex;justify-content:space-between;border-bottom:1px solid var(--rule);padding-bottom:6px;margin-bottom:10px}
+.keys{list-style:none}
+.keys a{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;padding:5px 6px;border:0;text-transform:uppercase;letter-spacing:.1em;font-size:var(--fs-0);font-weight:700}
+.keys a i{font-style:normal;font-weight:400;color:var(--ink-2);letter-spacing:.06em;text-transform:none}
+.keys a:hover{background:var(--paper-2);color:var(--ink)}
+.keys a[aria-current]{background:var(--ink);color:var(--paper)} .keys a[aria-current] i{color:var(--paper)}
+kbd{display:inline-block;min-width:24px;height:24px;padding:0 5px;border:1px solid var(--ink);border-bottom-width:3px;text-align:center;line-height:20px;font:700 11px/20px var(--f-mono);background:var(--paper)}
+.keys a[aria-current] kbd{border-color:var(--paper);background:var(--ink);color:var(--paper)}
+.rail-hints{margin-top:18px;padding-top:10px;border-top:1px dashed var(--graphite);font-size:var(--fs-0);color:var(--ink-2);line-height:2;display:grid;grid-template-columns:1fr 1fr;gap:0 6px;white-space:nowrap}
+.rail-hints kbd{min-width:20px;height:18px;line-height:14px;font-size:10px;border-bottom-width:2px}
+.content{min-width:0}
+section{padding:22px 24px 30px;border-bottom:1px solid var(--rule)}
+.sec-h{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.card{background:var(--plate);color:var(--on-plate);font:900 var(--fs-1) var(--f-display);letter-spacing:.14em;padding:5px 9px 3px;text-transform:uppercase}
+.sec-h h2{font:900 var(--fs-5)/1 var(--f-display);text-transform:uppercase;letter-spacing:.01em}
+.sec-note{color:var(--ink-2)}
+
+/* ---- hero viewport ---- */
+.plate-fig{margin:0;display:grid;grid-template-columns:minmax(0,1fr) 236px;gap:16px 24px;align-items:start}
+.plate-fig figcaption{grid-column:1/-1}
+.fig-parts{font-size:var(--fs-0);letter-spacing:.04em;border:1px solid var(--rule)}
+.fig-parts .h{padding:6px 10px;border-bottom:1px solid var(--rule);background:var(--paper-2);letter-spacing:.16em;text-transform:uppercase}
+.fig-parts ol{list-style:none}
+.fig-parts li{display:grid;grid-template-columns:22px 1fr;gap:6px;padding:5px 10px;border-bottom:1px solid var(--hatch)}
+.fig-parts li b{color:var(--accent)}
+.fig-parts p{padding:10px;font-family:var(--f-fell);font-style:italic;font-size:var(--fs-2);line-height:1.3;color:var(--ink-2)}
+.viewport{position:relative;aspect-ratio:4/3;max-width:860px;border:1px solid var(--rule);background:var(--paper);overflow:hidden}
+.viewport canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.anno,.fallback{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.anno text{font-family:var(--f-fell);font-style:italic;font-size:17px;fill:var(--ink)}
+.anno .dim{font-family:var(--f-mono);font-style:normal;font-size:11px;letter-spacing:.08em;fill:var(--ink-2)}
+.anno .pl{font-family:var(--f-display);font-style:normal;font-weight:900;font-size:28px;fill:var(--accent)}
+.anno line,.anno path,.anno circle,.anno rect{vector-effect:non-scaling-stroke}
+.anno .lead{stroke:var(--accent);stroke-width:1}
+.anno .con{stroke:var(--graphite);stroke-width:.8;fill:none;stroke-dasharray:4 3}
+.anno .dot{fill:var(--accent)}
+.anno .dl{stroke:var(--ink-2);stroke-width:.8;fill:none}
+.anno .ar{fill:var(--ink-2)}
+.fallback{display:none;fill:none;stroke:var(--ink);stroke-width:1.5}
+.viewport.nogl canvas{display:none} .viewport.nogl .fallback{display:block}
+figcaption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding:8px 0 0;font-size:var(--fs-0);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+figcaption b{color:var(--ink)}
+
+/* ---- bebop title-card band ---- */
+.band{background:var(--plate);color:var(--on-plate);padding:28px 24px 22px;border-bottom:1px solid var(--rule);overflow:hidden}
+.band-in{position:relative;font:900 clamp(44px,8.6vw,124px)/.86 var(--f-display);text-transform:uppercase;letter-spacing:-.005em}
+.band-in .ghost{position:absolute;left:3px;top:-2px;color:var(--plate-2);user-select:none}
+.band-in .main{position:relative}
+.band-sub{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:var(--fs-0);letter-spacing:.2em;text-transform:uppercase;opacity:.9}
+
+/* ---- bill of materials ---- */
+.bom-wrap{overflow-x:auto;border:1px solid var(--rule)}
+.bom{width:100%;min-width:600px;border-collapse:collapse;font-size:var(--fs-1)}
+.bom caption{text-align:left;padding:8px 10px;border-bottom:1px solid var(--rule);font-size:var(--fs-0);letter-spacing:.14em;text-transform:uppercase}
+.bom caption em{color:var(--accent);font-style:normal}
+.bom th{font-size:var(--fs-0);letter-spacing:.14em;text-align:left;padding:7px 10px;border-bottom:2px solid var(--rule);background:var(--paper-2);font-weight:700}
+.bom td{padding:8px 10px;border-bottom:1px solid var(--hatch);vertical-align:top}
+.bom th+th,.bom td+td{border-left:1px solid var(--hatch)}
+.bom .row{cursor:pointer}
+.bom .row td:first-child{width:46px;font-weight:700}
+.bom .row td:first-child::before{content:"  ";white-space:pre}
+.bom .row.cur td:first-child::before{content:"> "}
+.bom .row.cur{outline:2px solid var(--accent);outline-offset:-2px}
+.bom .row[aria-expanded="true"]{background:var(--paper-2)}
+.bom .row:hover{background:var(--paper-2)}
+.bom .n{white-space:nowrap}
+.bom .detail td{padding:0;border-bottom:2px solid var(--rule)}
+.detail-in{display:grid;grid-template-columns:150px 1fr auto;gap:16px;align-items:center;padding:12px 10px 12px 56px;background:repeating-linear-gradient(45deg,transparent 0 7px,var(--hatch) 7px 8px)}
+.detail-in .dd{width:150px;height:76px;display:block;border:1px solid var(--rule);background:var(--paper)}
+.detail-in p{font-family:var(--f-fell);font-style:italic;font-size:var(--fs-3);line-height:1.3;max-width:48ch}
+.detail-in small{font-size:var(--fs-0);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap}
+.bom-foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:var(--fs-0);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+
+/* ---- lab / notes / about / contact ---- */
+.lab{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rule)}
+.lab li{padding:12px 14px;border-right:1px solid var(--rule)} .lab li:last-child{border-right:0}
+.lab b{display:block;font:900 var(--fs-4)/1 var(--f-display);text-transform:uppercase;margin:2px 0 8px}
+.lab .st{display:inline-block;border:1px solid var(--ink);padding:0 6px;font-size:var(--fs-0);letter-spacing:.14em;text-transform:uppercase}
+.lab .st.on{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.notes{list-style:none;max-width:70ch}
+.notes li{display:grid;grid-template-columns:110px 1fr;gap:16px;padding:10px 0;border-bottom:1px dashed var(--graphite)}
+.notes time{font-size:var(--fs-0);letter-spacing:.14em;color:var(--ink-2);padding-top:5px}
+.about{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:24px}
+.spec{border:1px solid var(--rule);font-size:var(--fs-1)}
+.spec div{display:grid;grid-template-columns:110px 1fr;border-bottom:1px solid var(--hatch)} .spec div:last-child{border-bottom:0}
+.spec span{padding:6px 10px} .spec span:first-child{border-right:1px solid var(--hatch);font-size:var(--fs-0);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.contact{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0 24px;max-width:720px}
+.contact li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--hatch)}
+
+/* ---- colour plates ---- */
+.plates{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:1px solid var(--rule)}
+.plate-card{display:block;text-align:left;padding:24px 12px 12px;border-right:1px solid var(--rule);position:relative}
+.plate-card:last-child{border-right:0}
+.plate-card:hover{background:var(--paper-2)}
+.plate-card[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.plate-card .mini{display:block;height:76px;padding:8px;color:var(--mini-on);position:relative;overflow:hidden}
+.plate-card .mini b{font:900 28px/1 var(--f-display);letter-spacing:.02em;display:block}
+.plate-card .mini i{position:absolute;right:8px;bottom:6px;font-style:normal;font-size:9px;letter-spacing:.2em}
+.plate-card .mini .g{position:absolute;left:10px;top:7px;font:900 28px/1 var(--f-display);letter-spacing:.02em;color:var(--mini-2)}
+.plate-card .mini .m{position:relative}
+.plate-card .sw{display:flex;height:14px;margin-top:6px;border:1px solid var(--rule)} .plate-card .sw i{flex:1}
+.plate-card .nm{display:flex;justify-content:space-between;margin-top:10px;font-weight:700;letter-spacing:.14em;font-size:var(--fs-1)}
+.plate-card .nm small{font-weight:400;font-size:var(--fs-0);opacity:.75}
+.plate-card .hx{display:block;font-size:var(--fs-0);letter-spacing:.06em;opacity:.8;margin-top:2px}
+.plate-card .sel{position:absolute;top:4px;right:6px;font-size:var(--fs-0);letter-spacing:.14em;display:none}
+.plate-card[aria-pressed="true"] .sel{display:block}
+.plates-note{margin-top:10px;color:var(--ink-2);max-width:72ch}
+
+/* ---- footer / indie web ---- */
+.foot{padding:20px 24px}
+.ring{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;border:1px solid var(--rule);padding:10px 14px;font-size:var(--fs-1)}
+.ring .nm{font:900 var(--fs-3) var(--f-display);letter-spacing:.1em;text-transform:uppercase;padding:2px 10px;background:var(--ink);color:var(--paper)}
+.ring .rn{margin-left:auto;font-size:var(--fs-0);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}
+.badge{width:88px;height:31px;border:1px solid var(--ink);display:flex;align-items:center;justify-content:center;gap:4px;text-align:center;font:700 8px/1.1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;background:var(--paper);color:var(--ink);padding:0 4px;image-rendering:pixelated}
+.badge.inv{background:var(--ink);color:var(--paper)}
+.badge.pl{background:var(--plate);color:var(--on-plate);border-color:var(--plate)}
+.badge.st{background:repeating-linear-gradient(90deg,var(--paper) 0 3px,var(--hatch) 3px 4px)}
+.badge.ds{background:repeating-conic-gradient(var(--hatch) 0 25%,var(--paper) 0 50%) 0 0/4px 4px}
+.badge svg{width:14px;height:14px;flex:none;fill:currentColor;shape-rendering:crispEdges}
+.stamp{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:var(--fs-0);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.odo{display:inline-flex;gap:2px;vertical-align:middle} .odo b{display:inline-block;width:14px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);text-align:center;font-size:11px;line-height:16px}
+
+/* ---- title block ---- */
+.tblock-wrap{display:flex;justify-content:flex-end;padding:0 0 0 24px}
+.tblock{border-collapse:collapse;border:2px solid var(--rule);border-right:0;border-bottom:0;width:min(100%,420px);font-size:var(--fs-0);letter-spacing:.1em;text-transform:uppercase}
+.tblock td{border:1px solid var(--rule);padding:4px 8px}
+.tblock .big{font:900 28px/1 var(--f-display);letter-spacing:.02em;padding:8px}
+.tblock .big small{display:block;font:400 var(--fs-0) var(--f-mono);letter-spacing:.14em;margin-top:4px;color:var(--ink-2)}
+.tblock .k{color:var(--ink-2);width:70px} .tblock .v{font-weight:700}
+
+/* ---- modeline ---- */
+.modeline{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;align-items:center;gap:0;background:var(--ink);color:var(--paper);font-size:12px;line-height:1;height:28px;padding:0 var(--gut);white-space:nowrap;overflow:hidden}
+.modeline .seg{padding:0 10px;border-right:1px solid var(--paper-2);height:100%;display:flex;align-items:center;opacity:.9}
+.modeline .seg:first-child{padding-left:0}
+.modeline .mode{background:var(--accent);color:var(--paper);font-weight:700;padding:0 10px;letter-spacing:.14em;border-right:0}
+.modeline .mode.f{background:var(--plate-2);color:#1D1B17}
+.ml-filter{margin-left:auto;display:flex;align-items:center;gap:4px;height:100%}
+.ml-filter input{background:transparent;border:0;border-bottom:1px solid var(--paper);color:var(--paper);font:inherit;width:140px;padding:2px 0;outline:none}
+.ml-filter input:focus{border-bottom-color:var(--accent)}
+.ml-filter input::placeholder{color:var(--paper);opacity:.6}
+
+/* ---- help overlay (drawing sheet insert) ---- */
+.help{position:fixed;inset:0;z-index:30;background:var(--paper);background-image:repeating-linear-gradient(45deg,transparent 0 9px,var(--hatch) 9px 10px);display:none;align-items:center;justify-content:center;padding:var(--gut)}
+.help[data-open]{display:flex}
+.insert{background:var(--paper);border:2px solid var(--rule);width:min(640px,100%);max-height:calc(100vh - 32px);overflow:auto}
+.insert header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:2px solid var(--rule)}
+.insert h3{font:900 var(--fs-4)/1 var(--f-display);text-transform:uppercase}
+.insert header button{border:1px solid var(--ink);padding:3px 8px;font-size:var(--fs-0);letter-spacing:.14em}
+.keymap{width:100%;border-collapse:collapse}
+.keymap td{padding:7px 14px;border-bottom:1px solid var(--hatch);vertical-align:middle}
+.keymap td:first-child{width:160px;white-space:nowrap}
+.keymap tr.g td{background:var(--paper-2);font-size:var(--fs-0);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);padding:4px 14px}
+.insert footer{padding:8px 14px;font-size:var(--fs-0);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+
+/* ---- responsive ---- */
+@media (max-width:980px){.about{grid-template-columns:1fr}.lab{grid-template-columns:1fr}.lab li{border-right:0;border-bottom:1px solid var(--rule)}.lab li:last-child{border-bottom:0}}
+@media (max-width:760px){
+  :root{--zone:18px}
+  .head{grid-template-columns:1fr;padding:14px 12px 12px}.head-meta,.head-sub{text-align:left}.head-title{grid-row:auto}
+  .body{grid-template-columns:1fr}
+  .rail{border-right:0;border-bottom:1px solid var(--rule)}.rail-in{position:static;padding:12px}
+  .keys{display:flex;flex-wrap:wrap;gap:4px}.keys li{flex:1 1 40%}.keys a{grid-template-columns:28px 1fr}.keys a i{display:none}
+  .rail-hints{display:none}
+  section,.foot,.band{padding-left:12px;padding-right:12px}
+  .plates{grid-template-columns:repeat(2,minmax(0,1fr))}.plate-card:nth-child(2n){border-right:0}.plate-card:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+  .detail-in{grid-template-columns:1fr;padding-left:12px}
+  .plate-fig{grid-template-columns:1fr}
+  .notes li{grid-template-columns:1fr;gap:2px}
+  .tblock-wrap{padding-left:0}
+  .modeline .ml-hide{display:none}.ml-filter input{width:90px}
+  .anno text{font-size:28px}.anno .dim{font-size:16px}
+}
+</style>
+
+<div class="sheet" id="sheet">
+  <div class="corner"></div>
+  <div class="zone zone-top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+  <div class="corner"></div>
+  <div class="zone zone-l" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span></div>
+
+  <div class="field">
+    <header class="head">
+      <h1 class="head-title">Kygra<span>Codex</span></h1>
+      <div class="head-meta"><b>DWG No. KC-2026-01</b>portfolio · drawing sheet · rev C · 2026-10-08</div>
+      <p class="head-sub fell">Being a sheet of works, experiments &amp; marginalia, drawn by hand and driven by the keyboard. Press <b style="font-family:var(--f-mono);font-style:normal;font-size:13px">?</b> for the key map.</p>
+    </header>
+
+    <div class="body">
+      <nav class="rail" aria-label="Section index">
+        <div class="rail-in">
+          <div class="rail-h"><span class="lbl">Index</span><span class="lbl" style="color:var(--ink-2)">1–5</span></div>
+          <ol class="keys" id="keys">
+            <li><a href="#fig" data-sec="fig"><kbd>0</kbd><span>figure</span><i>pl. I</i></a></li>
+            <li><a href="#work" data-sec="work" aria-current="true"><kbd>1</kbd><span>work</span><i>§ BOM</i></a></li>
+            <li><a href="#lab" data-sec="lab"><kbd>2</kbd><span>lab</span><i>§ exp.</i></a></li>
+            <li><a href="#notes" data-sec="notes"><kbd>3</kbd><span>notes</span><i>§ log</i></a></li>
+            <li><a href="#about" data-sec="about"><kbd>4</kbd><span>about</span><i>§ spec</i></a></li>
+            <li><a href="#contact" data-sec="contact"><kbd>5</kbd><span>contact</span><i>§ ref.</i></a></li>
+            <li><a href="#plates" data-sec="plates"><kbd>6</kbd><span>plates</span><i>§ colour</i></a></li>
+          </ol>
+          <div class="rail-hints">
+            <div><kbd>j</kbd><kbd>k</kbd> cursor</div>
+            <div><kbd>⏎</kbd> open part</div>
+            <div><kbd>/</kbd> filter</div>
+            <div><kbd>t</kbd> theme</div>
+            <div><kbd>a</kbd> plate</div>
+            <div><kbd>r</kbd> render</div>
+            <div><kbd>?</kbd> all keys</div>
+          </div>
+        </div>
+      </nav>
+
+      <div class="content">
+        <!-- FIG. 1 : PS1 viewport -->
+        <section id="fig" data-sec="fig" aria-label="Figure 1">
+          <div class="sec-h"><span class="card">Plate I</span><h2>Vite aerea</h2><span class="sec-note fell">the aerial screw, rendered as a PlayStation might</span></div>
+          <figure class="plate-fig">
+            <div class="viewport" id="viewport">
+              <canvas id="gl" width="320" height="240" aria-label="Low-poly 3D model of Leonardo's aerial screw driven by a gear train"></canvas>
+              <svg class="fallback" viewBox="0 0 640 480" aria-hidden="true" id="fallback"></svg>
+              <svg class="anno" viewBox="0 0 640 480" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 1 L10 5 L0 9 z" class="ar"/></marker>
+                  <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--graphite)" stroke-width="1"/></pattern>
+                </defs>
+                <!-- vitruvian construction -->
+                <circle cx="330" cy="238" r="186" class="con"/>
+                <rect x="150" y="52" width="372" height="372" class="con"/>
+                <line x1="330" y1="40" x2="330" y2="436" class="con"/>
+                <line x1="132" y1="238" x2="528" y2="238" class="con"/>
+                <!-- section hatch swatch -->
+                <rect x="556" y="18" width="64" height="26" fill="url(#hatch)" stroke="var(--graphite)" stroke-width=".8"/>
+                <text x="556" y="58" class="dim">SECTION A–A</text>
+                <text x="20" y="96" class="pl">PL. I</text>
+                <!-- leaders (x2,y2 updated live from the 3D scene) -->
+                <g id="leads">
+                  <line class="lead" x1="172" y1="52" x2="250" y2="150" data-a="sail"/><circle class="dot" r="3" cx="250" cy="150" data-a="sail"/>
+                  <text x="20" y="48" transform="rotate(-1.5 20 48)">fig. 1 — the screw, of starched linen</text>
+                  <line class="lead" x1="478" y1="92" x2="320" y2="112" data-a="mast"/><circle class="dot" r="3" cx="320" cy="112" data-a="mast"/>
+                  <text x="620" y="96" text-anchor="end">the mast, of fir, three braccia</text>
+                  <line class="lead" x1="500" y1="408" x2="360" y2="378" data-a="pinion"/><circle class="dot" r="3" cx="360" cy="378" data-a="pinion"/>
+                  <text x="620" y="412" text-anchor="end" transform="rotate(1 620 412)">the pinion, 8 teeth</text>
+                  <line class="lead" x1="474" y1="356" x2="420" y2="372" data-a="wheel"/><circle class="dot" r="3" cx="420" cy="372" data-a="wheel"/>
+                  <text x="620" y="362" text-anchor="end">the great wheel, 16 teeth</text>
+                  <line class="lead" x1="212" y1="422" x2="190" y2="392" data-a="platform"/><circle class="dot" r="3" cx="190" cy="392" data-a="platform"/>
+                  <text x="20" y="428" transform="rotate(.8 20 428)">the platform, on which four men run</text>
+                </g>
+                <!-- dimensions -->
+                <line x1="160" y1="452" x2="300" y2="452" class="dl" marker-start="url(#ar)"/>
+                <line x1="372" y1="452" x2="500" y2="452" class="dl" marker-end="url(#ar)"/>
+                <text x="336" y="456" class="dim" text-anchor="middle">⌀ 3.60 br.</text>
+                <line x1="160" y1="444" x2="160" y2="462" class="dl"/><line x1="500" y1="444" x2="500" y2="462" class="dl"/>
+                <line x1="596" y1="130" x2="596" y2="210" class="dl" marker-start="url(#ar)"/>
+                <line x1="596" y1="252" x2="596" y2="340" class="dl" marker-end="url(#ar)"/>
+                <text x="588" y="236" class="dim" text-anchor="middle" transform="rotate(-90 588 236)">h 3.00 br.</text>
+                <line x1="588" y1="130" x2="604" y2="130" class="dl"/><line x1="588" y1="340" x2="604" y2="340" class="dl"/>
+                <!-- scale bar -->
+                <line x1="520" y1="466" x2="620" y2="466" class="dl"/><line x1="520" y1="461" x2="520" y2="471" class="dl"/><line x1="570" y1="463" x2="570" y2="469" class="dl"/><line x1="620" y1="461" x2="620" y2="471" class="dl"/>
+                <text x="520" y="457" class="dim">0</text><text x="620" y="457" class="dim" text-anchor="end">1 br.</text>
+              </svg>
+            </div>
+            <aside class="fig-parts" aria-label="Parts of figure 1">
+              <div class="h">Parts · fig. 1</div>
+              <ol>
+                <li><b>1</b><span>platform, 12-gon · fir</span></li>
+                <li><b>2</b><span>mast, 6-gon · fir, 3 br.</span></li>
+                <li><b>3</b><span>sail, 1¾ turns · starched linen</span></li>
+                <li><b>4</b><span>pinion · 8 t · module 0.06</span></li>
+                <li><b>5</b><span>idler · 12 t</span></li>
+                <li><b>6</b><span>great wheel · 16 t · with crank</span></li>
+              </ol>
+              <div class="h">Render</div>
+              <ol>
+                <li><b>a</b><span>320×240 · vertex snap to grid</span></li>
+                <li><b>b</b><span>affine uv · gouraud ×4 steps</span></li>
+                <li><b>c</b><span>bayer 4×4 · 5 bit / channel</span></li>
+                <li><b>d</b><span>fog fades into the paper</span></li>
+              </ol>
+              <p>Three 32-pixel textures, no mipmaps, no apology. Press r to strip it to the drawing.</p>
+            </aside>
+            <figcaption><span><b>FIG. 1</b> · VITE AEREA · after Ms. B 83v · <b id="tris">—</b> tris</span><span>render: <b id="rmode">tex+edges</b> · <b id="pstate">running</b> · 320×240 · <b id="glnote">webgl2</b></span></figcaption>
+          </figure>
+        </section>
+
+        <!-- Bebop title card -->
+        <div class="band" id="band">
+          <div class="band-in"><span class="ghost" aria-hidden="true">Session #04 — Work Log</span><span class="main">Session #04 — Work Log</span></div>
+          <div class="band-sub"><span>3 · 2 · 1 · let's jam</span><span>KC · 2026 · sheet 01</span></div>
+        </div>
+
+        <!-- WORK : bill of materials -->
+        <section id="work" data-sec="work">
+          <div class="sec-h"><span class="card">Session #04</span><h2>Work</h2><span class="sec-note fell">a bill of materials</span></div>
+          <div class="bom-wrap">
+            <table class="bom" id="bom">
+              <caption>Table 1 · Bill of materials · <em>sample parts — real entries in build</em></caption>
+              <thead><tr><th>Item</th><th>Part no.</th><th>Description</th><th>Matl</th><th>Qty</th></tr></thead>
+              <tbody id="bomBody">
+                <tr class="row cur" tabindex="0" aria-expanded="false"><td>01</td><td class="n">KC-001</td><td>Static site generator for hand-written HTML, with a leader-line annotation syntax</td><td>Node · Make · Bash</td><td class="n">2025</td></tr>
+                <tr class="detail" hidden><td colspan="5"><div class="detail-in"><svg class="dd" viewBox="0 0 150 76"><use href="#sym-part"/></svg><p>Every page is a sheet; the build only draws the frame. Leader lines are a line of Markdown, not a plugin.</p><small>Detail A · scale 2:1</small></div></td></tr>
+                <tr class="row" tabindex="0" aria-expanded="false"><td>02</td><td class="n">KC-002</td><td>Keyboard-driven feed reader; vim motions, no mouse required</td><td>TS · WebSocket · SQLite</td><td class="n">2024</td></tr>
+                <tr class="detail" hidden><td colspan="5"><div class="detail-in"><svg class="dd" viewBox="0 0 150 76"><use href="#sym-part"/></svg><p>Reads like a mailbox, moves like a text editor. The cursor is the interface.</p><small>Detail B · scale 2:1</small></div></td></tr>
+                <tr class="row" tabindex="0" aria-expanded="false"><td>03</td><td class="n">KC-003</td><td>PS1-style render pipeline for the browser: vertex snap, affine UVs, ordered dither</td><td>WebGL2 · GLSL</td><td class="n">2026</td></tr>
+                <tr class="detail" hidden><td colspan="5"><div class="detail-in"><svg class="dd" viewBox="0 0 150 76"><use href="#sym-part"/></svg><p>Three hundred and twenty by two hundred and forty, and proud of it. See fig. 1.</p><small>Detail C · scale 2:1</small></div></td></tr>
+                <tr class="row" tabindex="0" aria-expanded="false"><td>04</td><td class="n">KC-004</td><td>Gear-ratio calculator that plots involute profiles to SVG</td><td>Rust · WASM · SVG</td><td class="n">2024</td></tr>
+                <tr class="detail" hidden><td colspan="5"><div class="detail-in"><svg class="dd" viewBox="0 0 150 76"><use href="#sym-part"/></svg><p>Module, pressure angle, tooth count in; a drawing you could cut from out.</p><small>Detail D · scale 2:1</small></div></td></tr>
+                <tr class="row" tabindex="0" aria-expanded="false"><td>05</td><td class="n">KC-005</td><td>Webring registry and 88×31 badge forge</td><td>Go · HTML</td><td class="n">2023</td></tr>
+                <tr class="detail" hidden><td colspan="5"><div class="detail-in"><svg class="dd" viewBox="0 0 150 76"><use href="#sym-part"/></svg><p>Prev, next, random. Badges are drawn in a 2-colour pixel grid and served as plain PNG.</p><small>Detail E · scale 2:1</small></div></td></tr>
+                <tr class="row" tabindex="0" aria-expanded="false"><td>06</td><td class="n">KC-006</td><td>Marginalia: a notes format where every note is a figure with a caption</td><td>Markdown · Lua</td><td class="n">2025</td></tr>
+                <tr class="detail" hidden><td colspan="5"><div class="detail-in"><svg class="dd" viewBox="0 0 150 76"><use href="#sym-part"/></svg><p>Notes in the margin, drawings in the field. Captions are mandatory.</p><small>Detail F · scale 2:1</small></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bom-foot"><span><kbd>j</kbd> <kbd>k</kbd> move · <kbd>⏎</kbd> open detail · <kbd>/</kbd> filter</span><span id="bomCount">6 of 6 parts</span></div>
+        </section>
+
+        <!-- LAB -->
+        <section id="lab" data-sec="lab">
+          <div class="sec-h"><span class="card">Session #05</span><h2>Lab</h2><span class="sec-note fell">experiments, some of which turn</span></div>
+          <ul class="lab">
+            <li><span class="st on">running</span><b>Dither bench</b><span class="fell">Bayer 2×2 to 8×8 against blue noise, at five bits per channel.</span></li>
+            <li><span class="st">paused</span><b>Keycap font</b><span class="fell">A bitmap face for drawn keycaps; 24 px tall, no anti-aliasing.</span></li>
+            <li><span class="st">sketch</span><b>Ornithopter</b><span class="fell">Ms. B 70r. Wing linkage as a four-bar, exported to the PS1 pipe.</span></li>
+          </ul>
+        </section>
+
+        <!-- NOTES -->
+        <section id="notes" data-sec="notes">
+          <div class="sec-h"><span class="card">Session #06</span><h2>Notes</h2><span class="sec-note fell">marginalia, dated</span></div>
+          <ul class="notes">
+            <li><time>2026-10-08</time><span class="fell">On snapping vertices: the grid must be the render grid, not the display grid, or the jitter reads as a bug rather than a texture.</span></li>
+            <li><time>2026-09-21</time><span class="fell">Leonardo dimensions in braccia; the sheet does too. One braccio is about 58 cm, or 96 px at scale.</span></li>
+            <li><time>2026-08-30</time><span class="fell">A modeline is a better footer than a footer. It tells you where you are, which the footer never did.</span></li>
+          </ul>
+        </section>
+
+        <!-- ABOUT -->
+        <section id="about" data-sec="about">
+          <div class="sec-h"><span class="card">Session #07</span><h2>About</h2><span class="sec-note fell">specification of the draughtsman</span></div>
+          <div class="about">
+            <p class="fell">Kygra draws software the way an engineer draws a machine: in plan, in section, with every part numbered. The keyboard is the instrument; the browser is the sheet. Most of what is here was built to be looked at with the hands.</p>
+            <div class="spec">
+              <div><span>Trade</span><span>front-of-house engineer, graphics-curious</span></div>
+              <div><span>Tools</span><span>a text editor, a 60% keyboard, a pencil</span></div>
+              <div><span>Units</span><span>px · em · braccia</span></div>
+              <div><span>Location</span><span>somewhere between Mars and Callisto</span></div>
+              <div><span>Status</span><span>open to interesting parts</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONTACT -->
+        <section id="contact" data-sec="contact">
+          <div class="sec-h"><span class="card">Session #08</span><h2>Contact</h2><span class="sec-note fell">references on this sheet</span></div>
+          <ul class="contact">
+            <li><span class="lbl">mail</span><a href="#">hello@kygra.example</a></li>
+            <li><span class="lbl">git</span><a href="#">git.kygra.example</a></li>
+            <li><span class="lbl">feed</span><a href="#">/feed.xml</a></li>
+            <li><span class="lbl">pgp</span><a href="#">0xC0DEX</a></li>
+          </ul>
+        </section>
+
+        <!-- COLOUR PLATES -->
+        <section id="plates" data-sec="plates">
+          <div class="sec-h"><span class="card">Appendix</span><h2>Colour plates</h2><span class="sec-note fell">pick one; the sheet re-inks itself</span></div>
+          <div class="plates" id="plates-grid" role="group" aria-label="Accent colour plates">
+            <button class="plate-card" data-plate="mars" aria-pressed="true" style="--mini:#B5401F;--mini-on:#E8DFC8;--mini-2:#C9962A">
+              <span class="sel">[x] selected</span>
+              <span class="mini" style="background:var(--mini)"><span class="g" aria-hidden="true">Mars</span><b class="m">Mars</b><i>plate 01</i></span>
+              <span class="sw"><i style="background:#B5401F"></i><i style="background:#A3391A"></i><i style="background:#E0683F"></i><i style="background:#C9962A"></i></span>
+              <span class="nm">MARS <small>shift+1</small></span>
+              <span class="hx">#B5401F · text L #A3391A · D #E0683F</span>
+            </button>
+            <button class="plate-card" data-plate="callisto" aria-pressed="false" style="--mini:#C9962A;--mini-on:#1D1B17;--mini-2:#B5401F">
+              <span class="sel">[x] selected</span>
+              <span class="mini" style="background:var(--mini)"><span class="g" aria-hidden="true">Callisto</span><b class="m">Callisto</b><i>plate 02</i></span>
+              <span class="sw"><i style="background:#C9962A"></i><i style="background:#7B5A10"></i><i style="background:#D9A63A"></i><i style="background:#B5401F"></i></span>
+              <span class="nm">CALLISTO <small>shift+2</small></span>
+              <span class="hx">#C9962A · text L #7B5A10 · D #D9A63A</span>
+            </button>
+            <button class="plate-card" data-plate="ganymede" aria-pressed="false" style="--mini:#2F6E6A;--mini-on:#E8DFC8;--mini-2:#C9962A">
+              <span class="sel">[x] selected</span>
+              <span class="mini" style="background:var(--mini)"><span class="g" aria-hidden="true">Ganymede</span><b class="m">Ganymede</b><i>plate 03</i></span>
+              <span class="sw"><i style="background:#2F6E6A"></i><i style="background:#2A605C"></i><i style="background:#5FA39E"></i><i style="background:#C9962A"></i></span>
+              <span class="nm">GANYMEDE <small>shift+3</small></span>
+              <span class="hx">#2F6E6A · text L #2A605C · D #5FA39E</span>
+            </button>
+            <button class="plate-card" data-plate="venus" aria-pressed="false" style="--mini:#34508F;--mini-on:#E8DFC8;--mini-2:#B5401F">
+              <span class="sel">[x] selected</span>
+              <span class="mini" style="background:var(--mini)"><span class="g" aria-hidden="true">Venus</span><b class="m">Venus</b><i>plate 04</i></span>
+              <span class="sw"><i style="background:#34508F"></i><i style="background:#34508F"></i><i style="background:#7F98D6"></i><i style="background:#B5401F"></i></span>
+              <span class="nm">VENUS <small>shift+4</small></span>
+              <span class="hx">#34508F · text L #34508F · D #7F98D6</span>
+            </button>
+          </div>
+          <p class="plates-note fell">Each plate carries three inks: the flat block colour for title cards, and a text-safe tone per theme (L on vellum, D on night) that clears 4.5:1. Press <b style="font-family:var(--f-mono);font-style:normal;font-size:13px">a</b> to cycle, or shift + 1–4.</p>
+        </section>
+
+        <!-- FOOTER : indie web -->
+        <footer class="foot">
+          <div class="ring"><a href="#">← prev</a><span class="nm">kygra</span><a href="#">next →</a><a href="#">random</a><span class="rn">the drafting-table webring · 041 / 212</span></div>
+          <div class="badges" aria-label="88 by 31 badges">
+            <span class="badge inv">best viewed w/ keyboard</span>
+            <span class="badge st">no js framework</span>
+            <span class="badge">hand-drawn<br>since 2023</span>
+            <span class="badge pl"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2h2v2H2zM10 2h2v2h-2zM6 1h2v2H6zM6 11h2v2H6zM1 6h2v2H1zM11 6h2v2h-2zM5 5h4v4H5z"/></svg>PS1 inside</span>
+            <span class="badge ds">320 × 240<br>native</span>
+            <span class="badge">leonardo<br>approved*</span>
+          </div>
+          <div class="stamp"><span>visitors <span class="odo" id="odo"><b>0</b><b>0</b><b>4</b><b>2</b><b>1</b><b>7</b></span> · counted by hand</span><span>last edited 2026-10-08 23:41 · rev C · * not really</span></div>
+        </footer>
+
+        <div class="tblock-wrap">
+          <table class="tblock" aria-label="Title block">
+            <tr><td colspan="4" class="big">Kygra Codex<small>portfolio · drawing sheet · mock</small></td></tr>
+            <tr><td class="k">Drawn</td><td class="v">Kygra</td><td class="k">Checked</td><td class="v">—</td></tr>
+            <tr><td class="k">Scale</td><td class="v">1:1</td><td class="k">Units</td><td class="v">px · br.</td></tr>
+            <tr><td class="k">Date</td><td class="v">2026-10-08</td><td class="k">Rev</td><td class="v">C</td></tr>
+            <tr><td class="k">Sheet</td><td class="v">01 of 05</td><td class="k">Dwg No.</td><td class="v">KC-2026-01</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="zone zone-r" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span></div>
+  <div class="corner"></div>
+  <div class="zone zone-bot" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
+  <div class="corner"></div>
+</div>
+
+<!-- shared detail-drawing symbol -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="sym-part" viewBox="0 0 150 76">
+    <g fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke">
+      <rect x="22" y="18" width="70" height="40"/><circle cx="57" cy="38" r="11"/><circle cx="57" cy="38" r="2"/>
+      <line x1="40" y1="38" x2="74" y2="38" stroke-dasharray="6 2 1 2"/><line x1="57" y1="22" x2="57" y2="54" stroke-dasharray="6 2 1 2"/>
+      <path d="M92 20 L118 20 M92 56 L118 56 M112 22 L112 54" stroke-width=".8"/><path d="M112 22 l-2 5 h4 z M112 54 l-2 -5 h4 z" fill="currentColor"/>
+      <path d="M22 60 L22 70 M92 60 L92 70 M24 66 L90 66" stroke-width=".8"/><path d="M24 66 l5 -2 v4 z M90 66 l-5 -2 v4 z" fill="currentColor"/>
+      <path d="M100 30 l6 6 M100 36 l6 6 M100 42 l6 6" stroke-width=".7"/>
+    </g>
+    <text x="122" y="40" font-family="Courier Prime,monospace" font-size="8" fill="currentColor">40</text>
+    <text x="57" y="74" font-family="Courier Prime,monospace" font-size="8" fill="currentColor" text-anchor="middle">70</text>
+  </symbol>
+</svg>
+
+<!-- modeline -->
+<div class="modeline" id="modeline" role="status" aria-live="polite">
+  <span class="seg mode" id="ml-mode">NORMAL</span>
+  <span class="seg" id="ml-sec">work/01</span>
+  <span class="seg">plate: <b id="ml-plate" style="margin-left:4px">MARS</b></span>
+  <span class="seg ml-hide">render: <b id="ml-r" style="margin-left:4px">tex+edges</b></span>
+  <span class="seg ml-hide" id="ml-hint">? keys</span>
+  <label class="ml-filter"><span>/</span><input id="filter" type="text" placeholder="filter parts" autocomplete="off" spellcheck="false" aria-label="Filter bill of materials"></label>
+</div>
+
+<!-- help overlay -->
+<div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="help-h">
+  <div class="insert">
+    <header><h3 id="help-h">Insert A — key map</h3><span class="lbl" style="color:var(--ink-2)">sheet 01</span><button id="help-x" type="button">esc · close</button></header>
+    <table class="keymap">
+      <tr class="g"><td colspan="2">Navigate</td></tr>
+      <tr><td><kbd>0</kbd>…<kbd>6</kbd></td><td>jump to figure, work, lab, notes, about, contact, plates</td></tr>
+      <tr><td><kbd>g</kbd> / <kbd>G</kbd></td><td>top of sheet / bottom of sheet</td></tr>
+      <tr><td><kbd>j</kbd> / <kbd>k</kbd></td><td>move the parts cursor down / up</td></tr>
+      <tr><td><kbd>⏎</kbd></td><td>open or close the detail drawing under the cursor</td></tr>
+      <tr><td><kbd>/</kbd></td><td>filter the bill of materials (esc leaves the filter line)</td></tr>
+      <tr class="g"><td colspan="2">Sheet</td></tr>
+      <tr><td><kbd>t</kbd></td><td>toggle vellum / night shift</td></tr>
+      <tr><td><kbd>a</kbd></td><td>cycle colour plate</td></tr>
+      <tr><td><kbd>⇧1</kbd>…<kbd>⇧4</kbd></td><td>select plate: Mars, Callisto, Ganymede, Venus</td></tr>
+      <tr class="g"><td colspan="2">Figure 1</td></tr>
+      <tr><td><kbd>r</kbd></td><td>render mode: textured → textured+edges → drawing</td></tr>
+      <tr><td><kbd>space</kbd></td><td>pause / resume the mechanism</td></tr>
+      <tr class="g"><td colspan="2">Help</td></tr>
+      <tr><td><kbd>?</kbd> / <kbd>esc</kbd></td><td>open / close this insert</td></tr>
+    </table>
+    <footer>drawn: kygra · all keys are plain; no modifiers except shift</footer>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  var root = document.documentElement;
+  var $ = function (id) { return document.getElementById(id); };
+  var PLATES = ['mars', 'callisto', 'ganymede', 'venus'];
+  var SECS = ['fig', 'work', 'lab', 'notes', 'about', 'contact', 'plates'];
+  var state = { plate: 'mars', mode: 'NORMAL', sec: 'work', cur: 0, rmode: 1, paused: false };
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var gl = null; // set by initGL
+
+  /* ---------- modeline ---------- */
+  function modeline() {
+    $('ml-mode').textContent = state.mode;
+    $('ml-mode').className = 'seg mode' + (state.mode === 'FILTER' ? ' f' : '');
+    var n = state.sec === 'work' ? state.cur + 1 : SECS.indexOf(state.sec);
+    $('ml-sec').textContent = state.sec + '/' + (n < 10 ? '0' + n : n);
+    $('ml-plate').textContent = state.plate.toUpperCase();
+    $('ml-r').textContent = ['textured', 'tex+edges', 'drawing'][state.rmode];
+  }
+  function setMode(m) { state.mode = m; modeline(); }
+
+  /* ---------- theme & plate ---------- */
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    if (t) return t === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function toggleTheme() {
+    root.setAttribute('data-theme', isDark() ? 'light' : 'dark');
+    if (gl) gl.recolor();
+  }
+  function setPlate(p) {
+    state.plate = p;
+    root.setAttribute('data-plate', p);
+    var cards = document.querySelectorAll('.plate-card');
+    for (var i = 0; i < cards.length; i++) cards[i].setAttribute('aria-pressed', String(cards[i].getAttribute('data-plate') === p));
+    modeline();
+    if (gl) gl.recolor();
+  }
+  function cyclePlate() { setPlate(PLATES[(PLATES.indexOf(state.plate) + 1) % PLATES.length]); }
+  document.querySelectorAll('.plate-card').forEach(function (b) {
+    b.addEventListener('click', function () { setPlate(b.getAttribute('data-plate')); });
+  });
+
+  /* ---------- sections & rail ---------- */
+  function setSec(s) {
+    state.sec = s;
+    document.querySelectorAll('#keys a').forEach(function (a) {
+      if (a.getAttribute('data-sec') === s) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current');
+    });
+    modeline();
+  }
+  function go(s) { var el = $(s); if (el) { el.scrollIntoView({ block: 'start' }); setSec(s); } }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) { if (e.isIntersecting) setSec(e.target.getAttribute('data-sec')); });
+    }, { rootMargin: '-35% 0px -55% 0px' });
+    document.querySelectorAll('section[data-sec]').forEach(function (s) { io.observe(s); });
+  }
+
+  /* ---------- bill of materials ---------- */
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#bomBody .row'));
+  function visibleRows() { return rows.filter(function (r) { return !r.hidden; }); }
+  function setCur(i) {
+    var vis = visibleRows(); if (!vis.length) return;
+    i = Math.max(0, Math.min(vis.length - 1, i));
+    rows.forEach(function (r) { r.classList.remove('cur'); });
+    vis[i].classList.add('cur');
+    state.cur = rows.indexOf(vis[i]);
+    vis[i].scrollIntoView({ block: 'nearest' });
+    modeline();
+  }
+  function moveCur(d) { var vis = visibleRows(); var r = rows[state.cur]; setCur(vis.indexOf(r) + d); }
+  function toggleRow(r) {
+    var open = r.getAttribute('aria-expanded') === 'true';
+    r.setAttribute('aria-expanded', String(!open));
+    r.nextElementSibling.hidden = open;
+  }
+  rows.forEach(function (r, i) {
+    r.addEventListener('click', function () { setCur(visibleRows().indexOf(r)); toggleRow(r); });
+    r.addEventListener('focus', function () { setCur(visibleRows().indexOf(r)); });
+  });
+  var filter = $('filter');
+  filter.addEventListener('input', function () {
+    var q = filter.value.trim().toLowerCase(), n = 0;
+    rows.forEach(function (r) {
+      var hit = !q || r.textContent.toLowerCase().indexOf(q) >= 0;
+      r.hidden = !hit; if (!hit) { r.nextElementSibling.hidden = true; r.setAttribute('aria-expanded', 'false'); }
+      if (hit) n++;
+    });
+    $('bomCount').textContent = n + ' of ' + rows.length + ' parts' + (q ? ' · /' + q : '');
+    setCur(0);
+  });
+  filter.addEventListener('focus', function () { setMode('FILTER'); });
+  filter.addEventListener('blur', function () { if (state.mode === 'FILTER') setMode('NORMAL'); });
+
+  /* ---------- help ---------- */
+  var help = $('help');
+  function openHelp() { help.setAttribute('data-open', ''); setMode('HELP'); $('help-x').focus(); }
+  function closeHelp() { help.removeAttribute('data-open'); setMode('NORMAL'); }
+  $('help-x').addEventListener('click', closeHelp);
+  help.addEventListener('click', function (e) { if (e.target === help) closeHelp(); });
+
+  /* ---------- keyboard ---------- */
+  document.addEventListener('keydown', function (e) {
+    var t = e.target, tag = t.tagName;
+    var typing = tag === 'INPUT' || tag === 'TEXTAREA';
+    var helpOpen = help.hasAttribute('data-open');
+    if (e.key === 'Escape') {
+      if (helpOpen) closeHelp(); else if (typing) { t.blur(); } return;
+    }
+    if (typing) { if (e.key === 'Enter') { t.blur(); } return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === '?') { e.preventDefault(); helpOpen ? closeHelp() : openHelp(); return; }
+    if (helpOpen) return;
+    if (e.shiftKey && /^Digit[1-4]$/.test(e.code)) { e.preventDefault(); setPlate(PLATES[+e.code.charAt(5) - 1]); return; }
+    var onControl = tag === 'BUTTON' || tag === 'A';
+    switch (e.key) {
+      case '0': case '1': case '2': case '3': case '4': case '5': case '6': go(SECS[+e.key]); break;
+      case 'j': moveCur(1); break;
+      case 'k': moveCur(-1); break;
+      case 'Enter': if (!onControl) { toggleRow(rows[state.cur]); if (tag !== 'TR') go('work'); } break;
+      case '/': e.preventDefault(); filter.focus(); filter.select(); break;
+      case 't': toggleTheme(); break;
+      case 'a': cyclePlate(); break;
+      case 'g': window.scrollTo(0, 0); break;
+      case 'G': window.scrollTo(0, document.body.scrollHeight); break;
+      case 'r': if (gl) gl.cycle(); break;
+      case ' ': if (!onControl && gl) { e.preventDefault(); gl.pause(); } break;
+    }
+  });
+
+  /* ---------- fallback drawing (no WebGL2) ---------- */
+  function drawFallback() {
+    var s = '', i, t, n = 70, turns = 1.75;
+    function pt(r, t) { return (320 + r * Math.cos(t)).toFixed(1) + ' ' + (330 - 62 * (t / 6.283) + 30 * Math.sin(t) * (r / 115)).toFixed(1); }
+    var outer = '', inner = '';
+    for (i = 0; i <= n; i++) { t = i / n * turns * 6.283; outer += (i ? 'L' : 'M') + pt(115, t); inner += (i ? 'L' : 'M') + pt(16, t); }
+    s += '<path d="' + outer + '"/><path d="' + inner + '"/>';
+    for (i = 0; i <= n; i += 7) { t = i / n * turns * 6.283; s += '<path d="M' + pt(16, t) + 'L' + pt(115, t) + '"/>'; }
+    s += '<line x1="320" y1="400" x2="320" y2="96"/><line x1="326" y1="400" x2="326" y2="96"/>';
+    s += '<ellipse cx="320" cy="404" rx="150" ry="34"/><ellipse cx="320" cy="412" rx="150" ry="34" stroke-dasharray="3 3"/>';
+    s += '<ellipse cx="330" cy="392" rx="22" ry="8"/><ellipse cx="400" cy="398" rx="30" ry="10"/><ellipse cx="465" cy="402" rx="40" ry="13"/>';
+    $('fallback').innerHTML = s;
+    $('viewport').className = 'viewport nogl';
+    $('glnote').textContent = 'static plate';
+    $('tris').textContent = '0';
+  }
+
+  /* ---------- PS1 renderer ---------- */
+  function initGL() {
+    var W = 320, H = 240, canvas = $('gl'), renderer;
+    if (typeof THREE === 'undefined') return null;
+    try { renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false, powerPreference: 'low-power' }); }
+    catch (e) { return null; }
+    if (!renderer.capabilities.isWebGL2) { renderer.dispose(); return null; }
+    renderer.setPixelRatio(1);
+    renderer.setSize(W, H, false);
+
+    var scene = new THREE.Scene();
+    var camera = new THREE.PerspectiveCamera(36, 4 / 3, 0.5, 20);
+    var target = new THREE.Vector3(0.25, 1.35, 0);
+
+    /* procedural 32×32 textures, nearest, no mips */
+    var seed = 7;
+    function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+    function tex(fn) {
+      var c = document.createElement('canvas'); c.width = c.height = 32;
+      var ctx = c.getContext('2d'), img = ctx.createImageData(32, 32), d = img.data, p = 0;
+      for (var y = 0; y < 32; y++) for (var x = 0; x < 32; x++) {
+        var col = fn(x, y, rnd()); d[p++] = col[0]; d[p++] = col[1]; d[p++] = col[2]; d[p++] = 255;
+      }
+      ctx.putImageData(img, 0, 0);
+      var t = new THREE.CanvasTexture(c);
+      t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false;
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+    }
+    var rust = tex(function (x, y, r) { var n = (r - .5) * 60, pit = r < .12 ? -50 : 0, och = r > .93 ? 40 : 0; return [125 + n + pit + och, 72 + n * .7 + pit + och * .6, 40 + n * .4 + pit]; });
+    var cloth = tex(function (x, y, r) { var n = (r - .5) * 24, h = (y % 4 === 0 ? -26 : 0) + (x % 6 === 0 ? -14 : 0); return [214 + n + h, 198 + n + h, 158 + n + h]; });
+    var wood = tex(function (x, y, r) { var g = Math.sin(y * .9 + Math.sin(x * .3) * 2) * 22 + (r - .5) * 14; return [142 + g, 96 + g * .8, 50 + g * .5]; });
+
+    var fogU = { value: new THREE.Color(0xe4dbc3) };
+    var VS = [
+      'out vec3 vUvW; out vec3 vLit; out float vFog;',
+      'uniform vec2 uRes; uniform vec3 uLight; uniform vec2 uFogRange;',
+      'void main(){',
+      '  vec4 mv = modelViewMatrix * vec4(position,1.0);',
+      '  vec4 clip = projectionMatrix * mv;',
+      '  vec2 grid = uRes * 0.5;',                       // PS1: snap clip xy to the 320×240 pixel grid
+      '  vec2 ndc = clip.xy / clip.w;',
+      '  ndc = floor(ndc * grid + 0.5) / grid;',
+      '  clip.xy = ndc * clip.w;',
+      '  gl_Position = clip;',
+      '  vec3 n = normalize(normalMatrix * normal);',   // Gouraud, quantised to 4 steps
+      '  float d = abs(dot(n, uLight));',
+      '  d = floor(d * 4.0 + 0.5) / 4.0;',
+      '  vLit = vec3(0.38) + vec3(0.72) * d;',
+      '  vFog = clamp((-mv.z - uFogRange.x) / (uFogRange.y - uFogRange.x), 0.0, 1.0);',
+      '  vUvW = vec3(uv * clip.w, clip.w);',             // affine UVs: GLSL ES 3.0 has no noperspective, so undo the divide
+      '}'].join('\n');
+    var FS = [
+      'in vec3 vUvW; in vec3 vLit; in float vFog; out vec4 fragColor;',
+      'uniform sampler2D map; uniform vec3 uFog; uniform vec3 uTint;',
+      'void main(){',
+      '  vec2 uv = vUvW.xy / vUvW.z;',
+      '  vec3 c = texture(map, uv).rgb * uTint * vLit;',
+      '  c = mix(c, uFog, vFog);',
+      '  ivec2 p = ivec2(gl_FragCoord.xy);',             // 4×4 Bayer: M4 = 4*M2(x,y) + M2(x>>1,y>>1), M2 = (2x)^(3y)
+      '  int m2a = ((p.x & 1) * 2) ^ ((p.y & 1) * 3);',
+      '  int m2b = (((p.x >> 1) & 1) * 2) ^ (((p.y >> 1) & 1) * 3);',
+      '  float t = float(m2a * 4 + m2b) / 16.0;',
+      '  c = floor(c * 31.0 + t) / 31.0;',               // 5 bits per channel
+      '  fragColor = vec4(c, 1.0);',
+      '}'].join('\n');
+    function mat(map, tint, double) {
+      return new THREE.ShaderMaterial({
+        glslVersion: THREE.GLSL3, vertexShader: VS, fragmentShader: FS,
+        uniforms: { map: { value: map }, uRes: { value: new THREE.Vector2(W, H) }, uFog: fogU, uFogRange: { value: new THREE.Vector2(4.6, 8.6) },
+          uLight: { value: new THREE.Vector3(0.45, 0.8, 0.5).normalize() }, uTint: { value: new THREE.Color(tint) } },
+        side: double ? THREE.DoubleSide : THREE.FrontSide, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1
+      });
+    }
+    var lineMat = new THREE.LineBasicMaterial({ color: 0xa3391a });
+    var meshes = [], lines = [], tris = 0;
+    function part(geom, m, parent, edgeDeg) {
+      if (geom.index) geom = geom.toNonIndexed(); geom.computeVertexNormals(); // flat facets
+      var mesh = new THREE.Mesh(geom, m);
+      var edge = new THREE.LineSegments(new THREE.EdgesGeometry(geom, edgeDeg || 18), lineMat);
+      mesh.add(edge); meshes.push(mesh); lines.push(edge);
+      tris += geom.attributes.position.count / 3;
+      (parent || scene).add(mesh); return mesh;
+    }
+    /* helical sail: 3 rings, 26 segments, 1.75 turns */
+    function helix(turns, segs, radii, pitch, y0) {
+      var pos = [], uvs = [], idx = [], i, j, t, r;
+      for (i = 0; i <= segs; i++) {
+        t = i / segs * turns * Math.PI * 2;
+        for (j = 0; j < radii.length; j++) { r = radii[j]; pos.push(r * Math.cos(t), y0 + pitch * t / (Math.PI * 2), r * Math.sin(t)); uvs.push(i / segs * turns * 3, j / (radii.length - 1)); }
+      }
+      var k = radii.length;
+      for (i = 0; i < segs; i++) for (j = 0; j < k - 1; j++) { var a = i * k + j, b = a + k; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+      var g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+      g.setIndex(idx); return g;
+    }
+    /* gear outline → extrude; module m, N teeth */
+    function gear(N, m, depth) {
+      var rp = m * N / 2, ro = rp + m, ri = rp - m * 1.1, a = Math.PI * 2 / N, s = new THREE.Shape();
+      for (var i = 0; i < N; i++) {
+        var t = i * a;
+        var p = [[ri, t], [ro, t + a * .22], [ro, t + a * .5], [ri, t + a * .72]];
+        for (var j = 0; j < 4; j++) { var x = p[j][0] * Math.cos(p[j][1]), y = p[j][0] * Math.sin(p[j][1]); if (!i && !j) s.moveTo(x, y); else s.lineTo(x, y); }
+      }
+      s.closePath();
+      var g = new THREE.ExtrudeGeometry(s, { depth: depth, bevelEnabled: false, curveSegments: 1 });
+      g.rotateX(-Math.PI / 2); return g;
+    }
+    var M = 0.06;
+    part(new THREE.CylinderGeometry(1.8, 1.8, 0.14, 12), mat(wood, 0xffffff)).position.y = -0.07;
+    var screw = new THREE.Group(); scene.add(screw);
+    part(new THREE.CylinderGeometry(0.07, 0.1, 3.1, 6), mat(wood, 0xd8c8a8), screw).position.y = 1.55;
+    part(helix(1.75, 26, [0.12, 0.7, 1.25], 1.0, 1.1), mat(cloth, 0xffffff, true), screw, 40);
+    for (var si = 0; si < 3; si++) {
+      var sp = part(new THREE.CylinderGeometry(0.025, 0.025, 1.2, 4), mat(rust, 0xffffff), screw);
+      var ang = si / 3 * 1.75 * Math.PI * 2; sp.rotation.z = Math.PI / 2; sp.rotation.y = -ang; sp.position.set(0.6 * Math.cos(ang), 1.1 + ang / (Math.PI * 2), 0.6 * Math.sin(ang));
+    }
+    var pinion = part(gear(8, M, 0.12), mat(rust, 0xffffff), screw); pinion.position.y = 0.06;
+    var idler = part(gear(12, M, 0.12), mat(rust, 0xe8e0c0)); idler.position.set(0.60, 0.06, 0);
+    var wheel = part(gear(16, M, 0.12), mat(rust, 0xffffff)); wheel.position.set(0.60 + 0.42, 0.06, 0.73);
+    var crank = part(new THREE.BoxGeometry(0.42, 0.06, 0.08), mat(wood, 0xffffff), wheel); crank.position.set(0.18, 0.15, 0);
+    part(new THREE.CylinderGeometry(0.03, 0.03, 0.3, 4), mat(wood, 0xd0c0a0), crank).position.set(0.17, 0.15, 0);
+    $('tris').textContent = Math.round(tris);
+
+    /* leader anchors (world) → svg (640×480) */
+    var anchors = { sail: new THREE.Vector3(-0.95, 2.0, 0.55), mast: new THREE.Vector3(0, 3.05, 0), pinion: new THREE.Vector3(0.22, 0.14, 0.22), wheel: new THREE.Vector3(1.0, 0.16, 1.0), platform: new THREE.Vector3(-1.55, 0, 0.9) };
+    var leadEls = {};
+    document.querySelectorAll('#leads [data-a]').forEach(function (el) { var k = el.getAttribute('data-a'); (leadEls[k] = leadEls[k] || []).push(el); });
+    var tmp = new THREE.Vector3();
+    function placeLeads() {
+      for (var k in anchors) {
+        tmp.copy(anchors[k]).project(camera);
+        var x = ((tmp.x + 1) / 2 * 640).toFixed(1), y = ((1 - tmp.y) / 2 * 480).toFixed(1);
+        leadEls[k].forEach(function (el) { if (el.tagName === 'line') { el.setAttribute('x2', x); el.setAttribute('y2', y); } else { el.setAttribute('cx', x); el.setAttribute('cy', y); } });
+      }
+    }
+
+    var api = { t: 0, last: 0, visible: true };
+    function cssColor(name) { return new THREE.Color(getComputedStyle(root).getPropertyValue(name).trim() || '#e4dbc3'); }
+    api.recolor = function () {
+      fogU.value.copy(cssColor('--paper')); renderer.setClearColor(fogU.value);
+      lineMat.color.copy(cssColor('--accent'));
+      if (reduced || state.paused) draw(0);
+    };
+    api.setMode = function (m) {
+      state.rmode = m;
+      meshes.forEach(function (x) { x.material.visible = m !== 2; });
+      lines.forEach(function (x) { x.visible = m !== 0; });
+      $('rmode').textContent = ['textured', 'tex+edges', 'drawing'][m]; modeline();
+      if (reduced || state.paused) draw(0);
+    };
+    api.cycle = function () { api.setMode((state.rmode + 1) % 3); };
+    api.pause = function () { state.paused = !state.paused; $('pstate').textContent = state.paused ? 'paused' : 'running'; };
+    function draw(dt) {
+      api.t += dt;
+      var t = api.t, w = t * 0.9;
+      screw.rotation.y = w;
+      idler.rotation.y = -w * 8 / 12 + Math.PI / 12;
+      wheel.rotation.y = w * 8 / 16 + Math.PI / 16;
+      var a = 0.72 + Math.sin(t * 0.17) * 0.14, R = 6.1;
+      camera.position.set(R * Math.cos(a), 2.35 + Math.sin(t * 0.8) * 0.06, R * Math.sin(a));
+      camera.lookAt(target);
+      renderer.render(scene, camera);
+      placeLeads();
+    }
+    function loop(now) {
+      requestAnimationFrame(loop);
+      var dt = Math.min(0.05, (now - api.last) / 1000 || 0); api.last = now;
+      if (!api.visible) return;
+      draw(state.paused ? 0 : dt);
+    }
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (e) { api.visible = e[0].isIntersecting; }).observe(canvas);
+    api.recolor(); api.setMode(1);
+    if (reduced) { draw(0); $('pstate').textContent = 'still (reduced motion)'; }
+    else requestAnimationFrame(loop);
+    return api;
+  }
+
+  try { gl = initGL(); } catch (e) { gl = null; }
+  if (!gl) drawFallback();
+
+  modeline();
+})();
+</script>
