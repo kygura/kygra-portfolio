@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { NavLink } from "@/components/NavLink";
+import { NAV_ROUTES } from "@/lib/keybindings";
+import { cycleAccent, useAccent } from "@/hooks/useKeyboardNav";
 
 const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
@@ -10,59 +11,19 @@ const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Madrid",
 });
 
-const NAV_ITEMS = [
-  { path: "/", label: "Home" },
-  { path: "/writings", label: "Writings" },
-  { path: "/projects", label: "Software" },
-  { path: "/guestbook", label: "Guestbook" },
-  { path: "/cv", label: "CV" },
-];
-
-function MagneticNavLink({ path, label, end }: { path: string; label: string; end?: boolean }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const rawX = useMotionValue(0);
-  const rawY = useMotionValue(0);
-  const x = useSpring(rawX, { stiffness: 400, damping: 25 });
-  const y = useSpring(rawY, { stiffness: 400, damping: 25 });
-
-  const handleMove = (e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const dx = e.clientX - (rect.left + rect.width / 2);
-    const dy = e.clientY - (rect.top + rect.height / 2);
-    rawX.set(dx * 0.22);
-    rawY.set(dy * 0.22);
-  };
-
-  const handleLeave = () => {
-    rawX.set(0);
-    rawY.set(0);
-  };
-
-  return (
-    <li ref={ref} onMouseMove={handleMove} onMouseLeave={handleLeave}>
-      <motion.div style={{ x, y }}>
-        <NavLink
-          to={path}
-          end={end}
-          className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.16em]"
-          activeClassName="nav-link--active"
-        >
-          {label}
-        </NavLink>
-      </motion.div>
-    </li>
-  );
+interface NavigationProps {
+  onHelp: () => void;
 }
 
-const Navigation = () => {
+const Navigation = ({ onHelp }: NavigationProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [clock, setClock] = useState("--:--");
   const { resolvedTheme, setTheme } = useTheme();
+  const accent = useAccent();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -80,79 +41,61 @@ const Navigation = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Pure CSR — next-themes resolves synchronously; derive directly.
-  const isNight = resolvedTheme !== "light";
-
-  const toggleTheme = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const next = isNight ? "light" : "dark";
-    const reduce =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const doc = document as Document & {
-      startViewTransition?: (cb: () => void) => unknown;
-    };
-
-    if (reduce || typeof doc.startViewTransition !== "function") {
-      setTheme(next);
-      return;
-    }
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const root = document.documentElement;
-    root.style.setProperty("--vt-x", `${rect.left + rect.width / 2}px`);
-    root.style.setProperty("--vt-y", `${rect.top + rect.height / 2}px`);
-
-    doc.startViewTransition(() => {
-      // Flip the class synchronously so the transition captures the new
-      // theme; next-themes then settles to the same class.
-      root.classList.toggle("dark", next === "dark");
-      setTheme(next);
-    });
-  };
+  const base = resolvedTheme === "light" ? "codex" : "hangar";
+  const other = base === "codex" ? "hangar" : "codex";
 
   return (
-    <nav
-      className={`nav-bar px-3 sm:px-6 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
-        scrolled ? "border-[var(--border-subtle)]" : "border-transparent"
-      }`}
-      style={{
-        // No backdrop-blur: re-blurring the animating hero canvas every
-        // frame was the main scroll-jank source. Near-opaque bg instead.
-        backgroundColor: scrolled
-          ? "color-mix(in srgb, var(--bg-primary) 96%, transparent)"
-          : "transparent",
-      }}
-    >
-      <div className="flex h-full justify-between items-center gap-2 sm:gap-4 md:gap-8">
-        <div className="nav-micro flex items-baseline gap-1.5 sm:gap-2.5 font-mono tracking-[0.16em] font-medium whitespace-nowrap">
-          <span className="text-foreground">N.CA</span>
-          <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
-        </div>
+    <nav className={`nav-bar${scrolled ? " nav-bar--scrolled" : ""}`} aria-label="Main">
+      <div className="nav-bar__id">
+        <span className="nav-stamp">N.CA</span>
+        <span className="nav-rev">SHEET · REV 2026</span>
+      </div>
 
-        <ul className="nav-items flex flex-nowrap min-w-0 gap-0.5 sm:gap-1 md:gap-3 items-center">
-          {NAV_ITEMS.map((item) => (
-            <MagneticNavLink
-              key={item.path}
-              path={item.path}
-              label={item.label}
-              end={item.path === "/"}
-            />
-          ))}
-        </ul>
+      <ul className="nav-items">
+        {NAV_ROUTES.map((r) => (
+          <li key={r.path}>
+            <NavLink
+              to={r.path}
+              end={r.path === "/"}
+              className="nav-link"
+              activeClassName="nav-link--active"
+            >
+              <kbd>{r.key}</kbd>
+              {r.label}
+            </NavLink>
+          </li>
+        ))}
+      </ul>
 
-        <div className="flex items-center gap-2 md:gap-5 flex-shrink-0">
-          <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
-            {clock}
-          </span>
-          <button
-            onClick={toggleTheme}
-            className="nav-micro font-mono tracking-[0.18em] uppercase px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full border border-[var(--border-muted)] bg-transparent text-foreground transition-[color,border-color,transform,background-color] duration-200 hover:border-[var(--accent-amber)] hover:text-[var(--accent-amber)] hover:bg-[color-mix(in_srgb,var(--accent-amber)_8%,transparent)] active:translate-y-[1px]"
-            aria-label="Toggle theme"
-          >
-            {isNight ? "DAY" : "NIGHT"}
-          </button>
-        </div>
+      <div className="nav-tools">
+        <span className="nav-clock">{clock}</span>
+        <button
+          type="button"
+          className="nav-tool"
+          onClick={() => setTheme(base === "codex" ? "dark" : "light")}
+          title="Base (b)"
+          aria-label={`${base} base, switch to ${other}`}
+        >
+          {base}
+        </button>
+        <button
+          type="button"
+          className="nav-tool nav-swatch"
+          onClick={cycleAccent}
+          title="Accent (t)"
+          aria-label={`Accent: ${accent}, cycle`}
+        >
+          <span aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="nav-tool nav-help"
+          onClick={onHelp}
+          aria-label="Keyboard map"
+          aria-haspopup="dialog"
+        >
+          ?
+        </button>
       </div>
     </nav>
   );
