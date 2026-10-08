@@ -1,6 +1,17 @@
 # Redesign proposal: "Sheet 01"
 
-Status: mock for review. No site code changed. Open `mock.html` in a browser (or the published artifact) and press `?`.
+Status: mock for review, revision B (toned down). No site code changed. Open `mock.html` in a browser (or the published artifact) and press `?`.
+
+## Revision B: what was toned down
+
+Two earlier proposals on other branches sit in the same vein: "Small Press" (branch `ccr-acad1e2e-08xxdx`, a riso periodical with ruled catalogue tables and a colophon) and "Deskmat" (branch `ccr-0cef7925-0fm2dz`, keyboard chords and a morphing wireframe). This revision keeps the drafting-sheet idea but borrows their restraint:
+
+- Page grid and corner crosshairs removed. Rules are 1px, mostly in the quiet line colour; drafting ink is reserved for figure numbers and the title block.
+- Session title-card bars replaced by ruled headings with the plate numeral in small caps.
+- Project cards replaced by a catalogue table (figure, title and one line, stack and links), same pattern as the notes ledger.
+- Headline cut from 96px to 60px max, weight 800 to 700. Buttons replaced by key-hinted links.
+- Wireframe kept but smaller, without the concentric construction circles, dimension arrows or vertex label. Gear ring stays.
+- Accent picker, two bases, marginalia, title block, key bar and the indie-web footer stay.
 
 ## Direction
 
