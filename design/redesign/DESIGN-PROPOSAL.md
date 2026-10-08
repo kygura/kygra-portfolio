@@ -15,11 +15,11 @@ Two earlier proposals on other branches sit in the same vein: "Small Press" (bra
 
 ## Direction
 
-The site is an engineering drawing sheet. Every page is a plate: registration crosshairs in the corners, a title block, dimension lines, figure numbers. Section headers are session title cards (condensed black type on a solid bar, accent on the numeral). Chrome is monospace with a key hint on every action; the bottom bar is a TUI-style key legend and it actually works. Marginalia are italic serif, like notes in the margin of a codex.
+The site is an engineering drawing sheet. Every page is a plate: a title block, figure numbers, ruled sections. Section headers are ruled, with the plate numeral in small caps and the accent on the numeral. Chrome is monospace with a key hint on every action; the bottom bar is a TUI-style key legend and it actually works. Marginalia are italic serif, like notes in the margin of a codex.
 
-The 3D element is a wireframe, not a rendered object: a polyhedron inside a gear ring, drawn in sepia drafting ink on a 2D canvas, with one lit edge in the accent and a vertex label. In the build this becomes a Three.js line-material scene so project pages can each carry their own figure.
+The 3D element is a wireframe, not a rendered object: a polyhedron inside a gear ring, drawn in sepia drafting ink on a 2D canvas, with one lit edge in the accent. In the build this becomes a Three.js line-material scene so project pages can each carry their own figure.
 
-Brutalist cues are limited to structure: hard 1px rules, no radius, no shadow, visible grid, raw stacked blocks. The page stays legible; the roughness is in the geometry, not the type.
+Brutalist cues are limited to structure: hard 1px rules, no radius, no shadow, no cards, raw stacked blocks. The page stays legible; the roughness is in the geometry, not the type.
 
 ## Why this avoids the convergent look
 
