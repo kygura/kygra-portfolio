@@ -140,7 +140,7 @@ html[data-accent="gate"] {
 :root {
   /* Fixed nav height, so the hero can pull itself under the nav without
      hard-coding a magic offset per breakpoint. */
-  --nav-h: 46px;
+  --nav-h: 84px;
   --hero-gutter: clamp(20px, 4vw, 46px);
   /* Shared page gutters + vertical rhythm for every routed page. */
   --page-gutter: clamp(1.15rem, 5vw, 4rem);

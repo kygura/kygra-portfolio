@@ -21,10 +21,6 @@ export default function Manifesto() {
     <section className="plate frontis" aria-labelledby="manifesto-title">
       <figure className="frontis__fig">
         <Plate name="switch" />
-        <figcaption className="frontis__caption">
-          <b>Fig. 1b — Frontispiece</b>
-          Exploded switch stack, 1 : 2
-        </figcaption>
       </figure>
 
       <div className="frontis__text">

@@ -17,9 +17,8 @@
 }
 
 .page-lede {
-  max-width: 64ch;
+  max-width: 48ch;
   margin: 12px 0 18px;
-  color: var(--text-secondary);
 }
 
 .page-title {

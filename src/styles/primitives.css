@@ -298,8 +298,9 @@ kbd {
   white-space: nowrap;
 }
 
-@media (pointer: coarse), (max-width: 859px) {
-  .keybar { display: none; }
+.keybar { display: none; }
+@media (pointer: fine) and (min-width: 860px) {
+  .keybar { display: flex; }
 }
 
 /* ── Help overlay ── */

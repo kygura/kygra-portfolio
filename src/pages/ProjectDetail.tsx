@@ -41,7 +41,7 @@ const ProjectDetail = () => {
         <span className="session__num">Fig. <em>{index + 2}</em></span>
         <h1 className="page-title">{project.title}</h1>
       </div>
-      <p className="page-lede">{project.description}</p>
+      <p className="page-lede marg">{project.description}</p>
 
       <div className="titleblock">
         <div><b>Year</b>{project.year}</div>

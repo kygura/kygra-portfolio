@@ -122,7 +122,7 @@ const CV = () => {
       </div>
 
       <div className="session">
-        <span className="session__num">Sec. <em>1</em></span>
+        <span className="session__num">Plate <em>I</em></span>
         <h2>Professional Summary</h2>
       </div>
       <section className="plate cv-summary">
@@ -132,7 +132,7 @@ const CV = () => {
       </section>
 
       <div className="session">
-        <span className="session__num">Sec. <em>2</em></span>
+        <span className="session__num">Plate <em>II</em></span>
         <h2>Technical Projects</h2>
       </div>
       <section className="plate">
@@ -153,7 +153,7 @@ const CV = () => {
       </section>
 
       <div className="session">
-        <span className="session__num">Sec. <em>3</em></span>
+        <span className="session__num">Plate <em>III</em></span>
         <h2>Education</h2>
       </div>
       <section className="plate">
@@ -172,7 +172,7 @@ const CV = () => {
       </section>
 
       <div className="session">
-        <span className="session__num">Sec. <em>4</em></span>
+        <span className="session__num">Plate <em>IV</em></span>
         <h2>Technical Skills</h2>
       </div>
       <section className="plate">
@@ -187,7 +187,7 @@ const CV = () => {
       </section>
 
       <div className="session">
-        <span className="session__num">Sec. <em>5</em></span>
+        <span className="session__num">Plate <em>V</em></span>
         <h2>Languages</h2>
       </div>
       <section className="plate">

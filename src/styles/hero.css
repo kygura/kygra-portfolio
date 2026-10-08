@@ -140,8 +140,8 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 45vh;
-  height: 45svh;
+  height: 20vh;
+  height: 20svh;
   padding-bottom: 3rem;
   font-size: 11px;
   letter-spacing: 0.14em;
@@ -161,12 +161,12 @@
 
 @media (min-width: 640px) {
   .hero__intro { top: 24vh; top: 24svh; }
-  .hero__marker { height: 65vh; height: 65svh; }
+  .hero__marker { height: 28vh; height: 28svh; }
 }
 
 @media (min-width: 768px) {
   .hero__intro { top: 26vh; top: 26svh; }
-  .hero__marker { height: 100vh; height: 100svh; }
+  .hero__marker { height: 36vh; height: 36svh; }
 }
 
 /* Landscape phones and other short viewports: the display type has to
@@ -175,7 +175,7 @@
   .hero__intro { top: 18vh; top: 18svh; }
   .hero__name-text { font-size: clamp(56px, 9vw, 120px); }
   .hero__mark-text { font-size: clamp(44px, 7vw, 90px); }
-  .hero__marker { height: 60vh; height: 60svh; }
+  .hero__marker { height: 30vh; height: 30svh; }
 }
 
 /* Clear the fixed key bar (fine-pointer desktops only). */

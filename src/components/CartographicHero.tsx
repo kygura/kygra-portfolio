@@ -757,10 +757,9 @@ const CartographicHero = () => {
         </footer>
       </div>
 
-      {/* Scroll runway for the sticky stage, and the marker leading into
-          the Manifesto. The shell height is the sum of this and the stage,
-          so the two can never drift out of sync. */}
-      <div className="hero__marker">Plate I &mdash; On software craft</div>
+      {/* Scroll runway for the sticky stage. The shell height is the sum of
+          this and the stage, so the two can never drift out of sync. */}
+      <div className="hero__marker" aria-hidden="true" />
     </div>
   );
 };

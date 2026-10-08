@@ -3,6 +3,7 @@ import CartographicHero from "../components/CartographicHero";
 import Manifesto from "../components/Manifesto";
 import { projects } from "../lib/projects";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { resolvePostTags } from "../lib/postTagFallbacks";
 
 const external = (href: string) => /^https?:\/\//.test(href);
 const linkLabel = (href: string) => (href.includes("github.com") ? "repo" : "live");
@@ -43,10 +44,10 @@ const Home = () => {
                     {(project.techStack ?? []).slice(0, 3).join(" · ")}
                     {project.links
                       .filter((link) => external(link.href))
-                      .map((link) => (
+                      .map((link, i) => (
                         <a
                           key={link.href}
-                          className="home__link"
+                          className={`home__link${i === 0 && !(project.techStack ?? []).length ? " home__link--first" : ""}`}
                           href={link.href}
                           target="_blank"
                           rel="noreferrer"
@@ -97,7 +98,7 @@ const Home = () => {
                       </b>
                       {post.excerpt && <span>{post.excerpt}</span>}
                     </td>
-                    <td className="ledger__meta">{post.tags[0] ?? ""}</td>
+                    <td className="ledger__meta">{resolvePostTags(post)[0] ?? ""}</td>
                   </tr>
                 ))
               )}

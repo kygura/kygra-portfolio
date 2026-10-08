@@ -68,22 +68,6 @@
   max-height: 520px;
 }
 
-.frontis__caption {
-  margin-top: 10px;
-  padding: 8px 10px;
-  border-top: 1px solid var(--rule);
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.frontis__caption b {
-  display: block;
-  font-size: 10px;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--draft-ink);
-}
 
 .frontis__text {
   padding: 28px 0 28px 28px;
@@ -116,8 +100,14 @@
 }
 
 /* ── Ledgers ── */
-.home__link {
-  margin-left: 10px;
+.home__link::before {
+  content: "·";
+  margin: 0 8px;
+  color: var(--text-secondary);
+}
+
+.home__link--first::before {
+  content: none;
 }
 
 .home .ledger__title b a {

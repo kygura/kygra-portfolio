@@ -144,11 +144,22 @@
   .nav-clock { display: none; }
 }
 
+/* Phones: the bar wraps to two rows (identity and tools, then the five
+   links) so every page stays visible instead of scrolling off the edge. */
 @media (max-width: 639px) {
+  .nav-bar { flex-wrap: wrap; row-gap: 0; align-content: center; }
   .nav-rev,
   .nav-link kbd { display: none; }
-  .nav-link { font-size: clamp(10px, 2.9vw, 12px); }
-  .nav-tools { gap: 6px; }
+  .nav-link { font-size: 11px; }
+  .nav-items {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
+    overflow: visible;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .nav-tools { gap: 6px; margin-left: auto; }
 }
 
 /* ─────────────────────────────────────────────
@@ -257,6 +268,7 @@
   margin-top: 10px;
 }
 
+.colophon__controls button kbd { text-transform: none; }
 .colophon__controls button {
   font: inherit;
   font-size: 11px;
