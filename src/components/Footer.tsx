@@ -3,11 +3,6 @@ import { Link } from "react-router-dom";
 import { QUOTES_ARRAY } from "../lib/consts";
 import { shouldIgnoreKey } from "@/lib/keybindings";
 
-const BUILD_DATE: string =
-  import.meta.env.VITE_BUILD_DATE || new Date().toISOString().slice(0, 10);
-
-const BADGES = ["keyboard first", "no tracking", "built with vite"];
-
 function initQuote(list: string[]) {
   const r = Math.floor(Math.random() * list.length);
   return { index: r, content: list[r] };
@@ -49,19 +44,6 @@ const Footer = () => {
   return (
     <footer className="colophon sheet">
       <div>
-        <b>Status</b>
-        <span className="colophon__status" aria-hidden="true" />
-        building · last build {BUILD_DATE}
-        <div className="colophon__badges">
-          {BADGES.map((badge, i) => (
-            <span key={badge} className={`badge${i === 0 ? " badge--acc" : ""}`}>
-              {badge}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div>
         <b>
           Quote {currentQuote.index + 1} / {QUOTES_ARRAY.length}
         </b>
@@ -84,8 +66,7 @@ const Footer = () => {
 
       <div>
         <b>Colophon</b>
-        Set in Barlow Condensed, IBM Plex Mono, Newsreader. Built with React and Vite. No
-        analytics.
+        Set in Barlow Condensed, IBM Plex Mono, Newsreader.
         <div className="colophon__links">
           <a href="https://github.com/kygura" target="_blank" rel="noopener noreferrer">
             github / kygura
