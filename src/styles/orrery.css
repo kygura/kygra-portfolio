@@ -18,8 +18,7 @@ a:hover,a:focus-visible{background:var(--acc);color:var(--bg);text-decoration:no
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 [hidden]{display:none!important}
 .dim{color:var(--dim)}
-.fd,.fm,.chip,#status,#boot,#hud,.st,.lbl{-webkit-font-smoothing:none;font-smooth:never}
-.fd{font-family:var(--fd)}
+.fm,.chip,#status,#boot,#hud,.st,.lbl{-webkit-font-smoothing:none;font-smooth:never}
 .fm,.chip{font-family:var(--fm);text-transform:uppercase;letter-spacing:.08em}
 .chip{display:inline-block;font-size:8px;line-height:8px;padding:3px 3px 2px;color:var(--dim);background:var(--panel);border:1px solid var(--rule);white-space:nowrap;vertical-align:middle}
 .hit,.chip.hit{background:var(--acc)!important;color:var(--bg)!important;border-color:var(--acc)!important}

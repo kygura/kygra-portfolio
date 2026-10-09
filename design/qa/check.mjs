@@ -4,6 +4,7 @@
 //   bun run build && node design/qa/check.mjs            # starts `vite preview` on 127.0.0.1:4173 if nothing answers
 //   BASE_URL=http://127.0.0.1:4173 node design/qa/check.mjs
 //   node design/qa/check.mjs 1 7 9 static               # run a subset (check ids, `static`, `placeholders`)
+//   QA_WORKERS=2 node design/qa/check.mjs                # fewer parallel browser contexts (default 4)
 //
 // Playwright comes from /opt/node-tools (override with PLAYWRIGHT_MODULE), browsers from /opt/pw-browsers.
 // Screenshots go to design/qa/shots/ (gitignored). Exits 1 when any check fails.
@@ -56,8 +57,12 @@ const SEL = {
 const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 390, height: 844 };
 const NARROW = { width: 360, height: 740 };
-const READY_MS = 3000;
-const SKY_MS = 6000;
+// Readiness waits, not assertions: they return as soon as the condition holds. Parallel contexts share one
+// SwiftShader GPU process, so under load the first paint after `load` can take several seconds (3s flaked).
+const READY_MS = 15000;
+const SKY_MS = 15000;
+const STEP_MS = 3000;
+const WORKERS = Math.max(1, Number(process.env.QA_WORKERS) || 4);
 
 // ---------------------------------------------------------------- results
 
@@ -183,8 +188,14 @@ async function skySettled(page) {
   await page.waitForTimeout(400);
 }
 
+/** Waits (up to STEP_MS) for a key/click to take effect; the caller still asserts the outcome. */
+const until = (page, fn, arg) => page.waitForFunction(fn, arg, { timeout: STEP_MS }).catch(() => {});
+const selChanged = ([sel, before]) => (document.querySelector(sel)?.textContent ?? null) !== before;
+const pathIs = (re) => new RegExp(re).test(location.pathname);
+const shown = (page, sel, state = "visible") => page.locator(sel).first().waitFor({ state, timeout: STEP_MS }).catch(() => {});
+
 const visible = (page, sel) => page.locator(sel).first().isVisible().catch(() => false);
-const text = (page, sel) => page.locator(sel).first().textContent({ timeout: 1000 }).catch(() => null);
+const text = (page, sel) => page.locator(sel).first().textContent({ timeout: STEP_MS }).catch(() => null);
 const rect = (page, sel) =>
   page.evaluate((s) => {
     const el = document.querySelector(s);
@@ -381,6 +392,7 @@ async function noWebGL(route) {
       const fb = await visible(page, SEL.fallback);
       const gl = /gl:none/i.test((await text(page, SEL.status)) || "");
       let usable;
+      let why = "";
       if (READER_ROUTES.has(route)) {
         usable = await visible(page, SEL.reader);
       } else {
@@ -388,12 +400,14 @@ async function noWebGL(route) {
         // A one-row list cannot move (05 LOG offline holds only `+ sign`, A3): selection staying put is correct.
         const rows = await page.locator(".sec.on .row").filter({ visible: true }).count();
         await page.keyboard.press("j");
-        await page.waitForTimeout(150);
+        if (rows > 1) await until(page, selChanged, [SEL.selRow, before]);
+        else await page.waitForTimeout(150);
         const after = await text(page, SEL.selRow);
         const moved = rows === 1 ? before === after : before !== after;
         usable = (await visible(page, SEL.stack)) && before != null && after != null && moved;
+        if (!usable) why = ` rows=${rows} sel=${JSON.stringify(before)}->${JSON.stringify(after)}`;
       }
-      record(5, route, fb && gl && usable, `fallback=${fb} gl:none=${gl} usable=${usable}`);
+      record(5, route, fb && gl && usable, `fallback=${fb} gl:none=${gl} usable=${usable}${why}`);
     });
   } finally {
     await context.close();
@@ -408,28 +422,32 @@ async function keyboardSmoke() {
   try {
     await guard(7, route, async () => {
       await ready(page);
+      // The key listener binds in a mount effect after first paint; the sky status is written by the same effect pass.
+      await skySettled(page).catch(() => {});
       const steps = [];
       const s0 = await text(page, SEL.selRow);
       await page.keyboard.press("j");
-      await page.waitForTimeout(150);
+      await until(page, selChanged, [SEL.selRow, s0]);
       const s1 = await text(page, SEL.selRow);
       steps.push(["j moves", s0 != null && s1 != null && s0 !== s1]);
       await page.keyboard.press("l");
-      await page.waitForTimeout(250);
+      await until(page, pathIs, "^/writings$");
       steps.push(["l -> /writings", new URL(page.url()).pathname === "/writings"]);
       await page.keyboard.press("Enter");
-      await page.waitForTimeout(300);
+      await until(page, pathIs, "^/writings/[^/]+$");
+      await shown(page, SEL.reader);
       steps.push(["Enter -> /writings/<slug>", /^\/writings\/[^/]+$/.test(new URL(page.url()).pathname)]);
       await page.keyboard.press("Escape");
-      await page.waitForTimeout(250);
+      await until(page, pathIs, "^/writings$");
+      await shown(page, SEL.reader, "hidden");
       steps.push(["Esc -> /writings", new URL(page.url()).pathname === "/writings"]);
       await page.keyboard.press(":");
-      await page.waitForTimeout(150);
+      await shown(page, SEL.cmd);
       steps.push([": opens cmd", await visible(page, SEL.cmd)]);
       await page.keyboard.press("Escape");
-      await page.waitForTimeout(100);
+      await shown(page, SEL.cmd, "hidden");
       await page.keyboard.press("?");
-      await page.waitForTimeout(150);
+      await shown(page, SEL.help);
       steps.push(["? opens help", await visible(page, SEL.help)]);
       const failed = steps.filter(([, ok]) => !ok).map(([n]) => n);
       record(7, route, failed.length === 0, failed.length ? `failed: ${failed.join(", ")}` : steps.map(([n]) => n).join(", "));
@@ -453,6 +471,7 @@ async function palettes() {
       let ok = true;
       for (const [key, pal] of [["2", "phosphor"], ["3", "oxide"], ["4", "coldstar"], ["1", "sodium"]]) {
         await page.keyboard.press(key);
+        await until(page, (p) => (document.documentElement.dataset.pal || "sodium") === p, pal);
         await page.waitForTimeout(400);
         const attr = await page.evaluate(() => document.documentElement.dataset.pal || "");
         const bg = await cssVar(page, "--bg");
@@ -474,8 +493,8 @@ async function palettes() {
       let prevBg = await cssVar(page, "--bg");
       for (const pal of ["oxide", "phosphor", "coldstar"]) {
         const sw = page.locator(SEL.swatch(pal)).filter({ visible: true }).first();
-        await sw.click({ timeout: 1000 });
-        await page.waitForTimeout(250);
+        await sw.click({ timeout: STEP_MS });
+        await until(page, (p) => document.documentElement.dataset.pal === p, pal);
         const attr = await page.evaluate(() => document.documentElement.dataset.pal || "");
         const bg = await cssVar(page, "--bg");
         const name = ((await text(page, SEL.pal)) || "").toUpperCase();
@@ -649,7 +668,7 @@ async function main() {
       if (want(7) || want(6)) tasks.push(keyboardSmoke);
       if (want(9) || want(6)) tasks.push(palettes);
       if (want(10) || want(6)) tasks.push(debugKeys);
-      await pool(tasks, 4);
+      await pool(tasks, WORKERS);
       if (want(6)) {
         for (const route of ROUTES) {
           const errs = errorsByRoute.get(route) || [];
