@@ -118,7 +118,7 @@ URL is the source of truth for section and Reader. Section switches (`h`/`l`, In
   render before it arrives. A failed import or failed WebGL context uses the CSS/ASCII fallback (`gl:none`).
 - **Sky is imperative TS, not React.** `src/orrery/sky/` is a near-direct port of the mock's sky code into a class
   with the API from DESIGN §9 (`focus(id)`, `section(i)`, `setPalette(name)`, `setRes(h)`, `motion(on)`, `tear(n)`,
-  `pointer(x,y)`, `project(id) -> screen rect`, `dispose()`). React talks to it through a ref. Ramp/fog colors are read
+  `pointer(x,y)`, `dispose()`; the HUD reads body positions from `onFrame`). React talks to it through a ref. Ramp/fog colors are read
   from computed CSS custom properties (at init and on every `setPalette`), never hard-coded a second time.
 - **HudLayer updates imperatively** (refs + `textContent`/`style` writes from the Sky's frame callback), never through
   React state per frame.

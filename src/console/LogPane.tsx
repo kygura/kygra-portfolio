@@ -1,7 +1,8 @@
 // `05 LOG` (DESIGN A3): `+ sign` first, entries `YYYY-MM-DD  name~  message~` (Enter expands
 // inline), `+ more` last while older pages exist. `+ sign` / `:sign` open the inline INSERT form:
 // `name:` (optional, default anon) and `msg:` with an `n/280` counter. Enter sends, Esc cancels.
-// The form only collects text; validateSign (orrery/model) is the trust-boundary check on send.
+// The form only collects text (no maxLength on msg: the counter counts code points and turns `off`
+// past 280); sign() checks on send for UX and the database enforces the limits.
 import { useEffect, useRef, type FocusEvent } from "react";
 import { LOG_DEFAULT_NAME, LOG_MAX, LOG_NAME_MAX, charCount, type LogRow } from "../orrery/model";
 import KeyChip from "./KeyChip";
@@ -65,7 +66,6 @@ function SignForm({ draft, onDraft, onSend, onCancel }: Pick<LogPaneProps, "draf
           ref={msg}
           name="msg"
           rows={3}
-          maxLength={LOG_MAX}
           aria-describedby="logn"
           value={draft.msg}
           onChange={(e) => onDraft({ ...draft, msg: e.target.value })}

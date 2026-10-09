@@ -1,15 +1,14 @@
 // Guestbook data for `05 LOG` (DESIGN A3): pages of 12, realtime inserts, optimistic
-// send, 30s cooldown, offline mode when the Supabase env vars are missing. Errors come
-// back as Modeline strings; nothing is printed to the console.
+// send, 30s cooldown, offline mode when the Supabase env vars are missing or the first read
+// fails (`more()` retries it). Errors come back as Modeline strings; nothing is printed to the
+// console. The checks here are UX only; the database enforces the real limits.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { hasSupabaseConfig, supabase } from "../lib/supabase";
-import { LOG_PAGE, cooldownLeft, mergeEntries, validateSign, type LogEntry } from "./model.ts";
+import { LOG_LOCAL, LOG_PAGE, confirmEntry, cooldownLeft, mergeEntries, validateSign, withIncoming, type LogEntry } from "./model.ts";
 
 const TABLE = "guestbook";
 const COLUMNS = "id,name,message,created_at";
-/** Optimistic entries use this id prefix until the realtime row replaces them. */
-const LOCAL = "local-";
 
 export interface LogReply {
   ok: boolean;
@@ -22,8 +21,7 @@ export interface Guestbook {
   loading: boolean;
   entries: LogEntry[];
   hasMore: boolean;
-  /** Last load error as a Modeline string, or null. */
-  error: string | null;
+  /** Next page; while offline after a failed first read, retries that read instead. */
   more(): Promise<LogReply>;
   sign(name: string, message: string): Promise<LogReply>;
   /** Milliseconds until the next send is allowed. */
@@ -39,21 +37,12 @@ const asEntry = (row: Record<string, unknown>): LogEntry => ({
   created_at: String(row.created_at ?? ""),
 });
 
-/** A realtime row replaces the local optimistic copy of the same message. */
-function withIncoming(current: LogEntry[], row: LogEntry): LogEntry[] {
-  if (current.some((e) => e.id === row.id)) return current;
-  const local = current.find((e) => e.id.startsWith(LOCAL) && e.name === row.name && e.message === row.message);
-  const rest = local ? current.filter((e) => e !== local) : current;
-  return mergeEntries(rest, [row]);
-}
-
 export function useGuestbook(): Guestbook {
   const client = hasSupabaseConfig ? supabase : null;
   const [online, setOnline] = useState(Boolean(client));
   const [loading, setLoading] = useState(Boolean(client));
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [hasMore, setHasMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const lastSent = useRef<number | null>(null);
   const busy = useRef(false);
 
@@ -80,17 +69,10 @@ export function useGuestbook(): Guestbook {
     let alive = true;
     fetchPage(0)
       .then((r) => {
-        if (!alive) return;
-        if (!r.ok) {
-          setOnline(false);
-          setError(r.msg);
-        }
+        if (alive && !r.ok) setOnline(false);
       })
       .catch(() => {
-        if (alive) {
-          setOnline(false);
-          setError("E: log offline");
-        }
+        if (alive) setOnline(false);
       })
       .finally(() => alive && setLoading(false));
 
@@ -109,12 +91,18 @@ export function useGuestbook(): Guestbook {
   }, [client, fetchPage]);
 
   const more = useCallback(async (): Promise<LogReply> => {
-    if (!client || !online) return OFFLINE;
+    if (!client) return OFFLINE;
     if (busy.current) return { ok: false, msg: "log: busy" };
     busy.current = true;
     try {
+      if (!online) {
+        // The first read failed: try it again rather than staying offline for the session.
+        const r = await fetchPage(0);
+        if (r.ok) setOnline(true);
+        return r;
+      }
       // Server rows already held (realtime inserts included) are exactly the offset of the next page.
-      return await fetchPage(entries.filter((e) => !e.id.startsWith(LOCAL)).length);
+      return await fetchPage(entries.filter((e) => !e.id.startsWith(LOG_LOCAL)).length);
     } catch {
       return { ok: false, msg: "E: log read failed" };
     } finally {
@@ -132,7 +120,7 @@ export function useGuestbook(): Guestbook {
       if (v.ok === false) return { ok: false, msg: v.error };
 
       const temp: LogEntry = {
-        id: `${LOCAL}${now}`,
+        id: `${LOG_LOCAL}${now}`,
         name: v.name,
         message: v.message,
         created_at: new Date(now).toISOString(),
@@ -143,9 +131,15 @@ export function useGuestbook(): Guestbook {
       setEntries((cur) => mergeEntries(cur, [temp]));
 
       try {
-        const { error: err } = await client.from(TABLE).insert([{ name: v.name, message: v.message }]);
-        if (err) throw err;
-        setEntries((cur) => cur.map((e) => (e.id === temp.id ? { ...e, pending: false } : e)));
+        const { data, error: err } = await client
+          .from(TABLE)
+          .insert([{ name: v.name, message: v.message }])
+          .select("id,created_at")
+          .single();
+        if (err || !data) throw err;
+        // Swap in the server row now, so the entry is confirmed even without realtime.
+        const row: LogEntry = { ...temp, id: String(data.id), created_at: String(data.created_at), pending: false };
+        setEntries((cur) => confirmEntry(cur, temp.id, row));
         return { ok: true, msg: `signed as ${v.name}` };
       } catch {
         lastSent.current = previous;
@@ -158,5 +152,5 @@ export function useGuestbook(): Guestbook {
 
   const cooldown = useCallback(() => cooldownLeft(lastSent.current, Date.now()), []);
 
-  return { online, loading, entries, hasMore, error, more, sign, cooldown };
+  return { online, loading, entries, hasMore, more, sign, cooldown };
 }

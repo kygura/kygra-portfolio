@@ -74,6 +74,8 @@ export interface SkyOptions {
   onFrame?: (bodies: readonly SkyProjection[]) => void;
   /** Called once a second while animating, and whenever the internal height changes. */
   onStats?: (stats: SkyStats) => void;
+  /** The WebGL context was lost (GPU reset, eviction): the loop has stopped; show the fallback. */
+  onLost?: () => void;
 }
 
 interface MatSpec {
@@ -142,6 +144,7 @@ export function readSkyTokens(el: Element = document.documentElement): SkyTokens
 export class Sky {
   onFrame: SkyOptions["onFrame"];
   onStats: SkyOptions["onStats"];
+  onLost: SkyOptions["onLost"];
 
   private readonly canvas: HTMLCanvasElement;
   private readonly R: THREE.WebGLRenderer;
@@ -212,6 +215,7 @@ export class Sky {
     this.R.setPixelRatio(1);
     this.onFrame = opts.onFrame;
     this.onStats = opts.onStats;
+    this.onLost = opts.onLost;
     this.stackRight = opts.stackRight ?? (() => 0);
     this.H = baseHeight(innerWidth);
     this.moving = opts.motion ?? true;
@@ -421,6 +425,7 @@ export class Sky {
       this.visible = es[es.length - 1].isIntersecting;
     });
     this.io.observe(canvas);
+    canvas.addEventListener("webglcontextlost", this.lost);
 
     this.setPalette();
     if (opts.focus != null) this.focus(opts.focus, true);
@@ -541,18 +546,11 @@ export class Sky {
     this.need = true;
   }
 
-  /** Current screen projection of one body, or null for an unknown id. */
-  project(id: string): SkyProjection | null {
-    const i = this.orb.findIndex((o) => o.id === id);
-    if (i < 0) return null;
-    this.cam.updateMatrixWorld();
-    return { ...this.projectBody(i, this.projs[i]) };
-  }
-
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
     cancelAnimationFrame(this.raf);
+    this.canvas.removeEventListener("webglcontextlost", this.lost);
     this.ro.disconnect();
     this.io.disconnect();
     this.geos.forEach((g) => g.dispose());
@@ -567,6 +565,12 @@ export class Sky {
   }
 
   // ---------------------------------------------------------------- internals
+
+  private readonly lost = (e: Event): void => {
+    e.preventDefault();
+    cancelAnimationFrame(this.raf);
+    if (!this.disposed) this.onLost?.();
+  };
 
   private copyCs(): CamGoal {
     const c = this.cs;

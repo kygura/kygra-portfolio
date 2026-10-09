@@ -7,7 +7,9 @@ import { defineProject, type ProjectDraft } from "../lib/project-schema.ts";
 import { handle, links, now, quotes } from "../content/site.ts";
 import {
   LOG_COOLDOWN_MS,
+  LOG_LOCAL,
   charCount,
+  confirmEntry,
   cooldownLeft,
   dotLeader,
   formatDate,
@@ -24,6 +26,7 @@ import {
   projectRow,
   truncate,
   validateSign,
+  withIncoming,
   type LogEntry,
 } from "./model.ts";
 
@@ -138,7 +141,7 @@ describe("fortune", () => {
 });
 
 describe("guestbook helpers", () => {
-  it("validates at the trust boundary", () => {
+  it("validates the draft (UX check; the database enforces the same limits)", () => {
     assert.deepEqual(validateSign("  ", " hello \u0007 "), { ok: true, name: "anon", message: "hello" });
     assert.equal(validateSign("x", "   ").ok, false);
     assert.equal(validateSign("x", "a".repeat(281)).ok, false);
@@ -162,6 +165,25 @@ describe("guestbook helpers", () => {
     const merged = mergeEntries([e("a", "2026-01-01"), e("b", "2026-01-03")], [e("a", "2026-01-01", { name: "z" }), e("c", "2026-01-02")]);
     assert.deepEqual(merged.map((x) => x.id), ["b", "c", "a"]);
     assert.equal(merged[2].name, "z");
+  });
+  it("realtime row replaces the optimistic copy and is not added twice", () => {
+    const temp = e(`${LOG_LOCAL}1`, "2026-01-02", { pending: true });
+    const row = e("42", "2026-01-02T00:00:01Z");
+    const cur = [temp, e("a", "2026-01-01")];
+    const once = withIncoming(cur, row);
+    assert.deepEqual(once.map((x) => x.id), ["42", "a"]);
+    assert.equal(withIncoming(once, row), once);
+  });
+  it("insert reply swaps the temp entry for the server row, before or after realtime", () => {
+    const temp = e(`${LOG_LOCAL}1`, "2026-01-02", { pending: true });
+    const row = e("42", "2026-01-02T00:00:01Z", { pending: false });
+    // No realtime: the reply alone confirms the entry.
+    const noRt = confirmEntry([temp, e("a", "2026-01-01")], temp.id, row);
+    assert.deepEqual(noRt.map((x) => [x.id, Boolean(x.pending)]), [["42", false], ["a", false]]);
+    // Realtime landed first: no duplicate.
+    assert.deepEqual(confirmEntry(withIncoming([temp], row), temp.id, row).map((x) => x.id), ["42"]);
+    // Reply first, realtime later: still one entry.
+    assert.deepEqual(withIncoming(confirmEntry([temp], temp.id, row), row).map((x) => x.id), ["42"]);
   });
   it("log rows: + sign first, + more last, offline collapses", () => {
     const rows = logRows([e("a", "2026-01-01", { name: "a very long visitor name" })], { online: true, hasMore: true });

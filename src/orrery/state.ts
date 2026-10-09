@@ -322,8 +322,20 @@ function edge(s: State, end: "first" | "last"): State {
 
 const nothing = (s: State, what = "nothing to open"): State => say(s, `${s.section}: ${what}`);
 
+/** Row key of what the open Reader shows in the current section (selection is synced to it). */
+function readerKey(s: State): string | null {
+  const r = s.reader;
+  if (r?.kind === "dossier" && s.section === "projects") return r.slug;
+  if (r?.kind === "post" && s.section === "notes") return r.slug;
+  if (r?.kind === "cv" && s.section === "links") return "cv";
+  return null;
+}
+
 function openRow(s: State, newTab: boolean): State {
   const i = s.sel[s.section];
+  // o/Enter on the row a Reader already shows is a no-op (no duplicate push, no hidden Inspector
+  // flag). A click that selected another row in the visible list still opens it.
+  if (s.reader && !newTab && (s.rows[s.section] as { key: string }[])[i]?.key === readerKey(s)) return s;
   switch (s.section) {
     case "projects": {
       const p = s.rows.projects[i];
@@ -342,7 +354,8 @@ function openRow(s: State, newTab: boolean): State {
       const l = s.rows.links[i];
       if (!l) return s;
       if (newTab || l.kind === "external" || l.kind === "mailto" || l.kind === "file") {
-        return emit(s, { type: "open", url: l.href, newTab });
+        // Files (cv.pdf) get a tab of their own so the console is not torn down.
+        return emit(s, { type: "open", url: l.href, newTab: newTab || l.kind === "file" });
       }
       if (l.id === "log") return goSection(s, "log");
       return emit(s, { type: "navigate", to: l.href, replace: false });
@@ -388,7 +401,8 @@ function escape(s: State): State {
     case "BOOT":
       return reduce(s, { type: "bootDone" });
   }
-  if (s.reader) return emit({ ...s, reader: null, err: false }, { type: "navigate", to: sectionPath(s.section), replace: false });
+  // Back to the section path; replaces like every other section move (SPEC 4).
+  if (s.reader) return emit({ ...s, reader: null, err: false }, { type: "navigate", to: sectionPath(s.section), replace: true });
   if (s.inspector) return { ...s, inspector: false };
   if (s.filter[s.section]) return { ...s, filter: { ...s.filter, [s.section]: "" } };
   if (s.expanded) return { ...s, expanded: null };
@@ -458,7 +472,8 @@ export function reduce(s: State, a: Action): State {
       return s.filter[s.section] ? move(s, a.delta) : s;
 
     case "cmdOpen":
-      if (s.mode === "BOOT") return s;
+      // Already open: keep the query (Ctrl-k inside the command line).
+      if (s.mode === "BOOT" || s.mode === "CMD") return s;
       return { ...openOverlay(s, "CMD"), cmd: { query: "", index: 0 } };
     case "cmdQuery":
       return { ...s, cmd: { query: a.query, index: 0 } };

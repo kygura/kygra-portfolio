@@ -7,7 +7,7 @@
 //   - inputs/textareas/contenteditable are treated as text inputs
 //   - any other focused button/link is a control (Enter keeps its native click)
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { paletteForKey } from "./palette.ts";
 import { READER_LINES, type Action, type Mode, type State } from "./state.ts";
 
@@ -79,11 +79,15 @@ const READER_KEYS: Record<string, Action> = {
   G: { type: "readerEdge", end: "bottom" },
 };
 
+/** Keys that never skip the boot: modifiers alone, Tab, function keys, IME/dead keys. */
+const BOOT_PASS = /^(Shift|Control|Alt|AltGraph|Meta|OS|Super|Hyper|Fn|FnLock|CapsLock|NumLock|ScrollLock|Tab|Dead|Process|Unidentified|F\d{1,2})$/;
+
 export function resolveKey(s: State, e: KeyInput, now: number): KeyResult {
   const k = e.key;
   const target = e.target ?? "body";
 
-  if (s.mode === "BOOT") return act({ type: "bootDone" });
+  // Any plain key skips the boot but keeps its default; combos (browser shortcuts) pass through.
+  if (s.mode === "BOOT") return e.ctrl || e.alt || e.meta || BOOT_PASS.test(k) ? NONE : { action: { type: "bootDone" }, prevent: false };
   if (e.alt || e.meta) return NONE;
 
   if (e.ctrl) {
@@ -260,9 +264,12 @@ export interface UseKeysOptions {
  * Pass stable callbacks (e.g. `getState` reading a ref) so the listener is not re-bound every render.
  */
 export function useKeys({ getState, dispatch, onKey }: UseKeysOptions): void {
-  useEffect(() => {
+  // Layout effect: bound before first paint, so no early keypress slips past the console.
+  useLayoutEffect(() => {
     const timers = new Set<ReturnType<typeof setTimeout>>();
     const onKeyDown = (e: KeyboardEvent) => {
+      // IME composition (Enter confirms a candidate, not the form/filter).
+      if (e.isComposing || e.keyCode === 229) return;
       onKey?.(keyId(e.key));
       const r = resolveKey(
         getState(),

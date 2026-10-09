@@ -75,7 +75,20 @@ describe("input focus rules", () => {
 });
 
 describe("other modes", () => {
-  it("BOOT: any key skips", () => assert.deepEqual(key(withMode("BOOT"), "x"), { type: "bootDone" }));
+  it("BOOT: any plain key skips, keeping its default", () => {
+    const b = withMode("BOOT");
+    for (const k of ["x", "Enter", " ", "Escape", "j"]) {
+      assert.deepEqual(resolveKey(b, { key: k }, 0), { action: { type: "bootDone" }, prevent: false });
+    }
+  });
+  it("BOOT: modifiers, combos, Tab and F-keys pass through untouched", () => {
+    const b = withMode("BOOT");
+    const none = { action: null, prevent: false };
+    for (const k of ["Shift", "Control", "Alt", "Meta", "CapsLock", "Tab", "F5", "F12"]) assert.deepEqual(resolveKey(b, { key: k }, 0), none);
+    assert.deepEqual(resolveKey(b, { key: "r", ctrl: true }, 0), none);
+    assert.deepEqual(resolveKey(b, { key: "l", meta: true }, 0), none);
+    assert.deepEqual(resolveKey(b, { key: "d", alt: true }, 0), none);
+  });
   it("HELP swallows keys except ? and Esc", () => {
     const h = withMode("HELP");
     assert.equal(key(h, "j"), null);

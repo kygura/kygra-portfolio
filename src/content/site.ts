@@ -119,8 +119,6 @@ export interface Cv {
     email: string;
     website: string;
     github: string;
-    /** Hidden on the old page (commented out); kept here, not rendered. */
-    linkedin: string;
   };
   summary: string;
   projects: CvProjectArea[];
@@ -132,14 +130,13 @@ export interface Cv {
 export const cv: Cv = {
   title: "Curriculum Vitae",
   pdf: { href: "/CV_NCA.pdf", filename: "CV_NCA.pdf", label: "Download PDF" },
-  // The old page also held a phone number that it never rendered. It stays out of
-  // the client bundle on purpose (SPEC 3: "Phone number stays unpublished").
+  // The old page also held a phone number and a LinkedIn URL that it never rendered. Both stay
+  // out of the client bundle on purpose (SPEC 3: phone unpublished, LinkedIn not shown).
   contact: {
     location: "Malaga, Spain",
     email: "ncerratoanton@gmail.com",
     website: "kygra.xyz",
     github: "github.com/kygura",
-    linkedin: "https://www.linkedin.com/in/nicolas-cerrato-anton-746bb1412/",
   },
   summary:
     "Software Engineer with a strong foundation in Computer Science and an international academic background (Spain/Germany). Focused on agentic systems, full-stack web development, algorithmic trading, and blockchain protocols. Builds production-grade tooling across TypeScript, Python, and Solidity — from LLM-powered trading cockpits and agent orchestrators to editorial AI and on-chain monetary systems. Trilingual professional (English, German, Spanish).",

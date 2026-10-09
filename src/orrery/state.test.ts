@@ -155,7 +155,25 @@ describe("open / yank", () => {
     const s2 = run(s1, { type: "route", route: parseRoute("/writings/100m") });
     const s3 = run(s2, { type: "escape" });
     assert.equal(s3.reader, null);
-    assert.deepEqual(effects(s2, s3), [{ type: "navigate", to: "/writings", replace: false }]);
+    assert.deepEqual(effects(s2, s3), [{ type: "navigate", to: "/writings", replace: true }]);
+  });
+  it("o/Enter in a Reader on the row it shows is a no-op; another row still opens", () => {
+    const post = run(loaded(), { type: "route", route: parseRoute("/writings/100m") });
+    assert.equal(run(post, { type: "open" }), post);
+    const other = run(post, { type: "select", section: "notes", index: 0 }, { type: "open" });
+    assert.deepEqual(effects(post, other), [{ type: "navigate", to: "/writings/thaumazein", replace: false }]);
+    const dossier = run(loaded(), { type: "route", route: parseRoute("/projects/meridian") });
+    const d1 = run(dossier, { type: "open" });
+    assert.equal(d1, dossier);
+    assert.equal(d1.inspector, false);
+    const cv = run(loaded(), { type: "route", route: parseRoute("/cv") });
+    assert.equal(run(cv, { type: "open" }), cv);
+    // O (new tab) still works inside a Reader.
+    assert.deepEqual(effects(post, run(post, { type: "open", newTab: true })), [{ type: "open", url: "/writings/100m", newTab: true }]);
+  });
+  it("links: cv.pdf opens in a new tab", () => {
+    const s0 = run(loaded(), { type: "section", to: "links" }, { type: "move", delta: 3 });
+    assert.deepEqual(effects(s0, run(s0, { type: "open" })), [{ type: "open", url: "/CV_NCA.pdf", newTab: true }]);
   });
   it("links: external opens, cv pushes, log switches section", () => {
     const s0 = run(loaded(), { type: "section", to: "links" });
@@ -213,6 +231,10 @@ describe("modes", () => {
     assert.equal(s.mode, "NORMAL");
     assert.equal(s.palette, "coldstar");
     assert.deepEqual(effects(before, s), [{ type: "palette", palette: "coldstar" }, { type: "tear", frames: 2 }]);
+  });
+  it("Ctrl-k inside the command line keeps the query", () => {
+    const s0 = run(loaded(), { type: "cmdOpen" }, { type: "cmdQuery", query: "them" });
+    assert.equal(run(s0, { type: "cmdOpen" }), s0);
   });
   it("cmdMove wraps", () => {
     const s = run(loaded(), { type: "cmdOpen" }, { type: "cmdQuery", query: "motion" }, { type: "cmdMove", delta: -1 });

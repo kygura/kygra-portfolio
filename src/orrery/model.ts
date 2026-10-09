@@ -244,7 +244,11 @@ const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f]/g;
 
 export type SignCheck = { ok: true; name: string; message: string } | { ok: false; error: string };
 
-/** Trust-boundary check for a guestbook write: trim, strip control chars, length limits. */
+/**
+ * UX validation for a guestbook write (trim, strip control chars, length limits) so the visitor
+ * gets an instant Modeline error. Not a security boundary: the anon key is public, so the database
+ * must enforce the same rules itself (see supabase/guestbook_hardening.sql).
+ */
 export function validateSign(name: string, message: string): SignCheck {
   const n = String(name ?? "").replace(CONTROL, "").trim();
   const m = String(message ?? "").replace(CONTROL, "").trim();
@@ -269,6 +273,22 @@ export function mergeEntries(current: readonly LogEntry[], incoming: readonly Lo
   for (const e of current) byId.set(e.id, e);
   for (const e of incoming) byId.set(e.id, e);
   return [...byId.values()].sort((a, b) => time(b) - time(a));
+}
+
+/** Id prefix of optimistic entries not yet confirmed by the server. */
+export const LOG_LOCAL = "local-";
+
+/** A realtime row replaces the local optimistic copy of the same message (or is dropped if already held). */
+export function withIncoming(current: LogEntry[], row: LogEntry): LogEntry[] {
+  if (current.some((e) => e.id === row.id)) return current;
+  const local = current.find((e) => e.id.startsWith(LOG_LOCAL) && e.name === row.name && e.message === row.message);
+  return mergeEntries(local ? current.filter((e) => e !== local) : current, [row]);
+}
+
+/** The insert came back: swap the optimistic entry `tempId` for the server row, whichever arrived first. */
+export function confirmEntry(current: readonly LogEntry[], tempId: string, row: LogEntry): LogEntry[] {
+  const rest = current.filter((e) => e.id !== tempId);
+  return rest.some((e) => e.id === row.id) ? rest : mergeEntries(rest, [row]);
 }
 
 export type LogRow =

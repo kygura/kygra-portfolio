@@ -9,7 +9,7 @@ import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
 import { projects } from "../lib/projects";
 import { localFallbackSummaries } from "../posts/localFallback";
 import { chipHit, useKeys } from "../orrery/keys";
-import { linkRows, logRows, noteRows, nowRows, parseQuote, pickQuote, projectRows, validateSign } from "../orrery/model";
+import { linkRows, logRows, noteRows, nowRows, parseQuote, pickQuote, projectRows } from "../orrery/model";
 import { BOOT_KEY, applyPalette, loadMotion, loadPalette, saveMotion, savePalette, session } from "../orrery/palette";
 import { SECTIONS, docTitle, parseRoute, sectionIndex, type Section } from "../orrery/routes";
 import { loadSky, type Sky } from "../orrery/sky/load";
@@ -263,33 +263,28 @@ export default function Console() {
           gbRef.current.more().then((r) => dispatch({ type: "msg", text: r.msg, err: !r.ok }));
           break;
         case "submit": {
-          // Optimistic send (A3): check here so a bad draft keeps the form open, then close it and
-          // let the entry appear at once; a failed write restores the draft. Errors go to the Modeline.
+          // Optimistic send (A3): close the form and let the entry appear at once. sign() is the one
+          // checker (offline, cooldown, draft, write); on any failure the draft comes back and the form
+          // reopens if the visitor is still on the log. Errors go to the Modeline.
           const d = draftRef.current;
-          const g = gbRef.current;
           const say = (text: string, err: boolean) => dispatch({ type: "msg", text, err });
-          if (!g.online) {
-            say("E: log offline", true);
-            break;
-          }
-          const wait = g.cooldown();
-          if (wait > 0) {
-            say(`E: cooldown ${Math.ceil(wait / 1000)}s`, true);
-            break;
-          }
-          const v = validateSign(d.name, d.msg);
-          if (v.ok === false) {
-            say(v.error, true);
-            break;
-          }
+          const reopen = () => {
+            setDraft((cur) => (cur.msg ? cur : d));
+            const s = stateRef.current;
+            // INSERT: the close above may not have rendered yet (sign() rejects a bad draft at once).
+            if (s.section === "log" && (s.mode === "NORMAL" || s.mode === "INSERT") && !s.reader) dispatch({ type: "sign" });
+          };
           setDraft({ name: d.name, msg: "" });
           dispatch({ type: "insertDone" });
-          g.sign(d.name, d.msg).then(
+          gbRef.current.sign(d.name, d.msg).then(
             (r) => {
+              if (!r.ok) reopen();
               say(r.msg, !r.ok);
-              if (!r.ok) setDraft((cur) => (cur.msg ? cur : { name: d.name, msg: d.msg }));
             },
-            () => say("E: log write failed", true),
+            () => {
+              reopen();
+              say("E: log write failed", true);
+            },
           );
           break;
         }
@@ -321,6 +316,11 @@ export default function Console() {
   useEffect(() => {
     dispatch({ type: "rows", section: "log", rows: logRows(gb.entries, { online: gb.online, hasMore: gb.hasMore }) });
   }, [gb.entries, gb.online, gb.hasMore]);
+
+  // A failed first read is retried whenever the visitor comes back to the log.
+  useEffect(() => {
+    if (state.section === "log" && !gbRef.current.online) void gbRef.current.more();
+  }, [state.section]);
 
   useEffect(() => {
     applyPalette(document.documentElement, stateRef.current.palette);
@@ -363,6 +363,13 @@ export default function Console() {
       focus: selectedProject(s0)?.slug ?? null,
       stackRight: () => stackRef.current?.getBoundingClientRect().right ?? 0,
       onFrame: (ps) => hudRef.current?.frame(ps),
+      onLost: () => {
+        // GPU reset or context eviction: drop to the static fallback for the rest of the visit.
+        const sky = skyRef.current;
+        skyRef.current = null;
+        sky?.dispose();
+        dispatch({ type: "gl", status: "none" });
+      },
       onStats: ({ fps, res }) => {
         if (fpsRef.current) fpsRef.current.textContent = `${fps}fps`;
         if (stateRef.current.res !== res) dispatch({ type: "resReport", h: res });

@@ -53,7 +53,7 @@ Order: T1 → (T2 ∥ T3) → T4 → T5 → T6.
 - **Work**: port the mock's sky into a TS class: every §6 object, the full pipeline, 30fps cap, the 12-frame retarget, the
   8-frame 72° section turn across **5 regions** (A3), Lissajous idle, pointer parallax, tear, perf step-down, `document.hidden`
   and IntersectionObserver pause, the reduced-motion single-frame mode, and `setPalette()` re-reading the CSS tokens. API per SPEC 5.1,
-  including `project(id)` for the HUD and an `onFrame` callback. Drop the `ps1`/`scan` toggles and `res 360`. Import three as an
+  including an `onFrame` callback that feeds the HUD. Drop the `ps1`/`scan` toggles and `res 360`. Import three as an
   npm module through a dynamic `import()`. If the import or the context fails, render the ASCII + Bayer fallback and report `gl:none`.
 - **Done when**: `/__sky` at 1440x900 looks like `design/mock/shots/palette-*.png` for all four palettes; the 4:3 band at
   390 wide renders at 120px internal height; the reduced-motion screenshots 1s apart are identical; the no-WebGL init script shows the
