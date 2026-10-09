@@ -1,109 +1,24 @@
-import { lazy, Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
-import Index from "./pages/Index";
-import SmoothScroll from "./components/SmoothScroll";
-import CustomCursor from "./components/CustomCursor";
-import ScrollProgress from "./components/ScrollProgress";
-import TerminalHost from "./components/TerminalHost";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import Console from "./console/Console";
 
-// Toast viewports render nothing until something fires a toast, and only
-// two lazily-routed pages ever do — no reason to ship them up front.
-const Toaster = lazy(() =>
-  import("@/components/ui/toaster").then((m) => ({ default: m.Toaster }))
-);
-const Sonner = lazy(() =>
-  import("@/components/ui/sonner").then((m) => ({ default: m.Toaster }))
-);
-
-const Writings = lazy(() => import("./pages/Writings"));
-const Post = lazy(() => import("./pages/Post"));
-const Projects = lazy(() => import("./pages/Projects"));
-const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Guestbook = lazy(() => import("./pages/Guestbook"));
-const Artifacts = lazy(() => import("./pages/Artifacts"));
-const CV = lazy(() => import("./pages/CV"));
-
-const queryClient = new QueryClient();
-
+// Route table per design/SPEC.md section 4.
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <Suspense fallback={null}>
-      <Toaster />
-      <Sonner />
-    </Suspense>
-    <BrowserRouter>
-      <SmoothScroll>
-        <CustomCursor />
-        <ScrollProgress />
-        <TerminalHost />
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route
-              path="/writings"
-              element={
-                <Layout>
-                  <Writings />
-                </Layout>
-              }
-            />
-            <Route
-              path="/writings/:slug"
-              element={
-                <Layout>
-                  <Post />
-                </Layout>
-              }
-            />
-            <Route
-              path="/artifacts"
-              element={
-                <Layout>
-                  <Artifacts />
-                </Layout>
-              }
-            />
-            <Route
-              path="/projects"
-              element={
-                <Layout>
-                  <Projects />
-                </Layout>
-              }
-            />
-            <Route
-              path="/projects/:slug"
-              element={
-                <Layout>
-                  <ProjectDetail />
-                </Layout>
-              }
-            />
-            <Route
-              path="/guestbook"
-              element={
-                <Layout>
-                  <Guestbook />
-                </Layout>
-              }
-            />
-            <Route
-              path="/cv"
-              element={
-                <Layout>
-                  <CV />
-                </Layout>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </SmoothScroll>
-    </BrowserRouter>
-  </QueryClientProvider>
+  <BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Console route={{ section: "projects", reader: null }} />} />
+      <Route path="/projects" element={<Console route={{ section: "projects", reader: null }} />} />
+      <Route path="/projects/:slug" element={<Console route={{ section: "projects", reader: "dossier" }} />} />
+      <Route path="/writings" element={<Console route={{ section: "notes", reader: null }} />} />
+      <Route path="/writings/:slug" element={<Console route={{ section: "notes", reader: "post" }} />} />
+      <Route path="/links" element={<Console route={{ section: "links", reader: null }} />} />
+      <Route path="/now" element={<Console route={{ section: "now", reader: null }} />} />
+      <Route path="/guestbook" element={<Console route={{ section: "log", reader: null }} />} />
+      <Route path="/cv" element={<Console route={{ section: "links", reader: "cv" }} />} />
+      <Route path="/about" element={<Console route={{ section: null, reader: "about" }} />} />
+      <Route path="/artifacts" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Console route={{ section: "projects", reader: "404" }} />} />
+    </Routes>
+  </BrowserRouter>
 );
 
 export default App;

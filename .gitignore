@@ -31,3 +31,6 @@ dist-ssr
 .superpowers/
 docs/
 .atl/
+
+# QA screenshots
+design/qa/shots/

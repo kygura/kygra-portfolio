@@ -1,0 +1,21 @@
+/* NULL ORRERY: palette tokens, font vars and base reset, ported from design/mock/index.html.
+   SODIUM is the default (:root). T4 ports the rest of the mock stylesheet. */
+:root{--bg:#0c0b10;--panel:#16141b;--rule:#2e2a33;--fg:#e6dcc8;--dim:#8f897c;--acc:#ffaa1f;--acc2:#57c4a9;--glitch:#ff2e4c;
+  --fd:"DotGothic16",monospace;--fb:"Martian Mono",ui-monospace,monospace;--fm:"Silkscreen",monospace;color-scheme:dark}
+:root[data-pal=phosphor]{--bg:#050806;--panel:#0c120d;--rule:#1f2b20;--fg:#c6f0c2;--dim:#6a8a66;--acc:#3dff6e;--acc2:#d8ff3a;--glitch:#ff5a1f}
+:root[data-pal=oxide]{--bg:#0e0908;--panel:#181110;--rule:#332522;--fg:#ecd9cf;--dim:#94776e;--acc:#ff5a2e;--acc2:#b8c4be;--glitch:#f2ff00}
+:root[data-pal=coldstar]{--bg:#06080d;--panel:#0e121a;--rule:#1f2735;--fg:#d6e7f0;--dim:#74889a;--acc:#5ef0ff;--acc2:#ff5aa8;--glitch:#fff04d}
+*,*::before,*::after{box-sizing:border-box;border-radius:0;box-shadow:none;text-shadow:none}
+html,body{margin:0;background:var(--bg);color:var(--fg)}
+body{font:400 14px/1.5 var(--fb);font-stretch:87.5%;font-variant-numeric:tabular-nums;overflow:hidden;height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left}
+ul{list-style:none;margin:0;padding:0}
+p,h1,h2,pre{margin:0}
+a{color:var(--fg);text-decoration:underline solid var(--dim) 1px;text-underline-offset:3px}
+a:hover,a:focus-visible{background:var(--acc);color:var(--bg);text-decoration:none}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+[hidden]{display:none!important}
+.dim{color:var(--dim)}
+@media (max-width:639px){
+  body{overflow:auto;height:auto;padding-bottom:84px}
+}
