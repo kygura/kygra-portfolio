@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { createPs1Pass, type Ps1Pass } from "@/lib/ps1Pass";
 import { useTheme } from "next-themes";
 
 /**
@@ -58,8 +59,6 @@ const SEGS: readonly (readonly number[])[] = [
 interface Tier {
   /** Grid pitch in CSS px — cost scales with 1/cell². */
   cell: number;
-  /** Device pixel ratio ceiling. */
-  dpr: number;
   /** Spacing between contour levels. */
   step: number;
   /** Minimum ms between canvas repaints. */
@@ -71,11 +70,18 @@ interface Tier {
 }
 
 const TIERS: readonly Tier[] = [
-  { cell: 15, dpr: 1.6, step: 0.17, interval: 1000 / 60, pointer: true, maxRipples: 3, maxLabels: 14 },
-  { cell: 17, dpr: 1.5, step: 0.185, interval: 1000 / 40, pointer: true, maxRipples: 2, maxLabels: 10 },
-  { cell: 18, dpr: 1.25, step: 0.2, interval: 1000 / 30, pointer: false, maxRipples: 1, maxLabels: 6 },
-  { cell: 26, dpr: 1, step: 0.24, interval: 1000 / 24, pointer: false, maxRipples: 0, maxLabels: 0 },
+  { cell: 15, step: 0.17, interval: 1000 / 60, pointer: true, maxRipples: 3, maxLabels: 14 },
+  { cell: 17, step: 0.185, interval: 1000 / 40, pointer: true, maxRipples: 2, maxLabels: 10 },
+  { cell: 18, step: 0.2, interval: 1000 / 30, pointer: false, maxRipples: 1, maxLabels: 6 },
+  { cell: 26, step: 0.24, interval: 1000 / 24, pointer: false, maxRipples: 0, maxLabels: 0 },
 ];
+
+/**
+ * PS1 look: the field renders at one "console pixel" per PIXEL CSS px,
+ * roughly 320–480 pixels across, and a WebGL pass dithers it to 15-bit
+ * colour. Phones get 2, desktops 3, very wide screens 4.
+ */
+const pixelSize = (w: number) => Math.min(4, Math.max(2, Math.round(w / 440)));
 
 /** Frame cost (ms) above which we drop a quality tier. */
 const COST_CEILING = 11;
@@ -122,6 +128,7 @@ const CartographicHero = () => {
   const { resolvedTheme } = useTheme();
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const glRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -170,6 +177,23 @@ const CartographicHero = () => {
     const canvas = canvasRef.current;
     const root = rootRef.current;
     if (!canvas || !root) return;
+
+    // PS1 post pass. Without WebGL the low-res 2D canvas still shows,
+    // upscaled with hard pixels, just without the dither.
+    const glCanvas = glRef.current;
+    let ps1: Ps1Pass | null = null;
+    const usePlainCanvas = () => {
+      ps1 = null;
+      canvas.style.visibility = "";
+      if (glCanvas) glCanvas.hidden = true;
+    };
+    if (glCanvas) {
+      ps1 = createPs1Pass(glCanvas, usePlainCanvas);
+      if (ps1) {
+        glCanvas.hidden = false;
+        canvas.style.visibility = "hidden";
+      }
+    }
 
     const mq =
       typeof window.matchMedia === "function"
@@ -334,7 +358,10 @@ const CartographicHero = () => {
       const w = canvas.clientWidth;
       const h = canvas.clientHeight;
       if (!w || !h) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, tier.dpr);
+      const dpr = 1 / pixelSize(w);
+      // Snap to the console pixel grid: no sub-pixel precision, so edges
+      // crawl as the field morphs, like PS1 vertices.
+      const snap = (v: number) => Math.round(v * dpr) / dpr;
       const pw = Math.round(w * dpr);
       const ph = Math.round(h * dpr);
       if (canvas.width !== pw || canvas.height !== ph) {
@@ -553,8 +580,8 @@ const CartographicHero = () => {
                 edge(seg[s], x, y, cell, a, b, c, d, lv);
                 const x1 = sx, y1 = sy;
                 edge(seg[s + 1], x, y, cell, a, b, c, d, lv);
-                path.moveTo(x1, y1);
-                path.lineTo(sx, sy);
+                path.moveTo(snap(x1), snap(y1));
+                path.lineTo(snap(sx), snap(sy));
                 if (sampled && levelKind[k] !== 0 && labelX.length < tier.maxLabels * 4) {
                   labelX.push((x1 + sx) / 2);
                   labelY.push((y1 + sy) / 2);
@@ -566,7 +593,8 @@ const CartographicHero = () => {
         }
       }
 
-      ctx.lineJoin = "round";
+      ctx.lineJoin = "miter";
+      const minLine = 1 / dpr;
       const inkStr = `${ink[0] | 0},${ink[1] | 0},${ink[2] | 0}`;
       const accStr = `${acc[0] | 0},${acc[1] | 0},${acc[2] | 0}`;
       for (let k = 0; k <= nLev; k++) {
@@ -574,14 +602,14 @@ const CartographicHero = () => {
         if (!path) continue;
         const rgb = levelKind[k] === 2 ? accStr : inkStr;
         ctx.strokeStyle = `rgba(${rgb},${levelAlpha[k].toFixed(3)})`;
-        ctx.lineWidth = levelWidth[k];
+        ctx.lineWidth = Math.max(levelWidth[k], minLine);
         ctx.stroke(path);
         levelPaths[k] = null;
       }
 
       // elevation labels
       if (labelX.length) {
-        ctx.font = '500 10px "IBM Plex Mono", monospace';
+        ctx.font = `500 ${Math.round(7 / dpr)}px "IBM Plex Mono", monospace`;
         ctx.textBaseline = "middle";
         const halo = `rgb(${bg[0] | 0},${bg[1] | 0},${bg[2] | 0})`;
         const inkA = `rgba(${inkStr},${(0.6 * ease).toFixed(2)})`;
@@ -591,15 +619,18 @@ const CartographicHero = () => {
           const ly = labelY[i];
           if (lx < 40 || lx > w - 60 || ly < 70 || ly > h - 70) continue;
           const txt = String(Math.max(0, Math.round(240 + labelLv[i] * 160)));
-          ctx.lineWidth = 4;
+          const tx = snap(lx + 2 / dpr);
+          const ty = snap(ly);
+          ctx.lineWidth = 2 / dpr;
           ctx.strokeStyle = halo;
-          ctx.strokeText(txt, lx + 5, ly);
+          ctx.strokeText(txt, tx, ty);
           ctx.fillStyle = inkA;
-          ctx.fillText(txt, lx + 5, ly);
+          ctx.fillText(txt, tx, ty);
           drawn++;
         }
       }
 
+      ps1?.render(canvas, bg);
       drawnOnce = true;
     };
 
@@ -711,6 +742,7 @@ const CartographicHero = () => {
       mq?.removeEventListener?.("change", onReduced);
       observer.disconnect();
       ro.disconnect();
+      ps1?.dispose();
     };
   }, []);
 
@@ -718,6 +750,7 @@ const CartographicHero = () => {
     <div ref={rootRef} className="hero">
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" />
+        <canvas ref={glRef} className="hero__canvas" aria-hidden="true" hidden />
 
         {/* Display name + tagline share one column so their left edge and
             vertical gap hold at every width. */}
