@@ -442,3 +442,74 @@ The choice persists in localStorage (wrapped in try/catch).
 - [ ] The whole page can be used without a mouse, and every keybind is discoverable on screen or through `?`.
 - [ ] It stays at 30fps on an integrated-GPU laptop and works at 390px width without horizontal scroll.
 - [ ] Reduced motion produces a calm, static page.
+
+---
+
+## Amendments (full pass)
+
+Status: **FULL PASS.** The direction is approved. These amendments apply the brief to the real site and its real content.
+They override the sections they name. The rule in §1 about not carrying anything over from the old site still holds for
+visuals; only content, routes and data plumbing carry over. `design/SPEC.md` holds the build plan.
+
+### A1. Palettes ship
+All four palettes from §5 ship. SODIUM stays the default (`:root`); PHOSPHOR, OXIDE and COLDSTAR are
+`:root[data-pal=...]` token sets. The **PaletteSwitcher is no longer mock-only** (§9): keys `1`-`4`, clickable swatches
+(StatusBar on desktop, KeyBar on mobile) and `:theme sodium|phosphor|oxide|coldstar` all stay. The choice persists per
+viewer in localStorage and is applied before first paint, so the page never flashes the wrong palette. The §8 palette
+switch behaviour (2-frame tear, instant token swap, ramp uniforms, StatusBar name) is unchanged. Per-project accent colors
+from the old content are not used: palette tokens own every color on the page.
+
+### A2. Debug controls are dropped
+`[`, `]` and `\` are unbound in production, and the `ps1 on|off` and `scan on|off` commands are gone. The PS1 pipeline is
+always on, and the scanline pass stays at the mock's default. `:res 120|180|240` stays as a command with no key, and the
+automatic step-down from §6 stays. `res 360` is dropped.
+
+### A3. Fifth section: `05 LOG`
+The guestbook becomes a fifth section. Five regions at 72° close the circle that §6's section rotation already implies.
+- Title `05 LOG`, StatusBar tab `5:log`, IndexRail chip `[gb]`, chord `g b`. `h`/`l` wrap through five sections.
+- Sky region: the orrery turns to the dark face of the monolith with the ruin grid below.
+- Rows: `YYYY-MM-DD  name~  message~`. `Enter` expands a row inline (wrapped message, no new pane).
+- The first row is `+ sign`. `Enter` on it, or `:sign`, opens an inline form inside the pane: `name:` (optional,
+  default `anon`) and `msg:` (280 chars, counter `n/280` in `--dim`). The Modeline mode reads `INSERT`. `Enter` sends,
+  `Esc` cancels. Sending is optimistic. After a send there is a 30s cooldown, and messages go to the Modeline (no toasts).
+- The last row is `+ more` while more entries exist (pages of 12). New entries from other visitors appear at the top in real time.
+- Without a backend: the list shows `-- log offline --` in `--dim`, and `+ sign` reports `E: log offline` in `--glitch`.
+
+### A4. Reader pane (long-form)
+Long text (notes, project dossiers, the CV, the manifesto and 404) opens in a **Reader**: an opaque Pane with a title tab
+(`READ <slug>`, `DOSSIER <name>`, `CV`, `ABOUT`, `E404`) and the chips `[esc]` plus `[O]` where an external URL exists.
+- Desktop: it docks in the open-sky region, 8px right of the stack and running between the bars. Its width is `min(80ch, available − 16px)` and it scrolls internally.
+  The Inspector and reticle hide while it is open. The sky stays visible in the gutters and on the right.
+- Tablet: it replaces the section pane and Inspector in the widened stack. Mobile: it replaces the stacked sections under the sky band.
+- Keys: `j`/`k` scroll 3 lines, `gg`/`G` top and bottom, `Esc` closes back to the section. Everything else stays global.
+- Prose: Martian Mono 14/1.6, max 72ch. Headings in DotGothic16 at 32 (h1/h2) or 16 (h3+). No italics: `em` renders as
+  `--fg` with a 1px dotted `--dim` underline. Blockquotes get a 1px `--rule` left rule and `--dim` text. Lists use `-` and `*` glyphs.
+  Code blocks sit on `--panel` with a 1px `--rule` border, and syntax colors are limited to `fg / dim / acc / acc2`. Images have a
+  1px `--rule` border, no radius and normal (non-pixelated) scaling. Callouts (`[!NOTE]` and the rest) are boxed with a Silkscreen 8px label,
+  in `--acc2` for NOTE, TIP and IMPORTANT and `--glitch` for WARNING and CAUTION.
+- The Reader header shows date, read time and tags (posts), or year, status, stack and links (dossiers) as a `dl`, like the Inspector.
+- 404: `E404: <path> not found` in `--glitch`, a 6-frame tear and `ERR` in the StatusBar, plus `> back to index`.
+
+### A5. Routes
+The URL is the source of truth for section and Reader. `/` and `/projects` → 01, `/writings` → 02, `/links` → 03,
+`/now` → 04, `/guestbook` → 05. `/projects/:slug` opens the dossier, `/writings/:slug` the post, `/cv` the CV (section 03),
+`/about` the manifesto, and `/artifacts` redirects to `/`. Section switches replace history; opening a Reader pushes.
+
+### A6. Content slots, resolved
+- HandleBlock: `KYGRA`, `/ kygura /`, then a new dim 12px line `nicolas cerrato anton / malaga`, then the role line and the bio
+  (taken from the manifesto, 240ch or less), then `> manifesto` (to `/about`).
+- Inspector: the mock's `role` row becomes `type` (the project subtitle). Links are `> src`, `> live` and `> dossier`
+  (`dossier` replaces `writeup`), and links that don't exist are omitted. `O` opens live, or src if there is no live link.
+- ProjectRow `lang` comes from the first stack entry as a short lowercase code; `--` when empty.
+- `03 LINKS`: github, email, cv, cv.pdf, log. `y` on links yanks the email.
+- `04 NOW`: status line, up to 3 items and `updated <date>`, followed by a **fortune** block with one random quote from the old site's
+  quote list. A translation line (after `<br>`) renders on its own line in `--dim`. `:fortune` rerolls it.
+- Boot log: `LOADING ORBITS [n]` uses the real project count.
+
+### A7. Commands (production)
+`projects notes links now log` · `open <project>` · `read <note>` (one per note) · `cv` · `about` · `sign` · `fortune` ·
+`theme sodium|phosphor|oxide|coldstar` · `motion on|off` · `res 120|180|240` · `look` · `yank email` · `help` · `boot`.
+
+### A8. three.js source
+§6 and §10 load three from a CDN import map. That applied to the mock only. Production uses the npm package pinned at exactly `0.160.0`,
+loaded as a lazy chunk. If the chunk fails or WebGL is missing, the page uses the §6 no-WebGL fallback and shows `gl:none`.
