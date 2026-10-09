@@ -3,7 +3,7 @@ import {
   getConfiguredDatabaseId,
   getConfiguredDataSourceId,
   getNotionToken,
-} from "../env.ts";
+} from "./env.ts";
 
 /** Construct a Notion client authenticated with the integration token. */
 export function getNotionClient(): Client {

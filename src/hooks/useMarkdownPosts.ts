@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
-import { sortPostsByDateDesc, type Post, type PostSummary } from "../../content/posts";
-import { localFallbackSummaries, localFallbackPosts } from "../posts/localFallback";
+import { buildPostFromMarkdown } from "../../content/markdown";
+import type { Post, PostSummary } from "../../content/posts";
+
+// Both globs resolve at build time against content/writings/, which
+// scripts/build-writings.ts fills from Notion before `vite build`. The manifest
+// is tiny and bundled eagerly; each post body becomes its own lazily-loaded
+// chunk. A missing manifest (script not run yet) yields an empty list.
+const manifestModules = import.meta.glob<PostSummary[]>("../../content/writings/manifest.json", {
+  eager: true,
+  import: "default",
+});
+const postLoaders = import.meta.glob<string>("../../content/writings/*.md", {
+  query: "?raw",
+  import: "default",
+});
+
+const summaries: PostSummary[] = Object.values(manifestModules)[0] ?? [];
 
 interface UsePostsResult {
   posts: PostSummary[];
@@ -14,141 +29,52 @@ interface UsePostResult {
   error: string | null;
 }
 
-function normalizePostSummary(post: PostSummary): PostSummary {
-  return {
-    slug: post.slug,
-    title: post.title,
-    excerpt: post.excerpt,
-    tags: Array.isArray(post.tags) ? post.tags : [],
-    date: post.date,
-    readTime: Number(post.readTime) || 10,
-  };
-}
-
-function normalizePost(post: Post): Post {
-  return {
-    ...normalizePostSummary(post),
-    content: post.content ?? "",
-  };
-}
-
-export const useMarkdownPosts = (): UsePostsResult => {
-  const [posts, setPosts] = useState<PostSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadPosts() {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch("/api/posts");
-        if (!response.ok) {
-          throw new Error(`Failed to load posts (${response.status})`);
-        }
-
-        const data = (await response.json()) as PostSummary[];
-        if (cancelled) {
-          return;
-        }
-
-        const sortedPosts = sortPostsByDateDesc(data.map(normalizePostSummary));
-
-        setPosts(sortedPosts);
-      } catch (caughtError) {
-        if (cancelled) {
-          return;
-        }
-
-        // Fall back to local markdown files bundled at build time
-        if (localFallbackSummaries.length > 0) {
-          setPosts(localFallbackSummaries);
-          setError(null);
-        } else {
-          setPosts([]);
-          setError(caughtError instanceof Error ? caughtError.message : "Failed to load posts");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadPosts();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return { posts, loading, error };
-};
+export const useMarkdownPosts = (): UsePostsResult => ({
+  posts: summaries,
+  loading: false,
+  error: null,
+});
 
 export const useMarkdownPost = (slug: string | undefined): UsePostResult => {
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(Boolean(slug));
-  const [error, setError] = useState<string | null>(null);
+  const loader = slug ? postLoaders[`../../content/writings/${slug}.md`] : undefined;
+  const [state, setState] = useState<UsePostResult>({
+    post: null,
+    loading: Boolean(loader),
+    error: null,
+  });
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadPost() {
-      if (!slug) {
-        setPost(null);
-        setLoading(false);
-        setError(null);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        const response = await fetch(`/api/post/${encodeURIComponent(slug)}`);
-
-        if (response.status === 404) {
-          if (!cancelled) {
-            const local = localFallbackPosts.find((p) => p.slug === slug) ?? null;
-            setPost(local);
-          }
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed to load post (${response.status})`);
-        }
-
-        const data = (await response.json()) as Post;
-        if (!cancelled) {
-          setPost(normalizePost(data));
-        }
-      } catch (caughtError) {
-        if (!cancelled) {
-          const local = localFallbackPosts.find((p) => p.slug === slug) ?? null;
-          setPost(local);
-          if (!local) {
-            setError(caughtError instanceof Error ? caughtError.message : "Failed to load post");
-          } else {
-            setError(null);
-          }
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
+    if (!slug || !loader) {
+      setState({ post: null, loading: false, error: null });
+      return;
     }
 
-    void loadPost();
+    let cancelled = false;
+    setState({ post: null, loading: true, error: null });
+
+    loader()
+      .then((raw) => {
+        if (cancelled) return;
+        const parsed = buildPostFromMarkdown(raw, slug);
+        setState({
+          post: parsed ? { ...parsed.summary, content: parsed.content } : null,
+          loading: false,
+          error: null,
+        });
+      })
+      .catch((caughtError: unknown) => {
+        if (cancelled) return;
+        setState({
+          post: null,
+          loading: false,
+          error: caughtError instanceof Error ? caughtError.message : "Failed to load post",
+        });
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, loader]);
 
-  return { post, loading, error };
+  return state;
 };

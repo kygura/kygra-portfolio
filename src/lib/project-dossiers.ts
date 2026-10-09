@@ -5,6 +5,35 @@ import { defineProjects } from "./project-schema";
 export const projectDossiers = defineProjects(
 [
   {
+    "slug": "equilibria",
+    "accent": "#e4a853",
+    "title": "Equilibria",
+    "subtitle": "Algorithmic Flatcoin",
+    "summary": "An algorithmic flatcoin with built-in tranching and supply-sensitive stability mechanics.",
+    "description": "A monetary systems project about balance, incentives, and structural resilience. Stability is a designed mechanism, not a branding claim.",
+    "overview": [
+      "Market-aware behavior paired with tranche design — exposure gets shaped instead of flattened into a single risk profile."
+    ],
+    "links": [
+      {
+        "label": "Open dossier",
+        "href": "/projects/equilibria"
+      },
+      {
+        "label": "Live demo",
+        "href": "https://equilibria.cash"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/kygura/equilibria-protocol"
+      }
+    ],
+    "techStack": [],
+    "layout": "standard",
+    "status": "In development",
+    "year": "2026"
+  },
+  {
     "slug": "hyperion",
     "accent": "#3bb5a5",
     "title": "Hyperion",
@@ -34,42 +63,6 @@ export const projectDossiers = defineProjects(
     ],
     "layout": "standard",
     "status": "Active build",
-    "year": "2026"
-  },
-  {
-    "slug": "meridian",
-    "accent": "#4cb862",
-    "title": "Meridian",
-    "subtitle": "A cartographic interface",
-    "summary": "A globe-scale map interface for comparing and visualizing global metrics and generating city intelligence briefs",
-    "description": "Global metrics as overlays on a 3D MapLibre globe — compare cities at a glance. An OpenAI-powered agent generates city intelligence briefs and builds multi-city itineraries from a chat interface.",
-    "overview": [
-      "Each metric is a surface layer on the globe. MapLibre GL JS handles cartographic rendering, deck.gl composes data overlays, and a Hono backend serves normalized metric surfaces. Geographic context and metric distribution in one view instead of static comparison tables.",
-      "The atlas is the primary interface. A chat agent generates city briefs, compares regions, and builds itineraries. Zustand keeps the globe, overlays, and chat state in sync across a session."
-    ],
-    "links": [
-      {
-        "label": "Open dossier",
-        "href": "/projects/meridian"
-      },
-      {
-        "label": "Live demo",
-        "href": "https://meridian-cartography.onrender.com"
-      },
-      {
-        "label": "GitHub",
-        "href": "https://github.com/kygura/meridian"
-      }
-    ],
-    "techStack": [
-      "MapLibre GL JS",
-      "deck.gl",
-      "Hono",
-      "OpenAI",
-      "Zustand"
-    ],
-    "layout": "wide",
-    "status": "In development",
     "year": "2026"
   },
   {
@@ -140,31 +133,38 @@ export const projectDossiers = defineProjects(
     "year": "2026"
   },
   {
-    "slug": "equilibria",
-    "accent": "#e4a853",
-    "title": "Equilibria",
-    "subtitle": "Algorithmic Flatcoin",
-    "summary": "An algorithmic flatcoin with built-in tranching and supply-sensitive stability mechanics.",
-    "description": "A monetary systems project about balance, incentives, and structural resilience. Stability is a designed mechanism, not a branding claim.",
+    "slug": "meridian",
+    "accent": "#4cb862",
+    "title": "Meridian",
+    "subtitle": "A cartographic interface",
+    "summary": "A globe-scale map interface for comparing and visualizing global metrics and generating city intelligence briefs",
+    "description": "Global metrics as overlays on a 3D MapLibre globe — compare cities at a glance. An OpenAI-powered agent generates city intelligence briefs and builds multi-city itineraries from a chat interface.",
     "overview": [
-      "Market-aware behavior paired with tranche design — exposure gets shaped instead of flattened into a single risk profile."
+      "Each metric is a surface layer on the globe. MapLibre GL JS handles cartographic rendering, deck.gl composes data overlays, and a Hono backend serves normalized metric surfaces. Geographic context and metric distribution in one view instead of static comparison tables.",
+      "The atlas is the primary interface. A chat agent generates city briefs, compares regions, and builds itineraries. Zustand keeps the globe, overlays, and chat state in sync across a session."
     ],
     "links": [
       {
         "label": "Open dossier",
-        "href": "/projects/equilibria"
+        "href": "/projects/meridian"
       },
       {
         "label": "Live demo",
-        "href": "https://equilibria.cash"
+        "href": "https://meridian-cartography.onrender.com"
       },
       {
         "label": "GitHub",
-        "href": "https://github.com/kygura/equilibria-protocol"
+        "href": "https://github.com/kygura/meridian"
       }
     ],
-    "techStack": [],
-    "layout": "standard",
+    "techStack": [
+      "MapLibre GL JS",
+      "deck.gl",
+      "Hono",
+      "OpenAI",
+      "Zustand"
+    ],
+    "layout": "wide",
     "status": "In development",
     "year": "2026"
   },
