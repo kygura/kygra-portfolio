@@ -1,5 +1,9 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Console from "./console/Console";
+
+// TEMPORARY (T3 sky harness): T4 removes this import and the /__sky route.
+const SkyHarness = lazy(() => import("./orrery/sky/SkyHarness"));
 
 // Route table per design/SPEC.md section 4.
 const App = () => (
@@ -16,6 +20,7 @@ const App = () => (
       <Route path="/cv" element={<Console route={{ section: "links", reader: "cv" }} />} />
       <Route path="/about" element={<Console route={{ section: null, reader: "about" }} />} />
       <Route path="/artifacts" element={<Navigate to="/" replace />} />
+      <Route path="/__sky" element={<Suspense fallback={null}><SkyHarness /></Suspense>} />
       <Route path="*" element={<Console route={{ section: "projects", reader: "404" }} />} />
     </Routes>
   </BrowserRouter>
