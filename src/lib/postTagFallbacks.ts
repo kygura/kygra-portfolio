@@ -12,7 +12,7 @@ const SLUG_TAG_FALLBACKS: Record<string, string[]> = {
   "a-philosophy-of-pragmatic-sovereignity": ["philosophy"],
   "on-the-state-of-things": ["philosophy", "modernity"],
   "quantum-history": ["philosophy", "history"],
-  "the-movement-of-the-world": ["philosophy", "history"],
+  "on-the-movements-of-the-world": ["philosophy", "history"],
 };
 
 export function resolvePostTags(post: Pick<PostSummary, "slug" | "tags">): string[] {
