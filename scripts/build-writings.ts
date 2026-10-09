@@ -16,11 +16,11 @@
  * `content/writings/` is used as-is.
  *
  * Usage: bun scripts/build-writings.ts [--offline]
+ * Bun loads .env / .env.local on its own, so local runs pick up NOTION_SECRET.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEnvFile } from "node:process";
 import { iteratePaginatedAPI, isFullPage } from "@notionhq/client";
 import { buildPostFromMarkdown, parseFrontmatter, serializeFrontmatter } from "../content/markdown.ts";
 import {
@@ -47,15 +47,6 @@ const MEDIA_URL_PREFIX = "/media/writings";
 const SITE_TITLE = "Nicolas Cerrato Anton — Writings";
 const SITE_DESCRIPTION =
   "Essays on the arts, engineering, the esoteric and the existential.";
-
-for (const envFile of [".env.local", ".env"]) {
-  try {
-    loadEnvFile(path.join(ROOT, envFile));
-    break;
-  } catch {
-    // try the next candidate
-  }
-}
 
 function siteOrigin(): string {
   const configured =
