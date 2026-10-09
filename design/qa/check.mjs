@@ -385,10 +385,13 @@ async function noWebGL(route) {
         usable = await visible(page, SEL.reader);
       } else {
         const before = await text(page, SEL.selRow);
+        // A one-row list cannot move (05 LOG offline holds only `+ sign`, A3): selection staying put is correct.
+        const rows = await page.locator(".sec.on .row").filter({ visible: true }).count();
         await page.keyboard.press("j");
         await page.waitForTimeout(150);
         const after = await text(page, SEL.selRow);
-        usable = (await visible(page, SEL.stack)) && before != null && after != null && before !== after;
+        const moved = rows === 1 ? before === after : before !== after;
+        usable = (await visible(page, SEL.stack)) && before != null && after != null && moved;
       }
       record(5, route, fb && gl && usable, `fallback=${fb} gl:none=${gl} usable=${usable}`);
     });

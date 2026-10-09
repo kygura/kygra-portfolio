@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useContext, type CSSProperties } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
 import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
 import diff from "react-syntax-highlighter/dist/esm/languages/prism/diff";
@@ -16,6 +15,7 @@ import sql from "react-syntax-highlighter/dist/esm/languages/prism/sql";
 import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
 import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
 import yaml from "react-syntax-highlighter/dist/esm/languages/prism/yaml";
+import { ReaderSay } from "./msg";
 
 /**
  * The full `Prism` export bundles every language refractor ships with —
@@ -38,68 +38,62 @@ SyntaxHighlighter.registerLanguage("html", markup);
 SyntaxHighlighter.registerLanguage("xml", markup);
 SyntaxHighlighter.registerLanguage("yml", yaml);
 
+/**
+ * Palette-token syntax theme (DESIGN A4): only fg / dim / acc / acc2, no hex, no italics.
+ * Colors are CSS custom properties so a palette switch recolors code with everything else.
+ */
+const C = { fg: "var(--fg)", dim: "var(--dim)", acc: "var(--acc)", acc2: "var(--acc2)" };
+const paint = (color: string, keys: string[]): Record<string, CSSProperties> =>
+  Object.fromEntries(keys.map((k) => [k, { color }]));
+const THEME: Record<string, CSSProperties> = {
+  'pre[class*="language-"]': { margin: 0, padding: "8px 12px", overflow: "auto", background: "transparent", color: C.fg },
+  'code[class*="language-"]': { fontFamily: "inherit", fontSize: "inherit", background: "transparent", color: C.fg },
+  ...paint(C.dim, ["comment", "prolog", "doctype", "cdata", "punctuation", "deleted"]),
+  ...paint(C.acc, ["keyword", "atrule", "important", "tag", "selector", "boolean", "rule"]),
+  ...paint(C.acc2, ["string", "char", "attr-value", "regex", "inserted", "url", "template-string"]),
+  ...paint(C.fg, ["function", "class-name", "number", "constant", "symbol", "property", "builtin", "variable", "operator", "entity", "attr-name"]),
+  italic: { fontStyle: "normal" },
+  bold: { fontWeight: 600 },
+};
+
 interface CodeBlockProps {
   language?: string;
   value: string;
-  className?: string;
 }
 
-const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
-  const [isCopied, setIsCopied] = useState(false);
+const CodeBlock = ({ language, value }: CodeBlockProps) => {
+  const say = useContext(ReaderSay);
 
-  const handleCopy = async () => {
+  const copy = () => {
     try {
-      await navigator.clipboard.writeText(value);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
+      navigator.clipboard.writeText(value).then(
+        () => say("yanked code"),
+        () => say("E: clipboard blocked", true),
+      );
     } catch {
-      // Clipboard denied: nothing to report until T5 wires the Modeline.
+      say("E: clipboard blocked", true);
     }
   };
 
   return (
-    <div className={["relative group rounded-lg overflow-hidden my-6 border border-border bg-[#1e1e1e]", className].filter(Boolean).join(" ")}>
-      <div className="absolute right-4 top-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          onClick={handleCopy}
-          className="p-2 rounded-md bg-secondary/10 hover:bg-secondary/20 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Copy code"
-        >
-          {isCopied ? "copied" : "copy"}
-        </button>
-      </div>
-      <div className="pt-2 pl-4 text-xs text-muted-foreground select-none uppercase tracking-wider font-mono">
-        {language || "text"}
-      </div>
+    <figure className="code">
+      <figcaption className="ph">
+        <span>{language || "text"}</span>
+        <span className="r">
+          <button type="button" className="chip" onClick={copy} aria-label="copy code">
+            [copy]
+          </button>
+        </span>
+      </figcaption>
       <SyntaxHighlighter
         language={language || "text"}
-        style={vscDarkPlus}
-        PreTag="div"
-        codeTagProps={{
-          style: {
-            backgroundColor: "transparent",
-            fontFamily: "inherit",
-          }
-        }}
-        customStyle={{
-          margin: 0,
-          padding: "1.5rem",
-          background: "transparent",
-          fontSize: "0.875rem",
-          lineHeight: "1.6",
-        }}
-        showLineNumbers={true}
-        lineNumberStyle={{
-          minWidth: "2.5em",
-          paddingRight: "1em",
-          color: "#6e7681",
-          textAlign: "right",
-        }}
-        wrapLines={true}
+        style={THEME}
+        showLineNumbers
+        lineNumberStyle={{ color: C.dim, minWidth: "3ch", paddingRight: "1ch" }}
       >
         {value}
       </SyntaxHighlighter>
-    </div>
+    </figure>
   );
 };
 

@@ -9,9 +9,9 @@ import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
 import { projects } from "../lib/projects";
 import { localFallbackSummaries } from "../posts/localFallback";
 import { chipHit, useKeys } from "../orrery/keys";
-import { linkRows, logRows, noteRows, nowRows, parseQuote, pickQuote, projectRows, type LogRow } from "../orrery/model";
+import { linkRows, logRows, noteRows, nowRows, parseQuote, pickQuote, projectRows, validateSign } from "../orrery/model";
 import { BOOT_KEY, applyPalette, loadMotion, loadPalette, saveMotion, savePalette, session } from "../orrery/palette";
-import { SECTIONS, parseRoute, sectionIndex, type Section } from "../orrery/routes";
+import { SECTIONS, docTitle, parseRoute, sectionIndex, type Section } from "../orrery/routes";
 import { loadSky, type Sky } from "../orrery/sky/load";
 import {
   commandResults,
@@ -35,6 +35,7 @@ import IndexRail from "./IndexRail";
 import Inspector from "./Inspector";
 import KeyBar from "./KeyBar";
 import LinkTable from "./LinkTable";
+import LogPane, { type LogDraft } from "./LogPane";
 import Modeline from "./Modeline";
 import NoteList from "./NoteList";
 import NowBlock from "./NowBlock";
@@ -42,7 +43,7 @@ import ProjectList from "./ProjectList";
 import SectionPane from "./SectionPane";
 import SkyFallback from "./SkyFallback";
 import StatusBar from "./StatusBar";
-import { rowProps, type ListProps, type RowApi } from "./rows";
+import type { RowApi } from "./rows";
 
 const PROJECT_ROWS = projectRows(projects);
 const BODIES = projects.map((p) => p.slug);
@@ -90,35 +91,6 @@ interface BootView {
 const BOOT_DONE: BootView = { screen: false, lines: BOOT_LINES.length, shown: BOOT_PANES, flash: -1 };
 const BOOT_START: BootView = { screen: true, lines: 0, shown: 0, flash: -1 };
 
-/** `05 LOG` placeholder list (T5 replaces it with LogPane and the INSERT form). */
-function LogList({ rows, sel, visible, api, expanded }: ListProps<LogRow> & { expanded: string | null }) {
-  return (
-    <ul>
-      {rows.map((r, i) => (
-        <li key={r.key} hidden={!visible.has(i)}>
-          {r.kind === "entry" ? (
-            <button type="button" {...rowProps("log", i, sel, api, "rg")} aria-expanded={expanded === r.key}>
-              <span className="c" aria-hidden="true">
-                &gt;
-              </span>
-              <span className="m">{r.date}</span>
-              <span className="m">{r.name}</span>
-              <span className="nm">{expanded === r.key ? r.fullMessage : r.message}</span>
-            </button>
-          ) : (
-            <button type="button" {...rowProps("log", i, sel, api, "rw")}>
-              <span className="c" aria-hidden="true">
-                &gt;
-              </span>
-              <span className="nm">{r.text}</span>
-            </button>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export default function Console() {
   const loc = useLocation();
   const navigate = useNavigate();
@@ -130,6 +102,9 @@ export default function Console() {
   const gb = useGuestbook();
   const gbRef = useRef(gb);
   gbRef.current = gb;
+  const [draft, setDraft] = useState<LogDraft>({ name: "", msg: "" });
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
   const skyRef = useRef<Sky | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -263,13 +238,19 @@ export default function Console() {
           endBoot();
           break;
         case "scroll": {
+          // The Reader scrolls itself on desktop/tablet; on mobile it is part of the page.
           const el = readerRef.current?.querySelector<HTMLElement>(".rb");
-          if (el) el.scrollBy({ top: e.lines * (parseFloat(getComputedStyle(el).lineHeight) || 22) });
+          if (!el) break;
+          const top = e.lines * (parseFloat(getComputedStyle(el).lineHeight) || 22);
+          if (el.scrollHeight > el.clientHeight + 1) el.scrollBy({ top });
+          else window.scrollBy({ top });
           break;
         }
         case "scrollEdge": {
           const el = readerRef.current?.querySelector<HTMLElement>(".rb");
-          if (el) el.scrollTo({ top: e.end === "top" ? 0 : el.scrollHeight });
+          if (!el) break;
+          if (el.scrollHeight > el.clientHeight + 1) el.scrollTo({ top: e.end === "top" ? 0 : el.scrollHeight });
+          else readerRef.current?.scrollIntoView({ block: e.end === "top" ? "start" : "end" });
           break;
         }
         case "inspectorLink": {
@@ -281,9 +262,37 @@ export default function Console() {
         case "more":
           gbRef.current.more().then((r) => dispatch({ type: "msg", text: r.msg, err: !r.ok }));
           break;
-        case "submit":
-          // The INSERT form and its send arrive with LogPane (T5).
+        case "submit": {
+          // Optimistic send (A3): check here so a bad draft keeps the form open, then close it and
+          // let the entry appear at once; a failed write restores the draft. Errors go to the Modeline.
+          const d = draftRef.current;
+          const g = gbRef.current;
+          const say = (text: string, err: boolean) => dispatch({ type: "msg", text, err });
+          if (!g.online) {
+            say("E: log offline", true);
+            break;
+          }
+          const wait = g.cooldown();
+          if (wait > 0) {
+            say(`E: cooldown ${Math.ceil(wait / 1000)}s`, true);
+            break;
+          }
+          const v = validateSign(d.name, d.msg);
+          if (v.ok === false) {
+            say(v.error, true);
+            break;
+          }
+          setDraft({ name: d.name, msg: "" });
+          dispatch({ type: "insertDone" });
+          g.sign(d.name, d.msg).then(
+            (r) => {
+              say(r.msg, !r.ok);
+              if (!r.ok) setDraft((cur) => (cur.msg ? cur : { name: d.name, msg: d.msg }));
+            },
+            () => say("E: log write failed", true),
+          );
           break;
+        }
       }
     },
     [navigate, startBoot, endBoot],
@@ -461,8 +470,42 @@ export default function Console() {
     prevMode.current = state.mode;
     if (state.mode !== "NORMAL" || !["CMD", "HELP", "FILTER", "INSERT"].includes(p)) return;
     const ae = document.activeElement as HTMLElement | null;
-    if (!ae || ae === document.body || ae.closest("#cmd,#help,.flt")) rowEl()?.focus({ preventScroll: true });
+    if (!ae || ae === document.body || ae.closest("#cmd,#help,.flt,#logf")) rowEl()?.focus({ preventScroll: true });
   }, [state.mode, rowEl]);
+
+  // ---------------------------------------------------------------- Reader: focus, 404 swap, title
+
+  // Opening a Reader moves focus into it; closing returns focus to the selected row.
+  const readerKey = state.reader ? `${state.reader.kind}:${state.reader.slug ?? ""}` : null;
+  const prevReader = useRef(readerKey);
+  useEffect(() => {
+    const was = prevReader.current;
+    prevReader.current = readerKey;
+    if (was === readerKey) return;
+    if (readerKey) readerRef.current?.focus({ preventScroll: !isMobile() });
+    else if (was) {
+      const ae = document.activeElement as HTMLElement | null;
+      if (!ae || ae === document.body) rowEl()?.focus({ preventScroll: true });
+    }
+  }, [readerKey, rowEl]);
+
+  const notFound = useCallback(() => dispatch({ type: "route", route: { section: null, reader: "404", slug: null } }), []);
+  const unknownDossier = state.reader?.kind === "dossier" && !state.rows.projects.some((p) => p.key === state.reader?.slug);
+  useEffect(() => {
+    if (unknownDossier) notFound();
+  }, [unknownDossier, notFound]);
+
+  const titleName =
+    state.reader?.kind === "post"
+      ? state.rows.notes.find((n) => n.key === state.reader?.slug)?.title
+      : state.reader?.kind === "dossier"
+        ? state.rows.projects.find((p) => p.key === state.reader?.slug)?.title
+        : null;
+  useEffect(() => {
+    document.title = docTitle(state.section, state.reader, titleName);
+  }, [state.section, state.reader, titleName]);
+
+  const say = useCallback((text: string, err = false) => dispatch({ type: "msg", text, err }), []);
 
   // ---------------------------------------------------------------- keys + pointer
 
@@ -557,7 +600,7 @@ export default function Console() {
     const props = { sel, visible, api };
     let list;
     let count = vis.length;
-    let empty = query && !vis.length ? <p className="empty">-- no matches for /{query} --</p> : null;
+    const empty = query && !vis.length ? <p className="empty">-- no matches for /{query} --</p> : null;
     switch (section) {
       case "projects":
         list = <ProjectList rows={state.rows.projects} {...props} />;
@@ -572,9 +615,21 @@ export default function Console() {
         list = <NowBlock rows={state.rows.now} quote={q} {...props} />;
         break;
       case "log":
-        list = <LogList rows={state.rows.log} expanded={state.expanded} {...props} />;
+        list = (
+          <LogPane
+            rows={state.rows.log}
+            expanded={state.expanded}
+            online={gb.online}
+            loading={gb.loading}
+            insert={state.mode === "INSERT"}
+            draft={draft}
+            onDraft={setDraft}
+            onSend={() => dispatch({ type: "insertSubmit" })}
+            onCancel={() => dispatch({ type: "insertDone" })}
+            {...props}
+          />
+        );
         count = vis.filter((k) => state.rows.log[k]?.kind === "entry").length;
-        if (!gb.online) empty = <p className="upd">-- log offline --</p>;
         break;
     }
     return (
@@ -663,6 +718,8 @@ export default function Console() {
             note={readerNote}
             onClose={() => dispatch({ type: "escape" })}
             onExternal={() => dispatch({ type: "open", newTab: true })}
+            onMissing={notFound}
+            say={say}
           />
         )}
         <section

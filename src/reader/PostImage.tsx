@@ -1,37 +1,17 @@
-import { useState } from "react";
+// Markdown image (DESIGN A4): 1px `--rule` border, no radius, normal (non-pixelated) scaling,
+// caption from the title or alt text in `--dim`. Spans, not <figure>: markdown puts images inside <p>.
+import type { ImgHTMLAttributes } from "react";
 
-interface PostImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
-  caption?: string;
-}
+type PostImageProps = ImgHTMLAttributes<HTMLImageElement> & { node?: unknown };
 
-const PostImage = ({ src, alt, title, className, ...props }: PostImageProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-
+const PostImage = ({ src, alt, title, node, ...props }: PostImageProps) => {
+  const caption = title || alt;
   return (
-    <figure className="my-12 group">
-      <div className={[
-        "relative overflow-hidden rounded-xl border border-border/50 bg-secondary/20",
-        isLoading && "animate-pulse h-64 md:h-96", // Placeholder height
-      ].filter(Boolean).join(" ")}>
-        <img
-          src={src}
-          alt={alt}
-          className={[
-            "w-full h-auto object-cover transition-all duration-700",
-            isLoading ? "scale-105 blur-lg opacity-0" : "scale-100 blur-0 opacity-100",
-            "group-hover:scale-[1.02]",
-            className,
-          ].filter(Boolean).join(" ")}
-          onLoad={() => setIsLoading(false)}
-          {...props}
-        />
-      </div>
-      {(title || alt) && (
-        <figcaption className="text-center text-sm text-muted-foreground mt-3 italic">
-          {title || alt}
-        </figcaption>
-      )}
-    </figure>
+    <span className="img">
+      <img src={src} alt={alt ?? ""} title={title} loading="lazy" decoding="async" {...props} />
+      {/* Alt-only captions repeat the alt text, so screen readers skip them. */}
+      {caption && <span aria-hidden={caption === alt ? true : undefined}>{caption}</span>}
+    </span>
   );
 };
 

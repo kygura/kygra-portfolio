@@ -115,3 +115,24 @@ export function buildPath(r: Route, current: Section = "projects"): string {
   if (r.reader && r.reader !== "404") return readerPath(r.reader, r.slug);
   return sectionPath(r.section ?? current);
 }
+
+export const SITE_TITLE = "kygra / Nicolas Cerrato Anton";
+
+/**
+ * `document.title` per route (SPEC 4): the site title on the home section, `kygra / <section>` elsewhere,
+ * `kygra / <title>` for posts and dossiers (`name`, falling back to the slug), `kygra / E404` for 404.
+ */
+export function docTitle(section: Section, reader: { kind: ReaderKind; slug: string | null } | null, name?: string | null): string {
+  if (!reader) return section === "projects" ? SITE_TITLE : `kygra / ${section}`;
+  switch (reader.kind) {
+    case "post":
+    case "dossier":
+      return `kygra / ${name || reader.slug || reader.kind}`;
+    case "cv":
+      return "kygra / cv";
+    case "about":
+      return "kygra / about";
+    default:
+      return "kygra / E404";
+  }
+}

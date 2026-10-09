@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { buildPath, parseRoute, readerPath, sectionPath, stepSection, SECTIONS, type Route } from "./routes.ts";
+import { SITE_TITLE, buildPath, docTitle, parseRoute, readerPath, sectionPath, stepSection, SECTIONS, type Route } from "./routes.ts";
 
 const r = (section: Route["section"], reader: Route["reader"] = null, slug: string | null = null): Route => ({
   section,
@@ -59,5 +59,19 @@ describe("route builders", () => {
     assert.equal(stepSection("projects", -1), "log");
     assert.equal(stepSection("log", 1), "projects");
     assert.equal(stepSection("notes", 7), "now");
+  });
+});
+
+describe("docTitle (SPEC 4)", () => {
+  it("home section keeps the site title", () => assert.equal(docTitle("projects", null), SITE_TITLE));
+  it("other sections name the section", () => assert.equal(docTitle("log", null), "kygra / log"));
+  it("posts and dossiers use the given title, else the slug", () => {
+    assert.equal(docTitle("notes", { kind: "post", slug: "thaumazein" }, "Thaumazein"), "kygra / Thaumazein");
+    assert.equal(docTitle("projects", { kind: "dossier", slug: "noted" }), "kygra / noted");
+  });
+  it("cv, about and 404", () => {
+    assert.equal(docTitle("links", { kind: "cv", slug: null }), "kygra / cv");
+    assert.equal(docTitle("projects", { kind: "about", slug: null }), "kygra / about");
+    assert.equal(docTitle("projects", { kind: "404", slug: null }), "kygra / E404");
   });
 });

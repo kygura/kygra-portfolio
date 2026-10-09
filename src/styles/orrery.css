@@ -139,13 +139,70 @@ a:hover,a:focus-visible{background:var(--acc);color:var(--bg);text-decoration:no
 #insp .lk a:hover::before,#insp .lk a:focus-visible::before{color:var(--bg)}
 .nogl #insp{left:calc(16px + 46ch + 64px);top:96px}
 
-/* reader (T5 fills the body; this is the dock) */
+/* reader (A4): dock, header dl, prose */
 #reader{position:fixed;z-index:3;top:32px;bottom:32px;left:calc(16px + 46ch + 8px);width:min(80ch,calc(100vw - 46ch - 40px));display:flex;flex-direction:column}
-#reader .rb{flex:1;min-height:0;overflow:auto;padding:12px 16px 16px}
-#reader .rb>*{max-width:72ch}
-#reader .rb h1{font:400 32px/1.1 var(--fd);margin:0 0 12px}
-#reader .rb p{margin:0 0 12px;line-height:1.6}
+#reader:focus{outline:0}
+#reader:focus-visible{border-color:var(--acc)}
+#reader .rtab{color:var(--fg);overflow:hidden;text-overflow:clip;white-space:nowrap}
+#reader .rb{flex:1;min-height:0;overflow:auto;padding:12px 16px 24px;line-height:1.6}
+#reader article>*{max-width:72ch}
+#reader .rh{margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+#reader .rt{font:400 32px/1.1 var(--fd);margin:0 0 8px;overflow-wrap:anywhere}
+#reader .lede{color:var(--dim)}
+#reader dl{margin:8px 0 0;font-size:12px;line-height:1.4}
+#reader dt{color:var(--dim)}
+#reader dd{margin:0;min-width:0;overflow-wrap:anywhere}
+#reader .meta{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:0 1ch}
+#reader .meta .w{grid-column:span 3}
+#reader .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 2ch;margin-bottom:12px}
+#reader .kv>div{display:contents}
+#reader .lk{display:flex;gap:2ch;flex-wrap:wrap;margin:8px 0 0}
+#reader .lk a::before{content:"> ";color:var(--acc2)}
+#reader .lk a:hover::before,#reader .lk a:focus-visible::before{color:var(--bg)}
+#reader p,#reader ul,#reader ol,#reader blockquote,#reader .tw,#reader .code,#reader .co,#reader .img{margin:0 0 12px}
+#reader .rh p:last-child{margin-bottom:0}
+#reader .hl{font:400 32px/1.1 var(--fd);margin:24px 0 12px}
+#reader .hs{font:400 16px/1.25 var(--fd);margin:20px 0 8px}
+#reader h4.hs{margin-top:12px}
+#reader em{font-style:normal;color:var(--fg);text-decoration:underline dotted var(--dim) 1px;text-underline-offset:3px}
+#reader strong{font-weight:600}
+#reader a{overflow-wrap:anywhere}
+#reader blockquote{padding:0 0 0 12px;border-left:1px solid var(--rule);color:var(--dim)}
+#reader blockquote p:last-child,#reader .co p:last-child,#reader li p{margin:0}
+#reader ul>li{position:relative;padding-left:2ch;margin-bottom:4px}
+#reader ul>li::before{content:"-";position:absolute;left:0;color:var(--dim)}
+#reader ul ul>li::before{content:"*"}
+#reader ol{padding-left:4ch}
+#reader ol>li{margin-bottom:4px}
+#reader li>ul,#reader li>ol{margin:4px 0 0}
+#reader code{font:inherit;font-size:12px;border:1px solid var(--rule);padding:0 3px}
+#reader hr{border:0;border-top:1px solid var(--rule);margin:16px 0}
+#reader .code{border:1px solid var(--rule);background:var(--panel);font-size:12px;line-height:1.5}
+#reader .code .ph{min-height:20px;padding:1px 8px}
+#reader .code code{border:0;padding:0;font-size:inherit}
+#reader .co{border:1px solid var(--rule);padding:8px 12px}
+#reader .co>b{display:block;font:400 8px/1 var(--fm);letter-spacing:.08em;margin-bottom:8px}
+#reader .co.info>b{color:var(--acc2)}
+#reader .co.warn>b{color:var(--glitch)}
+#reader .img{display:block}
+#reader .img img{display:block;max-width:100%;height:auto;border:1px solid var(--rule)}
+#reader .img>span{display:block;color:var(--dim);font-size:12px;margin-top:4px}
+#reader .tw{overflow-x:auto}
+#reader table{border-collapse:collapse;font-size:12px;line-height:1.4}
+#reader th,#reader td{border:1px solid var(--rule);padding:2px 8px;text-align:left;vertical-align:top}
+#reader th{font-weight:600}
 #reader .e404{color:var(--glitch)}
+
+/* 05 LOG: expanded rows, pending sends, inline INSERT form (A3) */
+.rg.x,.rg.x .nm{white-space:normal;overflow-wrap:anywhere}
+.rg.pend .nm{color:var(--dim)}
+.row.sel.pend .nm{color:var(--bg)}
+#logf{margin:4px 8px 8px calc(8px + 3ch);display:flex;flex-direction:column;gap:4px}
+#logf label{display:grid;grid-template-columns:5ch minmax(0,1fr);gap:1ch;align-items:baseline}
+#logf input,#logf textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--rule);padding:2px 4px;resize:none;width:100%;min-width:0}
+#logf ::placeholder{color:var(--dim);opacity:1}
+#logf .lfb{display:flex;align-items:center;gap:1ch;font-size:12px;padding-left:6ch}
+#logf .lfb .r{margin-left:auto;display:flex;gap:6px}
 
 /* command line + help */
 #cmd{position:fixed;z-index:6;left:0;right:0;bottom:24px;background:var(--panel);border-top:1px solid var(--rule)}
@@ -196,7 +253,7 @@ a:hover,a:focus-visible{background:var(--acc);color:var(--bg);text-decoration:no
   .sec{display:flex!important;clip-path:none!important;scroll-margin-top:32px}
   #s0{order:2}#insp{position:static;width:auto;order:3}#s1{order:4}#s2{order:5}#s3{order:6}#s4{order:7}
   #reader{position:static;width:auto;order:2}
-  #reader .rb{overflow:visible}
+  #reader .rb{overflow:visible;padding:12px}
   .list{overflow:visible}
   .row{padding:6px 8px}
   .rn{grid-template-columns:2ch minmax(0,1fr) 5ch}.rn .m:nth-child(2){display:none}
