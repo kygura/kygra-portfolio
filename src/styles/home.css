@@ -1,0 +1,136 @@
+/* Home composition: frontispiece, selected work, notes. */
+
+/* ── Plates: generated line art, tinted by the palette ── */
+.plate-img {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  color: var(--draft-ink);
+}
+
+.plate-img svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.plate-img .acc {
+  stroke: var(--accent);
+}
+
+.plate-img .lbl {
+  font: 9px 'IBM Plex Mono', ui-monospace, monospace;
+  letter-spacing: 0.06em;
+  fill: var(--draft-ink);
+  stroke: none;
+}
+
+/* ── Rhythm ── */
+.home {
+  padding-top: 24px;
+}
+
+.home .session {
+  margin-top: 44px;
+  padding-bottom: 6px;
+}
+
+.home .session h2 {
+  margin: 0;
+}
+
+.home .session__hint {
+  text-decoration: none;
+}
+
+.home .session__hint:hover,
+.home .session__hint:focus-visible {
+  color: var(--accent);
+}
+
+/* ── Frontispiece: plate left, manifesto right ── */
+.frontis {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.frontis > * {
+  min-width: 0;
+}
+
+.frontis__fig {
+  margin: 0;
+  padding: 18px 24px 0 0;
+  border-right: 1px solid var(--rule);
+}
+
+.frontis__fig .plate-img svg {
+  max-height: 520px;
+}
+
+
+.frontis__text {
+  padding: 28px 0 28px 28px;
+}
+
+.frontis__text .session {
+  margin: 0 0 20px;
+  padding: 0;
+}
+
+.frontis__closer {
+  font-style: italic;
+  color: var(--draft-ink);
+}
+
+.frontis__cta {
+  margin: 8px 0 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.frontis__cta a {
+  text-decoration: none;
+}
+
+.frontis__cta a:hover,
+.frontis__cta a:focus-visible {
+  color: var(--accent);
+}
+
+/* ── Ledgers ── */
+.home__link::before {
+  content: "·";
+  margin: 0 8px;
+  color: var(--text-secondary);
+}
+
+.home__link--first::before {
+  content: none;
+}
+
+.home .ledger__title b a {
+  text-decoration: none;
+}
+
+.home .ledger__title b a:hover,
+.home .ledger__title b a:focus-visible {
+  color: var(--accent);
+}
+
+@media (max-width: 859px) {
+  .frontis {
+    grid-template-columns: 1fr;
+  }
+
+  .frontis__fig {
+    padding-right: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .frontis__text {
+    padding-left: 0;
+  }
+}

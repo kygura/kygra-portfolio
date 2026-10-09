@@ -1,0 +1,74 @@
+# Redesign proposal: "Sheet 01"
+
+Status: mock for review, revision B (toned down). No site code changed. Open `mock.html` in a browser (or the published artifact) and press `?`.
+
+## Revision B: what was toned down
+
+Two earlier proposals on other branches sit in the same vein: "Small Press" (branch `ccr-acad1e2e-08xxdx`, a riso periodical with ruled catalogue tables and a colophon) and "Deskmat" (branch `ccr-0cef7925-0fm2dz`, keyboard chords and a morphing wireframe). This revision keeps the drafting-sheet idea but borrows their restraint:
+
+- Page grid and corner crosshairs removed. Rules are 1px, mostly in the quiet line colour; drafting ink is reserved for figure numbers and the title block.
+- Session title-card bars replaced by ruled headings with the plate numeral in small caps.
+- Project cards replaced by a catalogue table (figure, title and one line, stack and links), same pattern as the notes ledger.
+- Headline cut from 96px to 60px max, weight 800 to 700. Buttons replaced by key-hinted links.
+- Wireframe kept but smaller, without the concentric construction circles, dimension arrows or vertex label. Gear ring stays.
+- Accent picker, two bases, marginalia, title block, key bar and the indie-web footer stay.
+
+## Direction
+
+The site is an engineering drawing sheet. Every page is a plate: a title block, figure numbers, ruled sections. Section headers are ruled, with the plate numeral in small caps and the accent on the numeral. Chrome is monospace with a key hint on every action; the bottom bar is a TUI-style key legend and it actually works. Marginalia are italic serif, like notes in the margin of a codex.
+
+The 3D element is a wireframe, not a rendered object: a polyhedron inside a gear ring, drawn in sepia drafting ink on a 2D canvas, with one lit edge in the accent. In the build this becomes a Three.js line-material scene so project pages can each carry their own figure.
+
+Brutalist cues are limited to structure: hard 1px rules, no radius, no shadow, no cards, raw stacked blocks. The page stays legible; the roughness is in the geometry, not the type.
+
+## Why this avoids the convergent look
+
+- No cream + serif + terracotta. The paper base uses a sepia rule system, not a warm card.
+- No lone neon pop on black. The accent is one of four Bebop-derived colours and is always secondary to the drafting ink.
+- No Inter / Space Grotesk. Barlow Condensed (title cards), IBM Plex Mono (chrome), Cormorant Garamond italic (marginalia).
+- Nothing centered, nothing rounded, no gradient hero, no emoji markers.
+- Numbering is real: plates are a sequence, figures are counted, sheet revisions are dated.
+
+## Palette
+
+Fixed base (dark, "Hangar"): ink `#0F1114`, surface `#171A1E`, line `#2B3037`, drafting ink `#B8976A`, muted `#8C8778`, bone `#E6DFCC`.
+Paper base ("Codex"): `#ECE3CD` / `#E3D8BB` / `#C6B893`, sepia ink `#7A5A2C`, text `#1B1A17`.
+
+Accent variants (pick one, or ship the picker as a site feature on `t`):
+
+| Name | Dark | Paper | Read |
+|---|---|---|---|
+| Swordfish | `#D6392C` | same | Vermilion warning stripe. Loudest. |
+| Session | `#E9B32B` | `#B9850E` | Title-card mustard. Closest to Bebop. |
+| Hammerhead | `#5A9D7C` | `#2F6D50` | Oxidised copper. Quietest, ink does the work. |
+| Gate | `#5D7FD6` | same | Astral-gate blue. Most blueprint, least Bebop. |
+
+My pick: Session on Hangar, Swordfish as the secondary for live/danger states. Session is the only one that makes the base read as Bebop rather than generic dark-mode.
+
+## Imagery
+
+Plates, not photos or screenshots. Four generated engraving-style drawings ship with the mock: a gear train with a hatched shaft section, a crank and slider in three phases, an exploded keyboard switch stack, and a worm and wheel in section. They are inline SVG from `plates/generate.py`: strokes use the drafting ink, dimension lines use the accent, labels use the mono face, and a small deterministic wobble keeps the lines from reading as CAD output. They re-tint with the base and the accent picker, cost no licensing, and can be regenerated per project in the build.
+
+Real period engravings (Agostino Ramelli's machine plates, Leonardo's codices, 19th century patent drawings) fit the same slot and are public domain. The cloud environment's network policy denies Wikimedia, the Met, the Library of Congress and archive.org, so none could be pulled in here. Allowing `upload.wikimedia.org` and `commons.wikimedia.org` in the environment's network settings would let the build fetch them.
+
+## Mapping to existing routes
+
+| Route | Plate |
+|---|---|
+| `/` | Sheet 01: general arrangement hero, Plate II work, Plate III notes |
+| `/projects`, `/projects/:slug` | One plate per project; detail page gets its own figure and title block |
+| `/writings`, `/writings/:slug` | Ledger list; post page is a plate with marginalia column |
+| `/artifacts` | Figure grid, same card as work |
+| `/guestbook` | Ledger with the entry form as a title-block row |
+| `/cv` | Printed sheet: paper base forced, full title block |
+| Terminal, soundtrack player | Kept; both are indie-web assets. Terminal gets `:` as its key. |
+
+## Keyboard contract
+
+`j`/`k` scroll, `1`-`4` plates, `g` top, `t` accent, `b` base, `?` map, `Esc` close, `:` terminal. All hints visible in the key bar; no hidden shortcuts.
+
+## Open decisions for the full pass
+
+1. Accent: one fixed, or the picker shipped as a feature.
+2. Default base: Hangar (dark) proposed; Codex for `/cv` only.
+3. Wireframe: canvas 2D as in the mock, or Three.js with per-project models.

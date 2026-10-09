@@ -1,6 +1,8 @@
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { getProjectBySlug } from "@/lib/projects";
+import { getProjectBySlug, projects } from "@/lib/projects";
+import Plate from "@/components/Plate";
+
+const PLATES = ["gears", "crank", "switch", "worm"] as const;
 
 const ProjectDetail = () => {
   const { slug } = useParams();
@@ -8,64 +10,61 @@ const ProjectDetail = () => {
 
   if (!project) {
     return (
-      <div className="page-shell max-w-[980px]">
-        <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground mb-4">
-          Project not found
-        </p>
-        <h1 className="text-5xl md:text-7xl text-foreground mb-6">Missing dossier</h1>
-        <p className="text-lg text-foreground/80 max-w-2xl mb-8">
-          The project you asked for is not in the current index.
-        </p>
-        <Link to="/projects" className="inline-flex items-center gap-2 project-detail__button">
-          <ArrowLeft className="w-4 h-4" />
-          Back to projects
-        </Link>
+      <div className="sheet page">
+        <Link to="/projects" className="back"><kbd>3</kbd>← catalogue</Link>
+        <div className="session">
+          <span className="session__num">Fig. <em>—</em></span>
+          <h1 className="page-title">Missing dossier</h1>
+        </div>
+        <section className="plate">
+          <table className="ledger">
+            <tbody>
+              <tr>
+                <td className="ledger__state">The project you asked for is not in the current index.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
       </div>
     );
   }
 
-  const externalLinks = project.links.filter((link) => !link.href.startsWith("/"));
+  const index = projects.indexOf(project);
+  const repo = project.links.find((link) => link.label === "GitHub")?.href;
+  const live = project.links.find((link) => link.label === "Live demo")?.href;
+  const stack = project.techStack?.length ? project.techStack.join(" · ") : "—";
 
   return (
-    <div className="project-detail">
-      <section className="project-detail__hero">
-        <div className="project-detail__hero-meta">
-          <Link to="/projects" className="project-detail__back">
-            <ArrowLeft className="w-4 h-4" />
-            Back to projects
-          </Link>
-          <span>{project.status}</span>
+    <div className="sheet page">
+      <Link to="/projects" className="back"><kbd>3</kbd>← catalogue</Link>
+      <div className="session">
+        <span className="session__num">Fig. <em>{index + 2}</em></span>
+        <h1 className="page-title">{project.title}</h1>
+      </div>
+      <p className="page-lede marg">{project.description}</p>
+
+      <div className="titleblock">
+        <div><b>Year</b>{project.year}</div>
+        <div><b>Status</b>{project.status}</div>
+        <div><b>Stack</b>{stack}</div>
+        <div>
+          <b>Links</b>
+          {repo && <a href={repo} target="_blank" rel="noopener noreferrer">repo</a>}
+          {live && <a href={live} target="_blank" rel="noopener noreferrer">live</a>}
+          {!repo && !live && "—"}
         </div>
+      </div>
 
-        <p className="project-detail__eyebrow">{project.subtitle}</p>
-        <h1 className="project-detail__title">{project.title}</h1>
-        <p className="project-detail__summary">{project.description}</p>
-
-        <div className="project-detail__buttons">
-          {externalLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              target="_blank"
-              rel="noreferrer"
-              className="project-detail__button"
-            >
-              {link.label}
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
+      <section className="plate detail-cols">
+        <div className="prose">
+          {project.overview.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
           ))}
         </div>
-      </section>
-
-      <section className="project-detail__grid">
-        <article className="project-detail__panel project-detail__panel--stack">
-          <p className="project-detail__label">Overview</p>
-          <div className="project-detail__copy">
-            {project.overview.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </article>
+        <aside>
+          <Plate name={PLATES[index % PLATES.length]} />
+          <p className="marg">{project.subtitle}</p>
+        </aside>
       </section>
     </div>
   );

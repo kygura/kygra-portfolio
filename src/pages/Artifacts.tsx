@@ -1,20 +1,20 @@
-
 const Artifacts = () => {
   return (
-    <div className="page-shell page-shell--mid">
-      <div className="prose-minimal animate-fade-in">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
-          ( 05 &mdash; ARTIFACTS )
-        </p>
+    <div className="sheet page">
+      <div className="session">
+        <span className="session__num">Sheet <em>06</em></span>
         <h1>Artifacts</h1>
-        <p className="text-xl text-muted-foreground mb-12">
-          A collection of digital objects and experiments.
-        </p>
-
-        <div className="p-12 border border-dashed border-primary/20 rounded-lg text-center text-muted-foreground bg-card/50">
-          <p className="italic">The gallery is currently empty.</p>
-        </div>
+        <span className="session__hint">digital objects and experiments</span>
       </div>
+      <section className="plate">
+        <table className="ledger">
+          <tbody>
+            <tr>
+              <td className="ledger__state">No figures filed yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 };

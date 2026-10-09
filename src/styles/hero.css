@@ -1,0 +1,193 @@
+/* Hero: contour field stage. The hero sets --bg, --ink, --soft, --line,
+   --accent on its own element; they are scoped to .hero and do
+   not collide with the global tokens. Complete at rest: no reveal
+   animations, no vignette. */
+
+.hero {
+  position: relative;
+  font-family: 'IBM Plex Mono', monospace;
+  background: var(--bg, #0f1114);
+  color: var(--ink, #e6dfcc);
+  transition: background 0.6s ease;
+  /* Slide under the nav so the stage owns a full viewport. */
+  margin-top: calc(var(--nav-h) * -1);
+}
+
+/* svh, not vh: the scroll cue sits on the bottom edge and must not start
+   life hidden behind mobile browser chrome. The shell around the stage
+   carries the same flat background, so the band revealed when the chrome
+   retracts reads as a continuation of the field. */
+.hero__stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.hero__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Low-res field, upscaled with hard pixels (PS1 look). */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+.hero__canvas[hidden] {
+  display: none;
+}
+
+/* Eyebrow, name and tagline share one column: one gutter, one rhythm. */
+.hero__intro {
+  position: absolute;
+  top: 22vh;
+  top: 22svh;
+  left: var(--hero-gutter);
+  right: var(--hero-gutter);
+  pointer-events: none;
+}
+
+.hero__eyebrow {
+  margin: 0 0 clamp(10px, 1.4vw, 18px);
+}
+
+.hero__name {
+  transform-origin: left center;
+  will-change: transform, opacity;
+}
+
+.hero__name-text {
+  margin: 0;
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: clamp(72px, 16vw, 240px);
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* Per-letter boxes so scroll can open the tracking with transforms
+   instead of re-laying out the headline every frame. */
+.hero__letter {
+  display: inline-block;
+  will-change: transform;
+}
+
+.hero__tagline {
+  margin: clamp(14px, 2vw, 22px) 0 0;
+  max-width: 44ch;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+  will-change: opacity;
+}
+
+/* Accent initials, right of the title block, clear of the footer. */
+.hero__mark {
+  position: absolute;
+  right: var(--hero-gutter);
+  bottom: 120px;
+  transform-origin: center center;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.hero__mark-text {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: clamp(56px, 10vw, 160px);
+  line-height: 0.85;
+  letter-spacing: 0.04em;
+  color: var(--accent, #e9b32b);
+  transition: color 0.6s ease;
+}
+
+/* Title block and scroll cue, pinned to the bottom of the stage. */
+.hero__foot {
+  position: absolute;
+  inset: auto 0 0 0;
+  will-change: opacity;
+}
+
+.hero__titleblock {
+  width: min(560px, calc(100% - 2 * var(--hero-gutter)));
+  margin-left: var(--hero-gutter);
+  background: var(--bg, #0f1114);
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+  transition: background 0.6s ease;
+}
+
+.hero__strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px var(--hero-gutter);
+  background: var(--bg, #0f1114);
+  border-top: 1px solid var(--rule);
+  transition: background 0.6s ease;
+}
+
+.hero__cue {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Scroll runway for the sticky stage. Its height is the hero's only
+   source of scroll travel, so stage and shell cannot drift apart. */
+.hero__marker {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 20vh;
+  height: 20svh;
+  padding-bottom: 3rem;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--draft-ink);
+}
+
+@media (max-width: 639px) {
+  .hero__titleblock {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hero__titleblock > :nth-child(2) { border-right: 0; }
+  .hero__titleblock > :nth-child(-n + 2) { border-bottom: 1px solid var(--rule); }
+  .hero__mark { bottom: 150px; }
+}
+
+@media (min-width: 640px) {
+  .hero__intro { top: 24vh; top: 24svh; }
+  .hero__marker { height: 28vh; height: 28svh; }
+}
+
+@media (min-width: 768px) {
+  .hero__intro { top: 26vh; top: 26svh; }
+  .hero__marker { height: 36vh; height: 36svh; }
+}
+
+/* Landscape phones and other short viewports: the display type has to
+   give way or it collides with the title block. */
+@media (max-height: 620px) and (min-width: 640px) {
+  .hero__intro { top: 18vh; top: 18svh; }
+  .hero__name-text { font-size: clamp(56px, 9vw, 120px); }
+  .hero__mark-text { font-size: clamp(44px, 7vw, 90px); }
+  .hero__marker { height: 30vh; height: 30svh; }
+}
+
+/* Clear the fixed key bar (fine-pointer desktops only). */
+@media (pointer: fine) and (min-width: 860px) {
+  .hero__foot { bottom: 31px; }
+  .hero__mark { bottom: 150px; }
+}
