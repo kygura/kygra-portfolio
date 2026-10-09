@@ -255,7 +255,10 @@ export interface UseKeysOptions {
   onKey?: (id: string) => void;
 }
 
-/** The single global key handler. Schedules `leaderClear` for the `g-` Modeline hint. */
+/**
+ * The single global key handler. Schedules `leaderClear` for the `g-` Modeline hint.
+ * Pass stable callbacks (e.g. `getState` reading a ref) so the listener is not re-bound every render.
+ */
 export function useKeys({ getState, dispatch, onKey }: UseKeysOptions): void {
   useEffect(() => {
     const timers = new Set<ReturnType<typeof setTimeout>>();

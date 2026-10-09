@@ -214,7 +214,7 @@ export function parseQuote(raw: string): Quote {
   return { text, translation: translation || null };
 }
 
-/** Index of the quote for fortune roll `n` (roll 0 is the initial pick). Pure given `rand`. */
+/** Random quote index for a fortune (re)roll; -1 when there are no quotes. Pure given `rand`. */
 export const pickQuote = (count: number, rand: () => number = Math.random): number =>
   count > 0 ? Math.min(count - 1, Math.floor(rand() * count)) : -1;
 

@@ -2,7 +2,7 @@
  * Site content as typed data. Moved verbatim from the old pages before they were
  * deleted (T1): CV (src/pages/CV.tsx), manifesto (src/components/Manifesto.tsx),
  * quotes (src/lib/consts.ts) and the small bits of page copy that had no other home.
- * T2 completes the console slots (handle, role, bio, links, now).
+ * Console slots (handle, name line, role, bio, links, now) follow DESIGN A6.
  */
 
 // ---------------------------------------------------------------- identity
@@ -15,6 +15,52 @@ export const identity = {
   email: "ncerratoanton@gmail.com",
   website: "kygra.xyz",
   location: "Malaga, Spain",
+} as const;
+
+// ---------------------------------------------------------------- console slots (DESIGN A6)
+
+/** HandleBlock. `bio` is verbatim manifesto sentences, <= 240 chars (SPEC 3). */
+export const handle = {
+  handle: "KYGRA",
+  reading: "/ kygura /",
+  nameLine: "nicolas cerrato anton / malaga",
+  role: "software engineer / agentic systems, trading, protocols",
+  bio: "I build software the way a cabinetmaker builds a chair: material first, ornament last. Tools to view and understand reality, never to replace it.",
+  manifesto: { label: "manifesto", to: "/about" },
+} as const;
+
+export type SiteLinkKind = "external" | "mailto" | "route" | "file";
+
+export interface SiteLink {
+  id: "github" | "email" | "cv" | "cv.pdf" | "log";
+  label: string;
+  /** Right-hand column after the dot leader. */
+  handle: string;
+  href: string;
+  kind: SiteLinkKind;
+}
+
+/** `03 LINKS` (A6: github, email, cv, cv.pdf, log). `y` on this section yanks the email. */
+export const links: SiteLink[] = [
+  { id: "github", label: "github", handle: identity.github, href: `https://github.com/${identity.github}`, kind: "external" },
+  { id: "email", label: "email", handle: identity.email, href: `mailto:${identity.email}`, kind: "mailto" },
+  { id: "cv", label: "cv", handle: "/cv", href: "/cv", kind: "route" },
+  { id: "cv.pdf", label: "cv.pdf", handle: "CV_NCA.pdf", href: "/CV_NCA.pdf", kind: "file" },
+  { id: "log", label: "log", handle: "guestbook", href: "/guestbook", kind: "route" },
+];
+
+/**
+ * `04 NOW`. Seeded from real data (project statuses in content/projects/*.yaml and the
+ * CV location); the owner should confirm the wording (SPEC 3).
+ */
+export const now = {
+  status: "malaga / building agentic systems",
+  items: [
+    "hyperion: active build, agentic trading on hyperliquid",
+    "lexis: active build, editorial intelligence",
+    "meridian, equilibria, noted: in development",
+  ],
+  updated: "2026-10-09",
 } as const;
 
 // ---------------------------------------------------------------- manifesto (/about)
