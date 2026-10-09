@@ -1,4 +1,4 @@
-// `/writings/:slug` (A4): Notion API post with the bundled markdown fallback (useMarkdownPost).
+// `/writings/:slug` (A4): post body lazy-loaded from content/writings, built from Notion at build time.
 // A slug that resolves to nothing reports back so the shell can switch to the 404 Reader.
 import { Suspense, lazy, useEffect } from "react";
 import { useMarkdownPost } from "../hooks/useMarkdownPosts";

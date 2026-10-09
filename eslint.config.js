@@ -26,7 +26,7 @@ export default tseslint.config(
   {
     // Pre-existing findings in the Notion pipeline, which this redesign leaves untouched
     // (SPEC 1: no changes to api/). Reported as warnings until someone owns that cleanup.
-    files: ["api/**/*.ts"],
+    files: ["api/**/*.ts", "scripts/notion/**/*.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "prefer-const": "warn",

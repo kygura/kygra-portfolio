@@ -5,9 +5,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { links as siteLinks, now as siteNow, quotes } from "../content/site";
-import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { summaries as postSummaries, useMarkdownPosts } from "../hooks/useMarkdownPosts";
 import { projects } from "../lib/projects";
-import { localFallbackSummaries } from "../posts/localFallback";
 import { chipHit, useKeys } from "../orrery/keys";
 import { linkRows, logRows, noteRows, nowRows, parseQuote, pickQuote, projectRows } from "../orrery/model";
 import { BOOT_KEY, applyPalette, loadMotion, loadPalette, saveMotion, savePalette, session } from "../orrery/palette";
@@ -70,7 +69,7 @@ function init(pathname: string): State {
     route: parseRoute(pathname),
   });
   s = reduce(s, { type: "rows", section: "projects", rows: PROJECT_ROWS });
-  s = reduce(s, { type: "rows", section: "notes", rows: noteRows(localFallbackSummaries) });
+  s = reduce(s, { type: "rows", section: "notes", rows: noteRows(postSummaries) });
   s = reduce(s, { type: "rows", section: "links", rows: linkRows(siteLinks) });
   s = reduce(s, { type: "rows", section: "now", rows: nowRows(siteNow.items) });
   return { ...s, fx: [], seq: 0 };

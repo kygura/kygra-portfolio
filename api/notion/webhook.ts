@@ -2,9 +2,10 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import {
   getOptionalWebhookVerificationToken,
+  getWatchedNotionParentIds,
   isWebhookSignatureRequired,
 } from "../_lib/env.ts";
-import { DuplicatePublishedSlugError, syncPageById } from "../_lib/sync.ts";
+import { triggerRebuild } from "../_lib/rebuild.ts";
 
 const verificationSchema = z.object({
   verification_token: z.string().trim().min(1),
@@ -13,22 +14,32 @@ const verificationSchema = z.object({
 const webhookEventSchema = z.object({
   id: z.string().trim().optional(),
   type: z.string().trim().optional(),
-  attempt_number: z.number().int().positive().optional(),
-  timestamp: z.string().trim().optional(),
   entity: z
     .object({
       id: z.string().trim().optional(),
       type: z.string().trim().optional(),
     })
     .optional(),
+  data: z
+    .object({
+      parent: z
+        .object({
+          id: z.string().trim().optional(),
+          type: z.string().trim().optional(),
+          data_source_id: z.string().trim().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
 });
 
-const supportedEventTypes = new Set([
+const rebuildEventTypes = new Set([
   "page.created",
   "page.properties_updated",
   "page.content_updated",
   "page.deleted",
   "page.undeleted",
+  "page.moved",
 ]);
 
 function safeEqual(expected: string, actual: string): boolean {
@@ -61,8 +72,28 @@ function isValidSignature(
   );
 }
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Failed to process webhook";
+function normalizeId(id: string): string {
+  return id.replace(/-/g, "").toLowerCase();
+}
+
+/**
+ * Page events from outside the Publications database are ignored when the
+ * payload names a parent and we know which database to watch. A page moved
+ * out of the database still rebuilds, so the post disappears.
+ */
+function isFromWatchedParent(
+  type: string,
+  parent: { id?: string; data_source_id?: string } | undefined,
+): boolean {
+  const watched = getWatchedNotionParentIds().map(normalizeId);
+  const candidates = [parent?.id, parent?.data_source_id]
+    .filter((id): id is string => Boolean(id))
+    .map(normalizeId);
+
+  if (type === "page.moved" || watched.length === 0 || candidates.length === 0) {
+    return true;
+  }
+  return candidates.some((id) => watched.includes(id));
 }
 
 export const runtime = "nodejs";
@@ -118,54 +149,44 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: "Invalid webhook event payload" }, { status: 400 });
   }
 
-  const { id, type, attempt_number: attemptNumber, entity } = event.data;
+  const { id, type, data } = event.data;
+  const eventId = id ?? null;
 
-  if (!type || !supportedEventTypes.has(type)) {
+  if (!type || !rebuildEventTypes.has(type)) {
     return Response.json({
       ok: true,
       ignored: true,
       reason: "Unsupported event type",
       eventType: type ?? null,
-      eventId: id ?? null,
+      eventId,
     });
   }
 
-  const pageId = entity?.id ?? null;
-  if (!pageId) {
+  if (!isFromWatchedParent(type, data?.parent)) {
     return Response.json({
       ok: true,
       ignored: true,
-      reason: "Missing page identifier",
+      reason: "Page is outside the Publications database",
       eventType: type,
-      eventId: id ?? null,
+      eventId,
     });
   }
 
   try {
-    const result = await syncPageById(pageId);
-    return Response.json({
-      ok: true,
-      eventId: id ?? null,
-      eventType: type,
-      attemptNumber: attemptNumber ?? null,
-      ...result,
-    });
-  } catch (error) {
-    if (error instanceof DuplicatePublishedSlugError) {
-      return Response.json(
-        {
-          error: error.message,
-          duplicateSlugs: error.duplicateSlugs,
-          pageId,
-          eventType: type,
-        },
-        { status: 409 },
-      );
+    const result = await triggerRebuild();
+    if (!result.triggered) {
+      console.error("Notion webhook could not trigger a rebuild:", result.reason);
+      return Response.json({ error: result.reason, eventType: type, eventId }, { status: 500 });
     }
-
-    console.error("Failed to process Notion webhook", error);
+    return Response.json({ ok: true, rebuild: "queued", eventType: type, eventId }, { status: 202 });
+  } catch (error) {
+    console.error("Failed to trigger rebuild from Notion webhook", error);
     return Response.json(
-      { error: errorMessage(error), pageId, eventType: type },
+      {
+        error: error instanceof Error ? error.message : "Failed to trigger rebuild",
+        eventType: type,
+        eventId,
+      },
       { status: 500 },
     );
   }

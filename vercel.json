@@ -1,7 +1,15 @@
 {
   "buildCommand": "bun run build",
+  "redirects": [
+    {
+      "source": "/writings/the-movement-of-the-world",
+      "destination": "/writings/on-the-movements-of-the-world",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "crons": [{ "path": "/api/notion/sync", "schedule": "0 5 * * *" }]
 }
