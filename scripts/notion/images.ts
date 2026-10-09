@@ -1,12 +1,11 @@
 /**
- * Notion image processing: download, compress, re-upload to Vercel Blob,
- * and rewrite markdown URLs to point at stable blob URLs.
+ * Notion image processing: download, compress, store next to the built site,
+ * and rewrite markdown URLs to the stable copies. Notion's own file URLs are
+ * pre-signed and expire after about an hour, so they can never ship as-is.
  */
 
 import { createHash } from "node:crypto";
 import sharp from "sharp";
-import { put, list, del } from "@vercel/blob";
-import { getBlobToken } from "../env.ts";
 
 // ---------------------------------------------------------------------------
 // Dependency-injection interface
@@ -14,25 +13,8 @@ import { getBlobToken } from "../env.ts";
 
 export interface ImageDeps {
   fetchImpl: typeof fetch;
+  /** Persist one image; returns the URL the markdown should reference. */
   put: (pathname: string, body: Buffer, contentType: string) => Promise<{ url: string; pathname: string }>;
-  list: (prefix: string) => Promise<string[]>;
-  del: (pathname: string) => Promise<void>;
-}
-
-export function defaultImageDeps(): ImageDeps {
-  const token = getBlobToken();
-  return {
-    fetchImpl: fetch,
-    put: async (pathname, body, contentType) =>
-      put(pathname, body, { access: "public", token, contentType, addRandomSuffix: false, allowOverwrite: true }),
-    list: async (prefix) => {
-      const result = await list({ prefix, token });
-      return result.blobs.map((b) => b.pathname);
-    },
-    del: async (pathname) => {
-      await del(pathname, { token });
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +43,7 @@ export function isNotionImage(url: string): boolean {
 export async function processPostImages(
   markdown: string,
   slug: string,
-  deps: ImageDeps = defaultImageDeps(),
+  deps: ImageDeps,
 ): Promise<{ markdown: string; pathnames: string[] }> {
   // Collect unique Notion image URLs from the markdown.
   const uniqueUrls = new Set<string>();
@@ -138,7 +120,7 @@ export async function processPostImages(
 
         const hash = createHash("sha1").update(finalBuffer).digest("hex").slice(0, 16);
         const filename = `${hash}.${ext}`;
-        const pathname = `images/${slug}/${filename}`;
+        const pathname = `${slug}/${filename}`;
 
         const uploaded = await deps.put(pathname, finalBuffer, finalContentType);
 
@@ -161,17 +143,4 @@ export async function processPostImages(
   );
 
   return { markdown: rewritten, pathnames: collectedPathnames };
-}
-
-// ---------------------------------------------------------------------------
-// deletePostImages
-// ---------------------------------------------------------------------------
-
-export async function deletePostImages(
-  slug: string,
-  deps: ImageDeps = defaultImageDeps(),
-): Promise<number> {
-  const paths = await deps.list(`images/${slug}/`);
-  await Promise.all(paths.map((p) => deps.del(p)));
-  return paths.length;
 }

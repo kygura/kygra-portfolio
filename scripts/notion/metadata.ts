@@ -5,7 +5,7 @@ import {
   notionPostMetadataSchema,
   normalizeSlug,
   type NotionPostMetadata,
-} from "../../../content/posts.ts";
+} from "../../content/posts.ts";
 
 type NotionPage = {
   id: string;

@@ -1,7 +1,7 @@
 /**
- * Centralized environment-variable access for the Notion → blog pipeline.
- * Every getter throws a clear, named error when the variable is missing so
- * misconfiguration surfaces immediately instead of as a downstream null.
+ * Environment access for the rebuild-trigger endpoints. Notion itself is only
+ * read at build time (see scripts/build-writings.ts), so the runtime functions
+ * need nothing beyond webhook verification and the deploy hook.
  */
 
 function firstConfigured(names: string[]): string | null {
@@ -14,33 +14,9 @@ function firstConfigured(names: string[]): string | null {
   return null;
 }
 
-function required(primary: string, fallbacks: string[] = []): string {
-  const value = firstConfigured([primary, ...fallbacks]);
-  if (!value) {
-    throw new Error(`Environment variable ${primary} is not configured`);
-  }
-  return value;
-}
-
-/** Notion integration token. */
-export function getNotionToken(): string {
-  return required("NOTION_SECRET");
-}
-
-/** Vercel Blob read/write token. */
-export function getBlobToken(): string {
-  return required("BLOB_READ_WRITE_TOKEN", ["NOTION_SYNC_READ_WRITE_TOKEN"]);
-}
-
-/** HMAC key used to verify the `X-Notion-Signature` header. */
-export function getWebhookVerificationToken(): string {
-  return required("NOTION_WEBHOOK_VERIFICATION_TOKEN", ["WEBHOOK_SECRET"]);
-}
-
 /**
- * Non-throwing variant: the verification token if one is configured under any
- * accepted name, else `null`. Used by the webhook so a missing token degrades
- * to a warning rather than a 500.
+ * HMAC key used to verify the `X-Notion-Signature` header, if one is configured
+ * under any accepted name.
  */
 export function getOptionalWebhookVerificationToken(): string | null {
   return firstConfigured(["NOTION_WEBHOOK_VERIFICATION_TOKEN", "WEBHOOK_SECRET"]);
@@ -55,17 +31,21 @@ export function isWebhookSignatureRequired(): boolean {
   return process.env.NOTION_WEBHOOK_REQUIRE_SIGNATURE === "true";
 }
 
-/** Bearer secret guarding the manual full-sync endpoint. */
-export function getSyncTriggerSecret(): string {
-  return required("NOTION_SYNC_TRIGGER_SECRET");
+/** Vercel deploy hook that rebuilds the site (and with it, the writings). */
+export function getDeployHookUrl(): string | null {
+  return firstConfigured(["VERCEL_DEPLOY_HOOK_URL"]);
 }
 
-/** Explicit data-source ID, if configured (v5 query API needs this). */
-export function getConfiguredDataSourceId(): string | null {
-  return firstConfigured(["NOTION_DATA_SOURCE_ID"]);
+/** Bearer secrets accepted by the manual / scheduled rebuild endpoint. */
+export function getRebuildSecrets(): string[] {
+  return ["NOTION_SYNC_TRIGGER_SECRET", "CRON_SECRET"]
+    .map((name) => firstConfigured([name]))
+    .filter((value): value is string => Boolean(value));
 }
 
-/** Database ID, used to derive the data-source ID when not set explicitly. */
-export function getConfiguredDatabaseId(): string | null {
-  return firstConfigured(["NOTION_DATABASE_ID"]);
+/** Notion database / data-source IDs whose page events should trigger a rebuild. */
+export function getWatchedNotionParentIds(): string[] {
+  return ["NOTION_DATA_SOURCE_ID", "NOTION_DATABASE_ID"]
+    .map((name) => firstConfigured([name]))
+    .filter((value): value is string => Boolean(value));
 }

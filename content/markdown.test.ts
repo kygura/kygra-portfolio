@@ -5,7 +5,7 @@ import {
   buildPostFromMarkdown,
   parseFrontmatter,
   serializeFrontmatter,
-} from "../../content/markdown.ts";
+} from "./markdown.ts";
 
 test("serializeFrontmatter + parseFrontmatter round-trips fields", () => {
   const serialized = serializeFrontmatter({

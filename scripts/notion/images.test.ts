@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { processPostImages, deletePostImages } from "./images.ts";
+import { processPostImages } from "./images.ts";
 import type { ImageDeps } from "./images.ts";
 
 // ---------------------------------------------------------------------------
@@ -41,21 +41,6 @@ function makePut(): { fn: ImageDeps["put"]; calls: { pathname: string; contentTy
   return { fn, calls };
 }
 
-function makeListAndDel(pathnames: string[]): {
-  list: ImageDeps["list"];
-  del: ImageDeps["del"];
-  deleted: string[];
-} {
-  const deleted: string[] = [];
-  return {
-    list: async (_prefix: string) => pathnames,
-    del: async (pathname: string) => {
-      deleted.push(pathname);
-    },
-    deleted,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Test 1: Notion image is downloaded, compressed, uploaded and URL rewritten.
 // ---------------------------------------------------------------------------
@@ -70,8 +55,6 @@ test("processPostImages rewrites notion image URL and returns pathname", async (
   const deps: ImageDeps = {
     fetchImpl: makeFetchOk(),
     put,
-    list: async () => [],
-    del: async () => {},
   };
 
   const result = await processPostImages(markdown, slug, deps);
@@ -83,14 +66,14 @@ test("processPostImages rewrites notion image URL and returns pathname", async (
   );
   // The new URL should point at blob.example with the correct prefix.
   assert.ok(
-    result.markdown.includes(`https://blob.example/images/${slug}/`),
+    result.markdown.includes(`https://blob.example/${slug}/`),
     `Expected blob.example URL in markdown, got: ${result.markdown}`,
   );
   assert.equal(result.pathnames.length, 1, "Expected exactly one pathname");
   assert.equal(putCalls.length, 1, "Expected put to be called once");
   assert.ok(
-    putCalls[0].pathname.startsWith(`images/${slug}/`),
-    `Expected pathname to start with images/${slug}/, got: ${putCalls[0].pathname}`,
+    putCalls[0].pathname.startsWith(`${slug}/`),
+    `Expected pathname to start with ${slug}/, got: ${putCalls[0].pathname}`,
   );
 });
 
@@ -105,8 +88,6 @@ test("processPostImages leaves non-notion image untouched", async () => {
   const deps: ImageDeps = {
     fetchImpl: makeFetchOk(),
     put,
-    list: async () => [],
-    del: async () => {},
   };
 
   const result = await processPostImages(markdown, "slug", deps);
@@ -129,8 +110,6 @@ test("processPostImages handles fetch failure gracefully (original URL preserved
   const deps: ImageDeps = {
     fetchImpl: makeFetchFail(),
     put,
-    list: async () => [],
-    del: async () => {},
   };
 
   // Should not throw.
@@ -139,29 +118,4 @@ test("processPostImages handles fetch failure gracefully (original URL preserved
   assert.equal(result.markdown, markdown, "Markdown should be unchanged when fetch fails");
   assert.equal(result.pathnames.length, 0, "Expected no pathnames on failure");
   assert.equal(putCalls.length, 0, "Expected put not to be called on failure");
-});
-
-// ---------------------------------------------------------------------------
-// Test 4: deletePostImages calls del for each blob and returns count.
-// ---------------------------------------------------------------------------
-
-test("deletePostImages deletes all listed pathnames and returns count", async () => {
-  const { list, del, deleted } = makeListAndDel([
-    "images/my-post/aabbccdd.jpg",
-    "images/my-post/11223344.png",
-  ]);
-
-  const deps: ImageDeps = {
-    fetchImpl: fetch,
-    put: async (p, _b, _ct) => ({ url: `https://blob.example/${p}`, pathname: p }),
-    list,
-    del,
-  };
-
-  const count = await deletePostImages("my-post", deps);
-
-  assert.equal(count, 2, "Expected count to equal number of blobs");
-  assert.equal(deleted.length, 2, "Expected del to be called twice");
-  assert.ok(deleted.includes("images/my-post/aabbccdd.jpg"), "Expected first path deleted");
-  assert.ok(deleted.includes("images/my-post/11223344.png"), "Expected second path deleted");
 });
