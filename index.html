@@ -3,23 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Nicolas Cerrato Anton — Frontier Software Studio</title>
-
-
-    <meta property="og:title" content="Nicolas Cerrato Anton — Frontier Software Studio" />
+    <title>kygra / Nicolas Cerrato Anton</title>
+    <meta name="description" content="My corner of the internet" />
+    <meta name="color-scheme" content="dark" />
+    <meta property="og:title" content="kygra / Nicolas Cerrato Anton" />
     <meta property="og:description" content="My corner of the internet" />
+
+    <!-- Pre-paint palette: apply the saved choice before first render (no flash). Keep the key in sync with src/orrery/palette.ts. -->
+    <script>
+      try {
+        var p = localStorage.getItem("no.pal");
+        if (p === "sodium" || p === "phosphor" || p === "oxide" || p === "coldstar") {
+          document.documentElement.dataset.pal = p;
+        }
+      } catch (e) {}
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Linked here rather than @import-ed from index.css: an @import cannot
-         begin downloading until the stylesheet that contains it has arrived,
-         which serialises fonts behind the CSS request. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,wght@0,400;1,400;1,500&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap&subset=latin"
+      href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Martian+Mono:wdth,wght@87.5,400;87.5,600&family=Silkscreen&display=swap"
     >
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314110a'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-style='italic' text-anchor='middle' fill='%23c3a561'%3EN%3C/text%3E%3C/svg%3E" />
-
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%230c0b10'/%3E%3Cpath fill='%23ffaa1f' d='M2 1h1v6H2zM5 1h1v1H5zM4 2h1v1H4zM3 3h1v2H3zM4 5h1v1H4zM5 6h1v1H5z'/%3E%3C/svg%3E" />
   </head>
 
   <body>
