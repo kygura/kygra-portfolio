@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kygra — No. 04</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EFE4; --paper-2:#E9E2D0; --ink:#141311; --ink-mute:#6B665C;
+    --loud:#C1272D; --loud-tint:#F0D4D0; --rule:#141311;
+    --grain-blend:multiply; --grain-opacity:.06;
+    --display:"Syne",system-ui,sans-serif;
+    --text:"Newsreader",Georgia,serif;
+    --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#121110; --paper-2:#1C1A17; --ink:#E8E2D4; --ink-mute:#A39D90;
+      --loud:#FF5A4E; --loud-tint:#3A1A18; --rule:#E8E2D4;
+      --grain-blend:screen; --grain-opacity:.08;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#121110; --paper-2:#1C1A17; --ink:#E8E2D4; --ink-mute:#A39D90;
+    --loud:#FF5A4E; --loud-tint:#3A1A18; --rule:#E8E2D4;
+    --grain-blend:screen; --grain-opacity:.08;
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--text); font-size:17px; line-height:1.5;
+    font-optical-sizing:auto;
+  }
+  @media (min-width:900px){ body{font-size:19px} }
+
+  /* Grain: decorative paper layer */
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:50;
+    opacity:var(--grain-opacity); mix-blend-mode:var(--grain-blend);
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size:240px 240px;
+  }
+
+  a{color:var(--loud); text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; text-decoration-color:var(--loud)}
+  a:hover{text-decoration-thickness:2px}
+  :focus-visible{outline:2px solid var(--loud); outline-offset:2px}
+  .skip{position:absolute; left:-999px; top:8px; background:var(--paper); padding:4px 8px; font-family:var(--mono)}
+  .skip:focus{left:8px; z-index:60}
+
+  .page{max-width:1180px; padding:0 16px 48px; margin:0}
+  @media (min-width:900px){ .page{padding:0 40px 64px} }
+
+  .mono{font-family:var(--mono); font-size:13px; line-height:1.4}
+  .caps{text-transform:uppercase; letter-spacing:.08em}
+  .mute{color:var(--ink-mute)}
+
+  /* Misregistration ghost */
+  .ghost{
+    font-family:var(--display); font-weight:800; letter-spacing:-.02em; line-height:.95;
+    text-shadow:2px -1px 0 var(--loud); transition:text-shadow .12s steps(2);
+  }
+  .ghost:hover{text-shadow:3px -2px 0 var(--loud)}
+
+  /* Masthead */
+  .masthead{padding-top:20px; border-bottom:2px solid var(--rule)}
+  .masthead .top{display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap}
+  .masthead .name{font-size:56px; margin:0; text-decoration:none; color:var(--ink)}
+  .masthead .name a{color:inherit; text-decoration:none}
+  .masthead .issue{margin:8px 0 0}
+  .masthead nav{border-top:1px solid var(--rule); margin-top:14px; padding:8px 0; display:flex; gap:18px; flex-wrap:wrap; align-items:center}
+  .masthead nav a{color:var(--ink); text-decoration:none}
+  .masthead nav a[aria-current]{text-decoration:underline; text-decoration-color:var(--loud); text-decoration-thickness:2px; text-underline-offset:4px}
+  .masthead nav a:hover{color:var(--loud)}
+  .toggle{margin-left:auto; background:none; border:1px solid var(--rule); color:var(--ink); font-family:var(--mono); font-size:13px; padding:2px 8px; cursor:pointer; border-radius:0}
+  .toggle:hover{background:var(--loud-tint)}
+  @media (min-width:900px){
+    .masthead .name{font-size:96px}
+    .masthead .top{align-items:flex-end}
+  }
+
+  /* Ticker */
+  .ticker{border-bottom:1px solid var(--rule); overflow:hidden; white-space:nowrap; padding:6px 0; background:var(--paper-2)}
+  .ticker .track{display:inline-block; animation:tick 40s linear infinite}
+  .ticker:hover .track{animation-play-state:paused}
+  .ticker span{padding-right:48px}
+  .ticker b{color:var(--loud); font-weight:500}
+  @keyframes tick{from{transform:translateX(0)} to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion: reduce){
+    .ticker{white-space:normal}
+    .ticker .track{animation:none}
+    .ticker .dup{display:none}
+    .ghost{transition:none}
+  }
+
+  /* PageGrid */
+  .grid{display:grid; grid-template-columns:1fr; gap:0 48px; padding-top:28px}
+  .margin{font-family:var(--mono); font-size:13px; line-height:1.4}
+  .margin .run{text-transform:uppercase; letter-spacing:.08em; border-top:2px solid var(--rule); padding-top:6px; margin-bottom:12px}
+  .margin .note{color:var(--ink-mute); margin:0 0 12px}
+  .margin .note b{color:var(--ink); font-weight:500; display:block}
+  @media (min-width:900px){
+    .grid{grid-template-columns:176px 1fr; padding-top:40px}
+    .margin{position:sticky; top:16px; align-self:start}
+  }
+  .main{min-width:0}
+  .prose{max-width:64ch}
+  .prose p{margin:0 0 1em}
+  .prose p.lede{font-size:1.15em}
+  .prose h2{font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:2em 0 .5em; line-height:1.1}
+  @media (min-width:900px){ .prose h2{font-size:32px} }
+
+  section{margin-bottom:44px}
+  .sec-head{display:flex; align-items:baseline; gap:12px; border-top:2px solid var(--rule); padding-top:8px; margin:0 0 12px}
+  .sec-head h2{font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; margin:0; line-height:1}
+  .sec-head .num{font-family:var(--mono); font-size:13px; color:var(--loud)}
+  .sec-head .more{margin-left:auto; font-family:var(--mono); font-size:13px}
+  @media (min-width:900px){ .sec-head h2{font-size:32px} }
+
+  /* IndexTable */
+  table.index{width:100%; border-collapse:collapse; font-family:var(--mono); font-size:13px; line-height:1.4}
+  table.index th{text-align:left; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-mute); border-bottom:1px solid var(--rule); padding:6px 10px 6px 0}
+  table.index td{border-bottom:1px solid var(--rule); padding:9px 10px 9px 0; vertical-align:top}
+  table.index tr:hover td, table.index tr:focus-within td{background:var(--loud-tint)}
+  table.index .no{color:var(--loud); white-space:nowrap; width:5.5em}
+  table.index .title{font-family:var(--text); font-size:19px; line-height:1.25}
+  table.index .title a{color:var(--ink); text-decoration:none}
+  table.index .title a:hover{color:var(--loud); text-decoration:underline}
+  table.index .title small{display:block; font-family:var(--text); font-style:italic; font-size:15px; color:var(--ink-mute); margin-top:2px}
+  table.index .yr{white-space:nowrap}
+  table.index .links a{text-transform:uppercase; margin-right:10px; white-space:nowrap}
+  .tag{text-transform:uppercase; color:var(--ink); text-decoration:none; border-bottom:1px solid var(--ink-mute)}
+  .tag:hover{color:var(--loud); border-color:var(--loud)}
+  .tag + .tag{margin-left:8px}
+  @media (max-width:899px){
+    table.index thead{position:absolute; left:-9999px}
+    table.index tr{display:grid; grid-template-columns:5.5em 1fr; border-bottom:1px solid var(--rule); padding:10px 0}
+    table.index td{border:0; padding:0 8px 0 0}
+    table.index .no{grid-row:1/3}
+    table.index .title{grid-column:2}
+    table.index .yr, table.index .tags, table.index .links{grid-column:2; margin-top:4px}
+  }
+
+  /* ContentsList */
+  ol.contents{list-style:none; margin:0; padding:0; counter-reset:c}
+  ol.contents li{display:grid; grid-template-columns:3em 1fr auto; gap:0 12px; align-items:baseline; border-bottom:1px solid var(--rule); padding:9px 0}
+  ol.contents li::before{counter-increment:c; content:counter(c,decimal-leading-zero) "."; font-family:var(--mono); font-size:13px; color:var(--loud)}
+  ol.contents .t{font-style:italic; font-size:19px; line-height:1.25}
+  ol.contents .t a{color:var(--ink); text-decoration:none}
+  ol.contents .t a:hover{color:var(--loud); text-decoration:underline}
+  ol.contents .t small{display:block; font-style:normal; font-size:15px; color:var(--ink-mute)}
+  ol.contents .d{font-family:var(--mono); font-size:13px; white-space:nowrap}
+  @media (max-width:899px){
+    ol.contents li{grid-template-columns:3em 1fr}
+    ol.contents .d{grid-column:2}
+  }
+
+  /* LinkList */
+  ul.links{list-style:none; margin:0; padding:0; font-family:var(--mono); font-size:13px}
+  ul.links li{display:flex; gap:12px; border-bottom:1px solid var(--rule); padding:8px 0}
+  ul.links .k{width:9em; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.08em; flex:none}
+
+  /* Now, badges, webring */
+  .now{border:1px solid var(--rule); padding:10px 12px; margin:0 0 16px; background:var(--paper-2)}
+  .now p{margin:0 0 6px; font-family:var(--text); font-size:16px; line-height:1.4; color:var(--ink)}
+  .badges{display:flex; flex-wrap:wrap; gap:6px; margin:0; padding:0; list-style:none}
+  .badges li{width:88px; height:31px; border:1px solid var(--rule); font-family:var(--mono); font-size:10px; display:flex; align-items:center; justify-content:center; letter-spacing:.04em; background:var(--paper-2)}
+  .badges li.hot{background:var(--loud); color:var(--paper); border-color:var(--loud)}
+  .webring{display:flex; gap:16px; font-family:var(--mono); font-size:13px; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); padding:8px 0; margin-top:16px; flex-wrap:wrap}
+  .webring .nm{margin-right:auto; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-mute)}
+
+  /* Colophon */
+  .colophon{border-top:2px solid var(--rule); margin-top:24px; padding-top:12px; font-family:var(--mono); font-size:13px; line-height:1.5; display:grid; gap:12px 48px; grid-template-columns:1fr}
+  .colophon p{margin:0}
+  .colophon .big{font-family:var(--display); font-weight:800; font-size:26px; letter-spacing:-.02em; line-height:1}
+  @media (min-width:900px){ .colophon{grid-template-columns:176px 1fr 1fr} }
+
+  /* Page break between mock pages */
+  .pagebreak{margin:64px -16px 0; border-top:2px dashed var(--ink-mute); padding:8px 16px; font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-mute)}
+  @media (min-width:900px){ .pagebreak{margin:80px -40px 0; padding:8px 40px} }
+
+  /* Project page */
+  .ph1{font-size:36px; margin:0 0 6px}
+  @media (min-width:900px){ .ph1{font-size:56px} }
+  .standfirst{font-style:italic; font-size:1.15em; margin:0 0 20px; max-width:64ch}
+  table.spec{border-collapse:collapse; width:100%; max-width:64ch; font-family:var(--mono); font-size:13px; margin:0 0 28px; border-top:2px solid var(--rule)}
+  table.spec th{text-align:left; font-weight:500; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-mute); width:9em; padding:7px 10px 7px 0; border-bottom:1px solid var(--rule); vertical-align:top}
+  table.spec td{padding:7px 0; border-bottom:1px solid var(--rule)}
+  .status{color:var(--loud)}
+  figure{margin:24px 0}
+  figure .ph{border:2px solid var(--rule); background:var(--paper-2); aspect-ratio:16/9; display:flex; align-items:flex-end; padding:10px; font-family:var(--mono); font-size:12px; color:var(--ink-mute)}
+  figcaption{font-family:var(--mono); font-size:13px; margin-top:6px}
+  pre{font-family:var(--mono); font-size:13px; line-height:1.5; background:var(--paper-2); border-left:2px solid var(--rule); padding:10px 12px; overflow:auto; margin:0 0 1em}
+  ul.changelog{list-style:none; margin:0; padding:0; font-family:var(--mono); font-size:13px; max-width:64ch}
+  ul.changelog li{display:grid; grid-template-columns:7em 1fr; gap:12px; border-bottom:1px solid var(--rule); padding:7px 0}
+  ul.changelog .d{color:var(--loud)}
+  .prevnext{display:grid; grid-template-columns:1fr 1fr; border-top:2px solid var(--rule); border-bottom:2px solid var(--rule); margin-top:32px}
+  .prevnext a{padding:12px 0; text-decoration:none; color:var(--ink); font-family:var(--text); font-size:19px}
+  .prevnext a + a{text-align:right; border-left:1px solid var(--rule); padding-left:12px}
+  .prevnext a span{display:block; font-family:var(--mono); font-size:13px; color:var(--loud); text-transform:uppercase; letter-spacing:.08em}
+  .prevnext a:hover{color:var(--loud)}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="grain" aria-hidden="true"></div>
+
+<div class="page">
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="top">
+      <h1 class="name ghost"><a href="#">kygra</a></h1>
+      <p class="issue mono">No. 04 &nbsp;·&nbsp; Autumn 2026 &nbsp;·&nbsp; printed in two colours &nbsp;·&nbsp; <span class="mute">edition of one</span></p>
+    </div>
+    <nav class="mono caps" aria-label="Primary">
+      <a href="#" aria-current="page">Front</a>
+      <a href="#">Catalogue</a>
+      <a href="#">Writing</a>
+      <a href="#">About</a>
+      <a href="#">Now</a>
+      <a href="#">Correspondence</a>
+      <button class="toggle" type="button" onclick="var r=document.documentElement;r.dataset.theme=(r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches))?'light':'dark'">Ink / Paper</button>
+    </nav>
+  </header>
+
+  <!-- Ticker -->
+  <div class="ticker mono" aria-hidden="true">
+    <div class="track">
+      <span><b>NOW</b> rebuilding the synth sequencer in Rust</span><span><b>LISTENING</b> Loraine James, Gentle Confrontation</span><span><b>READING</b> Ursula Franklin, The Real World of Technology</span><span><b>SHIPPED</b> KY-011 stamp, 02 Oct</span><span><b>LAST UPDATED</b> 08 Oct 2026</span>
+      <span class="dup"><b>NOW</b> rebuilding the synth sequencer in Rust</span><span class="dup"><b>LISTENING</b> Loraine James, Gentle Confrontation</span><span class="dup"><b>READING</b> Ursula Franklin, The Real World of Technology</span><span class="dup"><b>SHIPPED</b> KY-011 stamp, 02 Oct</span><span class="dup"><b>LAST UPDATED</b> 08 Oct 2026</span>
+    </div>
+  </div>
+
+  <main id="main">
+  <div class="grid">
+    <!-- Margin column: RunningHeader + NowBlock -->
+    <aside class="margin">
+      <div class="run">Front page</div>
+      <p class="note"><b>Where</b>Glasgow, UK<br>GMT+1</p>
+      <p class="note"><b>Doing</b>software by day, sequencers and screenprints by night</p>
+      <div class="now">
+        <p class="mono caps mute" style="margin-bottom:6px">Now · 08 Oct 2026</p>
+        <p>Rebuilding the step sequencer in Rust. Reading Franklin. Three prints drying on the rack.</p>
+        <p class="mono"><a href="#">full now page →</a></p>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="prose">
+        <p class="lede">kygra writes software and makes things that print. Most of the code on this site is small, finished, and runs on one machine; most of the prints are two colours because the riso only has two drums. This is the fourth version of the site, which replaces the third, which was fine but looked like everyone else's.</p>
+        <p>Everything here is hand-typed. Writing is drafted in Notion and synced once a day. The <a href="#">catalogue</a> lists every project with a number, because numbering things makes you finish them. If you want to talk, <a href="#">write</a>.</p>
+      </div>
+
+      <section aria-labelledby="h-work" style="margin-top:36px">
+        <div class="sec-head">
+          <span class="num">§1</span>
+          <h2 id="h-work">Selected work</h2>
+          <a class="more" href="#">full catalogue (14) →</a>
+        </div>
+        <table class="index">
+          <thead><tr><th scope="col">No.</th><th scope="col">Title</th><th scope="col">Year</th><th scope="col">Format</th><th scope="col">Links</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="no">KY-012</td>
+              <td class="title"><a href="#project">Stamp</a><small>a static site generator that only knows one layout</small></td>
+              <td class="yr">2026</td>
+              <td class="tags"><a class="tag" href="#">rust</a><a class="tag" href="#">cli</a></td>
+              <td class="links"><a href="#">repo</a><a href="#">live</a></td>
+            </tr>
+            <tr>
+              <td class="no">KY-011</td>
+              <td class="title"><a href="#">Drumkit for the 404</a><small>128 samples from a broken Roland, cut and tagged</small></td>
+              <td class="yr">2026</td>
+              <td class="tags"><a class="tag" href="#">audio</a><a class="tag" href="#">release</a></td>
+              <td class="links"><a href="#">bandcamp</a></td>
+            </tr>
+            <tr>
+              <td class="no">KY-010</td>
+              <td class="title"><a href="#">notion-sync</a><small>pulls a Notion database into Markdown with front matter, nothing else</small></td>
+              <td class="yr">2025</td>
+              <td class="tags"><a class="tag" href="#">typescript</a><a class="tag" href="#">tool</a></td>
+              <td class="links"><a href="#">repo</a><a href="#">npm</a></td>
+            </tr>
+            <tr>
+              <td class="no">KY-009</td>
+              <td class="title"><a href="#">Misregister</a><small>a CSS-only risograph effect, documented to death</small></td>
+              <td class="yr">2025</td>
+              <td class="tags"><a class="tag" href="#">css</a><a class="tag" href="#">demo</a></td>
+              <td class="links"><a href="#">repo</a><a href="#">live</a></td>
+            </tr>
+            <tr>
+              <td class="no">KY-007</td>
+              <td class="title"><a href="#">Hours</a><small>time tracking in a single SQLite file and a 200-line TUI</small></td>
+              <td class="yr">2024</td>
+              <td class="tags"><a class="tag" href="#">go</a><a class="tag" href="#">tui</a></td>
+              <td class="links"><a href="#">repo</a></td>
+            </tr>
+            <tr>
+              <td class="no">KY-004</td>
+              <td class="title"><a href="#">Flyers 2022–23</a><small>eleven A5 club flyers, two inks each, archived as PDFs</small></td>
+              <td class="yr">2023</td>
+              <td class="tags"><a class="tag" href="#">print</a><a class="tag" href="#">archive</a></td>
+              <td class="links"><a href="#">pdfs</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section aria-labelledby="h-writing">
+        <div class="sec-head">
+          <span class="num">§2</span>
+          <h2 id="h-writing">Recent writing</h2>
+          <a class="more" href="#">contents (31) →</a>
+        </div>
+        <ol class="contents">
+          <li><span class="t"><a href="#">Why I number everything</a><small>on finishing, and the catalogue as a forcing function</small></span><span class="d">04 Oct 2026</span></li>
+          <li><span class="t"><a href="#">A risograph is a slow laser printer with opinions</a></span><span class="d">21 Sep 2026</span></li>
+          <li><span class="t"><a href="#">Notes on syncing Notion without hating it</a><small>rate limits, block trees, and giving up on perfect fidelity</small></span><span class="d">02 Sep 2026</span></li>
+          <li><span class="t"><a href="#">The SP-404 and the case for fewer buttons</a></span><span class="d">17 Aug 2026</span></li>
+        </ol>
+      </section>
+
+      <section aria-labelledby="h-else">
+        <div class="sec-head">
+          <span class="num">§3</span>
+          <h2 id="h-else">Elsewhere</h2>
+        </div>
+        <ul class="links">
+          <li><span class="k">Code</span><a href="#">github.com/kygra</a></li>
+          <li><span class="k">Sound</span><a href="#">kygra.bandcamp.com</a></li>
+          <li><span class="k">Scraps</span><a href="#">are.na/kygra</a></li>
+          <li><span class="k">Posts</span><a href="#">@kygra@post.lurk.org</a></li>
+          <li><span class="k">Feed</span><a href="#">/rss.xml</a></li>
+          <li><span class="k">Mail</span><a href="#">hello@kygra.example</a></li>
+        </ul>
+      </section>
+
+      <section aria-label="Badges and webring">
+        <ul class="badges" aria-label="88 by 31 badges">
+          <li class="hot">KYGRA.NET</li>
+          <li>HAND CODED</li>
+          <li>NO COOKIES</li>
+          <li>RISO 2-COL</li>
+          <li>RSS ✓</li>
+          <li class="mute">your badge</li>
+        </ul>
+        <div class="webring">
+          <span class="nm">Glasgow Indie Web Ring</span>
+          <a href="#">← prev</a><a href="#">random</a><a href="#">next →</a>
+        </div>
+      </section>
+    </div>
+  </div>
+  </main>
+
+  <footer class="colophon">
+    <p class="big ghost">Colophon</p>
+    <p>Set in Syne, Newsreader and IBM Plex Mono. Two inks: black and <span style="color:var(--loud)">#C1272D</span> on cream. Built with React and Tailwind, no tracking, no analytics. Writing synced from Notion nightly.</p>
+    <p>Last updated <b>08 Oct 2026</b> (<a href="#">changelog</a>). Guestbook <a href="#">open</a>. Everything here is free to reuse with a note back. <a href="#">Source</a>.</p>
+  </footer>
+
+  <!-- ====================== PROJECT PAGE SECTION ====================== -->
+  <div class="pagebreak">Mock page break — project page, /catalogue/ky-012</div>
+
+  <header class="masthead" style="border-bottom-width:1px">
+    <div class="top">
+      <p class="name ghost" style="font-size:36px"><a href="#">kygra</a></p>
+      <p class="issue mono"><a href="#">Catalogue</a> / KY-012</p>
+    </div>
+  </header>
+
+  <div class="grid" id="project">
+    <aside class="margin">
+      <div class="run">Catalogue</div>
+      <p class="note"><b>KY-012</b>2026</p>
+      <p class="note"><b>Status</b><span class="status">live</span></p>
+      <p class="note"><b>On this page</b><a href="#">Spec</a><br><a href="#">Notes</a><br><a href="#">Changelog</a></p>
+    </aside>
+
+    <article class="main">
+      <h1 class="ghost ph1">Stamp</h1>
+      <p class="standfirst">A static site generator that only knows one layout, because deciding on layouts is how projects die.</p>
+
+      <table class="spec">
+        <tr><th scope="row">Year</th><td>2026, March to September</td></tr>
+        <tr><th scope="row">Stack</th><td>Rust, pulldown-cmark, minijinja</td></tr>
+        <tr><th scope="row">Role</th><td>everything</td></tr>
+        <tr><th scope="row">Status</th><td class="status">live · v0.6.2</td></tr>
+        <tr><th scope="row">Repo</th><td><a href="#">github.com/kygra/stamp</a></td></tr>
+        <tr><th scope="row">Live</th><td><a href="#">stamp.kygra.example</a></td></tr>
+        <tr><th scope="row">License</th><td>MIT</td></tr>
+      </table>
+
+      <div class="prose">
+        <p>Stamp takes a folder of Markdown and produces a folder of HTML. It has one template, three front-matter keys, and no plugin system. I wrote it after spending a weekend configuring a generator that had all of those things and producing nothing.</p>
+        <p>The constraint turned out to be the feature. Every site built with Stamp looks like a printed index: a masthead, a ruled table of entries, a colophon. You can change the ink colour and the fonts. That is it.</p>
+        <figure>
+          <div class="ph" aria-hidden="true">[ placeholder: terminal screenshot, 1600×900, 2px ink border ]</div>
+          <figcaption>Fig. 1 — <code>stamp build</code> on this site, 31 posts, 48ms.</figcaption>
+        </figure>
+        <h2>Notes</h2>
+        <p>Builds are incremental by content hash, not mtime, so a <code>git checkout</code> does not rebuild everything. The only clever part is the table-of-contents ordering, which sorts by date and falls back to filename when two posts share a day.</p>
+<pre>$ stamp build --ink "#C1272D"
+  read   31 entries
+  wrote  34 files
+  done   48ms</pre>
+      </div>
+
+      <section aria-labelledby="h-cl">
+        <div class="sec-head" style="max-width:64ch"><h2 id="h-cl" style="font-size:22px">Changelog</h2></div>
+        <ul class="changelog">
+          <li><span class="d">02 Oct 2026</span><span>v0.6.2 — fixes ToC order for same-day posts</span></li>
+          <li><span class="d">14 Sep 2026</span><span>v0.6.0 — incremental builds by content hash</span></li>
+          <li><span class="d">30 Mar 2026</span><span>v0.1.0 — first public build, used for this site</span></li>
+        </ul>
+      </section>
+
+      <nav class="prevnext" aria-label="Catalogue neighbours">
+        <a href="#"><span>← KY-011</span>Drumkit for the 404</a>
+        <a href="#"><span>KY-013 →</span>not yet</a>
+      </nav>
+    </article>
+  </div>
+
+  <footer class="colophon">
+    <p class="big ghost">Colophon</p>
+    <p>Set in Syne, Newsreader and IBM Plex Mono. Two inks on cream. No tracking.</p>
+    <p>Last updated <b>08 Oct 2026</b>. <a href="#">Back to front page</a>.</p>
+  </footer>
+
+</div>
+</body>
+</html>
