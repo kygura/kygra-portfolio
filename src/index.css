@@ -1521,11 +1521,6 @@ kbd {
     var(--bg);
 }
 
-.hero__labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.hero__labels .lbl { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); white-space: nowrap; will-change: transform; opacity: 0; }
-.hero__labels .lbl::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--accent); background: var(--scrim); }
-.hero__labels .lbl span { background: var(--scrim); padding: 2px 5px; }
-.hero__labels .lbl em { font-style: normal; color: var(--ink-3); }
 
 /* Scene tabs sit at the left end of the hero's existing hairline strip. */
 .hero__sheets { display: flex; align-items: center; gap: 0; margin-right: auto; pointer-events: auto; }

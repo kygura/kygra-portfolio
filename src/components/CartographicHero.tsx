@@ -31,7 +31,6 @@ const CartographicHero = () => {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const labelsRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -49,12 +48,11 @@ const CartographicHero = () => {
     let engine: HeroEngine | null = null;
     import("@/hero/engine/hero-engine")
       .then(({ createHeroEngine }) => {
-        if (dead || !canvasRef.current || !stageRef.current || !labelsRef.current) return;
+        if (dead || !canvasRef.current || !stageRef.current) return;
         const reduced = Boolean(reduceQuery()?.matches);
         engine = createHeroEngine({
           canvas: canvasRef.current,
           host: stageRef.current,
-          labelLayer: labelsRef.current,
           readKeys: [],
           readVals: [],
           compass: null,
@@ -241,7 +239,6 @@ const CartographicHero = () => {
     <div ref={rootRef} className={`hero${noGl ? " hero--no-gl" : ""}`}>
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" role="img" aria-label={SHEETS[sheet].aria} />
-        <div ref={labelsRef} className="hero__labels" aria-hidden="true" />
         <div className="hero__vignette" />
 
         {/* Display name + tagline share one column so their left edge and

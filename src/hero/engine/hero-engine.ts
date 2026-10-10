@@ -38,7 +38,8 @@ void main(){
 export interface HeroEngineOptions {
   canvas: HTMLCanvasElement;
   host: HTMLElement;
-  labelLayer: HTMLElement;
+  /** Optional: landmark labels are skipped when omitted. */
+  labelLayer?: HTMLElement | null;
   readKeys: HTMLElement[];
   readVals: HTMLElement[];
   compass: SVGGElement | null;
@@ -107,7 +108,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   /* ---- pinned labels ---- */
   let activeLabels: { l: SceneDef["labels"][number]; el: HTMLDivElement; em: HTMLElement }[] = [];
   const buildLabels = (sc: SceneDef) => {
-    o.labelLayer.replaceChildren();
+    if (!o.labelLayer) return;
+    const layer = o.labelLayer;
+    layer.replaceChildren();
     activeLabels = sc.labels.map((l) => {
       const el = document.createElement("div");
       el.className = "lbl";
@@ -117,7 +120,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       em.textContent = l.sub;
       span.append(em);
       el.append(span);
-      o.labelLayer.append(el);
+      layer.append(el);
       return { l, el, em };
     });
   };
@@ -300,7 +303,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       rtA.dispose();
       rtB.dispose();
       renderer.dispose();
-      o.labelLayer.replaceChildren();
+      o.labelLayer?.replaceChildren();
     },
   };
 }
