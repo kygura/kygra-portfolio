@@ -2,13 +2,15 @@ import { ExternalLink, GitBranch } from "lucide-react";
 import { Link } from "react-router-dom";
 import { projects } from "@/lib/projects";
 
-const DEFAULT_ACCENT = "var(--accent-amber)";
+// Every entry takes the site accent: per-project hues would sit outside
+// the survey palette, and the accent switch should recolour the index too.
+const DEFAULT_ACCENT = "var(--accent)";
 
 const Projects = () => {
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
       <div className="mb-10 sm:mb-16 pb-6 sm:pb-8 border-b border-[var(--border-muted)] relative">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
           ( 02 &mdash; SOFTWARE )
         </p>
         <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">
@@ -27,9 +29,9 @@ const Projects = () => {
           return (
           <article
             key={project.slug}
-            className="project-entry relative group border-b-2 border-dashed border-muted pb-8 sm:pb-12 last:border-0"
+            className="project-entry relative group border-b border-dashed border-muted pb-8 sm:pb-12 last:border-0"
             style={{
-              "--project-accent": project.accent ?? DEFAULT_ACCENT,
+              "--project-accent": DEFAULT_ACCENT,
               animationDelay: `${index * 100}ms`,
             } as React.CSSProperties}
           >

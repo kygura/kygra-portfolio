@@ -2,27 +2,55 @@
    downloading until this stylesheet itself has arrived. */
 
 :root {
-  /* ── Cartographic Palette — Day ── */
-  --bg-primary: #ece7db;
-  --bg-secondary: #e2dbc9;
-  --bg-elevated: #f4f0e5;
-  --text-primary: #211c12;
-  --text-secondary: rgba(33, 28, 18, 0.55);
-  --accent-amber: #a9853b;
-  --accent-terracotta: #b65c33;
-  --accent-sage: #3e6f6b;
-  --border-subtle: rgba(33, 28, 18, 0.12);
-  --border-muted: rgba(33, 28, 18, 0.22);
+  color-scheme: dark;
+  /* ── Survey-sheet palette (design/DESIGN.md). One dark world: slate
+     ground with a green-blue bias, bone ink, hairline rules. ── */
+  --bg: #111617;
+  --bg-2: #161d1f;
+  --sheet: #1a2224;
+  --code: #0c1112;
+  --ink: #e0d9c8;
+  --ink-2: #aab1a7;
+  --ink-3: #75817b;
+  --rule: #2b3739;
+  --rule-2: #3d4b4d;
+  --grid: rgba(224, 217, 200, 0.035);
+  --scrim: rgba(12, 17, 18, 0.86);
+  --danger: #e5787f;
+  /* Accent — default variant "Lichen"; [data-accent] variants below.
+     --accent-h is the same colour as an HSL triplet for the kit tokens. */
+  --accent: #bcc77c;
+  --accent-deep: #5d7a3a;
+  --on-accent: #151a0e;
+  --accent-h: 69 40% 63%;
+  --on-accent-h: 85 30% 8%;
 
-  /* Legacy aliases (used by bento grid blocks) */
+  --f-pixel: "Silkscreen", "Courier New", monospace;
+  --f-body: "Literata", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --f-mono: "Fragment Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* Legacy names the existing components read, mapped onto the palette. */
+  --bg-primary: var(--bg);
+  --bg-secondary: var(--bg-2);
+  --bg-elevated: var(--sheet);
+  --text-primary: var(--ink);
+  --text-secondary: var(--ink-2);
+  --accent-amber: var(--accent);
+  --accent-terracotta: var(--accent);
+  --accent-sage: var(--ink-2);
+  --border-subtle: var(--rule);
+  --border-muted: var(--rule-2);
+  --line: var(--rule-2);
+  --soft: var(--ink-2);
+
   --black: var(--bg-primary);
   --white: var(--text-primary);
-  --cream: #e2dbc9;
-  --yellow: var(--accent-amber);
-  --coral: var(--accent-terracotta);
-  --teal: var(--accent-sage);
-  --pink: #a06a58;
-  --blue: #5a6d80;
+  --cream: var(--bg-2);
+  --yellow: var(--accent);
+  --coral: var(--accent);
+  --teal: var(--ink-2);
+  --pink: var(--danger);
+  --blue: var(--ink-3);
   --grey: var(--text-secondary);
 
   /* ── Layout tokens ── */
@@ -35,26 +63,12 @@
   --page-block: clamp(2.25rem, 7vw, 4rem);
 }
 
+:root[data-accent="torch"]  { --accent: #eaa24c; --accent-deep: #a24e1c; --on-accent: #1d1206; --accent-h: 33 79% 61%; --on-accent-h: 31 66% 7%; }
+:root[data-accent="astral"] { --accent: #86d3dc; --accent-deep: #2f6f9a; --on-accent: #08171b; --accent-h: 186 55% 69%; --on-accent-h: 193 54% 7%; }
+:root[data-accent="madder"] { --accent: #e5787f; --accent-deep: #7e2638; --on-accent: #1f0a0d; --accent-h: 356 68% 68%; --on-accent-h: 351 51% 8%; }
+
 @media (min-width: 640px) {
   :root { --nav-h: 68px; }
-}
-
-.dark {
-  /* ── Cartographic Palette — Night ── */
-  --bg-primary: #14110a;
-  --bg-secondary: #1f1b10;
-  --bg-elevated: #282214;
-  --text-primary: #eae3cf;
-  --text-secondary: rgba(234, 227, 207, 0.55);
-  --accent-amber: #c3a561;
-  --accent-terracotta: #cc7f5a;
-  --accent-sage: #6d968f;
-  --border-subtle: rgba(234, 227, 207, 0.12);
-  --border-muted: rgba(234, 227, 207, 0.22);
-
-  --cream: #1f1b10;
-  --pink: #bd8a76;
-  --blue: #8296a8;
 }
 
 /* ─────────────────────────────────────────────
@@ -78,10 +92,9 @@
 
 .hero {
   position: relative;
-  font-family: 'IBM Plex Mono', monospace;
-  background: var(--bg, #14110a);
-  color: var(--ink, #eae3cf);
-  transition: background 0.6s ease;
+  font-family: var(--f-mono);
+  background: var(--bg);
+  color: var(--ink);
   /* Slide under the transparent nav so the stage owns a full viewport. */
   margin-top: calc(var(--nav-h) * -1);
 }
@@ -111,8 +124,12 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(120% 100% at 50% 40%, transparent 55%, var(--vig, rgba(0, 0, 0, 0.42)));
-  /* Own layer, so canvas repaints never re-rasterise the gradient. */
+  /* The mock's map-sheet scrims: darken the top under the nav and the
+     lower half under the type, so it reads over any of the three scenes. */
+  background:
+    linear-gradient(var(--scrim), rgba(12, 17, 18, 0) 120px),
+    linear-gradient(rgba(12, 17, 18, 0) 38%, var(--scrim) 92%);
+  /* Own layer, so canvas repaints never re-rasterise the scrim. */
   transform: translateZ(0);
 }
 
@@ -133,7 +150,7 @@
 
 .hero__name-text {
   margin: 0;
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--f-body);
   font-weight: 400;
   font-size: clamp(56px, 17vw, 300px);
   line-height: 0.82;
@@ -154,10 +171,10 @@
   margin: clamp(14px, 2.2vw, 26px) 0 0;
   max-width: 38ch;
   width: clamp(240px, 26vw, 360px);
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--f-body);
   font-size: clamp(16px, 1.45vw, 23px);
   line-height: 1.45;
-  color: var(--ink, #eae3cf);
+  color: var(--ink);
   text-wrap: pretty;
   transition: color 0.6s ease;
   animation: cartoFadeUp 0.9s ease 0.55s backwards;
@@ -175,11 +192,11 @@
 }
 
 .hero__mark-text {
-  font-family: 'Instrument Serif', Georgia, serif;
+  font-family: var(--f-body);
   font-style: italic;
   font-size: clamp(78px, 19vw, 360px);
   line-height: 0.78;
-  color: var(--accent, #c3a561);
+  color: var(--accent);
   transition: color 0.6s ease;
   animation: cartoFadeUp 1.1s ease 0.5s backwards;
 }
@@ -195,7 +212,7 @@
   padding: 13px var(--hero-gutter);
   font-size: 10.5px;
   letter-spacing: 0.16em;
-  border-top: 1px solid var(--line, rgba(234, 227, 207, 0.22));
+  border-top: 1px solid var(--rule-2);
   transition: border-color 0.6s ease;
   animation: cartoFadeUp 0.8s ease 0.8s backwards;
   will-change: opacity;
@@ -225,7 +242,7 @@
   font-size: 10.5px;
   letter-spacing: 0.2em;
   text-align: center;
-  color: var(--soft, rgba(234, 227, 207, 0.55));
+  color: var(--ink-2);
   transition: color 0.6s ease;
 }
 
@@ -322,7 +339,7 @@
 }
 
 .canvas-cell__placeholder {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 1.2rem;
   color: var(--border-muted);
 }
@@ -353,7 +370,7 @@
   display: flex;
   gap: 0.75rem;
   align-items: center;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.65rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -361,7 +378,7 @@
 }
 
 .canvas-cell__post-title {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--f-body);
   font-size: clamp(2rem, 3.5vw, 3.8rem);
   line-height: 0.92;
   letter-spacing: 0.02em;
@@ -370,7 +387,7 @@
 }
 
 .canvas-cell__post-excerpt {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: var(--f-body);
   font-style: italic;
   font-size: 0.98rem;
   line-height: 1.62;
@@ -382,7 +399,7 @@
 }
 
 .canvas-cell__post-cta {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.7rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -508,7 +525,7 @@
 }
 
 .project-tooltip__title {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--f-body);
   font-size: 1.3rem;
   letter-spacing: 0.04em;
   line-height: 1;
@@ -516,7 +533,7 @@
 }
 
 .project-tooltip__subtitle {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.6rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -537,7 +554,7 @@
   gap: 0.3rem;
   padding: 0.3rem 0.6rem;
   border: 1px solid color-mix(in srgb, var(--project-accent) 50%, transparent);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.58rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -611,11 +628,11 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.55rem 0.85rem;
-  border: 1.5px solid color-mix(in srgb, var(--project-accent) 50%, transparent);
-  border-radius: 2px;
+  border: 1px solid color-mix(in srgb, var(--project-accent) 50%, transparent);
   color: var(--project-accent);
+  font-family: var(--f-mono);
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   text-decoration: none;
@@ -624,9 +641,7 @@
   overflow: hidden;
   transition:
     border-color 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     background 0.45s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.45s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -648,14 +663,12 @@
 .project-entry__link:hover,
 .project-entry__link:focus-visible {
   border-color: var(--project-accent);
-  border-radius: 100px;
-  color: var(--bg-primary);
-  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--project-accent) 30%, transparent);
+  color: var(--on-accent);
 }
 
 .project-entry__link:hover .project-entry__link-icon,
 .project-entry__link:focus-visible .project-entry__link-icon {
-  color: var(--bg-primary);
+  color: var(--on-accent);
 }
 
 .project-entry__link > * {
@@ -716,7 +729,7 @@
   width: 6.6rem;
   aspect-ratio: 1;
   border: 1px solid currentColor;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 2rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -752,7 +765,7 @@
   align-self: flex-start;
   padding: 0.4rem 0.6rem;
   border: 1px solid currentColor;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -771,7 +784,7 @@
 .project-detail__stack span {
   border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   padding: 0.35rem 0.6rem;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -784,7 +797,7 @@
   gap: 0.45rem;
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   padding: 0.55rem 0.75rem;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.72rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -814,7 +827,7 @@
   gap: 1rem;
   align-items: center;
   margin-bottom: 1.5rem;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.72rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -823,7 +836,7 @@
 
 .project-detail__eyebrow,
 .project-detail__label {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.72rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -920,7 +933,7 @@
 
 .manifesto__eyebrow {
   display: block;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.7rem;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -940,7 +953,7 @@
 }
 
 .manifesto__hero-text {
-  font-family: 'Instrument Serif', serif;
+  font-family: var(--f-body);
   font-size: clamp(2.4rem, 6vw, 4.5rem);
   line-height: 1;
   letter-spacing: 0.03em;
@@ -948,7 +961,7 @@
 }
 
 .manifesto__hero-cursor {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: clamp(2.2rem, 5.5vw, 4rem);
   line-height: 1;
   color: var(--accent-amber);
@@ -963,14 +976,14 @@
 }
 
 .manifesto__hero-line {
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--accent-amber), var(--accent-terracotta), transparent);
+  height: 1px;
+  background: var(--accent);
   transform-origin: left center;
   margin-bottom: 2.5rem;
 }
 
 .manifesto__p {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: var(--f-body);
   font-size: 1.18rem;
   line-height: 1.7;
   letter-spacing: 0.003em;
@@ -993,11 +1006,11 @@
 .manifesto__quote {
   margin: 2.2rem 0 2rem;
   padding: 0.8rem 0 0.8rem 1.5rem;
-  border-left: 3px solid var(--accent-amber);
+  border-left: 1px solid var(--accent-amber);
 }
 
 .manifesto__quote p {
-  font-family: 'Newsreader', Georgia, serif;
+  font-family: var(--f-body);
   font-style: italic;
   font-size: 1.2rem;
   line-height: 1.66;
@@ -1012,7 +1025,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--f-mono);
   font-size: 0.72rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -1089,79 +1102,58 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 42 31% 89%;
-    --foreground: 40 29% 10%;
-    --card: 44 41% 93%;
-    --card-foreground: 40 29% 10%;
-    --popover: 44 41% 93%;
-    --popover-foreground: 40 29% 10%;
-    --primary: 40 29% 10%;
-    --primary-foreground: 42 31% 89%;
-    --secondary: 19 56% 46%;
-    --secondary-foreground: 42 31% 89%;
-    --destructive: 19 56% 46%;
-    --destructive-foreground: 42 31% 89%;
-    --muted: 43 30% 84%;
-    --muted-foreground: 40 12% 38%;
-    --accent: 40 48% 45%;
-    --accent-foreground: 44 41% 93%;
-    --border: 42 12% 78%;
-    --input: 42 12% 78%;
-    --ring: 40 48% 45%;
-    --radius: 0rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
+  /* shadcn/ui kit tokens (HSL triplets) mapped onto the survey palette, so
+     every kit component inherits the theme. `.dark` is the same world —
+     there is no light theme. */
+  :root,
   .dark {
-    --background: 42 33% 6%;
-    --foreground: 44 39% 86%;
-    --card: 44 32% 9%;
-    --card-foreground: 44 39% 86%;
-    --popover: 44 32% 9%;
-    --popover-foreground: 44 39% 86%;
-    --primary: 44 39% 86%;
-    --primary-foreground: 42 33% 6%;
-    --secondary: 20 53% 58%;
-    --secondary-foreground: 42 33% 6%;
-    --destructive: 20 53% 58%;
-    --destructive-foreground: 42 33% 6%;
-    --muted: 42 33% 12%;
-    --muted-foreground: 44 18% 62%;
-    --accent: 42 45% 57%;
-    --accent-foreground: 42 33% 6%;
-    --border: 43 15% 19%;
-    --input: 43 15% 19%;
-    --ring: 42 45% 57%;
+    --background: 190 15% 8%;
+    --foreground: 42 28% 83%;
+    --card: 193 17% 10%;
+    --card-foreground: 42 28% 83%;
+    --popover: 193 17% 10%;
+    --popover-foreground: 42 28% 83%;
+    --primary: var(--accent-h);
+    --primary-foreground: var(--on-accent-h);
+    --secondary: 192 16% 12%;
+    --secondary-foreground: 42 28% 83%;
+    --destructive: 356 68% 68%;
+    --destructive-foreground: 190 15% 8%;
+    --muted: 192 16% 12%;
+    --muted-foreground: 102 6% 67%;
+    --ui-accent: var(--accent-h);
+    --ui-accent-foreground: var(--on-accent-h);
+    --border: 189 14% 20%;
+    --input: 188 12% 27%;
+    --ring: var(--accent-h);
     --radius: 0rem;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 193 17% 10%;
+    --sidebar-foreground: 42 28% 83%;
+    --sidebar-border: 189 14% 20%;
+    --sidebar-primary: var(--accent-h);
+    --sidebar-primary-foreground: var(--on-accent-h);
+    --sidebar-accent: 192 16% 12%;
+    --sidebar-accent-foreground: 42 28% 83%;
+    --sidebar-ring: var(--accent-h);
   }
 }
 
 @layer base {
   * { @apply border-border; }
 
+  html { background: var(--bg); }
+
+  /* Survey grid: a faint 48px hairline lattice behind every sheet. */
   body {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: 'Newsreader', Georgia, serif;
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+    color: var(--ink);
+    font-family: var(--f-body);
     font-size: 1.125rem;
     line-height: 1.65;
-    letter-spacing: 0.003em;
     font-feature-settings: "kern";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -1170,30 +1162,17 @@
     cursor: none;
   }
 
-  /* Paper grain. The SVG carries explicit dimensions and is tiled at
-     200px: without them the turbulence filter is rasterised at full
-     viewport size and re-run on every resize. translateZ promotes the
-     overlay to its own layer so repaints underneath it stay cheap. */
-  body::after {
-    content: '';
-    position: fixed; inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
-    background-repeat: repeat;
-    background-size: 200px 200px;
-    pointer-events: none;
-    z-index: 9999;
-    opacity: 0.3;
-    transform: translateZ(0);
-  }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-normal;
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--f-body);
+    letter-spacing: -0.01em;
   }
 
   ::selection {
-    background-color: #a9853b;
-    color: #fff8e7;
+    background-color: var(--accent);
+    color: var(--on-accent);
   }
 
   /* No native pointer cursor — custom cursor handles hover feedback */
@@ -1217,22 +1196,20 @@
 
 @layer utilities {
   .smear {
-    height: 3px;
-    background: linear-gradient(90deg, transparent 0%, var(--text-primary) 15%, var(--text-primary) 85%, transparent 100%);
-    opacity: 0.15;
+    height: 1px;
+    background: var(--rule-2);
     margin: 0;
     border: none;
   }
   .smear.thick {
-    height: 8px;
-    opacity: 0.08;
+    height: 2px;
   }
 
   .stamp {
     display: inline-block;
-    border: 2.5px solid var(--accent-terracotta);
+    border: 1px solid var(--accent-terracotta);
     color: var(--accent-terracotta);
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--f-body);
     font-size: 0.75rem;
     letter-spacing: 0.2em;
     padding: 0.25rem 0.6rem;
@@ -1245,21 +1222,33 @@
   }
   .prose-minimal h1 {
     @apply text-4xl md:text-5xl lg:text-6xl mb-6 uppercase tracking-wider;
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--f-body);
   }
   .prose-minimal h2 {
     @apply text-3xl md:text-4xl mb-4 mt-12 uppercase tracking-wide;
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--f-body);
   }
   .prose-minimal h3 {
     @apply text-2xl md:text-3xl mb-4 mt-8 uppercase;
-    font-family: 'Instrument Serif', serif;
+    font-family: var(--f-body);
   }
+  /* Reading column: Literata 19px / 1.68 on a ~66ch measure. */
   .prose-minimal p {
     @apply mb-6 text-foreground;
-    font-size: 1.125rem;
-    line-height: 1.78;
-    letter-spacing: 0.005em;
+    font-size: 1.1875rem;
+    line-height: 1.68;
+    max-width: 66ch;
+  }
+  .prose-minimal ul li,
+  .prose-minimal ol li {
+    font-size: 1.1875rem;
+    line-height: 1.68;
+    max-width: 66ch;
+  }
+  @media (max-width: 560px) {
+    .prose-minimal p,
+    .prose-minimal ul li,
+    .prose-minimal ol li { font-size: 1.0625rem; }
   }
   .prose-minimal ul {
     @apply mb-6 ml-6 list-none;
@@ -1277,8 +1266,8 @@
     @apply mb-2 pl-2 text-base leading-relaxed;
   }
   .prose-minimal blockquote {
-    @apply relative border-l-4 pl-6 py-2 my-8;
-    font-family: 'Newsreader', Georgia, serif;
+    @apply relative border-l pl-6 py-2 my-8;
+    font-family: var(--f-body);
     font-style: italic;
     color: var(--accent-amber);
     border-color: var(--accent-amber);
@@ -1287,19 +1276,26 @@
   }
   .prose-minimal p code,
   .prose-minimal li code {
-    @apply bg-foreground/10 px-1.5 py-0.5 font-mono text-sm border border-foreground/20;
+    @apply px-1.5 py-0.5 font-mono text-sm border;
+    background: var(--code);
+    border-color: var(--rule);
   }
   .prose-minimal pre {
-    @apply bg-foreground/5 text-foreground border border-foreground/10 rounded-none p-4 overflow-x-auto mb-8 shadow-none;
+    @apply text-foreground border rounded-none p-4 overflow-x-auto mb-8 shadow-none;
+    background: var(--code);
+    border-color: var(--rule);
   }
   .prose-minimal pre code {
     @apply bg-transparent p-0 border-none text-sm;
   }
   .prose-minimal a {
-    @apply font-bold underline decoration-2 decoration-foreground/25 hover:decoration-foreground transition-all;
+    @apply underline decoration-1 underline-offset-[0.18em] transition-colors;
+    text-decoration-color: var(--accent);
   }
+  .prose-minimal a:hover { color: var(--accent); }
   .prose-minimal hr {
-    @apply my-12 border-none h-[2px] opacity-20 bg-gradient-to-r from-transparent via-foreground to-transparent;
+    @apply my-12 border-none h-px;
+    background: var(--rule-2);
   }
 }
 
@@ -1307,23 +1303,14 @@
   .cv-download-btn {
     @apply inline-flex items-center gap-2 font-bold text-sm tracking-widest uppercase px-6 py-3;
     background-color: var(--accent-amber);
-    color: var(--bg-primary);
-    border: 2px solid var(--accent-amber);
+    color: var(--on-accent);
+    border: 1px solid var(--accent-amber);
     position: relative;
-    transition: all 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: none;
+    transition: background-color 150ms ease, color 150ms ease;
   }
   .cv-download-btn:hover {
     background-color: transparent;
     color: var(--accent-amber);
-    transform: translate(-3px, -3px);
-    box-shadow:
-      1px 1px 0 var(--accent-amber),
-      2px 2px 0 var(--accent-amber),
-      3px 3px 0 var(--accent-amber),
-      4px 4px 0 var(--accent-amber),
-      5px 5px 0 var(--accent-amber),
-      6px 6px 0 var(--accent-amber);
   }
 }
 
@@ -1450,6 +1437,119 @@
   from { clip-path: circle(0% at var(--vt-x, 50%) var(--vt-y, 50%)); }
   to   { clip-path: circle(150% at var(--vt-x, 50%) var(--vt-y, 50%)); }
 }
+
+/* ─────────────────────────────────────────────
+   SURVEY-SHEET PIECES — wordmark, accent picker, kbd, help sheet,
+   hero scene tabs + pinned labels, code blocks
+   ───────────────────────────────────────────── */
+kbd {
+  font-family: var(--f-mono);
+  font-size: 0.78em;
+  line-height: 1;
+  display: inline-block;
+  padding: 0.22em 0.4em 0.18em;
+  color: var(--ink);
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+  border-bottom-width: 2px;
+  vertical-align: 0.08em;
+  min-width: 1.6em;
+  text-align: center;
+}
+
+/* "NCA" in Silkscreen + "Ventures" in Literata italic, in the accent. */
+.wordmark { display: inline-flex; align-items: baseline; gap: 0.35em; letter-spacing: 0; }
+.wordmark b { font-family: var(--f-pixel); font-weight: 400; font-size: 1.18em; letter-spacing: 0.02em; color: var(--ink); }
+.wordmark em { font-family: var(--f-body); font-style: italic; font-weight: 400; font-size: 1.28em; color: var(--accent); }
+
+.accent-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid var(--rule-2);
+}
+.accent-pick button {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  background: var(--sw);
+  border: 1px solid transparent;
+  outline-offset: 1px;
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+.accent-pick button:hover { opacity: 1; }
+.accent-pick button[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
+/* Phones: the bar is a fixed row that master filled with "N.CA" and a
+   three-letter toggle, so the wordmark drops to its initials and the
+   picker tightens to keep the five links unscrolled. */
+@media (max-width: 639px) {
+  .wordmark em { display: none; }
+  .accent-pick { gap: 2px; padding: 3px; }
+  .accent-pick button { width: 8px; height: 8px; }
+  .nav-bar .nav-link { font-size: clamp(8.5px, 2.6vw, 11px); }
+}
+@media (min-width: 640px) {
+  .accent-pick { gap: 5px; padding: 7px 9px; }
+}
+
+.help-back { position: fixed; inset: 0; z-index: 100000; background: var(--scrim); display: grid; place-items: center; padding: 16px; }
+.help {
+  width: min(100%, 640px); max-height: calc(100% - 32px); overflow: auto;
+  background: var(--bg-2); border: 1px solid var(--accent); padding: 20px 22px;
+  font-family: var(--f-mono); font-size: 0.8125rem; color: var(--ink-2);
+}
+.help-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.help-top h2 { margin: 0; font-family: var(--f-pixel); font-size: 13px; color: var(--ink); letter-spacing: 0.06em; text-transform: uppercase; }
+.help-close { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule-2); padding: 5px 9px; display: inline-flex; gap: 8px; align-items: center; }
+.help-close:hover { border-color: var(--accent); }
+.help-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 18px 28px; }
+.help h3 { margin: 0 0 8px; font-family: var(--f-pixel); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+.help dl { margin: 0; display: grid; grid-template-columns: 5.4rem 1fr; gap: 7px 12px; }
+.help dl > div { display: contents; }
+.help dt { white-space: nowrap; }
+.help dd { margin: 0; color: var(--ink); }
+
+/* PS1 renderer: quarter-res target, nearest upscale. */
+.hero__canvas { image-rendering: pixelated; }
+.hero--no-gl .hero__canvas { display: none; }
+/* Without WebGL: a contour sheet in CSS stands in for the scene. */
+.hero--no-gl .hero__stage {
+  background:
+    repeating-radial-gradient(circle at 62% 78%, transparent 0 22px, var(--rule) 22px 23px),
+    var(--bg);
+}
+
+.hero__labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.hero__labels .lbl { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); white-space: nowrap; will-change: transform; opacity: 0; }
+.hero__labels .lbl::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--accent); background: var(--scrim); }
+.hero__labels .lbl span { background: var(--scrim); padding: 2px 5px; }
+.hero__labels .lbl em { font-style: normal; color: var(--ink-3); }
+
+/* Scene tabs sit at the left end of the hero's existing hairline strip. */
+.hero__sheets { display: flex; align-items: center; gap: 0; margin-right: auto; pointer-events: auto; }
+.hero__sheet {
+  font: inherit; font-family: var(--f-mono); font-size: 10.5px; line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-2); background: transparent; border: 1px solid var(--rule-2);
+  margin-right: -1px; padding: 1px 8px; display: inline-flex; gap: 6px; align-items: baseline;
+}
+.hero__sheet small { font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.04em; color: var(--ink-3); }
+.hero__sheet:hover { color: var(--ink); }
+.hero__sheet[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); position: relative; }
+.hero__sheet[aria-pressed="true"] small { color: var(--on-accent); }
+.hero__sheet-keys { display: inline-flex; gap: 3px; padding-left: 10px; font-size: 10px; }
+@media (max-width: 480px) {
+  .hero__sheet-keys { display: none; }
+  .hero__sheet small { display: none; }
+}
+
+.hero__strip, .hero__marker { font-family: var(--f-pixel); letter-spacing: 0.08em; }
+.manifesto__eyebrow { font-family: var(--f-pixel); letter-spacing: 0.08em; }
+
+/* Code blocks: token-driven Prism theme on the code ground. */
+.codeblock { background: var(--code); border-color: var(--rule-2); }
+.codeblock pre, .codeblock code { font-family: var(--f-mono) !important; }
 
 /* ─────────────────────────────────────────────
    REDUCED MOTION — global safety net

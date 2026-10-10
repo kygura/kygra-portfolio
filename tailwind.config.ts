@@ -13,39 +13,24 @@ export default {
   			'2xl': '1400px'
   		}
   	},
+  	// Survey-sheet shape language: square corners and no soft shadows,
+  	// for every rounded-* / shadow-* utility the kit components use.
+  	borderRadius: {
+  		none: '0', sm: '0', DEFAULT: '0', md: '0', lg: '0', xl: '0', '2xl': '0', '3xl': '0', full: '0'
+  	},
+  	boxShadow: {
+  		none: 'none', '2xs': 'none', xs: 'none', sm: 'none', DEFAULT: 'none', md: 'none', lg: 'none', xl: 'none', '2xl': 'none', inner: 'none'
+  	},
   	extend: {
+  		// One serif (Literata) for reading and headings, Fragment Mono for
+  		// code/data/labels, Silkscreen only for tiny eyebrows and the wordmark.
   		fontFamily: {
-  			display: [
-  				'Instrument Serif',
-  				'Georgia',
-  				'serif'
-  			],
-  			body: [
-  				'Newsreader',
-  				'Georgia',
-  				'serif'
-  			],
-  			sans: [
-  				'Newsreader',
-  				'Georgia',
-  				'ui-serif',
-  				'serif'
-  			],
-  			serif: [
-  				'Newsreader',
-  				'Georgia',
-  				'ui-serif',
-  				'serif'
-  			],
-  			mono: [
-  				'IBM Plex Mono',
-  				'ui-monospace',
-  				'SFMono-Regular',
-  				'Menlo',
-  				'Monaco',
-  				'Consolas',
-  				'monospace'
-  			]
+  			display: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
+  			body: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
+  			sans: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
+  			serif: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
+  			mono: ['Fragment Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+  			pixel: ['Silkscreen', 'Courier New', 'monospace']
   		},
   		colors: {
   			border: 'hsl(var(--border))',
@@ -69,9 +54,11 @@ export default {
   				DEFAULT: 'hsl(var(--muted))',
   				foreground: 'hsl(var(--muted-foreground))'
   			},
+  			// --accent itself is the hex accent used by plain CSS; the kit's
+  			// HSL triplet lives under --ui-accent so opacity modifiers work.
   			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  				DEFAULT: 'hsl(var(--ui-accent))',
+  				foreground: 'hsl(var(--ui-accent-foreground))'
   			},
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',
@@ -91,11 +78,6 @@ export default {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			}
-  		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
   		},
   		keyframes: {
   			'accordion-down': {
@@ -121,15 +103,6 @@ export default {
   			'cursor-enter': 'cursor-enter 0.3s ease-out forwards',
   			'fade-up': 'fade-up 0.6s ease-out forwards',
   		},
-  		boxShadow: {
-  			'2xs': 'var(--shadow-2xs)',
-  			xs: 'var(--shadow-xs)',
-  			sm: 'var(--shadow-sm)',
-  			md: 'var(--shadow-md)',
-  			lg: 'var(--shadow-lg)',
-  			xl: 'var(--shadow-xl)',
-  			'2xl': 'var(--shadow-2xl)'
-  		}
   	}
   },
   plugins: [tailwindcssAnimate],

@@ -191,7 +191,7 @@ const Guestbook = () => {
   return (
     <div className="page-shell page-shell--narrow flex flex-col min-h-screen">
       <div className="prose-minimal animate-fade-in flex-grow">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
           ( 03 &mdash; GUESTBOOK )
         </p>
         <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">

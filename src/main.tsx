@@ -4,7 +4,8 @@ import App from "./App.tsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
-  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
+  // One dark world: the survey-sheet theme has no light variant.
+  <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
     <App />
   </ThemeProvider>
 );

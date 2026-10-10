@@ -8,7 +8,7 @@ type HistoryItem = {
   content: React.ReactNode;
 };
 
-type TerminalTheme = "tokyo-night" | "catppuccin" | "minimal";
+type TerminalTheme = "survey" | "tokyo-night" | "catppuccin" | "minimal";
 
 interface ThemeColors {
   bg: string;
@@ -32,6 +32,25 @@ interface ThemeColors {
 }
 
 const themes: Record<TerminalTheme, ThemeColors> = {
+  // Default: the site's survey-sheet tokens (follows the accent switch).
+  survey: {
+    bg: "bg-[var(--code)]",
+    bgOverlay: "bg-[var(--scrim)]",
+    header: "bg-[var(--bg-2)]",
+    border: "border-[var(--rule-2)]",
+    text: "text-[var(--ink)]",
+    textMuted: "text-[var(--ink-3)]",
+    prompt: "text-[var(--accent)]",
+    path: "text-[var(--ink-2)]",
+    command: "text-[var(--ink)]",
+    success: "text-[var(--accent)]",
+    error: "text-[var(--danger)]",
+    warning: "text-[var(--accent)]",
+    info: "text-[var(--ink-2)]",
+    accent: "text-[var(--accent)]",
+    scrollbarThumb: "bg-[var(--rule-2)]",
+    scrollbarTrack: "bg-transparent",
+  },
   "tokyo-night": {
     bg: "bg-[#1a1b26]/95",
     bgOverlay: "bg-black/40",
@@ -110,8 +129,13 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [input, setInput] = useState("");
   const [theme, setTheme] = useState<TerminalTheme>(() => {
-    const saved = localStorage.getItem("terminal-theme");
-    return (saved as TerminalTheme) || "tokyo-night";
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem("terminal-theme");
+    } catch {
+      /* storage blocked */
+    }
+    return saved && saved in themes ? (saved as TerminalTheme) : "survey";
   });
   const [history, setHistory] = useState<HistoryItem[]>([
     {
@@ -340,6 +364,7 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
               <div className="flex flex-col gap-2">
                 <div>Available themes:</div>
                 <div className="flex gap-4 ml-2">
+                  <span className={themes[theme].success}>survey</span>
                   <span className={themes[theme].success}>tokyo-night</span>
                   <span className={themes[theme].success}>catppuccin</span>
                   <span className={themes[theme].success}>minimal</span>
@@ -352,7 +377,11 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
           const newTheme = args[0].toLowerCase() as TerminalTheme;
           if (themes[newTheme]) {
             setTheme(newTheme);
-            localStorage.setItem("terminal-theme", newTheme);
+            try {
+              localStorage.setItem("terminal-theme", newTheme);
+            } catch {
+              /* storage blocked */
+            }
             newHistory.push({
               type: "output",
               content: (
@@ -434,7 +463,7 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
         onClick={() => setIsOpen(false)}
       >
         <div
-          className={`relative w-full max-w-2xl h-96 ${themes[theme].bg} border ${themes[theme].border} rounded-lg shadow-2xl flex flex-col font-mono text-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+          className={`relative w-full max-w-2xl h-96 ${themes[theme].bg} border ${themes[theme].border} flex flex-col font-mono text-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Texture Overlay - Almanac Sketch Effect */}

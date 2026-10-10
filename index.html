@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#111617" />
     <title>Nicolas Cerrato Anton — Frontier Software Studio</title>
 
 
@@ -16,10 +18,16 @@
          which serialises fonts behind the CSS request. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Newsreader:ital,wght@0,400;1,400;1,500&family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap&subset=latin"
+      href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Silkscreen&display=swap"
     >
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314110a'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' font-style='italic' text-anchor='middle' fill='%23c3a561'%3EN%3C/text%3E%3C/svg%3E" />
-
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' shape-rendering='crispEdges'%3E%3Crect width='32' height='32' fill='%23111617'/%3E%3Cpath fill='%23bcc77c' d='M7 8h3v16H7zM22 8h3v16h-3zM10 9h3v5h-3zM13 13h3v5h-3zM16 17h3v5h-3zM19 20h3v3h-3z'/%3E%3C/svg%3E" />
+    <script>
+      // Apply the saved accent before first paint (storage may be blocked).
+      try {
+        var a = ["lichen", "torch", "astral", "madder"][parseInt(localStorage.getItem("nca-accent"), 10)];
+        if (a && a !== "lichen") document.documentElement.setAttribute("data-accent", a);
+      } catch (e) {}
+    </script>
   </head>
 
   <body>
