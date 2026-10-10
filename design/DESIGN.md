@@ -13,11 +13,11 @@ One dark world, no light theme. A survey sheet: slate ground with a green-blue b
 | `--rule` / `--rule-2` | `#2b3739` / `#3d4b4d` | hairlines |
 | `--accent` / `--accent-deep` / `--on-accent` | per variant | links, keys, selection, fills |
 
-The only fills are the accent and the sheet. Corners are square (`--radius: 0`). Tokens live in `src/index.css`; the shadcn HSL tokens are remapped onto the same palette (`--ui-accent` etc.) so kit components stay in the world.
+The only fills are the accent and the sheet. Corners are square and shadows flat everywhere: `--radius: 0`, and `tailwind.config.ts` overrides every `rounded-*`/`shadow-*` step to 0/none. Tokens live in `src/index.css`. The names the existing components already read (`--bg-primary`, `--text-primary`, `--accent-amber`, `--border-muted`, …) are aliases onto the palette, and the shadcn HSL tokens are remapped too (the kit's accent is `--ui-accent`, fed by `--accent-h`, so `bg-accent/50` style modifiers follow the accent switch). `next-themes` is forced to dark; there is no light theme. Accent state: `src/theme/accent.ts`.
 
 ### Accent variants
 
-Keys `1`–`4`, buttons in the home strip and footer, or click the accent in the status line. Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
+Keys `1`–`4`, or the four-swatch picker in the nav (the slot the old day/night toggle used). Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
 
 1. Lichen `#bcc77c` (default)
 2. Torch Amber `#eaa24c`
@@ -26,62 +26,45 @@ Keys `1`–`4`, buttons in the home strip and footer, or click the accent in the
 
 ## Type
 
-- **Literata** (opsz 7–72, 400/600, italic 400): body and headings. Reading column 19px / 1.68 on a ~66ch (42rem) measure; 17px under 560px.
-- **Fragment Mono**: keys, code, data, nav, table cells, status line.
-- **Silkscreen**: wordmark initials, eyebrows, sheet numbers, 88×31 buttons, status mode. Nowhere else.
+- **Literata** (opsz 7–72, 400/600, italic 400): body and every heading that used Instrument Serif or Newsreader (Tailwind `font-display`/`font-serif`/`font-body`/`font-sans` all map to it). Post body 19px / 1.68 with a 66ch cap; 17px under 560px.
+- **Fragment Mono**: code, data, nav links, buttons, terminal, labels (`font-mono`).
+- **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings, and the "NCA" of the wordmark. Nowhere else.
 
-Scale: 11 / 13 / 16 / 19 (read) / 24 / 36px, hero `clamp(2.1rem, 5.2vw, 3.9rem)`.
+Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 640px the bar keeps only "NCA" so the five links still fit unscrolled, as master's did.
 
-Wordmark: "NCA" in Silkscreen + "Ventures" in Literata italic in the accent.
+## Layout
 
-## Layout per route
+Layout: unchanged from master. Same routes, component tree, section order, nav/footer/hero placement, grids, gutters, content and interactions (custom cursor, Lenis smooth scroll, page transitions, scroll progress, terminal on `` ` ``/Ctrl+K, footer quote carousel on A/D). Only colour, type, shape and the hero's background changed. Before/after captures at 1360px: `design/qa/before-*.png`, `design/qa/after-*.png` (element x/width identical; heights move only where Literata sets wider than the old faces and lines rewrap).
 
-All routes: top bar (wordmark, nav with printed g-chords), survey-grid `main.sheet` (max 1240px, `clamp(16px, 4vw, 48px)` gutters), indie footer, status line pinned to the bottom.
-
-- `/` Home: full-bleed hero (top bar and index filter overlaid), control strip (accent, motion, keys), ruler A–H, project index as survey table, latest five field notes, the craft statement in rail + reading column.
-- `/projects`: same survey table with a filter. Rows expand in place (description, dossier, live, GitHub).
-- `/projects/:slug`: rail (ref, kind, est., state, stack) + reading column (description lede, links, overview).
-- `/writings`: field-note log (number, date, title, read time, excerpt), text filter and tag buttons.
-- `/writings/:slug`: rail (note number, filed, reading time, tags, TOC built from rendered headings, back link) + reading column. Code blocks use a token-driven Prism theme; `> [!NOTE]` callouts render as ruled asides; GFM footnotes styled; older/newer links at the end.
-- `/guestbook`: rail + form panel (name ≤ 64, message ≤ 280, Ctrl+Enter, 30s cooldown, Supabase insert + realtime unchanged) + signature log. Toasts replaced by an inline status message mirrored to the status line.
-- `/cv`, `/artifacts`, 404: section heads, ruled CV sections with a Silkscreen label column.
-
-Mobile (≤ 560px): 16px gutters, nav keys hidden, sheet tabs left-aligned, map key hidden, index drops kind/year/stack columns and state text (dot remains), status line drops where/accent. No horizontal page scroll at 400px.
+Per-project accent hues on `/projects` were dropped for the site accent (they sat outside the palette).
 
 ## Hero
 
-Code: `src/hero/` (`Hero.tsx` DOM frame, `sheets.ts` metadata, `engine/` three.js r160: `psx.ts` shared materials and helpers, `ruins.ts`, `topo.ts`, `astral.ts`, `hero-engine.ts` loop + post). The engine is a dynamic import, so only `/` downloads three.
+Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline, "C.A" accent initials, hairline strip and scroll parallax. Only the field behind them changed: the canvas-2D contour field is replaced by the PS1 three-scene renderer in `src/hero/` (`sheets.ts` metadata, `engine/` three.js r160: `psx.ts` shared materials and helpers, `ruins.ts`, `topo.ts`, `astral.ts`, `hero-engine.ts` loop + post). The engine is a dynamic import, so only `/` downloads three.
 
-- **01 Ruins**: plaza, column ring, collapsed arch, fallen head, trees, motes, moon. Readout lat/lon/elev/bearing/grid.
-- **02 Topo**: animated relief, marching-squares contours (0.5 m, index every 2.5 m), draped 5 m grid, trig points, sweep. Readout scale/CI/relief/bearing/grid.
-- **03 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite. Readout RA/Dec/epoch/bearing/field.
+- **01 Ruins**: plaza, column ring, collapsed arch, fallen head, trees, motes, moon.
+- **02 Topo**: animated relief, marching-squares contours, draped grid, trig points, sweep.
+- **03 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite.
 
-PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching sheets dissolves through the dither matrix (hard cut under reduced motion). Last sheet stored in `localStorage["nca-sheet"]`. Map frame per sheet: eyebrow, readouts, scale bar labels, key glyphs, compass turning with the camera, pinned labels projected from the scene.
+Scene tabs (`01 Ruins / 02 Topo / 03 Astral` + `[` `]` hint) sit at the left end of the existing bottom strip, opposite the scroll cue. Pinned scene labels float in the stage beneath the type; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
 
-Colour: three's colour management is off and output is linear, matching the r128 mock. The loop runs only while needed (stops offscreen, in hidden tabs, and when paused and clean). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the frame stays up over a CSS contour fallback.
+PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching scenes dissolves through the dither matrix (hard cut under reduced motion). Last scene stored in `localStorage["nca-sheet"]`. The mock's scrims (top and lower half) keep the type legible over every scene.
+
+Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
 
 ## Keyboard
 
-Ignored while typing in a field, except `Esc`, which leaves it.
+Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while typing in a field or with a modifier held. Code: `src/theme/Keys.tsx`, tables in `src/theme/keymap.ts`. Nav links carry their chord in `title`/`aria-keyshortcuts`; no visible hints were added to the bar (no room without changing it), and there is no status line.
 
 | Keys | Action |
 | --- | --- |
-| `g h` / `g w` / `g b` / `g l` / `g c` / `g a` | Home / Work / Writing / Guestbook (log) / CV / Artifacts |
+| `g h` / `g w` / `g s` / `g b` / `g c` | Home / Writings / Software / Guestbook / CV |
 | `g g` | Top of page |
-| `/` | Focus the page's filter (`[data-filter]`) |
-| `j` `k` | Next / previous row (project index on home and /projects, notes on /writings) |
-| `Enter` | Native activation of the focused row (expand, or open note) |
 | `1`–`4` | Accent |
-| `[` `]` | Previous / next hero sheet (home) |
-| `p` | Pause / play the scene (home) |
-| `x` | PS1 pipeline on/off (home; key only, no button) |
-| `?` | Help overlay (focus held on its close button) |
-| `Esc` | Close help, leave a field, cancel a chord |
+| `[` `]` | Previous / next hero scene (home) |
+| `?` | Help sheet (focus held on its close button) |
+| `Esc` | Close help, leave a field |
 
-Status line: mode (NORMAL / SEARCH / INSERT / HELP, follows focus), where (path or hero sheet), message, pending chord, accent.
+## Also fixed
 
-## Removed
-
-Cartographic hero, custom cursor, magnetic buttons, Lenis smooth scroll, scroll progress bar, page transitions, typewriter manifesto, quote-carousel footer, theme toggle (next-themes provider), terminal overlay and soundtrack player, old SVG graphics, toasts. Dependencies dropped: framer-motion, lenis, canvas-confetti. Added: three 0.160.1.
-
-Not carried from the mock: proposal tags A–G and the notes section, the "Proposal" nav item, the visible PS1 toggle button, the invented project activity profiles (the table shows real stack and status instead), RSS (no feed exists; the footer links `/writings.json`). The webring is a placeholder.
+Post markdown: fenced code is detected from its `<pre>` (react-markdown no longer passes `inline`, so every inline code span rendered as a block); a markdown `h1` renders as `h2` under the page title; the hast `node` prop is no longer forwarded to the DOM. Code blocks use a token-driven Prism theme (comments ink-3, keywords accent, literals ink-2). Footer quote keys ignore typing and claimed chord keys.
