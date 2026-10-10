@@ -18,13 +18,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        // No "radix" bucket: grouping every primitive into one chunk meant
-        // a page that used a tooltip also downloaded accordion, dialog,
-        // select and the rest. Rollup splits them per-route on its own.
-        manualChunks: {
-          "framer-motion": ["framer-motion"],
-          "react-query": ["@tanstack/react-query"],
-        },
+        // three is loaded with a dynamic import() and lands in its own chunk.
+        manualChunks: { three: ["three"] },
       },
     },
     cssCodeSplit: true,

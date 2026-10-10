@@ -15,7 +15,7 @@ const postLoaders = import.meta.glob<string>("../../content/writings/*.md", {
   import: "default",
 });
 
-const summaries: PostSummary[] = Object.values(manifestModules)[0] ?? [];
+export const summaries: PostSummary[] = Object.values(manifestModules)[0] ?? [];
 
 interface UsePostsResult {
   posts: PostSummary[];

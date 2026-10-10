@@ -21,6 +21,14 @@ const ROOT = path.resolve(__dirname, "..");
 const PROJECTS_DIR = path.join(ROOT, "content", "projects");
 const OUTPUT_MODULE = path.join(ROOT, "src", "lib", "project-dossiers.ts");
 
+// readdir order differs per filesystem, so the output is sorted to keep builds idempotent.
+// Listed slugs keep the order the site has always shown; any other dossier follows by slug.
+const PROJECT_ORDER = ["hyperion", "meridian", "lexis-editorial-companion", "swarm", "equilibria", "noted"];
+const rank = (slug: string) => {
+  const i = PROJECT_ORDER.indexOf(slug);
+  return i === -1 ? PROJECT_ORDER.length : i;
+};
+
 // ---- Schema -------------------------------------------------------------------
 
 const projectLinkSchema = z.object({
@@ -105,7 +113,10 @@ async function main() {
     process.exit(1);
   }
 
-  const yamlFiles = files.filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"));
+  const slugOf = (file: string) => file.replace(/\.ya?ml$/, "");
+  const yamlFiles = files
+    .filter((f) => f.endsWith(".yaml") || f.endsWith(".yml"))
+    .sort((a, b) => rank(slugOf(a)) - rank(slugOf(b)) || (slugOf(a) < slugOf(b) ? -1 : slugOf(a) > slugOf(b) ? 1 : 0));
   if (!yamlFiles.length) {
     console.warn("No YAML project files found. Writing empty module.");
     await writeModule([]);
@@ -116,7 +127,7 @@ async function main() {
   const errors: string[] = [];
 
   for (const file of yamlFiles) {
-    const slug = file.replace(/\.ya?ml$/, "");
+    const slug = slugOf(file);
     const filePath = path.join(PROJECTS_DIR, file);
     const raw = await fs.readFile(filePath, "utf-8");
 

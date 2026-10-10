@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en" data-acc="sodium">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kygra Field Survey</title>
+<meta name="description" content="Sketch mockup: keyboard-first, PS1-rendered cartographic portfolio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- tokens ---------- */
+:root{
+  --font-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-ui:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --gut:16px; --rule-w:1px; --focus-w:3px;
+  /* default = sodium */
+  --bg:#0e0d0b; --bg-2:#17150f; --ink:#e6dfcc; --dim:#8a8270; --rule:#2e2a21;
+  --acc:#ff7a1a; --acc-2:#ffd23f; --acc-ink:#0e0d0b; --terrain:#6b4a1c;
+}
+:root[data-acc="phosphor"]{ --bg:#070b08; --bg-2:#0d140f; --ink:#cfe8d2; --dim:#6f8a74; --rule:#1c2a20; --acc:#5dff6a; --acc-2:#e8ff7a; --acc-ink:#041006; --terrain:#1f5a2a; }
+:root[data-acc="survey"]{ --bg:#e9e3d0; --bg-2:#ddd5bd; --ink:#1d1a14; --dim:#5e5747; --rule:#bfb498; --acc:#b8301a; --acc-2:#8a5a2b; --acc-ink:#f5f0e0; --terrain:#c9b48a; }
+:root[data-acc="ion"]{ --bg:#06090d; --bg-2:#0c121a; --ink:#d6e2ea; --dim:#6c7d8a; --rule:#1a2633; --acc:#2ef2e0; --acc-2:#ff3d8b; --acc-ink:#03110f; --terrain:#123c44; }
+:root[data-acc="hazard"]{ --bg:#0b0b0a; --bg-2:#141412; --ink:#ececec; --dim:#868680; --rule:#2b2b28; --acc:#d7ff1e; --acc-2:#ff4f1f; --acc-ink:#0b0b0a; --terrain:#4a4a2a; }
+
+/* ---------- base ---------- */
+*,*::before,*::after{box-sizing:border-box;border-radius:0}
+html{scroll-behavior:smooth;scroll-padding-top:56px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  margin:0; color:var(--ink); background-color:var(--bg);
+  background-image:
+    linear-gradient(color-mix(in srgb,var(--rule) 55%,transparent) 1px,transparent 1px),
+    linear-gradient(90deg,color-mix(in srgb,var(--rule) 55%,transparent) 1px,transparent 1px);
+  background-size:64px 64px;
+  font:17px/1.6 var(--font-body);
+  padding-bottom:40px; overflow-x:hidden;
+}
+a{color:var(--acc);text-underline-offset:3px}
+kbd{
+  font:600 .78em/1 var(--font-ui); display:inline-block; padding:.18em .38em; min-width:1.5em; text-align:center;
+  border:1px solid currentColor; border-bottom-width:2px; background:var(--bg-2); color:var(--ink);
+}
+.mono{font-family:var(--font-ui)}
+.dim{color:var(--dim)}
+:focus-visible{outline:var(--focus-w) solid var(--acc);outline-offset:2px}
+::selection{background:var(--acc);color:var(--acc-ink)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 var(--gut)}
+
+/* ---------- command bar ---------- */
+.cmdbar{
+  position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:var(--rule-w) solid var(--ink);
+  font:13px/1 var(--font-ui);
+}
+.cmdbar .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding-top:8px;padding-bottom:8px}
+.brand{font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+.brand b{color:var(--acc)}
+.nav{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0;padding:0;list-style:none}
+.nav a{color:var(--ink);text-decoration:none;padding:4px 2px;display:inline-flex;gap:6px;align-items:center}
+.nav a:hover,.nav a[aria-current="true"]{color:var(--acc)}
+.nav a:focus-visible{background:var(--acc);color:var(--acc-ink);outline-color:var(--acc)}
+.nav a:focus-visible kbd{color:var(--acc-ink);background:transparent}
+.acc{margin-left:auto;display:flex;gap:4px;align-items:center}
+.acc button{
+  font:600 12px/1 var(--font-ui); color:var(--ink); background:var(--bg-2); border:1px solid var(--rule);
+  padding:6px 7px; cursor:pointer; display:flex; gap:5px; align-items:center;
+}
+.acc button i{width:10px;height:10px;display:inline-block;border:1px solid var(--ink)}
+.acc button[aria-pressed="true"]{border-color:var(--acc);color:var(--acc);box-shadow:inset 0 -3px 0 var(--acc)}
+.acc button:focus-visible{background:var(--acc);color:var(--acc-ink)}
+
+/* ---------- hero / map frame ---------- */
+.hero{padding-top:20px}
+.sheet-head{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;
+  font:12px/1.4 var(--font-ui);color:var(--dim);text-transform:uppercase;letter-spacing:.06em;
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);padding:6px 0;margin-bottom:10px;
+}
+.mapframe{position:relative;border:1px solid var(--ink);aspect-ratio:16/9;background:var(--bg);outline:1px dashed var(--rule);outline-offset:5px}
+#scene{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.hud{position:absolute;font:11px/1.3 var(--font-ui);color:var(--ink);text-transform:uppercase;pointer-events:none;
+  background:color-mix(in srgb,var(--bg) 70%,transparent);padding:3px 5px}
+.hud.tl{top:6px;left:6px}.hud.tr{top:6px;right:6px;text-align:right}
+.hud.bl{bottom:6px;left:6px}.hud.br{bottom:6px;right:6px;text-align:right}
+.hud b{color:var(--acc);font-weight:600}
+.tick{position:absolute;width:14px;height:14px;border-color:var(--acc);border-style:solid;pointer-events:none}
+.tick.a{top:-1px;left:-1px;border-width:3px 0 0 3px}.tick.b{top:-1px;right:-1px;border-width:3px 3px 0 0}
+.tick.c{bottom:-1px;left:-1px;border-width:0 0 3px 3px}.tick.d{bottom:-1px;right:-1px;border-width:0 3px 3px 0}
+.wp{position:absolute;pointer-events:none;font:11px/1 var(--font-ui);color:var(--acc);white-space:nowrap;transform:translate(-4px,-4px)}
+.wp::before{content:"";display:inline-block;width:7px;height:7px;border:1px solid var(--acc);margin-right:5px;vertical-align:-1px;transform:rotate(45deg)}
+.wp span{background:var(--bg);color:var(--ink);padding:1px 3px;border-left:2px solid var(--acc)}
+.fallback{display:none;position:absolute;inset:0;margin:0;padding:24px;overflow:hidden;color:var(--acc);
+  font:12px/1.15 var(--font-ui);white-space:pre}
+.no-gl #scene{display:none}.no-gl .fallback{display:block}
+
+.cartouche{
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:0;border:1px solid var(--ink);border-top:0;background:var(--bg);
+}
+.cartouche > div{padding:18px 20px}
+.cartouche > div + div{border-left:1px solid var(--ink)}
+h1{font:700 clamp(40px,8vw,88px)/.92 var(--font-ui);letter-spacing:-.02em;margin:0 0 10px;text-transform:uppercase;
+  text-shadow:3px 2px 0 color-mix(in srgb,var(--acc) 55%,transparent)}
+.lede{font-size:19px;max-width:38ch;margin:0}
+.keys{list-style:none;margin:0;padding:0;font:13px/1 var(--font-ui);display:grid;gap:8px}
+.keys li{display:flex;gap:10px;align-items:center}
+.keys li span{color:var(--dim)}
+
+/* ---------- sections ---------- */
+section{padding:56px 0 8px}
+h2{font:700 28px/1.1 var(--font-ui);text-transform:uppercase;letter-spacing:.02em;margin:0 0 18px;display:flex;gap:12px;align-items:baseline;
+  text-shadow:2px 1px 0 color-mix(in srgb,var(--acc) 45%,transparent)}
+h2 small{font-size:12px;color:var(--dim);text-shadow:none;letter-spacing:.08em}
+.cols{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px}
+.legend{border:1px solid var(--ink);font:13px/1.5 var(--font-ui);background:var(--bg)}
+.legend h3{margin:0;font:700 12px/1 var(--font-ui);text-transform:uppercase;letter-spacing:.1em;padding:8px 10px;border-bottom:1px solid var(--ink);background:var(--bg-2)}
+.legend dl{margin:0;padding:10px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.legend dt{color:var(--acc)} .legend dd{margin:0}
+.contour-rule{height:22px;margin:8px 0 0;background:
+  repeating-linear-gradient(90deg,transparent 0 7px,var(--rule) 7px 8px),
+  linear-gradient(var(--acc),var(--acc)) 0 50%/100% 1px no-repeat}
+
+/* list = projects + writings */
+.filter{display:flex;gap:8px;align-items:center;font:13px/1 var(--font-ui);margin-bottom:10px;border:1px solid var(--rule);padding:6px 8px;background:var(--bg)}
+.filter input{flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:inherit;padding:4px}
+.filter input:focus{outline:none}
+.filter:focus-within{border-color:var(--acc);box-shadow:inset 3px 0 0 var(--acc)}
+.split{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.list{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink);background:var(--bg)}
+.list li{
+  display:grid;grid-template-columns:3.2em minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;
+  padding:10px 8px;border-bottom:1px solid var(--rule);cursor:pointer;
+}
+.list li .n{font:12px var(--font-ui);color:var(--dim)}
+.list li .t{font-weight:700}
+.list li .m{font:12px var(--font-ui);color:var(--dim);text-align:right;white-space:nowrap}
+.list li .d{grid-column:2/-1;font-size:15px;color:var(--dim)}
+.list li:hover{background:var(--bg-2)}
+.list li[aria-selected="true"]{background:var(--acc);color:var(--acc-ink)}
+.list li[aria-selected="true"] *{color:var(--acc-ink)}
+.list li[aria-selected="true"] .n::before{content:"▶ "}
+.list li:focus-visible{outline:var(--focus-w) solid var(--ink);outline-offset:-3px}
+.list li[hidden]{display:none}
+.inspector{border:1px solid var(--ink);background:var(--bg);position:sticky;top:64px}
+.inspector header{font:700 12px/1 var(--font-ui);text-transform:uppercase;letter-spacing:.1em;padding:8px 10px;border-bottom:1px solid var(--ink);background:var(--bg-2);display:flex;justify-content:space-between}
+.inspector .body{padding:14px}
+.inspector h3{margin:0 0 6px;font:700 20px/1.2 var(--font-body)}
+.inspector .ph{aspect-ratio:4/3;border:1px dashed var(--dim);margin:0 0 12px;display:grid;place-items:center;font:12px var(--font-ui);color:var(--dim);
+  background:repeating-linear-gradient(45deg,transparent 0 9px,color-mix(in srgb,var(--rule) 70%,transparent) 9px 10px)}
+.inspector .meta{font:12px/1.6 var(--font-ui);color:var(--dim);margin-top:10px}
+.writings li{grid-template-columns:7.4em minmax(0,1fr) auto}
+
+/* contact */
+.term{border:1px solid var(--ink);background:var(--bg);font:15px/1.8 var(--font-ui);padding:14px 16px}
+.term p{margin:0}
+.term .p{color:var(--acc)}
+.term a{color:var(--ink)}
+.term a:focus-visible{background:var(--acc);color:var(--acc-ink)}
+footer{margin-top:56px;border-top:2px solid var(--ink);font:12px/1.5 var(--font-ui);color:var(--dim);padding:10px 0 24px}
+
+/* status line (vim modeline) */
+.status{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:0;font:12px/1 var(--font-ui);background:var(--bg-2);border-top:1px solid var(--ink);height:28px;align-items:stretch}
+.status > *{padding:0 10px;display:flex;align-items:center;white-space:nowrap;border-right:1px solid var(--rule)}
+.status .mode{background:var(--acc);color:var(--acc-ink);font-weight:700}
+.status .grow{flex:1;min-width:0;overflow:hidden;display:block;line-height:28px}
+.status .grow:has(input){display:flex}
+.status input{flex:1;min-width:0;background:transparent;border:0;color:var(--ink);font:inherit}
+.status input:focus{outline:none}
+.status .opt{display:flex}
+
+/* help dialog */
+dialog{border:2px solid var(--acc);background:var(--bg);color:var(--ink);padding:0;max-width:min(560px,calc(100vw - 32px));width:100%}
+dialog::backdrop{background:color-mix(in srgb,var(--bg) 70%,transparent)}
+dialog header{font:700 12px/1 var(--font-ui);padding:10px 12px;background:var(--acc);color:var(--acc-ink);text-transform:uppercase;letter-spacing:.1em}
+dialog table{width:100%;border-collapse:collapse;font:13px/1.4 var(--font-ui)}
+dialog td{padding:6px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+dialog td:first-child{white-space:nowrap;width:1%}
+
+/* ---------- phone ---------- */
+@media (max-width:760px){
+  body{font-size:16px}
+  .acc{margin-left:0;width:100%;overflow-x:auto}
+  .acc button span{display:none}
+  .nav a kbd{display:none}
+  .cartouche,.cols,.split{grid-template-columns:minmax(0,1fr)}
+  .cartouche > div + div{border-left:0;border-top:1px solid var(--ink)}
+  .inspector{position:static}
+  .hud.tr,.hud.br{display:none}
+  .writings li{grid-template-columns:minmax(0,1fr) auto}
+  .writings li .n{grid-column:1/-1}
+  .list li .d{grid-column:1/-1}
+  .status .opt{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- C01 CommandBar -->
+<header class="cmdbar">
+  <div class="wrap">
+    <a class="brand" href="#top" data-go="top">kygra<b>/</b>survey</a>
+    <ul class="nav" aria-label="Sections">
+      <li><a href="#about" data-go="about"><kbd>g a</kbd>about</a></li>
+      <li><a href="#projects" data-go="projects"><kbd>g p</kbd>projects</a></li>
+      <li><a href="#writings" data-go="writings"><kbd>g w</kbd>writings</a></li>
+      <li><a href="#contact" data-go="contact"><kbd>g c</kbd>contact</a></li>
+      <li><a href="#help" data-help><kbd>?</kbd>keys</a></li>
+    </ul>
+    <div class="acc" role="group" aria-label="Accent variant"></div>
+  </div>
+</header>
+
+<main id="top" class="wrap">
+  <!-- C02 MapFrame (hero) -->
+  <section class="hero" aria-label="Intro" style="padding-top:20px">
+    <div class="sheet-head"><span>sheet 01 / 05 — field survey of a practice</span><span id="coords">N 41°23′12″ · E 002°10′48″ · elev 0412 m</span><span>scale 1:25 000 · contour 20 m</span></div>
+    <div class="mapframe" id="map">
+      <canvas id="scene" width="320" height="180" aria-label="Low-poly animated topographic terrain with orbiting geometric bodies"></canvas>
+      <pre class="fallback" aria-hidden="true">
+        .-~~~~-.            .--~~--.
+     .-'  .--.  `-.      .'  .-.   `.
+    /   .' __ `.   \    /  .'   `.   \      ▲ 2410
+   |   /  /  \  \   |  |  (  ●  )   |
+   |   \  \__/  /   |   \  `._.'   /    + TRIG.0412
+    \   `.____.'   /     `.      .'
+     `-.        .-'        `-..-'      contours: 20 m
+        `~~~~~~'     .  .   .   .       (no webgl — static sheet)
+      </pre>
+      <div id="labels"></div>
+      <span class="tick a"></span><span class="tick b"></span><span class="tick c"></span><span class="tick d"></span>
+      <div class="hud tl">int res <b>320×180</b> · nearest<br>6-lvl dither · snap on</div>
+      <div class="hud tr">t+<b id="hud-t">0000</b><br><b id="hud-fps">--</b> fps</div>
+      <div class="hud bl" id="hud-mode">scene: <b>booting</b></div>
+      <div class="hud br"><kbd>.</kbd> pause · <kbd>1</kbd>–<kbd>5</kbd> accent</div>
+    </div>
+    <div class="cartouche">
+      <div>
+        <h1>Kygra</h1>
+        <p class="lede">Independent developer charting odd terrain: tools, interfaces and small strange worlds. <span class="dim">[placeholder bio — one line]</span></p>
+      </div>
+      <div>
+        <ul class="keys" aria-label="Key hints">
+          <li><kbd>j</kbd><kbd>k</kbd><span>move through lists</span></li>
+          <li><kbd>↵</kbd><span>open selected entry</span></li>
+          <li><kbd>/</kbd><span>filter projects</span></li>
+          <li><kbd>:</kbd><span>command line (try <code>:acc ion</code>)</span></li>
+          <li><kbd>g</kbd><kbd>g</kbd> / <kbd>G</kbd><span>top / bottom</span></li>
+          <li><kbd>?</kbd><span>all keys</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- C04 SheetSection: about -->
+  <section id="about" data-sheet="02">
+    <h2>About <small>sheet 02 · legend</small></h2>
+    <div class="cols">
+      <div>
+        <p>[Placeholder] I build software the way surveyors walk a ridge: slowly, with notes. Most of my work sits between graphics, tooling and the web — renderers, editors, little engines, the occasional strange website.</p>
+        <p>[Placeholder] Currently based at <span class="mono">N 41.38 · E 2.18</span>. Open to collaborations on rendering, developer tools, and interfaces that respect the keyboard.</p>
+        <div class="contour-rule" aria-hidden="true"></div>
+      </div>
+      <aside class="legend" aria-label="Legend">
+        <h3>Legend</h3>
+        <dl>
+          <dt>▲</dt><dd>project / summit</dd>
+          <dt>●</dt><dd>writing / body</dd>
+          <dt>◇</dt><dd>waypoint / link</dd>
+          <dt>───</dt><dd>contour, 20 m</dd>
+          <dt>━━━</dt><dd>index contour, 100 m</dd>
+          <dt>stack</dt><dd>TS · Rust · GLSL · Go</dd>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <!-- C05 SurveyList + C06 Inspector: projects -->
+  <section id="projects" data-sheet="03">
+    <h2>Projects <small>sheet 03 · <kbd>j</kbd>/<kbd>k</kbd> select · <kbd>↵</kbd> open</small></h2>
+    <label class="filter"><kbd>/</kbd><span class="dim">filter</span><input id="filter" type="text" placeholder="type to narrow…" autocomplete="off"></label>
+    <div class="split">
+      <ul class="list" id="proj" role="listbox" aria-label="Projects"></ul>
+      <aside class="inspector" aria-live="polite">
+        <header><span>inspector</span><span id="ins-n">▲ 01</span></header>
+        <div class="body">
+          <div class="ph">[ project still · 4:3 · dithered ]</div>
+          <h3 id="ins-t">—</h3>
+          <p id="ins-d" style="margin:0"></p>
+          <div class="meta" id="ins-m"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- C07 Gazetteer: writings -->
+  <section id="writings" data-sheet="04">
+    <h2>Writings <small>sheet 04 · gazetteer</small></h2>
+    <ul class="list writings" id="wri" role="listbox" aria-label="Writings"></ul>
+  </section>
+
+  <!-- C08 TerminalBlock: contact -->
+  <section id="contact" data-sheet="05">
+    <h2>Contact <small>sheet 05 · <kbd>y</kbd> yank email</small></h2>
+    <div class="term">
+      <p><span class="p">kygra@survey:~$</span> mail</p>
+      <p><a href="mailto:hello@example.com" id="mail">hello@example.com</a> <span class="dim">— replies within ~3 days</span></p>
+      <p><span class="p">kygra@survey:~$</span> ls links/</p>
+      <p><a href="#">github/</a> &nbsp; <a href="#">mastodon/</a> &nbsp; <a href="#">rss.xml</a> &nbsp; <a href="#">cv.pdf</a></p>
+      <p><span class="p">kygra@survey:~$</span> <span class="dim">_</span></p>
+    </div>
+  </section>
+
+  <footer>END OF SHEET · surveyed by hand · no trackers · built with three.js r160 at 320×180 · <a href="#top" data-go="top">↑ top <kbd>g g</kbd></a></footer>
+</main>
+
+<!-- C09 StatusLine -->
+<div class="status" role="status">
+  <span class="mode" id="st-mode">NORMAL</span>
+  <span class="grow" id="st-msg">press <kbd>?</kbd> for keys</span>
+  <span class="opt" id="st-sheet">sheet 01/05</span>
+  <span class="opt" id="st-acc">acc:sodium</span>
+  <span class="opt" id="st-scene">scene:–</span>
+</div>
+
+<!-- C10 KeyHelp -->
+<dialog id="help" aria-label="Keyboard map">
+  <header>keyboard map — <kbd>esc</kbd> closes</header>
+  <table>
+    <tr><td><kbd>g</kbd> <kbd>a</kbd>/<kbd>p</kbd>/<kbd>w</kbd>/<kbd>c</kbd></td><td>go to about / projects / writings / contact</td></tr>
+    <tr><td><kbd>g</kbd><kbd>g</kbd> · <kbd>G</kbd></td><td>top · bottom</td></tr>
+    <tr><td><kbd>j</kbd> <kbd>k</kbd> · <kbd>↓</kbd> <kbd>↑</kbd></td><td>next / previous entry in active list</td></tr>
+    <tr><td><kbd>↵</kbd> · <kbd>o</kbd></td><td>open selected entry</td></tr>
+    <tr><td><kbd>/</kbd></td><td>filter projects (<kbd>↵</kbd> jumps into list)</td></tr>
+    <tr><td><kbd>:</kbd></td><td>command: <code>acc &lt;name|n&gt;</code>, <code>go &lt;section&gt;</code>, <code>pause</code>, <code>help</code></td></tr>
+    <tr><td><kbd>1</kbd>–<kbd>5</kbd> · <kbd>[</kbd> <kbd>]</kbd></td><td>accent variant / cycle</td></tr>
+    <tr><td><kbd>.</kbd></td><td>pause / resume 3D scene</td></tr>
+    <tr><td><kbd>y</kbd></td><td>copy email</td></tr>
+    <tr><td><kbd>?</kbd> · <kbd>esc</kbd></td><td>this help · close / leave input</td></tr>
+  </table>
+</dialog>
+
+<!-- UI + keyboard (classic script: works even if three.js fails) -->
+<script>
+(() => {
+  const $ = s => document.querySelector(s), root = document.documentElement;
+  const ACC = [['sodium','#ff7a1a'],['phosphor','#5dff6a'],['survey','#b8301a'],['ion','#2ef2e0'],['hazard','#d7ff1e']];
+  const msg = t => { $('#st-msg').textContent = t; };
+  const store = (k, v) => { try { v === undefined ? (v = localStorage.getItem(k)) : localStorage.setItem(k, v); } catch (e) { v = null; } return v; };
+
+  // accent switcher
+  const accBox = $('.acc');
+  ACC.forEach(([n, c], i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.i = i;
+    b.innerHTML = `<kbd>${i + 1}</kbd><i style="background:${c}"></i><span>${n}</span>`;
+    b.onclick = () => setAcc(i);
+    accBox.append(b);
+  });
+  let cur = 0;
+  function setAcc(i) {
+    cur = (i + ACC.length) % ACC.length;
+    root.dataset.acc = ACC[cur][0];
+    accBox.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.i === cur));
+    $('#st-acc').textContent = 'acc:' + ACC[cur][0];
+    store('acc', ACC[cur][0]);
+    window.dispatchEvent(new Event('accent'));
+  }
+  const saved = ACC.findIndex(a => a[0] === store('acc'));
+  setAcc(saved >= 0 ? saved : (matchMedia('(prefers-color-scheme: light)').matches ? 2 : 0));
+
+  // data (placeholders)
+  const P = [
+    ['Contour', 'Terminal map renderer that draws OpenStreetMap tiles as ASCII elevation bands.', 'rust · tui', '2026', '▲ 2410 m'],
+    ['Lowpoly Orrery', 'Browser toy: a PS1-style solar system with vertex jitter and dithered fog.', 'three.js · glsl', '2026', '▲ 1980 m'],
+    ['hjkl.nav', 'Tiny library adding vim-style list navigation to any web page.', 'ts · lib', '2025', '▲ 1720 m'],
+    ['Survey Kit', 'CLI that turns GPX tracks into printable topo sheets with grid references.', 'go · cli', '2025', '▲ 1310 m'],
+    ['Astral Index', 'Catalogue of imaginary celestial bodies, generated and hand-annotated.', 'web · data', '2024', '▲ 1080 m'],
+    ['Fogbank', 'Shader pack: affine warp, colour crush, ordered dither for any WebGL scene.', 'glsl', '2024', '▲ 0870 m'],
+  ];
+  const W = [
+    ['2026-09-02', 'Why my portfolio renders at 320×180', '7 min', '§graphics'],
+    ['2026-06-18', 'Keyboard-first is an accessibility feature', '11 min', '§ux'],
+    ['2026-03-30', 'Drawing contour lines in a fragment shader', '9 min', '§glsl'],
+    ['2025-12-11', 'Notes from walking a ridge with a GPS', '5 min', '§field'],
+    ['2025-08-04', 'Vertex snapping, explained with a ruler', '6 min', '§graphics'],
+  ];
+  const pl = $('#proj'), wl = $('#wri');
+  P.forEach((p, i) => pl.insertAdjacentHTML('beforeend',
+    `<li role="option" tabindex="-1" aria-selected="false"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${p[0]}</span><span class="m">${p[4]}</span><span class="d">${p[2]} · ${p[3]}</span></li>`));
+  W.forEach(w => wl.insertAdjacentHTML('beforeend',
+    `<li role="option" tabindex="-1" aria-selected="false"><span class="n">${w[0]}</span><span class="t">${w[1]}</span><span class="m">● ${w[2]} · ${w[3]}</span></li>`));
+
+  // list selection
+  const lists = { proj: { el: pl, i: 0 }, wri: { el: wl, i: 0 } };
+  let active = lists.proj;
+  const visible = L => [...L.el.children].filter(li => !li.hidden);
+  function select(L, i, focus = true) {
+    const v = visible(L); if (!v.length) return;
+    L.i = Math.max(0, Math.min(v.length - 1, i));
+    [...L.el.children].forEach(li => li.setAttribute('aria-selected', 'false'));
+    const li = v[L.i]; li.setAttribute('aria-selected', 'true');
+    if (focus) { li.focus({ preventScroll: true }); li.scrollIntoView({ block: 'nearest' }); }
+    active = L;
+    if (L === lists.proj) {
+      const p = P[[...pl.children].indexOf(li)];
+      $('#ins-n').textContent = '▲ ' + li.querySelector('.n').textContent;
+      $('#ins-t').textContent = p[0]; $('#ins-d').textContent = p[1];
+      $('#ins-m').textContent = `${p[2]} · ${p[3]} · ${p[4]}`;
+    }
+  }
+  const open = () => { const li = visible(active)[active.i]; if (li) msg('open → ' + li.querySelector('.t').textContent + ' (placeholder)'); };
+  for (const L of Object.values(lists)) {
+    L.el.addEventListener('click', e => { const li = e.target.closest('li'); if (li) select(L, visible(L).indexOf(li)); });
+    L.el.addEventListener('dblclick', open);
+  }
+  select(lists.proj, 0, false);
+
+  // filter
+  const f = $('#filter');
+  f.addEventListener('input', () => {
+    const q = f.value.toLowerCase();
+    [...pl.children].forEach(li => li.hidden = !li.textContent.toLowerCase().includes(q));
+    select(lists.proj, 0, false);
+    msg(visible(lists.proj).length + ' match');
+  });
+  f.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); select(lists.proj, 0); } });
+
+  // navigation
+  function go(id) {
+    const el = id === 'top' ? document.body : document.getElementById(id); if (!el) return msg('no sheet: ' + id);
+    (id === 'top' ? window.scrollTo({ top: 0 }) : el.scrollIntoView({ block: 'start' }));
+    const L = { projects: lists.proj, writings: lists.wri }[id];
+    if (L) { select(L, L.i, false); visible(L)[L.i]?.focus({ preventScroll: true }); }
+    msg('go ' + id);
+  }
+  document.querySelectorAll('[data-go]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); go(a.dataset.go); }));
+  const help = $('#help');
+  const toggleHelp = () => help.open ? help.close() : help.showModal();
+  document.querySelector('[data-help]').addEventListener('click', e => { e.preventDefault(); toggleHelp(); });
+
+  // section tracking for status line
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const s = e.target.dataset.sheet || '01';
+    $('#st-sheet').textContent = `sheet ${s}/05`;
+    document.querySelectorAll('.nav a').forEach(a => a.setAttribute('aria-current', a.dataset.go === e.target.id));
+  }), { rootMargin: '-40% 0px -55% 0px' });
+  document.querySelectorAll('main > section').forEach(s => io.observe(s));
+
+  // command line
+  const stMsg = $('#st-msg');
+  function cmdline() {
+    $('#st-mode').textContent = 'COMMAND';
+    stMsg.innerHTML = ':<input id="cmd" aria-label="command" autocomplete="off">';
+    const inp = $('#cmd'); inp.focus();
+    const done = t => { $('#st-mode').textContent = 'NORMAL'; msg(t); };
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { e.stopPropagation(); return done(''); }
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      const [c, a = ''] = inp.value.trim().split(/\s+/);
+      if (c === 'acc') { const i = /^\d$/.test(a) ? a - 1 : ACC.findIndex(x => x[0] === a); i >= 0 && i < ACC.length ? (setAcc(i), done('accent → ' + ACC[i][0])) : done('E: unknown accent ' + a); }
+      else if (c === 'go') { done(''); go(a); }
+      else if (c === 'pause') { window.dispatchEvent(new Event('scene-toggle')); done('scene toggled'); }
+      else if (c === 'help') { done(''); toggleHelp(); }
+      else done('E492: not a command: ' + c);
+    });
+    inp.addEventListener('blur', () => { if ($('#st-mode').textContent === 'COMMAND') done(''); });
+  }
+
+  // keys
+  let pending = null, pTimer;
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target, typing = t.matches && t.matches('input,textarea,[contenteditable]');
+    if (typing) { if (e.key === 'Escape') { t.blur(); msg(''); } return; }
+    const k = e.key;
+    if (pending === 'g') {
+      pending = null; clearTimeout(pTimer);
+      const m = { g: 'top', h: 'top', a: 'about', p: 'projects', w: 'writings', c: 'contact' }[k];
+      if (m) { e.preventDefault(); return go(m); }
+    }
+    if (k === 'g') { pending = 'g'; msg('g-'); pTimer = setTimeout(() => { pending = null; msg(''); }, 900); return; }
+    if (k === 'G') return window.scrollTo({ top: document.body.scrollHeight });
+    if (/^[1-9]$/.test(k) && k <= ACC.length) return setAcc(k - 1);
+    if (k === ']') return setAcc(cur + 1);
+    if (k === '[') return setAcc(cur - 1);
+    if (k === 'j' || k === 'ArrowDown') { if (k === 'j' || active.el.contains(t)) { e.preventDefault(); select(active, active.i + 1); } return; }
+    if (k === 'k' || k === 'ArrowUp') { if (k === 'k' || active.el.contains(t)) { e.preventDefault(); select(active, active.i - 1); } return; }
+    if ((k === 'Enter' && active.el.contains(t)) || k === 'o') { e.preventDefault(); return open(); }
+    if (k === '/') { e.preventDefault(); go('projects'); return f.focus(); }
+    if (k === ':') { e.preventDefault(); return cmdline(); }
+    if (k === '?') return toggleHelp();
+    if (k === '.') return window.dispatchEvent(new Event('scene-toggle'));
+    if (k === 'y') { const m = $('#mail').textContent; navigator.clipboard?.writeText(m).then(() => msg('yanked ' + m), () => msg('clipboard blocked')); }
+  });
+})();
+</script>
+
+<!-- 3D: PS1-style survey scene -->
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
+<script type="module">
+const map = document.getElementById('map'), cvs = document.getElementById('scene');
+const hudMode = document.getElementById('hud-mode'), stScene = document.getElementById('st-scene');
+const setMode = s => { hudMode.innerHTML = 'scene: <b>' + s + '</b>'; stScene.textContent = 'scene:' + s; };
+const fail = why => { map.classList.add('no-gl'); setMode(why); };
+
+let THREE = null;
+try { THREE = await import('three'); } catch (e) { fail('three.js offline'); }
+if (THREE) { try { init(); } catch (e) { console.error(e); fail('no webgl'); } }
+
+function init() {
+  const W = 320, H = 180;
+  THREE.ColorManagement.enabled = false;          // raw sRGB in, raw out: we crush colours ourselves
+  const renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: false, powerPreference: 'low-power' });
+  renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H, false);
+  renderer.debug.onShaderError = () => fail('shader error');
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(55, W / H, 0.1, 140);
+
+  // ---- shared PS1 shader ----
+  const VS = /* glsl */`
+    uniform vec2 uRes;
+    varying float vH; varying float vD; varying float vL;
+    varying vec3 vUvw;                              // uv*w + w: undoes perspective correction -> affine warp
+    void main(){
+      vec4 wp = modelMatrix * vec4(position, 1.0);
+      vH = wp.y;
+      vec4 mv = viewMatrix * wp;
+      vD = -mv.z;
+      vL = clamp(dot(normalMatrix * normal, normalize(vec3(.4, .8, .45))), 0., 1.);   // per-vertex (gouraud) light
+      vec4 p = projectionMatrix * mv;
+      vUvw = vec3(uv * p.w, p.w);
+      vec2 g = uRes * 0.5;
+      p.xy = floor(p.xy / p.w * g + 0.5) / g * p.w;  // vertex snap to the 320x180 pixel grid -> jitter
+      gl_Position = p;
+    }`;
+  const FS = /* glsl */`
+    uniform vec3 uColor; uniform vec3 uLine; uniform vec3 uFog;
+    uniform float uNear; uniform float uFar; uniform float uMode; uniform float uLevels;
+    varying float vH; varying float vD; varying float vL;
+    varying vec3 vUvw;
+    float bayer(vec2 p){
+      ivec2 i = ivec2(mod(p, 4.0));
+      float m[16] = float[16](0.,8.,2.,10.,12.,4.,14.,6.,3.,11.,1.,9.,15.,7.,13.,5.);
+      return m[i.x + i.y * 4] / 16.0;
+    }
+    void main(){
+      vec2 vUv = vUvw.xy / vUvw.z;                 // screen-linear (affine) uv, PS1 style
+      vec3 c = uColor;
+      if (uMode > 0.5 && uMode < 1.5) {            // terrain: elevation bands + contours + survey grid
+        float b = vH * 1.4, band = floor(b), f = fract(b), w = fwidth(b);
+        c = uColor * (0.35 + 0.16 * clamp(band + 2.0, 0.0, 8.0)) * (0.55 + 0.45 * vL);
+        if (f < w * 1.2) c = uLine;
+        if (mod(band, 5.0) < 0.5 && f < w * 2.6) c = uLine * 1.25;   // index contour
+        vec2 gg = abs(fract(vUv * 12.0) - 0.5);
+        if (max(gg.x, gg.y) > 0.475) c = mix(c, uLine, 0.45);       // affine-warped grid
+      } else if (uMode > 1.5) {                    // lit solid with warped checker
+        c = uColor * (0.3 + 0.7 * vL);
+        vec2 gg = abs(fract(vUv * vec2(10.0, 5.0)) - 0.5);
+        if ((gg.x > 0.25) != (gg.y > 0.25)) c *= 0.7;
+      }
+      c = mix(c, uFog, smoothstep(uNear, uFar, vD));
+      c = floor(c * uLevels + bayer(gl_FragCoord.xy)) / uLevels;   // ordered dither + colour crush
+      gl_FragColor = vec4(c, 1.0);
+    }`;
+  const shared = {
+    uRes: { value: new THREE.Vector2(W, H) }, uFog: { value: new THREE.Color() },
+    uNear: { value: 22 }, uFar: { value: 80 }, uLevels: { value: 6 },
+  };
+  const mats = [];
+  const mat = (mode, key, lineKey = 'acc', extra = {}) => {
+    const m = new THREE.ShaderMaterial({
+      vertexShader: VS, fragmentShader: FS, side: THREE.DoubleSide, ...extra,
+      uniforms: { ...shared, uColor: { value: new THREE.Color() }, uLine: { value: new THREE.Color() }, uMode: { value: mode } },
+    });
+    m.userData = { key, lineKey }; mats.push(m); return m;
+  };
+
+  // ---- terrain (animated topology) ----
+  const geo = new THREE.PlaneGeometry(72, 72, 36, 36); geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position;
+  const height = (x, z, t) =>
+    2.4 * Math.sin(x * 0.17 + t * 0.35) * Math.cos(z * 0.14 - t * 0.22)
+    + 1.4 * Math.sin((x - z) * 0.09 + t * 0.18)
+    + 7.0 * Math.exp(-((x - 5) ** 2 + (z + 8) ** 2) / (70 + 20 * Math.sin(t * 0.3)))
+    - 3.0 * Math.exp(-((x + 14) ** 2 + (z - 6) ** 2) / 40);
+  const terrain = new THREE.Mesh(geo, mat(1, 'terrain', 'acc', { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 }));
+  const wire = new THREE.Mesh(geo, mat(0, 'rule', 'acc', { wireframe: true }));
+  scene.add(terrain, wire);
+
+  // survey pins (vertical markers on terrain)
+  const pinXZ = [[5, -8], [-14, 6], [16, 10]];
+  const pinGeo = new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(new Array(pinXZ.length * 6).fill(0), 3));
+  scene.add(new THREE.LineSegments(pinGeo, mat(0, 'acc')));
+
+  // ---- astral bodies ----
+  const planet = new THREE.Group(); planet.position.set(-4, 14, -9);
+  planet.add(new THREE.Mesh(new THREE.IcosahedronGeometry(3.4, 0), mat(2, 'ink')));
+  const shell = new THREE.Mesh(new THREE.IcosahedronGeometry(3.7, 1), mat(0, 'acc', 'acc', { wireframe: true }));
+  planet.add(shell);
+  const loop = (r, n, ry = r) => new THREE.BufferGeometry().setFromPoints(
+    Array.from({ length: n }, (_, i) => new THREE.Vector3(Math.cos(i / n * 6.283) * r, 0, Math.sin(i / n * 6.283) * ry)));
+  const ring = new THREE.LineLoop(loop(6.5, 9), mat(0, 'acc-2')); ring.rotation.set(0.5, 0, 0.25); planet.add(ring);
+  scene.add(planet);
+
+  const moons = [
+    [new THREE.OctahedronGeometry(0.9, 0), 9, 0.55, 0.0, 0.3],
+    [new THREE.TetrahedronGeometry(1.1, 0), 13, -0.35, 2.0, -0.4],
+    [new THREE.BoxGeometry(1, 1, 1), 17, 0.22, 4.0, 0.15],
+  ].map(([g, r, sp, ph, tilt]) => {
+    const m = new THREE.Mesh(g, mat(2, 'acc-2'));
+    const orbit = new THREE.LineLoop(loop(r, 28, r * 0.7), mat(0, 'dim'));
+    const pivot = new THREE.Group(); pivot.rotation.x = tilt; pivot.add(orbit, m); planet.add(pivot);
+    return { m, r, sp, ph };
+  });
+
+  // stars
+  const sv = [];
+  for (let i = 0; i < 260; i++) {
+    const a = Math.random() * 6.283, e = Math.random() * 1.3 + 0.05, R = 90;
+    sv.push(Math.cos(a) * Math.cos(e) * R, Math.sin(e) * R - 10, Math.sin(a) * Math.cos(e) * R);
+  }
+  const starMat = new THREE.PointsMaterial({ size: 1, sizeAttenuation: false, fog: false });
+  scene.add(new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(sv, 3)), starMat));
+
+  // ---- HTML annotation layer (crisp text over crushed pixels) ----
+  const labelBox = document.getElementById('labels');
+  const wps = [
+    { name: 'Σ PEAK', get: v => v.set(5, height(5, -8, time) + 3, -8) },
+    { name: 'TRIG.0412', get: v => v.set(-14, height(-14, 6, time) + 3, 6) },
+    { name: 'BODY·A', get: v => moons[0].m.getWorldPosition(v) },
+    { name: 'ORB 2.41', get: v => planet.getWorldPosition(v).add({ x: 4, y: 3, z: 0 }) },
+  ].map(w => { const el = document.createElement('div'); el.className = 'wp'; el.innerHTML = `<span>${w.name}</span>`; labelBox.append(el); return { ...w, el }; });
+  const tmp = new THREE.Vector3();
+
+  // ---- colours from CSS tokens ----
+  function readColors() {
+    const s = getComputedStyle(document.documentElement), v = n => s.getPropertyValue('--' + n).trim();
+    shared.uFog.value.set(v('bg'));
+    renderer.setClearColor(v('bg'));
+    starMat.color.set(v('ink'));
+    for (const m of mats) { m.uniforms.uColor.value.set(v(m.userData.key)); m.uniforms.uLine.value.set(v(m.userData.lineKey)); }
+  }
+  readColors();
+
+  // ---- loop ----
+  let time = 8, last = 0, lastDraw = 0, frames = 0, fpsT = 0, running = false, visible = true;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  let paused = reduce.matches;
+
+  function draw() {
+    const t = time;
+    for (let i = 0; i < pos.count; i++) pos.setY(i, height(pos.getX(i), pos.getZ(i), t));
+    pos.needsUpdate = true; geo.computeVertexNormals();
+    const pp = pinGeo.attributes.position;
+    pinXZ.forEach(([x, z], i) => { const y = height(x, z, t); pp.setXYZ(i * 2, x, y, z); pp.setXYZ(i * 2 + 1, x, y + 3, z); });
+    pp.needsUpdate = true;
+    planet.rotation.y = t * 0.12; shell.rotation.x = t * 0.2;
+    moons.forEach(o => { const a = t * o.sp + o.ph; o.m.position.set(Math.cos(a) * o.r, 0, Math.sin(a) * o.r * 0.7); o.m.rotation.set(t, t * 0.7, 0); });
+    const ca = t * 0.06;
+    cam.position.set(Math.cos(ca) * 34, 13 + Math.sin(t * 0.2) * 1.5, Math.sin(ca) * 34);
+    cam.lookAt(0, 5, -4);
+    renderer.render(scene, cam);
+    for (const w of wps) {
+      w.get(tmp).project(cam);
+      const off = tmp.z > 1 || Math.abs(tmp.x) > 1 || Math.abs(tmp.y) > 1;
+      w.el.style.display = off ? 'none' : '';
+      // snap labels to the same 320x180 grid as the pixels
+      w.el.style.left = Math.round((tmp.x * 0.5 + 0.5) * W) / W * 100 + '%';
+      w.el.style.top = Math.round((-tmp.y * 0.5 + 0.5) * H) / H * 100 + '%';
+    }
+    document.getElementById('hud-t').textContent = String(Math.floor(t * 10) % 10000).padStart(4, '0');
+  }
+  function tick(now) {
+    if (paused || !visible) { running = false; return; }
+    requestAnimationFrame(tick);
+    if (now - lastDraw < 1000 / 30) return;        // cap at 30 fps: cheaper and more PS1
+    time += Math.min(now - (last || now), 100) / 1000; last = now; lastDraw = now;
+    draw(); frames++;
+    if (now - fpsT > 1000) { document.getElementById('hud-fps').textContent = frames; frames = 0; fpsT = now; }
+  }
+  function start() {
+    setMode(paused ? (reduce.matches ? 'frozen (reduced motion)' : 'paused') : 'running');
+    if (!paused && visible && !running) { running = true; last = 0; requestAnimationFrame(tick); }
+  }
+  addEventListener('scene-toggle', () => { paused = !paused; start(); });
+  addEventListener('accent', () => { readColors(); if (!running) draw(); });
+  reduce.addEventListener('change', () => { paused = reduce.matches; start(); });
+  new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); }).observe(map);
+  draw(); start();
+}
+</script>
+</body>
+</html>
