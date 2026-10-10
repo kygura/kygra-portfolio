@@ -1,6 +1,6 @@
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { getProjectBySlug } from "@/lib/projects";
+import SectionHead from "@/components/SectionHead";
+import { getProjectBySlug, projects } from "@/lib/projects";
 
 const ProjectDetail = () => {
   const { slug } = useParams();
@@ -8,66 +8,70 @@ const ProjectDetail = () => {
 
   if (!project) {
     return (
-      <div className="page-shell max-w-[980px]">
-        <p className="text-xs uppercase tracking-[0.35em] text-muted-foreground mb-4">
-          Project not found
+      <div className="empty">
+        <p className="mono mute">Dossier not found</p>
+        <h1 className="disp">Missing</h1>
+        <p className="mono" style={{ marginTop: 20 }}>
+          <Link to="/projects" className="u">← Back to the index</Link>
         </p>
-        <h1 className="text-5xl md:text-7xl text-foreground mb-6">Missing dossier</h1>
-        <p className="text-lg text-foreground/80 max-w-2xl mb-8">
-          The project you asked for is not in the current index.
-        </p>
-        <Link to="/projects" className="inline-flex items-center gap-2 project-detail__button">
-          <ArrowLeft className="w-4 h-4" />
-          Back to projects
-        </Link>
       </div>
     );
   }
 
-  const externalLinks = project.links.filter((link) => !link.href.startsWith("/"));
+  const idx = projects.findIndex((p) => p.slug === project.slug);
+  const prev = projects[(idx - 1 + projects.length) % projects.length];
+  const next = projects[(idx + 1) % projects.length];
+  const external = project.links.filter((l) => !l.href.startsWith("/"));
 
   return (
-    <div className="project-detail">
-      <section className="project-detail__hero">
-        <div className="project-detail__hero-meta">
-          <Link to="/projects" className="project-detail__back">
-            <ArrowLeft className="w-4 h-4" />
-            Back to projects
-          </Link>
-          <span>{project.status}</span>
-        </div>
+    <>
+      <div className="ptitle">
+        <p className="mono mute" style={{ marginTop: 0 }}>
+          <Link to="/projects" className="u">← Index</Link> · Dossier {String(idx + 1).padStart(3, "0")}
+        </p>
+        <h1 className="disp">{project.title}</h1>
+        <p>{project.description}</p>
+      </div>
 
-        <p className="project-detail__eyebrow">{project.subtitle}</p>
-        <h1 className="project-detail__title">{project.title}</h1>
-        <p className="project-detail__summary">{project.description}</p>
+      <div className="dossier__meta mono">
+        <div><b>Discipline</b>{project.subtitle}</div>
+        <div><b>Status</b>{project.status}</div>
+        <div><b>Year</b>{project.year}</div>
+        <div><b>Index</b>{String(idx + 1).padStart(3, "0")} / {String(projects.length).padStart(3, "0")}</div>
+      </div>
 
-        <div className="project-detail__buttons">
-          {externalLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              target="_blank"
-              rel="noreferrer"
-              className="project-detail__button"
-            >
-              {link.label}
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
+      {external.length > 0 && (
+        <div className="dossier__links mono">
+          {external.map((l) => (
+            <a key={l.href} href={l.href} target="_blank" rel="noopener noreferrer">{l.label} ↗</a>
           ))}
         </div>
+      )}
+
+      <SectionHead n="01" title="Overview" />
+      <section className="dossier__body">
+        <div>
+          <p className="mono mute">Summary</p>
+          <p style={{ marginTop: 10 }}>{project.summary}</p>
+          {project.techStack && project.techStack.length > 0 && (
+            <>
+              <p className="mono mute" style={{ marginTop: 24 }}>Stack</p>
+              <ul className="dossier__stack mono">
+                {project.techStack.map((t) => <li key={t}>{t}</li>)}
+              </ul>
+            </>
+          )}
+        </div>
+        <div>
+          {project.overview.map((p) => <p key={p.slice(0, 32)}>{p}</p>)}
+        </div>
       </section>
 
-      <section className="project-detail__grid">
-        <article className="project-detail__panel project-detail__panel--stack">
-          <p className="project-detail__label">Overview</p>
-          <div className="project-detail__copy">
-            {project.overview.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </article>
-      </section>
-    </div>
+      <div className="colophon__end mono">
+        <Link to={`/projects/${prev.slug}`} className="u">← {prev.title}</Link>
+        <Link to={`/projects/${next.slug}`} className="u">{next.title} →</Link>
+      </div>
+    </>
   );
 };
 

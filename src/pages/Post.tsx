@@ -1,6 +1,8 @@
 import React from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock } from "lucide-react";
+import SectionHead from "@/components/SectionHead";
+import { resolvePostTags } from "../lib/postTagFallbacks";
+import { formatLogDate, formatLongDate } from "@/lib/format";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMarkdownPost } from "../hooks/useMarkdownPosts";
@@ -31,42 +33,16 @@ const alertTypes: Record<AlertType, AlertType> = {
   CAUTION: "CAUTION",
 };
 
-function formatPostDate(date: string): string | null {
-  const parsedDate = new Date(date);
-
-  if (!date || Number.isNaN(parsedDate.getTime())) {
-    return null;
-  }
-
-  return parsedDate.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 const Post = () => {
   const { slug } = useParams();
   const { post, loading, error } = useMarkdownPost(slug);
 
   if (loading) {
-    return (
-      <div className="page-shell page-shell--narrow animate-fade-in">
-        <div className="border-2 border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
-          Loading post...
-        </div>
-      </div>
-    );
+    return <div className="notice">Loading the entry…</div>;
   }
 
   if (error) {
-    return (
-      <div className="page-shell page-shell--narrow animate-fade-in">
-        <div className="border-2 border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
-          {error}
-        </div>
-      </div>
-    );
+    return <div className="notice notice--err">{error}</div>;
   }
 
   // Handle post not found
@@ -76,48 +52,36 @@ const Post = () => {
       replace />;
   }
 
-  const formattedDate = formatPostDate(post.date);
+  const longDate = formatLongDate(post.date);
+  const tags = resolvePostTags(post);
 
   return (
-    <div className="page-shell page-shell--narrow animate-fade-in">
-      <div className="mb-12 pb-6 border-b border-[var(--border-muted)] relative">
-        <Link
-          to="/writings"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-300 mb-8 mt-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          BACK TO WRITINGS
-        </Link>
-
-        <h1 className="text-4xl md:text-6xl font-display tracking-[-0.01em] text-foreground uppercase leading-[0.9] mb-8">
-          {post.title}
-        </h1>
-
-        {(formattedDate || post.readTime) && (
-          <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {formattedDate && (
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {formattedDate}
-              </span>
-            )}
-            {post.readTime && (
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                {post.readTime} read
-              </span>
-            )}
-          </div>
-        )}
+    <>
+      <div className="ptitle">
+        <p className="mono mute" style={{ marginTop: 0 }}>
+          <Link to="/writings" className="u">← Logbook</Link> · {formatLogDate(post.date)}
+        </p>
+        <h1 className="disp" style={{ fontSize: "clamp(2.8rem, 8vw, 6.5rem)" }}>{post.title}</h1>
+        {post.excerpt && <p>{post.excerpt}</p>}
       </div>
 
-      <article className="prose-minimal text-lg leading-relaxed text-foreground">
+      <SectionHead n="02" title="Entry" right={`${post.readTime} min read`} />
+
+      <div className="read">
+        <aside className="read__margin read__margin--l mono">
+          <ul>
+            {longDate && <li>Filed {longDate}</li>}
+            <li>{post.readTime} min</li>
+            {tags.map((t) => <li key={t}>#{t}</li>)}
+          </ul>
+        </aside>
+      <article className="read__body prose">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
             pre({ children }) {
               // Return a fragment or unstyled div to avoid double styling by prose-minimal pre
-              return <div className="not-prose my-6">{children}</div>;
+              return <>{children}</>;
             },
             code({ inline, className, children, ...props }: MarkdownCodeProps) {
               const match = /language-(\w+)/.exec(className || "");
@@ -140,10 +104,7 @@ const Post = () => {
             },
             img(props: MarkdownImageProps) {
               return (
-                <PostImage
-                  {...props}
-                  className="w-full h-auto rounded-lg shadow-md"
-                />
+                <PostImage {...props} />
               );
             },
             blockquote({ children, ...props }: MarkdownBlockquoteProps) {
@@ -231,7 +192,19 @@ const Post = () => {
           {post.content}
         </ReactMarkdown>
       </article>
-    </div>
+        <aside className="read__margin read__margin--r mono" aria-hidden="true">
+          <ul>
+            <li>§02</li>
+            <li>N.CA</li>
+          </ul>
+        </aside>
+      </div>
+
+      <div className="colophon__end mono">
+        <Link to="/writings" className="u">← All entries</Link>
+        <Link to="/guestbook" className="u">Argue in the guestbook →</Link>
+      </div>
+    </>
   );
 };
 

@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Check, Copy } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
 import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
 import diff from "react-syntax-highlighter/dist/esm/languages/prism/diff";
@@ -18,7 +16,6 @@ import tsx from "react-syntax-highlighter/dist/esm/languages/prism/tsx";
 import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
 import yaml from "react-syntax-highlighter/dist/esm/languages/prism/yaml";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 /**
  * The full `Prism` export bundles every language refractor ships with —
@@ -41,6 +38,29 @@ SyntaxHighlighter.registerLanguage("html", markup);
 SyntaxHighlighter.registerLanguage("xml", markup);
 SyntaxHighlighter.registerLanguage("yml", yaml);
 
+/* Two-colour syntax: paper for text, spot for the few things worth marking. */
+const INK: Record<string, React.CSSProperties> = {
+  'code[class*="language-"]': { color: "var(--paper)" },
+  'pre[class*="language-"]': { color: "var(--paper)" },
+  comment: { opacity: 0.45, fontStyle: "italic" },
+  prolog: { opacity: 0.45 },
+  doctype: { opacity: 0.45 },
+  cdata: { opacity: 0.45 },
+  punctuation: { opacity: 0.7 },
+  keyword: { color: "var(--spot)" },
+  string: { color: "var(--spot)", opacity: 0.85 },
+  "attr-value": { color: "var(--spot)", opacity: 0.85 },
+  tag: { color: "var(--spot)" },
+  selector: { color: "var(--spot)" },
+  function: { textDecoration: "underline", textDecorationColor: "var(--spot)", textUnderlineOffset: "0.2em" },
+  "class-name": { fontWeight: 700 },
+  number: { fontWeight: 700 },
+  boolean: { fontWeight: 700 },
+  operator: { opacity: 0.8 },
+  inserted: { color: "var(--spot)" },
+  deleted: { opacity: 0.5, textDecoration: "line-through" },
+};
+
 interface CodeBlockProps {
   language?: string;
   value: string;
@@ -62,47 +82,22 @@ const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
   };
 
   return (
-    <div className={cn("relative group rounded-lg overflow-hidden my-6 border border-border bg-[#1e1e1e]", className)}>
-      <div className="absolute right-4 top-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <button
-          onClick={handleCopy}
-          className="p-2 rounded-md bg-secondary/10 hover:bg-secondary/20 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Copy code"
-        >
-          {isCopied ? (
-            <Check className="w-4 h-4 text-green-500" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
+    <div className={["code", className].filter(Boolean).join(" ")}>
+      <div className="code__bar mono">
+        <span>{language || "text"}</span>
+        <button type="button" onClick={handleCopy} aria-label="Copy code">
+          {isCopied ? "copied" : "copy"}
         </button>
-      </div>
-      <div className="pt-2 pl-4 text-xs text-muted-foreground select-none uppercase tracking-wider font-mono">
-        {language || "text"}
       </div>
       <SyntaxHighlighter
         language={language || "text"}
-        style={vscDarkPlus}
-        PreTag="div"
-        codeTagProps={{
-          style: {
-            backgroundColor: "transparent",
-            fontFamily: "inherit",
-          }
-        }}
-        customStyle={{
-          margin: 0,
-          padding: "1.5rem",
-          background: "transparent",
-          fontSize: "0.875rem",
-          lineHeight: "1.6",
-        }}
+        style={INK}
+        PreTag="pre"
+        useInlineStyles={true}
+        codeTagProps={{ style: { fontFamily: "inherit", background: "transparent" } }}
+        customStyle={{ margin: 0, padding: "14px 16px", background: "transparent", fontSize: "inherit", lineHeight: "inherit" }}
         showLineNumbers={true}
-        lineNumberStyle={{
-          minWidth: "2.5em",
-          paddingRight: "1em",
-          color: "#6e7681",
-          textAlign: "right",
-        }}
+        lineNumberStyle={{ minWidth: "2.5em", paddingRight: "1em", opacity: 0.4, textAlign: "right" }}
         wrapLines={true}
       >
         {value}

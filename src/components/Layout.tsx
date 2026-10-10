@@ -1,7 +1,6 @@
 import { ReactNode, Suspense } from "react";
 import Navigation from "./Navigation";
 import Footer from "./Footer";
-import PageTransition from "./PageTransition";
 
 interface LayoutProps {
   children: ReactNode;
@@ -9,14 +8,12 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="sheet">
       <Navigation />
-      <main className="flex-grow">
-        {/* Only page content suspends — Navigation + Footer stay mounted
+      <main>
+        {/* Only page content suspends — masthead and colophon stay mounted
             when navigating to a lazily-loaded route. */}
-        <Suspense fallback={<div className="min-h-[60vh]" />}>
-          <PageTransition>{children}</PageTransition>
-        </Suspense>
+        <Suspense fallback={<div style={{ minHeight: "60vh" }} />}>{children}</Suspense>
       </main>
       <Footer />
     </div>

@@ -1,7 +1,4 @@
-import {
-  Download, MapPin, Mail, Globe,
-  GitBranch, Link2, Phone
-} from "lucide-react";
+import SectionHead from "@/components/SectionHead";
 
 const CV = () => {
 
@@ -89,131 +86,69 @@ const CV = () => {
     "Tools": ["Bun", "Git", "Docker", "Linux", "Bash", "Vercel"],
   };
 
-  const downloadPDF = () => {
-    // Create a link element and trigger download
-    const link = document.createElement('a');
-    link.href = '/CV_NCA.pdf';
-    link.download = 'CV_NCA.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
-    <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-4xl animate-fade-in mx-auto">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
-        <div>
-          <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
-            ( 04 &mdash; CREDENTIALS )
-          </p>
-          <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
-            Curriculum Vitae
-          </h1>
-          <div className="text-lg text-muted-foreground space-y-2">
-            <p className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> {contact.location}
-            </p>
-            <div className="flex flex-wrap gap-4 text-sm md:text-base">
-              <a href={`mailto:${contact.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Mail className="w-4 h-4" /> {contact.email}
-              </a>
-              <a href={`https://${contact.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Globe className="w-4 h-4" /> {contact.website}
-              </a>
-              <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <GitBranch className="w-4 h-4" /> github.com/kygura
-              </a>
-              {/* <a href={`https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Link2 className="w-4 h-4" /> ${contact.linkedin.replace('https://', '')}
-              </a> */}
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={downloadPDF}
-          className="cv-download-btn mt-4 md:mt-0 self-start shrink-0"
-        >
-          <Download className="w-4 h-4" />
-          Download PDF
-        </button>
+    <>
+      <div className="ptitle">
+        <p className="mono mute" style={{ marginTop: 0 }}>§05 — Credentials</p>
+        <h1 className="disp">Curriculum</h1>
+        <p>{summary}</p>
       </div>
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-display font-light mb-4 text-foreground/90">Professional Summary</h2>
-        <p className="text-muted-foreground leading-relaxed">
-          {summary}
-        </p>
-      </section>
+      <div className="dossier__meta mono">
+        <div><b>Based</b>{contact.location}</div>
+        <div><b>Mail</b><a href={`mailto:${contact.email}`} className="u">{contact.email}</a></div>
+        <div><b>Code</b><a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="u">{contact.github}</a></div>
+        <div><b>Paper copy</b><a href="/CV_NCA.pdf" download="CV_NCA.pdf" className="u">Download PDF ↓</a></div>
+      </div>
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Technical Projects</h2>
-        <div className="space-y-8">
-          {projects.map((project, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <h3 className="text-xl font-display">{project.title}</h3>
-                <span className="text-sm px-2 py-0.5 border border-foreground/40 text-foreground bg-foreground/5 w-fit">
-                  {project.tech}
-                </span>
-              </div>
-              <ul className="list-disc list-outside ml-4 text-muted-foreground space-y-1">
-                {project.points.map((point, i) => (
-                  <li key={i}>{point}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      <SectionHead n="01" title="Technical projects" right={`${String(projects.length).padStart(2, "0")} groups`} />
+      {projects.map((project) => (
+        <div key={project.title} className="cv__row">
+          <div className="mono">{project.tech}</div>
+          <div>
+            <h3>{project.title}</h3>
+            <ul>
+              {project.points.map((point) => <li key={point}>{point}</li>)}
+            </ul>
+          </div>
         </div>
-      </section>
+      ))}
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Education</h2>
-        <div className="space-y-8">
-          {education.map((edu, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
-              <h3 className="text-xl font-display mb-2">{edu.degree}</h3>
-              <p className="text-muted-foreground mb-2">
-                {edu.institution} • {edu.period}
-              </p>
-              {edu.description && <p className="text-muted-foreground italic text-sm">{edu.description}</p>}
-            </div>
-          ))}
+      <SectionHead n="02" title="Education" />
+      {education.map((edu) => (
+        <div key={edu.degree + edu.period} className="cv__row">
+          <div className="mono">{edu.period}</div>
+          <div>
+            <h3>{edu.degree}</h3>
+            <p className="mono mute" style={{ marginTop: 6 }}>{edu.institution}</p>
+            {edu.description && <p style={{ marginTop: 8, fontStyle: "italic" }}>{edu.description}</p>}
+          </div>
         </div>
-      </section>
+      ))}
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Technical Skills</h2>
-        <div className="space-y-8">
-          {Object.entries(skills).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="text-xl font-display mb-4">{category}</h3>
-              <div className="flex flex-wrap gap-2">
-                {items.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-4 py-2 text-sm border border-foreground/40 text-foreground bg-foreground/5"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+      <SectionHead n="03" title="Skills" />
+      {Object.entries(skills).map(([category, items]) => (
+        <div key={category} className="cv__row">
+          <div className="mono">{category}</div>
+          <div className="cv__chips mono">
+            {items.map((skill) => <span key={skill}>{skill}</span>)}
+          </div>
         </div>
-      </section>
+      ))}
 
-      <section className="mb-16">
-        <h2 className="text-3xl font-display font-light mb-8">Languages</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {languages.map((lang, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
-              <h3 className="text-xl font-display mb-1">{lang.name}</h3>
-              <p className="text-muted-foreground">{lang.proficiency}</p>
-            </div>
-          ))}
+      <SectionHead n="04" title="Languages" />
+      {languages.map((lang) => (
+        <div key={lang.name} className="cv__row">
+          <div className="mono">{lang.name}</div>
+          <div>{lang.proficiency}</div>
         </div>
-      </section>
-    </div>
+      ))}
+
+      <div className="colophon__end mono">
+        <span className="mute">Phone on request</span>
+        <a href="/CV_NCA.pdf" download="CV_NCA.pdf" className="cv__dl">Download PDF ↓</a>
+      </div>
+    </>
   );
 };
 
