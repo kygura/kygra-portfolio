@@ -90,7 +90,7 @@ function Cursor() {
         transition={{ duration: 0.15, ease: "easeOut" }}
       >
         <div
-          className="rounded-full -translate-x-1/2 -translate-y-1/2"
+          className="-translate-x-1/2 -translate-y-1/2"
           style={{
             width: "100%",
             height: "100%",
@@ -110,7 +110,7 @@ function Cursor() {
         transition={{ duration: 0.25, ease: "easeOut" }}
       >
         <div
-          className="rounded-full -translate-x-1/2 -translate-y-1/2"
+          className="-translate-x-1/2 -translate-y-1/2"
           style={{
             width: "100%",
             height: "100%",
@@ -134,12 +134,12 @@ function Cursor() {
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
             <div
-              className="rounded-full -translate-x-1/2 -translate-y-1/2"
+              className="-translate-x-1/2 -translate-y-1/2"
               style={{
                 width: "100%",
                 height: "100%",
-                border: `2px solid ${accentColor}`,
-                background: `${accentColor}18`,
+                border: `1px solid ${accentColor}`,
+                background: `color-mix(in srgb, ${accentColor} 9%, transparent)`,
                 transition: "border-color 0.2s ease, background 0.2s ease",
               }}
             />

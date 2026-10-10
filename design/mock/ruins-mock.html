@@ -1,0 +1,1492 @@
+<title>NCA Ventures Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Silkscreen&display=swap">
+<style>
+/* Layout: a survey sheet. Full-bleed live PS1 hero acts as the map frame (legend in its corners); below, a ruled 12-col sheet holds the index table and a rail + 66ch reading column; a vim-style status line is pinned to the bottom edge. */
+:root {
+  color-scheme: dark;
+  /* ground + ink: slate with a green-blue bias, bone-coloured ink */
+  --bg: #111617;
+  --bg-2: #161d1f;
+  --sheet: #1a2224;
+  --code: #0c1112;
+  --ink: #e0d9c8;
+  --ink-2: #aab1a7;
+  --ink-3: #75817b;
+  --rule: #2b3739;
+  --rule-2: #3d4b4d;
+  --grid: rgba(224, 217, 200, 0.035);
+  --scrim: rgba(12, 17, 18, 0.86);
+  --scrim-0: rgba(12, 17, 18, 0);
+  /* accent: default variant "Lichen"; variants below redefine these three */
+  --accent: #bcc77c;
+  --accent-deep: #5d7a3a;
+  --on-accent: #151a0e;
+  /* type */
+  --f-display: "Silkscreen", "Courier New", monospace;
+  --f-body: "Literata", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --f-mono: "Fragment Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --t-xs: 0.6875rem;
+  --t-sm: 0.8125rem;
+  --t-md: 1rem;
+  --t-read: 1.1875rem;
+  --t-lg: 1.5rem;
+  --t-xl: 2.25rem;
+  --t-hero: clamp(2.1rem, 5.2vw, 3.9rem);
+  --gutter: clamp(16px, 4vw, 48px);
+  --maxw: 1240px;
+}
+:root[data-accent="torch"]  { --accent: #eaa24c; --accent-deep: #a24e1c; --on-accent: #1d1206; }
+:root[data-accent="astral"] { --accent: #86d3dc; --accent-deep: #2f6f9a; --on-accent: #08171b; }
+:root[data-accent="madder"] { --accent: #e5787f; --accent-deep: #7e2638; --on-accent: #1f0a0d; }
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--bg); }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: var(--t-md);
+  line-height: 1.55;
+  margin: 0;
+  padding-bottom: 52px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 0.18em; text-decoration-thickness: 1px; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+::selection { background: var(--accent); color: var(--on-accent); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.skip { position: absolute; left: 16px; top: -60px; z-index: 50; background: var(--accent); color: var(--on-accent); padding: 8px 12px; font-family: var(--f-mono); }
+.skip:focus { top: 12px; }
+
+kbd {
+  font-family: var(--f-mono);
+  font-size: 0.78em;
+  line-height: 1;
+  display: inline-block;
+  padding: 0.22em 0.4em 0.18em;
+  color: var(--ink);
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+  border-bottom-width: 2px;
+  vertical-align: 0.08em;
+  min-width: 1.6em;
+  text-align: center;
+}
+.eyebrow {
+  font-family: var(--f-display);
+  font-size: var(--t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0;
+}
+
+/* proposal tags (A–G) that key regions to the notes strip */
+.tag {
+  font-family: var(--f-display);
+  font-size: 10px;
+  line-height: 1;
+  display: inline-grid;
+  place-items: center;
+  width: 18px; height: 18px;
+  background: var(--accent);
+  color: var(--on-accent);
+  flex: none;
+}
+body.hide-tags .tag { display: none; }
+
+/* ---------- HERO ---------- */
+.hero {
+  position: relative;
+  height: clamp(480px, 74vh, 760px);
+  overflow: hidden;
+  background:
+    repeating-radial-gradient(circle at 60% 80%, transparent 0 22px, var(--rule) 22px 23px),
+    linear-gradient(var(--bg-2), var(--bg));
+}
+.hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+.hero.no-gl canvas { display: none; }
+.hero::before, .hero::after { content: ""; position: absolute; left: 0; right: 0; pointer-events: none; z-index: 1; }
+.hero::before { top: 0; height: 120px; background: linear-gradient(var(--scrim), var(--scrim-0)); }
+.hero::after { bottom: 0; height: 62%; background: linear-gradient(var(--scrim-0), var(--scrim) 78%); }
+.hero-ui {
+  position: absolute; inset: 0; z-index: 3;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  padding: 14px var(--gutter) 18px;
+  gap: 16px;
+  pointer-events: none;
+}
+.hero-ui > * { pointer-events: auto; min-width: 0; }
+.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; }
+.mark { display: flex; align-items: baseline; gap: 8px; text-decoration: none; }
+.mark b { font-family: var(--f-display); font-weight: 400; font-size: 1.5rem; letter-spacing: 0.02em; color: var(--ink); }
+.mark em { font-family: var(--f-body); font-style: italic; font-weight: 400; font-size: 1.375rem; color: var(--accent); letter-spacing: 0; margin-left: -2px; }
+.mark small { margin-left: 6px;  font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.06em; }
+.nav { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 0; padding: 0; list-style: none; font-family: var(--f-mono); font-size: var(--t-sm); }
+.nav a { text-decoration: none; display: inline-flex; gap: 7px; align-items: center; padding: 4px 0; color: var(--ink); }
+.nav a:hover span, .nav a.flash span { color: var(--accent); }
+.nav a.flash kbd { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.nav kbd { font-size: 0.72rem; color: var(--ink-2); }
+.search { margin-left: auto; display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: var(--t-sm); }
+.search input {
+  font: inherit; color: var(--ink); background: var(--scrim);
+  border: 1px solid var(--rule-2); padding: 6px 8px; width: 13rem; max-width: 100%;
+}
+.search input::placeholder { color: var(--ink-3); }
+.search input:focus { border-color: var(--accent); outline: none; }
+
+.sheets { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; justify-self: end; font-family: var(--f-mono); font-size: var(--t-sm); border-bottom: 1px solid var(--rule-2); }
+.sheet-tab { font: inherit; color: var(--ink-2); background: var(--scrim); border: 1px solid var(--rule-2); border-bottom: 0; margin-right: -1px; padding: 6px 12px 5px; cursor: pointer; display: inline-flex; gap: 8px; align-items: baseline; }
+.sheet-tab small { font-family: var(--f-display); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.sheet-tab:hover { color: var(--ink); }
+.sheet-tab[aria-pressed="true"] { color: var(--accent); background: var(--bg-2); box-shadow: inset 0 2px 0 var(--accent); }
+.sheet-tab[aria-pressed="true"] small { color: var(--accent); }
+.sheet-keys { display: inline-flex; gap: 3px; align-items: center; padding-left: 10px; }
+.hero-title { align-self: end; max-width: 40rem; display: grid; gap: 14px; }
+.hero-title .eyebrow { display: flex; gap: 8px; align-items: center; }
+.hero-title h1 {
+  font-family: var(--f-body); font-weight: 600; font-size: var(--t-hero); line-height: 1.04;
+  letter-spacing: -0.015em; margin: 0; text-wrap: balance;
+  text-shadow: 0 2px 0 var(--bg);
+}
+.hero-title h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+.hero-title p { margin: 0; font-size: 1.0625rem; color: var(--ink); max-width: 34rem; text-shadow: 0 1px 0 var(--bg); }
+.hero-title p.eyebrow { font-size: var(--t-xs); text-shadow: none; }
+.ctas { display: flex; flex-wrap: wrap; gap: 10px; font-family: var(--f-mono); font-size: var(--t-sm); }
+.ctas a { display: inline-flex; gap: 8px; align-items: center; padding: 8px 12px; border: 1px solid var(--rule-2); background: var(--scrim); text-decoration: none; }
+.ctas a:first-child { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.ctas a:first-child kbd { background: transparent; color: var(--on-accent); border-color: var(--on-accent); }
+
+.legend-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 14px 24px; font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.readout { display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+.readout .line { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.readout b { font-weight: 400; color: var(--ink); }
+.readout i { font-style: normal; }
+.scalebar { display: grid; grid-template-columns: repeat(4, 28px); height: 6px; border: 1px solid var(--ink-2); width: max-content; }
+.scalebar span:nth-child(odd) { background: var(--ink); }
+.scale-lbl { display: grid; grid-template-columns: repeat(4, 28px) auto; font-size: 10px; color: var(--ink-3); }
+.legend-key { display: flex; gap: 18px; align-items: end; }
+.key-list { display: grid; gap: 5px; margin: 0; padding: 0; list-style: none; }
+.key-list li { display: flex; align-items: center; gap: 8px; }
+.g { width: 14px; height: 10px; display: inline-block; flex: none; }
+.g-pillar { width: 6px; height: 12px; background: var(--ink); margin: 0 4px; }
+.g-arch { border: 2px solid var(--ink); border-bottom: 0; border-radius: 7px 7px 0 0; }
+.g-astral { width: 9px; height: 9px; border: 1px solid var(--accent); transform: rotate(45deg); margin: 0 2.5px; }
+.g-tri { width: 12px; height: 11px; background: var(--ink); clip-path: polygon(50% 0, 100% 100%, 0 100%); margin: 0 1px; }
+.g-head { width: 11px; height: 12px; border: 1px solid var(--ink); border-radius: 50% 50% 45% 45%; margin: 0 1.5px; }
+.g-index { height: 3px; background: var(--accent); }
+.g-grid { width: 12px; height: 12px; margin: 0 1px; background: linear-gradient(var(--accent-deep), var(--accent-deep)) 50% 0 / 1px 100% no-repeat, linear-gradient(var(--accent-deep), var(--accent-deep)) 0 50% / 100% 1px no-repeat; border: 1px solid var(--accent-deep); }
+.g-trig { width: 12px; height: 10px; background: var(--accent); clip-path: polygon(50% 0, 100% 100%, 0 100%); margin: 0 1px; }
+.g-ring { width: 12px; height: 12px; border: 1px solid var(--accent); border-radius: 50%; margin: 0 1px; }
+.g-orbit { width: 14px; height: 8px; border: 1px dashed var(--accent-deep); border-radius: 50%; }
+.g-glyph { width: 7px; height: 7px; background: var(--accent); transform: rotate(45deg); margin: 0 3.5px; }
+.g-contour { height: 1px; background: var(--ink-2); }
+.compass { width: 58px; height: 58px; flex: none; }
+.compass text { font-family: var(--f-display); font-size: 9px; fill: var(--ink); }
+
+.labels { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.lbl { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); white-space: nowrap; will-change: transform; }
+.lbl::before { content: ""; width: 7px; height: 7px; border: 1px solid var(--accent); background: var(--scrim); }
+.lbl span { background: var(--scrim); padding: 2px 5px; }
+.lbl em { font-style: normal; color: var(--ink-3); }
+.gl-note { position: absolute; right: var(--gutter); top: 64px; z-index: 2; font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-2); display: none; }
+.no-gl .gl-note { display: block; }
+
+/* ---------- control strip ---------- */
+.strip {
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  background: var(--bg-2);
+}
+.strip-in {
+  max-width: var(--maxw); margin: 0 auto; padding: 12px var(--gutter);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+  font-family: var(--f-mono); font-size: var(--t-sm);
+}
+.strip-lbl { color: var(--ink-3); text-transform: uppercase; font-size: var(--t-xs); letter-spacing: 0.06em; display: flex; gap: 8px; align-items: center; }
+.variants { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn {
+  font: inherit; color: var(--ink); background: transparent; cursor: pointer;
+  border: 1px solid var(--rule-2); padding: 6px 10px; display: inline-flex; gap: 8px; align-items: center;
+}
+.btn:hover { border-color: var(--ink-2); }
+.btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.sw { width: 12px; height: 12px; display: inline-block; flex: none; }
+.toggles { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+
+/* ---------- SHEET ---------- */
+main.sheet {
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+.sheet-in { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--gutter) 56px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 72px; }
+.sheet-in > * { min-width: 0; }
+.ruler {
+  display: flex; justify-content: space-between; font-family: var(--f-display); font-size: 10px; color: var(--ink-3);
+  padding: 6px 0 14px; overflow: hidden;
+  background: repeating-linear-gradient(90deg, var(--rule-2) 0 1px, transparent 1px 12.5%) top / 100% 5px no-repeat;
+  border-top: 1px solid var(--rule-2);
+}
+.sec-head { display: grid; gap: 10px; margin-bottom: 22px; }
+.sec-head .eyebrow { display: flex; gap: 8px; align-items: center; }
+.sec-head h2 { font-family: var(--f-body); font-weight: 600; font-size: var(--t-xl); line-height: 1.1; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.sec-head p { margin: 0; color: var(--ink-2); max-width: 60ch; }
+.sec-head:focus { outline: none; }
+
+/* index table */
+.tablewrap { position: relative; overflow-x: auto; border: 1px solid var(--rule); background: var(--bg); }
+table.index { width: 100%; border-collapse: collapse; min-width: 720px; font-variant-numeric: tabular-nums; }
+.index caption { text-align: left; }
+.index th { font-family: var(--f-mono); font-weight: 400; font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--rule-2); background: var(--bg-2); }
+.index td { padding: 12px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; font-family: var(--f-mono); font-size: var(--t-sm); color: var(--ink-2); }
+.index tr.row.sel td { background: var(--sheet); }
+.index tr.row.sel td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.index tr.row.sel .ref { color: var(--accent); }
+.ref { color: var(--ink); }
+.site-btn { font: inherit; background: none; border: 0; padding: 0; color: inherit; text-align: left; cursor: pointer; display: grid; gap: 3px; }
+.site-btn b { font-family: var(--f-body); font-weight: 600; font-size: 1.0625rem; color: var(--ink); }
+.site-btn span { font-family: var(--f-body); font-size: 0.9375rem; color: var(--ink-2); }
+.site-btn:hover b { color: var(--accent); }
+.site-btn[aria-expanded="true"] b::after { content: " −"; color: var(--accent); }
+.state { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+.dot { width: 9px; height: 9px; border: 1px solid var(--accent); display: inline-block; }
+.dot.active { background: var(--accent); }
+.dot.dormant { background: linear-gradient(90deg, var(--accent) 50%, transparent 50%); }
+.dot.ruin { border-color: var(--ink-3); }
+.profile { display: block; width: 120px; height: 26px; }
+.profile polyline { fill: none; stroke: var(--accent); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.profile polygon { fill: var(--accent); opacity: 0.12; }
+.profile line { stroke: var(--rule-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+tr.detail td { background: var(--sheet); color: var(--ink); font-family: var(--f-body); font-size: 1rem; padding: 4px 14px 18px 46px; }
+tr.detail p { margin: 0 0 8px; max-width: 68ch; }
+tr.detail .links { font-family: var(--f-mono); font-size: var(--t-sm); display: flex; gap: 16px; flex-wrap: wrap; }
+.index-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; padding-top: 12px; font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.index-foot .key { display: flex; gap: 16px; flex-wrap: wrap; }
+.index-foot .key span { display: inline-flex; gap: 6px; align-items: center; }
+
+/* article */
+.post { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 42rem); gap: 24px 56px; justify-content: start; }
+.rail { font-family: var(--f-mono); font-size: var(--t-sm); color: var(--ink-2); display: grid; gap: 18px; align-content: start; position: sticky; top: 16px; }
+.rail dl { margin: 0; display: grid; gap: 8px; }
+.rail dt { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+.rail dd { margin: 0; color: var(--ink); }
+.rail ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.rail ol a { text-decoration: none; color: var(--ink-2); }
+.rail ol a:hover { color: var(--accent); }
+.prose { min-width: 0; font-size: var(--t-read); line-height: 1.68; color: var(--ink); }
+.prose > * { margin: 0 0 1.05em; }
+.prose h2 { font-weight: 600; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.1; letter-spacing: -0.015em; margin-bottom: 0.4em; text-wrap: balance; }
+.prose .lede { font-size: 1.3125rem; line-height: 1.55; color: var(--ink); }
+.prose h3 { font-weight: 600; font-size: var(--t-lg); line-height: 1.25; margin: 1.7em 0 0.5em; text-wrap: balance; }
+.prose h3 .eyebrow { display: block; margin-bottom: 6px; }
+.prose code { font-family: var(--f-mono); font-size: 0.84em; background: var(--bg-2); padding: 0.08em 0.3em; border: 1px solid var(--rule); }
+.prose sup a { font-family: var(--f-mono); font-size: 0.72em; text-decoration: none; color: var(--accent); padding: 0 2px; }
+.codeblock { border: 1px solid var(--rule-2); background: var(--code); margin: 1.4em 0; }
+.codeblock .cb-head { display: flex; justify-content: space-between; gap: 12px; padding: 6px 12px; border-bottom: 1px solid var(--rule); font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.codeblock pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-family: var(--f-mono); font-size: 0.875rem; line-height: 1.6; color: var(--ink); tab-size: 2; }
+.codeblock pre code { background: none; border: 0; padding: 0; font-size: inherit; }
+.c-c { color: var(--ink-3); font-style: italic; }
+.c-k { color: var(--accent); }
+.c-n { color: var(--ink-2); }
+.aside { border-top: 1px solid var(--rule-2); border-bottom: 1px solid var(--rule-2); padding: 14px 0; font-size: 1.0625rem; color: var(--ink-2); display: grid; grid-template-columns: auto 1fr; gap: 14px; }
+.aside b { font-family: var(--f-display); font-weight: 400; font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; padding-top: 6px; }
+.prose ul { padding-left: 1.2em; }
+.prose li { margin-bottom: 0.35em; }
+.prose li::marker { color: var(--accent); content: "◆  "; font-size: 0.6em; }
+.footnotes { border-top: 1px solid var(--rule-2); padding-top: 12px; font-size: 0.9375rem; color: var(--ink-2); line-height: 1.55; }
+.footnotes ol { margin: 0; padding-left: 1.3em; }
+.footnotes li::marker { content: counter(list-item) "  "; font-family: var(--f-mono); font-size: 0.85em; color: var(--accent); }
+.footnotes a.back { font-family: var(--f-mono); text-decoration: none; color: var(--accent); }
+:target { scroll-margin-top: 24px; }
+.footnotes li:target { background: var(--sheet); }
+
+/* notes strip */
+.notes { border: 1px solid var(--rule-2); background: var(--bg-2); }
+.notes-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: baseline; padding: 14px 18px; border-bottom: 1px solid var(--rule-2); }
+.notes-head h2 { font-family: var(--f-display); font-weight: 400; font-size: var(--t-sm); text-transform: uppercase; letter-spacing: 0.08em; margin: 0; color: var(--ink); }
+.notes-head p { margin: 0; font-family: var(--f-mono); font-size: var(--t-xs); color: var(--ink-3); }
+.notes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+.note { display: grid; align-content: start; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; padding: 14px 18px; border-bottom: 1px solid var(--rule); border-right: 1px solid var(--rule); font-size: 0.9375rem; line-height: 1.5; color: var(--ink-2); }
+.note h3 { margin: 0; font-family: var(--f-mono); font-weight: 400; font-size: var(--t-sm); color: var(--ink); text-transform: uppercase; letter-spacing: 0.04em; }
+.note p { margin: 0; grid-column: 2; }
+.note .tag { grid-row: span 2; }
+body.hide-tags .note .tag { display: inline-grid; }
+.vtable { grid-column: 2; display: grid; gap: 6px; margin-top: 6px; font-family: var(--f-mono); font-size: var(--t-xs); }
+.vtable div { display: grid; grid-template-columns: 12px 7.5rem 4.6rem minmax(0, 1fr); gap: 4px 8px; align-items: baseline; }
+.vtable em { font-style: normal; color: var(--ink-3); }
+@media (min-width: 1100px) { .notes-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: dense; } .note.wide { grid-column: span 2; } }
+.vtable code { color: var(--ink); }
+
+/* indie footer */
+.indie { border-top: 1px solid var(--rule-2); background: var(--bg-2); }
+.indie-in { max-width: var(--maxw); margin: 0 auto; padding: 28px var(--gutter) 32px; display: grid; gap: 22px; font-family: var(--f-mono); font-size: var(--t-sm); color: var(--ink-2); }
+.ring { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+.ring a { text-decoration: none; }
+.ring .next { text-align: right; }
+.ring .mid { text-align: center; font-family: var(--f-display); font-size: 11px; color: var(--ink); letter-spacing: 0.06em; }
+.ring .mid small { display: block; font-family: var(--f-mono); color: var(--ink-3); letter-spacing: 0; text-transform: none; font-size: var(--t-xs); }
+.buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.b88 {
+  width: 88px; height: 31px; flex: none; display: grid; place-items: center; text-align: center;
+  font-family: var(--f-display); font-size: 9px; line-height: 1.05; text-transform: uppercase; text-decoration: none;
+  border: 1px solid; border-color: var(--rule-2) var(--code) var(--code) var(--rule-2);
+  box-shadow: inset 1px 1px 0 var(--ink-3), inset -1px -1px 0 var(--code);
+  color: var(--ink); background: var(--sheet); overflow: hidden;
+}
+.b88.k { background: repeating-linear-gradient(0deg, var(--accent-deep) 0 2px, var(--sheet) 2px 4px); }
+.b88.k b { font-weight: 400; background: var(--bg); padding: 1px 3px; color: var(--accent); }
+.b88.rss { background: var(--accent); color: var(--on-accent); }
+.b88.split { grid-template-columns: 30px 1fr; place-items: stretch; }
+.b88.split i { font-style: normal; background: var(--ink); color: var(--bg); display: grid; place-items: center; }
+.b88.split span { display: grid; place-items: center; }
+.b88.dither { background-color: var(--bg); background-image: radial-gradient(var(--ink-3) 1px, transparent 1.2px); background-size: 3px 3px; }
+.b88.dither span { background: var(--bg); padding: 1px 3px; }
+.meta-line { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-3); }
+.meta-line b { font-weight: 400; color: var(--ink); }
+
+/* status line */
+.status {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  display: flex; align-items: stretch; gap: 0;
+  font-family: var(--f-mono); font-size: 12px; color: var(--ink-2);
+  background: var(--code); border-top: 1px solid var(--rule-2);
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+  height: calc(30px + env(safe-area-inset-bottom, 0px));
+}
+.status > span { display: flex; align-items: center; padding: 0 12px; white-space: nowrap; border-right: 1px solid var(--rule); min-width: 0; }
+.status .mode { background: var(--accent); color: var(--on-accent); font-family: var(--f-display); font-size: 10px; letter-spacing: 0.06em; padding-left: 16px; }
+.status .msg { flex: 1; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 30px; }
+.status .chord { color: var(--accent); min-width: 3.5em; justify-content: center; }
+.status .acc { gap: 6px; }
+
+/* help overlay */
+.help-back { position: fixed; inset: 0; z-index: 40; background: var(--scrim); display: grid; place-items: center; padding: 16px; }
+.help {
+  width: min(100%, 640px); max-height: calc(100% - 32px); overflow: auto;
+  background: var(--bg-2); border: 1px solid var(--accent); padding: 20px 22px;
+  font-family: var(--f-mono); font-size: var(--t-sm); color: var(--ink-2);
+}
+.help-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.help-top h2 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 13px; color: var(--ink); letter-spacing: 0.06em; text-transform: uppercase; }
+.help-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px 28px; }
+.help h3 { margin: 0 0 8px; font-family: var(--f-mono); font-weight: 400; font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+.help dl { margin: 0; display: grid; grid-template-columns: 5.2rem 1fr; gap: 7px 12px; }
+.help dt { white-space: nowrap; }
+.help dd { margin: 0; color: var(--ink); }
+
+@media (max-width: 860px) {
+  .post { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .key-list { display: none; }
+  .search { margin-left: 0; width: 100%; }
+  .search input { flex: 1; width: auto; }
+}
+@media (max-width: 560px) {
+  .hero { height: clamp(600px, 92vh, 760px); }
+  .sheets { justify-self: start; }
+  .sheet-keys { display: none; }
+  .hero-ui { gap: 12px; }
+  .mark small { display: none; }
+  .nav { gap: 2px 12px; font-size: 12px; }
+  .nav kbd { display: none; }
+  .prose { font-size: 1.0625rem; }
+  .prose .lede { font-size: 1.1875rem; }
+  .status .acc, .status .where { display: none; }
+  .ring { grid-template-columns: 1fr; text-align: left; }
+  .ring .next, .ring .mid { text-align: left; }
+  .toggles { margin-left: 0; }
+  .vtable div { grid-template-columns: 12px 6.5rem minmax(0, 1fr); }
+  .vtable div em { grid-column: 2 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+</style>
+
+<a class="skip" href="#work">Skip to the index</a>
+
+<header class="hero" id="home">
+  <canvas id="scene" aria-label="Animated low-poly scene: forest ruins with broken columns, a collapsed arch and a fallen stone head under a starry sky." role="img"></canvas>
+  <div class="labels" id="labels" aria-hidden="true"></div>
+  <p class="gl-note">WebGL unavailable: static fallback shown</p>
+  <div class="hero-ui">
+    <div class="topbar">
+      <a class="mark" href="#home" aria-label="NCA Ventures, home"><b>NCA</b><em>Ventures</em><small>studio &amp; field station · est. 2019</small></a>
+      <nav aria-label="Primary">
+        <ul class="nav">
+          <li><a href="#home" data-go="h"><span>Home</span> <kbd>g</kbd><kbd>h</kbd></a></li>
+          <li><a href="#work" data-go="w"><span>Work</span> <kbd>g</kbd><kbd>w</kbd></a></li>
+          <li><a href="#blog" data-go="b"><span>Writing</span> <kbd>g</kbd><kbd>b</kbd></a></li>
+          <li><a href="#notes" data-go="n"><span>Proposal</span> <kbd>g</kbd><kbd>n</kbd></a></li>
+          <li><a href="#ring" data-go="r"><span>Webring</span> <kbd>g</kbd><kbd>r</kbd></a></li>
+        </ul>
+      </nav>
+      <div class="search">
+        <span class="tag" title="Proposal note C">C</span>
+        <label for="q"><kbd>/</kbd><span class="sr">Search the index</span></label>
+        <input id="q" type="search" placeholder="filter the index" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="sheets" role="group" aria-label="Hero sheet">
+      <button class="sheet-tab" type="button" data-s="0" aria-pressed="true"><small>Sheet 01</small>Ruins</button>
+      <button class="sheet-tab" type="button" data-s="1" aria-pressed="false"><small>02</small>Topo</button>
+      <button class="sheet-tab" type="button" data-s="2" aria-pressed="false"><small>03</small>Astral</button>
+      <span class="sheet-keys" aria-hidden="true"><kbd>[</kbd><kbd>]</kbd></span>
+    </div>
+
+    <div class="hero-title">
+      <p class="eyebrow"><span class="tag" title="Proposal note A">A</span><span id="sheet-eyebrow">Sheet 01 · the overgrown plaza</span></p>
+      <h1>Field notes from the <em>overgrown</em> web.</h1>
+      <p>NCA Ventures is a small studio that builds tools, shaders and keyboard-first interfaces, and keeps field notes on how they work. Every page here can be driven without a mouse.</p>
+      <div class="ctas">
+        <a href="#blog" data-go="b">Latest field note <kbd>g</kbd><kbd>b</kbd></a>
+        <a href="#work" data-go="w">Survey the work <kbd>g</kbd><kbd>w</kbd></a>
+      </div>
+    </div>
+
+    <div class="legend-row">
+      <div class="readout" aria-label="Camera survey readout">
+        <span class="tag" title="Proposal note B">B</span>
+        <div class="line"><span><i id="k0">Lat</i> <b id="v0">N 47°12′08″</b></span><span><i id="k1">Lon</i> <b id="v1">E 008°31′44″</b></span></div>
+        <div class="line"><span><i id="k2">Elev</i> <b id="v2">214 m</b></span><span><i id="k3">Brg</i> <b id="v3">312°</b></span><span><i id="k4">Grid</i> <b id="v4">C-04</b></span></div>
+        <div class="scalebar" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div class="scale-lbl" id="scale-lbl" aria-hidden="true"><span>0</span><span>5</span><span>10</span><span>15</span><span>20 m</span></div>
+      </div>
+      <div class="legend-key">
+        <ul class="key-list" id="key-list" aria-label="Map key"></ul>
+        <svg class="compass" viewBox="-30 -30 60 60" aria-hidden="true">
+          <circle r="26" fill="none" stroke="currentColor" style="color:var(--ink-3)"></circle>
+          <g id="compass-rose">
+            <g stroke="currentColor" style="color:var(--ink-2)">
+              <line x1="0" y1="-26" x2="0" y2="-21"></line><line x1="0" y1="26" x2="0" y2="21"></line>
+              <line x1="-26" y1="0" x2="-21" y2="0"></line><line x1="26" y1="0" x2="21" y2="0"></line>
+            </g>
+            <polygon points="0,-18 4,0 0,3 -4,0" style="fill:var(--accent)"></polygon>
+            <polygon points="0,18 4,0 0,-3 -4,0" style="fill:var(--ink-3)"></polygon>
+            <text x="0" y="-8" text-anchor="middle" transform="translate(0,-14)">N</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="strip">
+  <div class="strip-in">
+    <span class="strip-lbl"><span class="tag" title="Proposal note D">D</span>Accent</span>
+    <div class="variants" id="variants" role="group" aria-label="Accent variant"></div>
+    <div class="toggles">
+      <button class="btn" id="t-motion" type="button" aria-pressed="true"><kbd>p</kbd> Motion</button>
+      <button class="btn" id="t-psx" type="button" aria-pressed="true"><kbd>x</kbd> PS1 pipeline</button>
+      <button class="btn" id="t-tags" type="button" aria-pressed="true"><kbd>a</kbd> Note tags</button>
+      <button class="btn" id="t-help" type="button"><kbd>?</kbd> Keys</button>
+    </div>
+  </div>
+</div>
+
+<main class="sheet">
+  <div class="sheet-in">
+    <div>
+      <div class="ruler" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span></div>
+
+      <section id="work" aria-labelledby="work-h">
+        <div class="sec-head" tabindex="-1">
+          <p class="eyebrow"><span class="tag" title="Proposal note E">E</span>Survey index · 6 sites</p>
+          <h2 id="work-h">Work, surveyed</h2>
+          <p>Projects are logged like features on a field sheet: a grid reference, what kind of thing it is, the year it was founded and whether anyone still tends it. Move with <kbd>j</kbd> <kbd>k</kbd>, open with <kbd>Enter</kbd>.</p>
+        </div>
+        <div class="tablewrap">
+          <table class="index" id="index">
+            <caption class="sr">Project index</caption>
+            <thead>
+              <tr><th scope="col">Ref</th><th scope="col">Site</th><th scope="col">Kind</th><th scope="col">Est.</th><th scope="col">Activity, 12 mo</th><th scope="col">State</th></tr>
+            </thead>
+            <tbody id="index-body"></tbody>
+          </table>
+        </div>
+        <div class="index-foot">
+          <div class="key"><span><i class="dot active"></i>Active</span><span><i class="dot dormant"></i>Dormant</span><span><i class="dot ruin"></i>Ruin (archived)</span></div>
+          <span id="index-count">6 of 6 shown</span>
+        </div>
+      </section>
+    </div>
+
+    <article id="blog" class="post" aria-labelledby="post-h">
+      <aside class="rail" aria-label="Entry details">
+        <p class="eyebrow"><span class="tag" title="Proposal note F">F</span>Field note 031</p>
+        <dl>
+          <dt>Filed</dt><dd>28 Sep 2026</dd>
+          <dt>Reading</dt><dd>9 min · 1,840 words</dd>
+          <dt>Filed under</dt><dd>shaders, three.js, retro</dd>
+        </dl>
+        <nav aria-label="On this note">
+          <dl><dt>On this note</dt></dl>
+          <ol>
+            <li><a href="#s-snap">1 · Snap to the grid</a></li>
+            <li><a href="#s-swim">2 · Let textures swim</a></li>
+            <li><a href="#s-dither">3 · Fewer colours, then dither</a></li>
+          </ol>
+        </nav>
+      </aside>
+
+      <div class="prose">
+        <h2 id="post-h" class="sec-head-target" tabindex="-1">Wobble on purpose: PS1 rendering in a browser</h2>
+        <p class="lede">The PlayStation drew 3D with whole-pixel screen coordinates and no perspective correction. The flaws that make 1997 look like 1997 all came from saving silicon. I wanted them back for this site’s header, and each one costs about ten lines of shader.</p>
+
+        <h3 id="s-snap"><span class="eyebrow">1</span>Snap every vertex to the pixel grid</h3>
+        <p>The console’s geometry coprocessor, the GTE, handed the rasterizer integer screen positions.<sup id="r1"><a href="#fn1" aria-label="Footnote 1">1</a></sup> No corner could sit between two pixels, so when the camera moved, every polygon hopped from one pixel to the next. In a vertex shader, that means rounding the clip-space position after projection:</p>
+        <div class="codeblock">
+          <div class="cb-head"><span>glsl · vertex</span><span>psx-snap.vert</span></div>
+<pre><code><span class="c-c">// after projection, before the rasterizer</span>
+<span class="c-k">vec4</span> p = projectionMatrix * viewMatrix * worldPos;
+<span class="c-k">vec2</span> grid = uResolution * <span class="c-n">0.5</span>;   <span class="c-c">// pixels per NDC unit</span>
+p.xy = <span class="c-k">floor</span>(p.xy / p.w * grid + <span class="c-n">0.5</span>) / grid * p.w;
+gl_Position = p;</code></pre>
+        </div>
+        <p>Divide by <code>w</code>, round, multiply back. The multiply matters: the GPU divides by <code>w</code> again during rasterization, so the value you hand it has to land on the grid after that divide.</p>
+
+        <h3 id="s-swim"><span class="eyebrow">2</span>Let textures swim</h3>
+        <p>Perspective-correct texturing needs a divide per pixel, and the hardware skipped it. Texture coordinates were interpolated straight across the screen, so a floor tile bent along its diagonal as it turned toward you. WebGL always corrects for perspective, but you can cancel the correction: multiply the UV by <code>w</code> in the vertex shader, pass <code>w</code> along, and divide in the fragment shader.</p>
+        <div class="aside"><b>Field note</b><span>Keep polygons large. Affine warping only shows on big triangles, which is why PS1 artists subdivided their floors and why this scene doesn’t.</span></div>
+
+        <h3 id="s-dither"><span class="eyebrow">3</span>Fewer colours, then dither</h3>
+        <p>The frame buffer held 15-bit colour, five bits per channel. Quantize to 32 levels and the sky bands at once. Adding a 4×4 Bayer matrix before the rounding turns those bands into the crosshatch everyone remembers from CRT captures.</p>
+        <ul>
+          <li>Render the scene to a target about a quarter of the canvas width.</li>
+          <li>Scale it up with nearest-neighbour filtering so each dither cell is a visible block.</li>
+          <li>Fog everything past 50 units. It hides the draw distance, as it did in 1997.</li>
+        </ul>
+        <p>Fill cost at that size is tiny. The real budget goes to draw calls, which is the next note.</p>
+
+        <section class="footnotes" aria-label="Footnotes">
+          <ol>
+            <li id="fn1">Geometry Transformation Engine, a fixed-point coprocessor in the CPU package. Its screen coordinates came out as 16-bit integers, which is where the snapping comes from. <a class="back" href="#r1" aria-label="Back to reference 1">↩</a></li>
+          </ol>
+        </section>
+      </div>
+    </article>
+
+    <section class="notes" id="notes" aria-labelledby="notes-h">
+      <div class="notes-head sec-head" tabindex="-1">
+        <h2 id="notes-h">Proposal notes · key to tags A–G</h2>
+        <p>Mock only. Content is placeholder. Toggle tags with <kbd>a</kbd>.</p>
+      </div>
+      <div class="notes-grid">
+        <div class="note"><span class="tag">A</span><h3>Hero sheets</h3><p>Three scenes, one subject each. 01 Ruins: columns, arch, fallen head, trees, fog, stars and moon. 02 Topo: live relief with marching-squares contours, index contour every 2.5 m, a draped 5 m survey grid and a sweep. 03 Astral: halo with glyphs, cored polyhedra, the watcher, the moon on its orbit. Only the active sheet renders. Switch with <kbd>[</kbd> <kbd>]</kbd> or the tabs; it dissolves through the dither matrix (hard cut under reduced motion) and remembers your last sheet. All three use the PS1 pipeline: ¼ resolution, 15-bit colour, Bayer dither, vertex snap, affine UVs, fog. <kbd>x</kbd> compares against a clean render.</p></div>
+        <div class="note"><span class="tag">B</span><h3>Map frame</h3><p>Hero corners act as a sheet legend. Lat/lon, elevation, bearing and grid ref are read from the drifting camera; the compass turns with it. Landmarks carry pinned survey labels. Readouts, labels, map key and eyebrow change with each sheet (topo shows scale and contour interval; astral shows RA/Dec).</p></div>
+        <div class="note"><span class="tag">C</span><h3>Keyboard layer</h3><p>Every nav item prints its chord. <kbd>g</kbd> starts a chord, <kbd>/</kbd> filters the index, <kbd>?</kbd> lists all keys. The status line mirrors vim: mode, pending chord, selection.</p></div>
+        <div class="note wide"><span class="tag">D</span><h3>Accent variants</h3><p>Four accents named for materials in the world. One switch rewrites CSS tokens and shader uniforms for all three sheets, and shifts fog and sky to suit. Lichen is the default.</p>
+          <div class="vtable" id="vtable"></div>
+        </div>
+        <div class="note"><span class="tag">E</span><h3>Index as survey table</h3><p>Grid ref, kind, founding year, a 12-month activity profile drawn like an elevation section, and a map-key state symbol. Rows filter and expand in place.</p></div>
+        <div class="note"><span class="tag">F</span><h3>Reading column</h3><p>Literata at 19 px / 1.68 on a 66-character measure: a screen-tuned book face with optical sizes, so headings and body share one family. Fragment Mono for keys, code and data. Silkscreen only for eyebrows, sheet numbers and 88×31s, where its pixel grid echoes the hero.</p><p><b>Wordmark:</b> “NCA” in Silkscreen, “Ventures” in Literata italic, in the accent. The initials sit on the hero’s pixel grid and the word sits in the reading face, so the name joins the two halves of the site.</p></div>
+        <div class="note"><span class="tag">G</span><h3>Indie footer</h3><p>Webring with prev/next, 88×31 buttons drawn in CSS (no images), RSS, last-surveyed date. Square corners and hairline rules throughout; the only fills are the accent and the sheet.</p></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="indie" id="ring">
+  <div class="indie-in">
+    <div class="ring" aria-label="Webring">
+      <a href="#ring" class="prev">← lowtide.garden</a>
+      <div class="mid"><span class="tag" title="Proposal note G">G</span> FOREST RING <small>23 hand-built sites · random hop</small></div>
+      <a href="#ring" class="next">mossbyte.net →</a>
+    </div>
+    <div class="buttons" aria-label="88 by 31 buttons">
+      <a class="b88 k" href="#home"><b>NCA<br>ventures</b></a>
+      <a class="b88 rss" href="#ring">RSS<br>feed.xml</a>
+      <span class="b88 split"><i>⌨</i><span>mouse<br>optional</span></span>
+      <span class="b88 dither"><span>320×180</span></span>
+      <span class="b88">no<br>trackers</span>
+      <span class="b88 split"><i>r1</i><span>three.js<br>r128</span></span>
+      <a class="b88" href="#ring">forest<br>ring</a>
+    </div>
+    <div class="meta-line">
+      <span>Last surveyed <b>2026-10-09</b></span>
+      <span>Feed <b>/feed.xml</b></span>
+      <span>Set in <b>Literata, Fragment Mono, Silkscreen</b></span>
+      <span>Built by hand · no cookies</span>
+    </div>
+  </div>
+</footer>
+
+<div class="status" role="status">
+  <span class="mode" id="st-mode">NORMAL</span>
+  <span class="where" id="st-where">sheet 01 ruins</span>
+  <span class="msg" id="st-msg" aria-live="polite">press ? for keys</span>
+  <span class="chord" id="st-chord" aria-label="Pending chord"> </span>
+  <span class="acc"><i class="sw" id="st-sw" style="background:var(--accent)"></i><span id="st-acc">Lichen</span></span>
+</div>
+
+<div class="help-back" id="help" hidden>
+  <div class="help" role="dialog" aria-modal="true" aria-labelledby="help-h">
+    <div class="help-top"><h2 id="help-h">Keys</h2><button class="btn" id="help-close" type="button"><kbd>Esc</kbd> Close</button></div>
+    <div class="help-cols">
+      <div><h3>Go to</h3><dl>
+        <dt><kbd>g</kbd> <kbd>h</kbd></dt><dd>Home</dd>
+        <dt><kbd>g</kbd> <kbd>w</kbd></dt><dd>Work index</dd>
+        <dt><kbd>g</kbd> <kbd>b</kbd></dt><dd>Writing</dd>
+        <dt><kbd>g</kbd> <kbd>n</kbd></dt><dd>Proposal notes</dd>
+        <dt><kbd>g</kbd> <kbd>r</kbd></dt><dd>Webring</dd>
+      </dl></div>
+      <div><h3>Index</h3><dl>
+        <dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next / previous row</dd>
+        <dt><kbd>Enter</kbd></dt><dd>Open or close row</dd>
+        <dt><kbd>/</kbd></dt><dd>Filter rows</dd>
+        <dt><kbd>Esc</kbd></dt><dd>Leave filter, close</dd>
+      </dl></div>
+      <div><h3>View</h3><dl>
+        <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Accent variant</dd>
+        <dt><kbd>p</kbd></dt><dd>Pause or play scene</dd>
+        <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next sheet</dd>
+        <dt><kbd>x</kbd></dt><dd>PS1 pipeline on/off</dd>
+        <dt><kbd>a</kbd></dt><dd>Proposal tags</dd>
+        <dt><kbd>?</kbd></dt><dd>This sheet</dd>
+      </dl></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+  var root = document.documentElement;
+
+  /* ---------------- data ---------------- */
+  var ACCENTS = [
+    { id: "lichen", name: "Lichen", hex: "#bcc77c", deep: "#5d7a3a", fog: "#3b4c4b", zen: "#0f171b", why: "the pale crust on every north face of the ruins" },
+    { id: "torch", name: "Torch Amber", hex: "#eaa24c", deep: "#a24e1c", fog: "#4a453d", zen: "#15121a", why: "firelight in a shrine; warm dusk fog" },
+    { id: "astral", name: "Astral Cyan", hex: "#86d3dc", deep: "#2f6f9a", fog: "#33475a", zen: "#0b1222", why: "the halo and the floating bodies; cold night" },
+    { id: "madder", name: "Ritual Madder", hex: "#e5787f", deep: "#7e2638", fog: "#463a42", zen: "#140d14", why: "old dye on carved stone; dusk with a bruise" }
+  ];
+  var PROJECTS = [
+    { ref: "B-02", name: "fogpass", desc: "PS1-style post-processing passes for three.js", kind: "shader", year: 2026, state: "active",
+      act: [2, 3, 5, 4, 6, 9, 12, 10, 14, 11, 13, 15],
+      more: "Snap, affine, dither and fog as drop-in passes. The header of this site is its test scene. About 400 lines, no dependencies beyond three." },
+    { ref: "C-05", name: "marchsq", desc: "Marching-squares contour generator, CLI and wasm", kind: "tool", year: 2025, state: "active",
+      act: [8, 6, 7, 9, 5, 4, 6, 8, 7, 5, 6, 7],
+      more: "Turns any heightmap PNG into SVG contour lines with index lines every fifth level. Used for the floating plate in the hero." },
+    { ref: "A-07", name: "chordmap", desc: "Visualizer for chorded and split-keyboard layouts", kind: "tool", year: 2025, state: "active",
+      act: [3, 4, 4, 6, 8, 7, 5, 3, 4, 6, 9, 8],
+      more: "Paste a QMK or ZMK keymap, get a heatmap of finger travel against a week of your own typing. Runs locally in the browser." },
+    { ref: "D-01", name: "ringleader", desc: "A tiny webring host in one Go binary", kind: "service", year: 2024, state: "dormant",
+      act: [6, 5, 4, 2, 1, 1, 0, 1, 0, 0, 1, 0],
+      more: "Hosts the Forest Ring in the footer. Members add a single link; the binary handles prev, next and random with no database." },
+    { ref: "E-03", name: "lowpoly-kit", desc: "Vertex-jittered primitives for quick 3D sketches", kind: "library", year: 2024, state: "dormant",
+      act: [4, 3, 2, 2, 1, 3, 2, 0, 1, 0, 0, 1],
+      more: "Pillars, arches, rocks and trees with seeded roughness. Seams stay welded because jitter is hashed from position." },
+    { ref: "F-06", name: "quillmark", desc: "My old Markdown-to-Gemtext blog engine", kind: "tool", year: 2021, state: "ruin",
+      act: [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      more: "Archived. It rendered the studio’s old site until 2024. Left standing because three other people still run it." }
+  ];
+
+  var SHEETS = [
+    { id: "ruins", no: "01", name: "Ruins", eyebrow: "Sheet 01 · the overgrown plaza", scale: ["0", "5", "10", "15", "20 m"],
+      aria: "Animated low-poly scene: forest ruins with broken columns, a collapsed arch and a fallen stone head under a starry sky.",
+      key: [["g-pillar", "Standing column"], ["g-arch", "Arch, collapsed"], ["g-head", "Fallen statue"], ["g-tri", "Tree line"]] },
+    { id: "topo", no: "02", name: "Topo", eyebrow: "Sheet 02 · relief, contoured at 0.5 m", scale: ["0", "5", "10", "15", "20 m"],
+      aria: "Animated low-poly relief map: a shifting terrain drawn with live contour lines, a survey grid and a sweeping scan.",
+      key: [["g-contour", "Contour · 0.5 m"], ["g-index", "Index contour · 2.5 m"], ["g-grid", "Survey grid · 5 m"], ["g-trig", "Trig point"]] },
+    { id: "astral", no: "03", name: "Astral", eyebrow: "Sheet 03 · the astral survey", scale: ["0", "15", "30", "45", "60′"],
+      aria: "Animated night sky: a ringed halo with orbiting glyphs, wireframe polyhedra, a watching eye figure and a moon with a satellite.",
+      key: [["g-ring", "Halo · r 11.5"], ["g-astral", "Astral body"], ["g-orbit", "Orbit"], ["g-glyph", "Glyph in transit"]] }
+  ];
+  var sheetIdx = 0;
+  var mqReduce = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+  var motion = !mqReduce.matches;
+  var psxOn = true;
+  var gl = null; // scene API once ready
+
+  function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+  /* ---------------- status line ---------------- */
+  var stMsg = $("#st-msg"), stMode = $("#st-mode"), stChord = $("#st-chord");
+  function say(t) { stMsg.textContent = t; }
+  function setMode(m) { stMode.textContent = m; }
+
+  /* ---------------- accent variants ---------------- */
+  var vwrap = $("#variants"), vtable = $("#vtable");
+  ACCENTS.forEach(function (a, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "btn"; b.dataset.i = i;
+    b.innerHTML = '<kbd>' + (i + 1) + '</kbd><i class="sw" style="background:' + a.hex + '"></i>' + a.name;
+    b.addEventListener("click", function () { setAccent(i); });
+    vwrap.appendChild(b);
+    var row = document.createElement("div");
+    row.innerHTML = '<i class="sw" style="background:' + a.hex + '"></i><span>' + a.name + '</span><code>' + a.hex + '</code><em>' + a.why + '</em>';
+    vtable.appendChild(row);
+  });
+  var accIdx = 0;
+  function setAccent(i, quiet) {
+    accIdx = i; var a = ACCENTS[i];
+    if (a.id === "lichen") root.removeAttribute("data-accent"); else root.setAttribute("data-accent", a.id);
+    $$("#variants .btn").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.i === i)); });
+    $("#st-acc").textContent = a.name;
+    if (gl) gl.setAccent(a);
+    if (!quiet) say("accent: " + a.name + " " + a.hex);
+    store("ruins-accent", String(i));
+  }
+
+  /* ---------------- index table ---------------- */
+  var tbody = $("#index-body");
+  function profile(arr) {
+    var max = 15, w = 120, h = 26, n = arr.length;
+    var pts = arr.map(function (v, i) { return (i * (w / (n - 1))).toFixed(1) + "," + (h - 2 - (v / max) * (h - 4)).toFixed(1); });
+    return '<svg class="profile" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true">' +
+      '<line x1="0" y1="' + (h - 1) + '" x2="' + w + '" y2="' + (h - 1) + '"></line>' +
+      '<polygon points="0,' + h + ' ' + pts.join(" ") + ' ' + w + ',' + h + '"></polygon>' +
+      '<polyline points="' + pts.join(" ") + '"></polyline></svg>';
+  }
+  PROJECTS.forEach(function (p, i) {
+    var tr = document.createElement("tr");
+    tr.className = "row"; tr.dataset.i = i;
+    tr.dataset.text = (p.ref + " " + p.name + " " + p.desc + " " + p.kind + " " + p.year + " " + p.state).toLowerCase();
+    var total = p.act.reduce(function (s, v) { return s + v; }, 0);
+    tr.innerHTML =
+      '<td class="ref">' + p.ref + '</td>' +
+      '<td><button class="site-btn" type="button" aria-expanded="false" aria-controls="d-' + i + '"><b>' + p.name + '</b><span>' + p.desc + '</span></button></td>' +
+      '<td>' + p.kind + '</td><td>' + p.year + '</td>' +
+      '<td>' + profile(p.act) + '<span class="sr">' + total + ' commits in 12 months</span></td>' +
+      '<td><span class="state"><i class="dot ' + p.state + '"></i>' + p.state + '</span></td>';
+    var dt = document.createElement("tr");
+    dt.className = "detail"; dt.id = "d-" + i; dt.hidden = true;
+    dt.innerHTML = '<td colspan="6"><p>' + p.more + '</p><div class="links"><a href="#work">source ↗</a><a href="#blog">related notes</a><span>' + total + ' commits / 12 mo</span></div></td>';
+    tbody.appendChild(tr); tbody.appendChild(dt);
+    var btn = tr.querySelector(".site-btn");
+    btn.addEventListener("click", function () { select(i, false); toggleRow(i); });
+    btn.addEventListener("focus", function () { select(i, false); });
+  });
+  var sel = -1;
+  function rows() { return $$("#index-body tr.row"); }
+  function select(i, focus) {
+    var rs = rows();
+    rs.forEach(function (r) { r.classList.toggle("sel", +r.dataset.i === i); });
+    sel = i;
+    if (focus) rs[i].querySelector(".site-btn").focus();
+    say("index " + PROJECTS[i].ref + " · " + PROJECTS[i].name + " (" + (i + 1) + "/" + PROJECTS.length + ")");
+  }
+  function toggleRow(i) {
+    var btn = rows()[i].querySelector(".site-btn"), d = $("#d-" + i);
+    var open = btn.getAttribute("aria-expanded") !== "true";
+    btn.setAttribute("aria-expanded", String(open)); d.hidden = !open;
+  }
+  function move(dir) {
+    var rs = rows().filter(function (r) { return !r.hidden; });
+    if (!rs.length) return;
+    var pos = rs.findIndex(function (r) { return +r.dataset.i === sel; });
+    pos = pos < 0 ? (dir > 0 ? 0 : rs.length - 1) : Math.max(0, Math.min(rs.length - 1, pos + dir));
+    select(+rs[pos].dataset.i, true);
+  }
+  var q = $("#q");
+  q.addEventListener("focus", function () { setMode("SEARCH"); });
+  q.addEventListener("blur", function () { setMode("NORMAL"); });
+  q.addEventListener("input", function () {
+    var v = q.value.trim().toLowerCase(), n = 0;
+    rows().forEach(function (r) {
+      var hit = !v || r.dataset.text.indexOf(v) !== -1;
+      r.hidden = !hit; if (hit) n++;
+      var d = $("#d-" + r.dataset.i);
+      if (!hit) d.hidden = true; else d.hidden = r.querySelector(".site-btn").getAttribute("aria-expanded") !== "true";
+    });
+    $("#index-count").textContent = n + " of " + PROJECTS.length + " shown";
+    say(v ? "filter “" + v + "”: " + n + " match" + (n === 1 ? "" : "es") : "filter cleared");
+  });
+  q.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); q.blur(); go("w"); move(1); }
+  });
+
+  /* ---------------- navigation ---------------- */
+  var TARGETS = { h: "#home", w: "#work", b: "#blog", n: "#notes", r: "#ring" };
+  function go(k) {
+    var el = $(TARGETS[k]); if (!el) return;
+    el.scrollIntoView({ behavior: motion ? "smooth" : "auto", block: "start" });
+    var f = k === "w" ? $("#work .sec-head") : k === "b" ? $("#post-h") : k === "n" ? $("#notes .sec-head") : null;
+    if (f) f.focus({ preventScroll: true });
+    $$('.nav a').forEach(function (a) { a.classList.toggle("flash", a.dataset.go === k); });
+    setTimeout(function () { $$('.nav a').forEach(function (a) { a.classList.remove("flash"); }); }, 900);
+    say("go " + TARGETS[k].slice(1));
+  }
+  $$("[data-go]").forEach(function (a) {
+    a.addEventListener("click", function (e) { e.preventDefault(); go(a.dataset.go); });
+  });
+
+  /* ---------------- help ---------------- */
+  var help = $("#help"), helpReturn = null;
+  function openHelp() { helpReturn = document.activeElement; help.hidden = false; $("#help-close").focus(); setMode("HELP"); }
+  function closeHelp() { help.hidden = true; setMode("NORMAL"); if (helpReturn && helpReturn.focus) helpReturn.focus(); }
+  $("#help-close").addEventListener("click", closeHelp);
+  $("#t-help").addEventListener("click", openHelp);
+  help.addEventListener("click", function (e) { if (e.target === help) closeHelp(); });
+
+  /* ---------------- hero sheets ---------------- */
+  function setSheet(i, quiet) {
+    i = ((i % SHEETS.length) + SHEETS.length) % SHEETS.length;
+    sheetIdx = i; var sh = SHEETS[i];
+    $$(".sheet-tab").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.s === i)); });
+    $("#sheet-eyebrow").textContent = sh.eyebrow;
+    $("#scene").setAttribute("aria-label", sh.aria);
+    $("#key-list").innerHTML = sh.key.map(function (k) { return '<li><i class="g ' + k[0] + '"></i>' + k[1] + '</li>'; }).join("");
+    $("#scale-lbl").innerHTML = sh.scale.map(function (v) { return "<span>" + v + "</span>"; }).join("");
+    $("#st-where").textContent = "sheet " + sh.no + " " + sh.id;
+    if (gl) gl.setSheet(i);
+    if (!quiet) say("sheet " + sh.no + " · " + sh.name);
+    store("ruins-sheet", String(i));
+  }
+  $$(".sheet-tab").forEach(function (b) { b.addEventListener("click", function () { setSheet(+b.dataset.s); }); });
+
+  /* ---------------- toggles ---------------- */
+  function setMotion(on) { motion = on; $("#t-motion").setAttribute("aria-pressed", String(on)); say(on ? "scene playing" : "scene paused"); if (gl) gl.poke(); }
+  function setPsx(on) { psxOn = on; $("#t-psx").setAttribute("aria-pressed", String(on)); say(on ? "PS1 pipeline on" : "PS1 pipeline off: clean full-res render"); if (gl) gl.setPsx(on); }
+  function toggleTags() { var off = document.body.classList.toggle("hide-tags"); $("#t-tags").setAttribute("aria-pressed", String(!off)); say(off ? "proposal tags hidden" : "proposal tags shown"); }
+  $("#t-motion").addEventListener("click", function () { setMotion(!motion); });
+  $("#t-psx").addEventListener("click", function () { setPsx(!psxOn); });
+  $("#t-tags").addEventListener("click", toggleTags);
+  $("#t-motion").setAttribute("aria-pressed", String(motion));
+
+  /* ---------------- keyboard ---------------- */
+  var chord = null, chordT = 0;
+  function setChord(c) {
+    chord = c; stChord.textContent = c ? c + "…" : " ";
+    clearTimeout(chordT); if (c) chordT = setTimeout(function () { setChord(null); }, 1400);
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var t = e.target, typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+    if (!help.hidden) {
+      if (e.key === "Escape" || e.key === "?") { e.preventDefault(); closeHelp(); }
+      else if (e.key === "Tab") { e.preventDefault(); $("#help-close").focus(); }
+      return;
+    }
+    if (typing) { if (e.key === "Escape") { t.blur(); say("left filter"); } return; }
+    if (chord === "g") {
+      setChord(null);
+      if (TARGETS[e.key]) { e.preventDefault(); go(e.key); } else say("no chord g " + e.key);
+      return;
+    }
+    switch (e.key) {
+      case "g": setChord("g"); break;
+      case "/": e.preventDefault(); q.focus(); q.select(); break;
+      case "j": e.preventDefault(); move(1); break;
+      case "k": e.preventDefault(); move(-1); break;
+      case "?": e.preventDefault(); openHelp(); break;
+      case "1": case "2": case "3": case "4": setAccent(+e.key - 1); break;
+      case "p": setMotion(!motion); break;
+      case "x": setPsx(!psxOn); break;
+      case "[": setSheet(sheetIdx - 1); break;
+      case "]": setSheet(sheetIdx + 1); break;
+      case "a": toggleTags(); break;
+      case "Escape": if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); setChord(null); break;
+      default: return;
+    }
+  });
+
+  /* ---------------- scene ---------------- */
+  function initScene() {
+    var hero = $("#home"), canvas = $("#scene");
+    if (!window.THREE) { hero.classList.add("no-gl"); return null; }
+    var T = window.THREE, renderer;
+    try { renderer = new T.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false, powerPreference: "low-power" }); }
+    catch (err) { hero.classList.add("no-gl"); return null; }
+    if (!renderer.getContext()) { hero.classList.add("no-gl"); return null; }
+
+    var seed = 1337;
+    function rnd() { seed = (seed + 0x6D2B79F5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+
+    var a0 = ACCENTS[accIdx];
+    var U = {
+      uTime: { value: 0 },
+      uAccent: { value: new T.Color(a0.hex) },
+      uAccent2: { value: new T.Color(a0.deep) },
+      uSnap: { value: new T.Vector2(80, 45) },
+      uFogColor: { value: new T.Color(a0.fog) },
+      uZen: { value: new T.Color(a0.zen) },
+      uFogNear: { value: 12 },
+      uFogFar: { value: 50 },
+      uLightDir: { value: new T.Vector3(-0.55, 0.75, 0.35).normalize() }
+    };
+
+    /* ---- procedural textures (32px, nearest) ---- */
+    function tex(size, paint) {
+      var c = document.createElement("canvas"); c.width = c.height = size;
+      var g = c.getContext("2d"), img = g.createImageData(size, size);
+      paint(img.data, size);
+      g.putImageData(img, 0, 0);
+      var t = new T.CanvasTexture(c);
+      t.magFilter = T.NearestFilter; t.minFilter = T.NearestFilter; t.generateMipmaps = false;
+      t.wrapS = t.wrapT = T.RepeatWrapping;
+      return t;
+    }
+    function put(d, i, r, g, b) { d[i] = Math.max(0, Math.min(255, r)); d[i + 1] = Math.max(0, Math.min(255, g)); d[i + 2] = Math.max(0, Math.min(255, b)); d[i + 3] = 255; }
+    var tStone = tex(32, function (d, s) {
+      for (var y = 0; y < s; y++) for (var x = 0; x < s; x++) {
+        var k = 0.78 + rnd() * 0.34, row = Math.floor(y / 8), off = (row % 2) * 6;
+        if ((y % 8 === 0) || ((x + off) % 12 === 0)) k *= 0.55;
+        put(d, (y * s + x) * 4, 150 * k, 150 * k, 136 * k);
+      }
+    });
+    var tMoss = tex(32, function (d, s) {
+      for (var i = 0; i < s * s; i++) { var k = 0.55 + rnd() * 0.6; if (rnd() > 0.93) put(d, i * 4, 160, 168, 92); else put(d, i * 4, 72 * k, 104 * k, 52 * k); }
+    });
+    var tBark = tex(32, function (d, s) {
+      for (var y = 0; y < s; y++) for (var x = 0; x < s; x++) { var k = (x % 4 === 0 ? 0.6 : 0.9) * (0.8 + rnd() * 0.3); put(d, (y * s + x) * 4, 98 * k, 78 * k, 60 * k); }
+    });
+    var tLeaf = tex(32, function (d, s) {
+      for (var i = 0; i < s * s; i++) { var k = 0.5 + rnd() * 0.7; if (rnd() > 0.95) put(d, i * 4, 120, 140, 90); else put(d, i * 4, 52 * k, 78 * k, 50 * k); }
+    });
+    var tGround = tex(32, function (d, s) {
+      for (var i = 0; i < s * s; i++) {
+        var k = 0.7 + rnd() * 0.4, f = rnd();
+        if (f > 0.9) put(d, i * 4, 118, 128, 74); else if (f > 0.7) put(d, i * 4, 96 * k, 88 * k, 64 * k); else put(d, i * 4, 70 * k, 86 * k, 54 * k);
+      }
+    });
+    var tPlain = tex(16, function (d, s) {
+      for (var i = 0; i < s * s; i++) { var k = 0.9 + rnd() * 0.12; put(d, i * 4, 200 * k, 200 * k, 196 * k); }
+    });
+
+    /* ---- PSX material: Gouraud light, vertex snap, affine UVs, moss-by-slope, sweep, fog ---- */
+    var V = [
+      "uniform vec2 uSnap; uniform vec3 uLightDir; uniform vec2 uUvScale; uniform vec3 uAmbient; uniform vec3 uSun;",
+      "varying vec3 vAff; varying vec3 vLight; varying float vDepth; varying vec3 vWP; varying float vUp;",
+      "void main(){",
+      "  vec4 wp = modelMatrix * vec4(position, 1.0);",
+      "  vec3 n = normalize(mat3(modelMatrix) * normal);",
+      "  vWP = wp.xyz; vUp = n.y;",
+      "  vec4 mv = viewMatrix * wp;",
+      "  vec4 p = projectionMatrix * mv;",
+      "  p.xy = floor(p.xy / p.w * uSnap + 0.5) / uSnap * p.w;",
+      "  gl_Position = p;",
+      "  vLight = uAmbient + uSun * max(dot(n, uLightDir), 0.0);",
+      "  vAff = vec3(uv * uUvScale * p.w, p.w);",
+      "  vDepth = -mv.z;",
+      "}"].join("\n");
+    var F = [
+      "uniform sampler2D uMap; uniform sampler2D uMoss; uniform vec3 uTint; uniform float uMossAmt;",
+      "uniform vec3 uFogColor; uniform float uFogNear; uniform float uFogFar; uniform float uFogAmt;",
+      "uniform vec3 uAccent; uniform vec3 uAccent2; uniform float uSweep; uniform float uHypso; uniform float uTime; uniform float uEmit;",
+      "varying vec3 vAff; varying vec3 vLight; varying float vDepth; varying vec3 vWP; varying float vUp;",
+      "void main(){",
+      "  vec2 uv = vAff.xy / vAff.z;",
+      "  vec3 c = texture2D(uMap, uv).rgb * uTint;",
+      "  c = mix(c, c * mix(vec3(0.75), uAccent2 * 2.2, 0.35), uHypso * smoothstep(-4.0, 5.0, vWP.y));",
+      "  float m = smoothstep(0.35, 0.8, vUp) * uMossAmt;",
+      "  c = mix(c, texture2D(uMoss, vWP.xz * 0.35).rgb, m);",
+      "  c *= vLight;",
+      "  if (uSweep > 0.0) {",
+      "    float r = length(vWP.xz);",
+      "    float sw = smoothstep(1.4, 0.0, abs(r - mod(uTime * 3.2, 34.0)));",
+      "    c = mix(c, uAccent, sw * uSweep);",
+      "  }",
+      "  c += uAccent * uEmit;",
+      "  float fg = smoothstep(uFogNear, uFogFar, vDepth) * uFogAmt;",
+      "  gl_FragColor = vec4(mix(c, uFogColor, fg), 1.0);",
+      "}"].join("\n");
+    function psx(o) {
+      return new T.ShaderMaterial({
+        vertexShader: V, fragmentShader: F, side: o.side || T.FrontSide,
+        uniforms: {
+          uSnap: U.uSnap, uLightDir: U.uLightDir,
+          uAmbient: { value: new T.Color(o.amb || "#5a6870") }, uSun: { value: new T.Color(o.sun || "#d9ccb0") },
+          uUvScale: { value: new T.Vector2(o.uv || 1, o.uv || 1) },
+          uMap: { value: o.map }, uMoss: { value: tMoss }, uTint: { value: new T.Color(o.tint || "#ffffff") },
+          uMossAmt: { value: o.moss || 0 }, uFogColor: U.uFogColor, uFogNear: U.uFogNear, uFogFar: U.uFogFar,
+          uFogAmt: { value: o.fogAmt === undefined ? 1 : o.fogAmt },
+          uAccent: U.uAccent, uAccent2: U.uAccent2, uSweep: { value: o.sweep || 0 }, uHypso: { value: o.hypso || 0 },
+          uTime: U.uTime, uEmit: { value: o.emit || 0 }
+        }
+      });
+    }
+    var LV = "uniform vec2 uSnap; varying float vDepth; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vec4 p = projectionMatrix * mv; p.xy = floor(p.xy / p.w * uSnap + 0.5) / uSnap * p.w; gl_Position = p; vDepth = -mv.z; }";
+    var LF = "uniform vec3 uColor; uniform vec3 uFogColor; uniform float uFade; varying float vDepth; void main(){ gl_FragColor = vec4(mix(uColor, uFogColor, clamp(vDepth / uFade, 0.0, 1.0) * 0.55), 1.0); }";
+    function lineMat(colorU, fade) {
+      return new T.ShaderMaterial({ vertexShader: LV, fragmentShader: LF, uniforms: { uSnap: U.uSnap, uColor: colorU, uFogColor: U.uFogColor, uFade: { value: fade || 90 } } });
+    }
+
+    /* ---- helpers ---- */
+    function hash3(x, y, z) { var s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); }
+    function rough(geo, amt) {
+      var p = geo.attributes.position;
+      for (var i = 0; i < p.count; i++) {
+        var x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+        var kx = Math.round(x * 100), ky = Math.round(y * 100), kz = Math.round(z * 100);
+        p.setXYZ(i, x + (hash3(kx, ky, kz) - 0.5) * amt, y + (hash3(ky, kz, kx) - 0.5) * amt, z + (hash3(kz, kx, ky) - 0.5) * amt);
+      }
+      return geo;
+    }
+    function facet(geo, amt) { if (amt) rough(geo, amt); var g = geo.index ? geo.toNonIndexed() : geo; g.computeVertexNormals(); return g; }
+    function mesh(geo, mat, parent, x, y, z, rx, ry, rz) {
+      var m = new T.Mesh(geo, mat); m.position.set(x || 0, y || 0, z || 0); m.rotation.set(rx || 0, ry || 0, rz || 0); parent.add(m); return m;
+    }
+    function segs(pts, mat) { return new T.LineSegments(new T.BufferGeometry().setFromPoints(pts), mat); }
+    function circle(r, n) { var o = []; for (var i = 0; i < n; i++) { var a = i / n * Math.PI * 2; o.push(new T.Vector3(Math.cos(a) * r, Math.sin(a) * r, 0)); } return o; }
+    var skyGeo = new T.SphereGeometry(200, 24, 16);
+    function skyDome(grat, stars, glow, dark) {
+      var m = new T.ShaderMaterial({
+        side: T.BackSide, depthWrite: false,
+        uniforms: { uTime: U.uTime, uAccent: U.uAccent, uAccent2: U.uAccent2, uFog: U.uFogColor, uZen: U.uZen, uGrat: { value: grat }, uStars: { value: stars }, uGlow: { value: glow }, uDark: { value: dark || 0 } },
+        vertexShader: "varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        fragmentShader: [
+          "uniform float uTime; uniform vec3 uAccent; uniform vec3 uAccent2; uniform vec3 uFog; uniform vec3 uZen; uniform float uGrat; uniform float uStars; uniform float uGlow; uniform float uDark; varying vec3 vDir;",
+          "float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }",
+          "void main(){",
+          "  vec3 d = normalize(vDir); float h = clamp(d.y, 0.0, 1.0);",
+          "  vec3 c = mix(uFog, uZen, pow(h, 0.5));",
+          "  c = mix(c, uZen * 0.8, uDark);",
+          "  c += uAccent2 * exp(-h * 9.0) * 0.35 * uGlow;",
+          "  vec3 q = floor(d * 150.0); float s = hash(q);",
+          "  float star = step(0.9965, s) * smoothstep(0.02, 0.4, d.y + 0.25 * uGrat) * (0.55 + 0.45 * sin(uTime * 1.7 + s * 80.0));",
+          "  c += vec3(star) * 0.85 * uStars;",
+          "  float lon = atan(d.z, d.x) + uTime * 0.006; float lat = asin(clamp(d.y, -1.0, 1.0));",
+          "  float g = max(step(0.997, abs(cos(lon * 9.0))), step(0.997, abs(cos(lat * 14.0))));",
+          "  c = mix(c, uAccent, g * 0.14 * uGrat);",
+          "  gl_FragColor = vec4(c, 1.0);",
+          "}"].join("\n")
+      });
+      var s = new T.Mesh(skyGeo, m); s.renderOrder = -1; return s;
+    }
+
+    /* shared materials */
+    var mStone = psx({ map: tStone, tint: "#bdbaa8", moss: 0.8 });
+    var mStone2 = psx({ map: tStone, tint: "#8f9288", moss: 0.95, uv: 1.5 });
+    var mHead = psx({ map: tStone, tint: "#cdc7b2", moss: 0.85, uv: 2 });
+    var mSocket = psx({ map: tStone, tint: "#262b29" });
+    var mBark = psx({ map: tBark, tint: "#a29280", moss: 0.4 });
+    var mLeaf = [psx({ map: tLeaf, tint: "#8aa274", uv: 1.5 }), psx({ map: tLeaf, tint: "#6f8e68", uv: 1.5 }), psx({ map: tLeaf, tint: "#9aa478", uv: 1.5 })];
+    var mMoon = psx({ map: tStone, tint: "#dcd6c4", fogAmt: 0.15, amb: "#8e96a2", uv: 2 });
+    var mSolid = psx({ map: tStone, tint: "#2c3438", fogAmt: 0.25, amb: "#38424a" });
+    var mGlyph = psx({ map: tStone, tint: "#000000", emit: 1, fogAmt: 0.2 });
+    var lAccent = lineMat(U.uAccent, 110);
+    var lBone = lineMat({ value: new T.Color("#d8d1bd") }, 110);
+    var lBoneDim = lineMat({ value: new T.Color("#9ea596") }, 120);
+    var lDeep = lineMat(U.uAccent2, 140);
+
+    var tmp = new T.Vector3();
+    var px = 0, py = 0, tpx = 0, tpy = 0;
+    function pad(n, w) { n = String(n); while (n.length < (w || 2)) n = "0" + n; return n; }
+    function dms(v, pos, neg, dw) { var s = v < 0 ? neg : pos; v = Math.abs(v); var d = Math.floor(v), mf = (v - d) * 60, m = Math.floor(mf), sec = Math.floor((mf - m) * 60); return s + " " + pad(d, dw) + "°" + pad(m) + "′" + pad(sec) + "″"; }
+    function bearing(cam) { cam.getWorldDirection(tmp); return (Math.atan2(tmp.x, -tmp.z) * 180 / Math.PI + 360) % 360; }
+    function gridRef(x, z, span) { return "ABCDEFGH".charAt(Math.max(0, Math.min(7, Math.floor((x + span) / (span / 4))))) + "-" + pad(Math.max(1, Math.min(9, Math.floor((z + span) / (span / 4)) + 1))); }
+
+    /* ================= SHEET 01 · RUINS ================= */
+    function buildRuins() {
+      var scene = new T.Scene(), cam = new T.PerspectiveCamera(64, 16 / 9, 0.1, 320);
+      var sky = skyDome(0, 1, 1); scene.add(sky);
+      function ground(x, z) {
+        var r = Math.sqrt(x * x + z * z);
+        var h = 1.1 * Math.sin(x * 0.16 + 1.3) * Math.cos(z * 0.14) + 0.55 * Math.sin(x * 0.41 + z * 0.27) + 0.25 * Math.sin(x * 1.1 - z * 0.9);
+        h += Math.max(0, r - 13) * 0.34 + Math.max(0, r - 26) * 0.55;
+        var f = Math.min(1, Math.max(0, (r - 5) / 8));
+        return h * f * f - 0.1 * (1 - f);
+      }
+      var tg = new T.PlaneGeometry(100, 100, 56, 56); tg.rotateX(-Math.PI / 2);
+      var tp = tg.attributes.position;
+      for (var i = 0; i < tp.count; i++) tp.setY(i, ground(tp.getX(i), tp.getZ(i)));
+      mesh(facet(tg, 0), psx({ map: tGround, uv: 24 }), scene);
+
+      var slab = facet(new T.BoxGeometry(1.12, 0.22, 1.12), 0.06);
+      for (var sx = -4; sx <= 4; sx++) for (var sz = -4; sz <= 4; sz++) {
+        if (Math.hypot(sx, sz) > 4.6 || rnd() < 0.22) continue;
+        mesh(slab, rnd() > 0.5 ? mStone : mStone2, scene, sx * 1.2, ground(sx * 1.2, sz * 1.2) + 0.02, sz * 1.2, (rnd() - 0.5) * 0.12, (rnd() - 0.5) * 0.2, (rnd() - 0.5) * 0.12);
+      }
+      var heights = [5.4, 3.1, 4.7, 0, 1.4, 5.8, 2.3, 4.1, 0.9, 3.6], tallest = new T.Vector3();
+      var plinth = facet(new T.BoxGeometry(1.5, 0.5, 1.5), 0.08), capital = facet(new T.BoxGeometry(1.6, 0.42, 1.6), 0.1);
+      heights.forEach(function (h, k) {
+        var a = (k / heights.length) * Math.PI * 2 + 0.2, x = Math.cos(a) * 7, z = Math.sin(a) * 7, y = ground(x, z);
+        mesh(plinth, mStone2, scene, x, y + 0.2, z, 0, a, 0);
+        if (!h) return;
+        var col = facet(new T.CylinderGeometry(0.52, 0.62, h, 7, Math.max(1, Math.round(h / 1.4))), 0.12);
+        mesh(col, mStone, scene, x, y + 0.45 + h / 2, z, (rnd() - 0.5) * 0.08, rnd() * 3, (rnd() - 0.5) * 0.08);
+        if (h > 5) mesh(capital, mStone, scene, x, y + 0.66 + h, z, 0, a, 0);
+        if (k === 5) tallest.set(x, y + 1.6 + h, z);
+      });
+      var drum = facet(new T.CylinderGeometry(0.55, 0.55, 1.3, 7, 1), 0.12);
+      for (var dd = 0; dd < 4; dd++) {
+        var fa = (3 / 10) * Math.PI * 2 + 0.2, fx = Math.cos(fa) * 7 + dd * 1.35 * Math.cos(fa + 1.3), fz = Math.sin(fa) * 7 + dd * 1.35 * Math.sin(fa + 1.3);
+        mesh(drum, mStone, scene, fx, ground(fx, fz) + 0.45, fz, 0, -(fa + 1.3), Math.PI / 2 + (rnd() - 0.5) * 0.2);
+      }
+      var AZ = -11.5, AY = ground(0, AZ);
+      var pier = facet(new T.BoxGeometry(1.3, 5.6, 1.4), 0.12);
+      mesh(pier, mStone, scene, -3.2, AY + 2.8, AZ); mesh(pier, mStone2, scene, 3.2, AY + 2.1, AZ, 0, 0, 0.03);
+      var vous = facet(new T.BoxGeometry(0.95, 0.75, 1.4), 0.1);
+      for (var vi = 0; vi <= 6; vi++) {
+        var th = Math.PI - (vi / 10) * Math.PI;
+        mesh(vous, mStone, scene, Math.cos(th) * 3.2, AY + 5.6 + Math.sin(th) * 3.2, AZ, 0, 0, th - Math.PI / 2);
+      }
+      for (var fb = 0; fb < 6; fb++) { var bx = 2 + rnd() * 3, bz = AZ + 1 + rnd() * 3; mesh(vous, mStone2, scene, bx, ground(bx, bz) + 0.3, bz, rnd() * 3, rnd() * 3, rnd() * 3); }
+      [[4.6, 1], [3.8, 1], [3.0, 1]].forEach(function (s, k) { mesh(facet(new T.BoxGeometry(s[0], 0.32, s[1]), 0.06), mStone2, scene, 0, ground(0, -8.2) + 0.1 + k * 0.3, -8.2 - k * 0.8); });
+      var wallG = facet(new T.BoxGeometry(3, 1.4, 0.7, 3, 1, 1), 0.18);
+      [[-2.2, 1.2], [-1.6, 0.8], [0.8, 1.6], [1.4, 0.9], [2.6, 1.1], [4.1, 1.4]].forEach(function (w) {
+        var a = w[0], x = Math.cos(a) * 10, z = Math.sin(a) * 10;
+        mesh(wallG, mStone2, scene, x, ground(x, z) + w[1] * 0.35, z, 0, -a + Math.PI / 2, (rnd() - 0.5) * 0.1).scale.y = w[1];
+      });
+      var head = new T.Group(), HX = 7.6, HZ = 1.6;
+      head.position.set(HX, ground(HX, HZ) + 0.9, HZ); head.rotation.set(0.12, -0.65, 0.5); scene.add(head);
+      var skull = new T.IcosahedronGeometry(2.2, 1); skull.scale(1, 1.25, 1.05);
+      mesh(facet(skull, 0.35), mHead, head);
+      var nose = new T.ConeGeometry(0.45, 1.3, 4); nose.rotateX(Math.PI / 2);
+      mesh(facet(nose, 0.05), mHead, head, 0, -0.15, 2.3);
+      mesh(facet(new T.BoxGeometry(2.6, 0.35, 0.7), 0.1), mHead, head, 0, 0.7, 1.9, -0.2);
+      var eye = facet(new T.BoxGeometry(0.62, 0.3, 0.4), 0.04);
+      mesh(eye, mSocket, head, -0.62, 0.36, 2.05); mesh(eye, mSocket, head, 0.62, 0.36, 2.05);
+      mesh(facet(new T.BoxGeometry(1.0, 0.18, 0.4), 0.04), mSocket, head, 0, -1.05, 1.95);
+      mesh(facet(new T.CylinderGeometry(2.05, 2.2, 0.5, 9, 1, true), 0.1), psx({ map: tStone, tint: "#a9a28c", moss: 0.6, side: T.DoubleSide }), head, 0, 2.2, 0, 0.12);
+      for (var st = 0; st < 46; st++) {
+        var ra = rnd() * Math.PI * 2, rr = 3 + rnd() * 16, x0 = Math.cos(ra) * rr, z0 = Math.sin(ra) * rr, sc = 0.25 + rnd() * 0.7;
+        mesh(facet(new T.DodecahedronGeometry(sc, 0), sc * 0.35), rnd() > 0.4 ? mStone2 : mStone, scene, x0, ground(x0, z0) + sc * 0.4, z0, rnd() * 3, rnd() * 3, rnd() * 3);
+      }
+      var trunkG = facet(new T.CylinderGeometry(0.22, 0.38, 2.4, 5), 0.08);
+      var coneG = [facet(new T.ConeGeometry(1.8, 2.6, 6), 0.3), facet(new T.ConeGeometry(1.35, 2.1, 6), 0.25), facet(new T.ConeGeometry(0.85, 1.7, 5), 0.2)];
+      var branchG = facet(new T.CylinderGeometry(0.06, 0.12, 1.6, 4), 0.05);
+      function tree(x, z, s) {
+        var g = new T.Group(); g.position.set(x, ground(x, z) - 0.1, z); g.rotation.y = rnd() * 6; g.scale.setScalar(s); scene.add(g);
+        mesh(trunkG, mBark, g, 0, 1.2, 0);
+        if (rnd() < 0.12) { mesh(branchG, mBark, g, 0.4, 2.2, 0, 0, 0, -0.8); mesh(branchG, mBark, g, -0.3, 2.5, 0.2, 0.5, 0, 0.9); return; }
+        var lm = mLeaf[Math.floor(rnd() * 3)];
+        mesh(coneG[0], lm, g, 0, 2.7, 0, 0, rnd()); mesh(coneG[1], lm, g, 0, 3.9, 0, 0, rnd()); mesh(coneG[2], lm, g, 0, 4.9, 0, 0, rnd());
+      }
+      for (var tr = 0; tr < 64; tr++) { var ta = rnd() * Math.PI * 2, trr = 19.5 + rnd() * 18; tree(Math.cos(ta) * trr, Math.sin(ta) * trr, 1 + rnd() * 1.3); }
+      [[2.5, 11], [3.4, 10.5], [5.6, 11.5], [-0.4, 12]].forEach(function (p) { tree(Math.cos(p[0]) * p[1], Math.sin(p[0]) * p[1], 0.75 + rnd() * 0.3); });
+      var NM = 90, mp = new Float32Array(NM * 3);
+      for (var mi = 0; mi < NM; mi++) { var ma = rnd() * 6.28, mr = rnd() * 14; mp[mi * 3] = Math.cos(ma) * mr; mp[mi * 3 + 1] = 0.5 + rnd() * 5; mp[mi * 3 + 2] = Math.sin(ma) * mr; }
+      var moteGeo = new T.BufferGeometry(); moteGeo.setAttribute("position", new T.BufferAttribute(mp, 3));
+      var moteMat = new T.PointsMaterial({ color: new T.Color(a0.hex), size: 1, sizeAttenuation: false });
+      scene.add(new T.Points(moteGeo, moteMat));
+      var moteBase = mp.slice();
+      var moon = mesh(facet(new T.IcosahedronGeometry(6, 1), 0.5), mMoon, scene, -55, 34, -80);
+
+      return {
+        scene: scene, cam: cam, fog: [12, 50], fov: [64, 74], moteMat: moteMat,
+        labels: [
+          { name: "Colossus head", sub: "fallen", at: function (v) { v.set(0, 3.2, 0); head.localToWorld(v); } },
+          { name: "North arch", sub: "4 of 11 voussoirs lost", at: function (v) { v.set(-3.2, AY + 9.4, AZ); } },
+          { name: "Column ring", sub: "9 of 10 standing", at: function (v) { v.copy(tallest); } }
+        ],
+        update: function (t) {
+          var a = 1.25 + t * 0.022 + px * 0.12, r = 15.5 + Math.sin(t * 0.07) * 1.1, x = Math.cos(a) * r, z = Math.sin(a) * r;
+          cam.position.set(x, ground(x, z) + 2.6 + Math.sin(t * 0.11) * 0.35 - py * 0.6, z);
+          cam.lookAt(0, 4.4 - py * 1.2, 0);
+          sky.position.copy(cam.position);
+          moon.rotation.y = t * 0.01;
+          for (var i = 0; i < NM; i++) { mp[i * 3 + 1] = moteBase[i * 3 + 1] + ((t * 0.12 + i * 0.37) % 3); mp[i * 3] = moteBase[i * 3] + Math.sin(t * 0.3 + i) * 0.3; }
+          moteGeo.attributes.position.needsUpdate = true;
+        },
+        readout: function () {
+          var p = cam.position;
+          return [["Lat", dms(47.2023 - p.z * 0.00009, "N", "S", 2)], ["Lon", dms(8.5288 + p.x * 0.00013, "E", "W", 3)],
+            ["Elev", Math.round(212 + p.y * 3.1) + " m"], ["Brg", pad(Math.round(bearing(cam)), 3) + "°"], ["Grid", gridRef(p.x, p.z, 20)]];
+        }
+      };
+    }
+
+    /* ================= SHEET 02 · TOPO ================= */
+    function buildTopo() {
+      var scene = new T.Scene(), cam = new T.PerspectiveCamera(50, 16 / 9, 0.1, 400);
+      var sky = skyDome(0, 0.35, 0.6); scene.add(sky);
+      var S = 40, N = 40, half = S / 2, cs = S / N, W = N + 1;
+      var hg = new Float32Array(W * W);
+      function field(x, z, t) {
+        var u = x * 0.12, v = z * 0.12;
+        return 2.0 * Math.sin(u * 1.1 + t * 0.05) * Math.cos(v * 0.9 - t * 0.04) + 1.1 * Math.sin((u + v) * 0.7 + 1.3 + t * 0.03) +
+          3.4 * Math.exp(-((x - 6) * (x - 6) + (z + 4) * (z + 4)) * 0.014) - 2.2 * Math.exp(-((x + 8) * (x + 8) + (z - 7) * (z - 7)) * 0.02) +
+          0.35 * Math.sin(u * 3.1 - v * 2.3 + t * 0.07);
+      }
+      var tg = new T.PlaneGeometry(S, S, N, N); tg.rotateX(-Math.PI / 2);
+      var tgeo = tg.toNonIndexed(), tpos = tgeo.attributes.position, vmap = new Int32Array(tpos.count);
+      for (var i = 0; i < tpos.count; i++) { vmap[i] = Math.round((tpos.getZ(i) + half) / cs) * W + Math.round((tpos.getX(i) + half) / cs); }
+      var terrain = mesh(tgeo, psx({ map: tPlain, tint: "#5d6967", uv: 1, sweep: 0.4, hypso: 1, amb: "#3e4a52", sun: "#c9c2ae" }), scene);
+      terrain.frustumCulled = false;
+      var LV0 = -5, LSTEP = 0.5, NLV = 24;
+      var minPos = new Float32Array(N * N * 4 * 8 * 3), idxPos = new Float32Array(N * N * 4 * 4 * 3), gridPos = new Float32Array(2 * 9 * N * 2 * 3);
+      function lineBuf(arr, mat) { var g = new T.BufferGeometry(); g.setAttribute("position", new T.BufferAttribute(arr, 3)); var l = new T.LineSegments(g, mat); l.frustumCulled = false; scene.add(l); return g; }
+      var gMin = lineBuf(minPos, lBoneDim), gIdx = lineBuf(idxPos, lAccent), gGrid = lineBuf(gridPos, lDeep);
+      var MS = { 1: [[3, 2]], 2: [[2, 1]], 3: [[3, 1]], 4: [[0, 1]], 5: [[0, 1], [3, 2]], 6: [[0, 2]], 7: [[0, 3]], 8: [[0, 3]], 9: [[0, 2]], 10: [[0, 3], [2, 1]], 11: [[0, 1]], 12: [[3, 1]], 13: [[2, 1]], 14: [[3, 2]] };
+      var cnt = [0, 0];
+      function ep(out, ci, e, x, y, a, b, c, d, l) {
+        var tt, qx, qy, n = cnt[ci];
+        if (n + 3 > out.length) return;
+        if (e === 0) { tt = (l - a) / (b - a); qx = x + tt; qy = y; }
+        else if (e === 1) { tt = (l - b) / (c - b); qx = x + 1; qy = y + tt; }
+        else if (e === 2) { tt = (l - d) / (c - d); qx = x + tt; qy = y + 1; }
+        else { tt = (l - a) / (d - a); qx = x; qy = y + tt; }
+        out[n] = -half + qx * cs; out[n + 1] = l + 0.12; out[n + 2] = -half + qy * cs; cnt[ci] = n + 3;
+      }
+      var trig = [new T.Vector3(6, 0, -4), new T.Vector3(-13, 0, -12)], trigM = [];
+      var trigG = new T.ConeGeometry(0.42, 0.85, 3);
+      trig.forEach(function (p) { trigM.push(mesh(trigG, mGlyph, scene, p.x, 0, p.z)); });
+      var lo = 0, hi = 0, lastT = -1;
+      function rebuild(t) {
+        var x, y, k, i;
+        lo = 1e9; hi = -1e9;
+        for (y = 0; y < W; y++) for (x = 0; x < W; x++) { var h = field(-half + x * cs, -half + y * cs, t); hg[y * W + x] = h; if (h < lo) lo = h; if (h > hi) hi = h; }
+        for (i = 0; i < tpos.count; i++) tpos.setY(i, hg[vmap[i]]);
+        tpos.needsUpdate = true; tgeo.computeVertexNormals();
+        cnt[0] = 0; cnt[1] = 0;
+        for (k = 0; k < NLV; k++) {
+          var l = LV0 + k * LSTEP, isIdx = Math.round(l / LSTEP) % 5 === 0, out = isIdx ? idxPos : minPos, ci = isIdx ? 1 : 0;
+          if (l < lo || l > hi) continue;
+          for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
+            var a = hg[y * W + x], b = hg[y * W + x + 1], c = hg[(y + 1) * W + x + 1], d = hg[(y + 1) * W + x];
+            var s = MS[(a > l ? 8 : 0) | (b > l ? 4 : 0) | (c > l ? 2 : 0) | (d > l ? 1 : 0)];
+            if (!s) continue;
+            for (i = 0; i < s.length; i++) { ep(out, ci, s[i][0], x, y, a, b, c, d, l); ep(out, ci, s[i][1], x, y, a, b, c, d, l); }
+          }
+        }
+        gMin.setDrawRange(0, cnt[0] / 3); gMin.attributes.position.needsUpdate = true;
+        gIdx.setDrawRange(0, cnt[1] / 3); gIdx.attributes.position.needsUpdate = true;
+        var n = 0;
+        for (var gl = 0; gl <= N; gl += 5) for (var sgi = 0; sgi < N; sgi++) {
+          gridPos[n++] = -half + gl * cs; gridPos[n++] = hg[sgi * W + gl] + 0.14; gridPos[n++] = -half + sgi * cs;
+          gridPos[n++] = -half + gl * cs; gridPos[n++] = hg[(sgi + 1) * W + gl] + 0.14; gridPos[n++] = -half + (sgi + 1) * cs;
+          gridPos[n++] = -half + sgi * cs; gridPos[n++] = hg[gl * W + sgi] + 0.14; gridPos[n++] = -half + gl * cs;
+          gridPos[n++] = -half + (sgi + 1) * cs; gridPos[n++] = hg[gl * W + sgi + 1] + 0.14; gridPos[n++] = -half + gl * cs;
+        }
+        gGrid.setDrawRange(0, n / 3); gGrid.attributes.position.needsUpdate = true;
+        trig.forEach(function (p, j) { p.y = field(p.x, p.z, t) + 0.55; trigM[j].position.y = p.y; });
+      }
+      return {
+        scene: scene, cam: cam, fog: [42, 95], fov: [50, 64],
+        labels: [
+          { name: "Trig point", sub: "", at: function (v) { v.copy(trig[0]); v.y += 1.2; }, sub2: function () { return Math.round(400 + trig[0].y * 10) + " m"; } },
+          { name: "Trig point", sub: "", at: function (v) { v.copy(trig[1]); v.y += 1.2; }, sub2: function () { return Math.round(400 + trig[1].y * 10) + " m"; } },
+          { name: "Hollow", sub: "closed depression", at: function (v) { v.set(-8, field(-8, 7, U.uTime.value) + 0.6, 7); } }
+        ],
+        update: function (t) {
+          var a = 0.9 + t * 0.03 + px * 0.15, r = 33;
+          cam.position.set(Math.cos(a) * r, 24 - py * 4, Math.sin(a) * r);
+          cam.lookAt(0, -1.5, 0);
+          sky.position.copy(cam.position);
+          if (Math.abs(t - lastT) > 0.03 || lastT < 0) { rebuild(t); lastT = t; }
+        },
+        readout: function () {
+          return [["Scale", "1:2 500"], ["CI", "0.5 m · index 2.5 m"], ["Relief", ((hi - lo) * 10).toFixed(0) + " m"], ["Brg", pad(Math.round(bearing(cam)), 3) + "°"], ["Grid", "5 m"]];
+        }
+      };
+    }
+
+    /* ================= SHEET 03 · ASTRAL ================= */
+    function buildAstral() {
+      var scene = new T.Scene(), cam = new T.PerspectiveCamera(60, 16 / 9, 0.1, 400);
+      var sky = skyDome(1, 1, 0.6, 0.75); scene.add(sky);
+      var halo = new T.Group(); halo.rotation.set(Math.PI / 2 - 0.45, 0, 0.2); scene.add(halo);
+      var spin = new T.Group(); halo.add(spin);
+      var HR = 11.5, ticks = [], dash = [];
+      for (var dg = 0; dg < 360; dg += 5) {
+        var r2 = dg * Math.PI / 180, len = dg % 30 === 0 ? 1.5 : 0.55;
+        ticks.push(new T.Vector3(Math.cos(r2) * HR, Math.sin(r2) * HR, 0), new T.Vector3(Math.cos(r2) * (HR + len), Math.sin(r2) * (HR + len), 0));
+      }
+      for (var di = 0; di < 96; di += 2) {
+        var d1 = di / 96 * Math.PI * 2, d2 = (di + 1) / 96 * Math.PI * 2, IR = HR - 1.3;
+        dash.push(new T.Vector3(Math.cos(d1) * IR, Math.sin(d1) * IR, 0), new T.Vector3(Math.cos(d2) * IR, Math.sin(d2) * IR, 0));
+      }
+      spin.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(circle(HR, 144)), lAccent));
+      spin.add(segs(ticks, lAccent)); spin.add(segs(dash, lBone));
+      var glyphs = [], glyphG = new T.OctahedronGeometry(0.42, 0);
+      for (var gi = 0; gi < 6; gi++) { var gm = new T.Mesh(glyphG, mGlyph); halo.add(gm); glyphs.push({ m: gm, off: gi / 6 * Math.PI * 2, sp: 0.06 + (gi % 3) * 0.025, r: HR + (gi % 2 ? 0.9 : -0.6) }); }
+      var core = mesh(facet(new T.IcosahedronGeometry(1.6, 0), 0), mSolid, scene);
+      var coreW = new T.LineSegments(new T.EdgesGeometry(new T.IcosahedronGeometry(1.66, 0)), lBone); scene.add(coreW);
+
+      var polyRig = new T.Group(); scene.add(polyRig);
+      var polys = [];
+      [[new T.IcosahedronGeometry(2.6, 0), -16, 5, -6, lAccent], [new T.OctahedronGeometry(2.1, 0), 15, 7, -10, lBone],
+       [new T.DodecahedronGeometry(1.9, 0), 13, -4, 7, lAccent], [new T.TetrahedronGeometry(2.1, 0), -13, -4, 6, lBone],
+       [new T.IcosahedronGeometry(1.3, 1), 1, 14, 5, lDeep]].forEach(function (p, idx) {
+        var g = new T.Group(); g.position.set(p[1], p[2], p[3]); polyRig.add(g);
+        var c = new T.Mesh(facet(p[0].clone(), 0), mSolid); c.scale.setScalar(0.93); g.add(c);
+        g.add(new T.LineSegments(new T.EdgesGeometry(p[0]), p[4]));
+        if (idx === 0) g.add(new T.LineSegments(new T.EdgesGeometry(new T.OctahedronGeometry(1.2, 0)), lAccent));
+        polys.push({ g: g, sx: 0.05 + rnd() * 0.12, sy: 0.08 + rnd() * 0.15, bob: rnd() * 6, y: p[2] });
+      });
+
+      var watcher = new T.Group(); watcher.position.set(4, 8, -42); watcher.scale.setScalar(1.7); scene.add(watcher);
+      var wl = [];
+      function arc(cx, cy, r, a1, a2, n, out) { for (var k = 0; k < n; k++) { var u = a1 + (a2 - a1) * k / n, v = a1 + (a2 - a1) * (k + 1) / n; out.push(new T.Vector3(cx + Math.cos(u) * r, cy + Math.sin(u) * r, 0), new T.Vector3(cx + Math.cos(v) * r, cy + Math.sin(v) * r, 0)); } }
+      arc(0, -6, 10, Math.PI * 0.2, Math.PI * 0.8, 18, wl); arc(0, 6, 10, -Math.PI * 0.2, -Math.PI * 0.8, 18, wl);
+      arc(0, 0, 3, 0, Math.PI * 2, 20, wl); arc(0, 0, 1.2, 0, Math.PI * 2, 10, wl);
+      for (var ry = 0; ry < 16; ry++) { var ru = ry / 16 * Math.PI * 2, ro = ry % 4 ? 12 : 14; wl.push(new T.Vector3(Math.cos(ru) * 11, Math.sin(ru) * 11, 0), new T.Vector3(Math.cos(ru) * ro, Math.sin(ru) * ro, 0)); }
+      watcher.add(segs(wl, lAccent));
+
+      var moonRig = new T.Group(); moonRig.position.set(-30, 14, -30); scene.add(moonRig);
+      var moon = mesh(facet(new T.IcosahedronGeometry(5, 1), 0.5), psx({ map: tPlain, tint: "#d6d0be", fogAmt: 0.1, amb: "#7d8590" }), moonRig);
+      var orbit = new T.Group(); orbit.rotation.set(1.15, 0.3, 0); moonRig.add(orbit);
+      orbit.add(new T.LineLoop(new T.BufferGeometry().setFromPoints(circle(8.5, 96)), lDeep));
+      var sat = mesh(new T.OctahedronGeometry(0.5, 0), mGlyph, orbit);
+
+      return {
+        scene: scene, cam: cam, fog: [60, 170], fov: [60, 72],
+        labels: [
+          { name: "Halo", sub: "r 11.5 · 360°", at: function (v) { v.set(HR + 1.6, 0, 0); halo.localToWorld(v); } },
+          { name: "Watcher", sub: "fixed, faces observer", at: function (v) { v.set(0, 14, 0); watcher.localToWorld(v); } },
+          { name: "Moon", sub: "1 satellite", at: function (v) { v.set(0, 6, 0); moonRig.localToWorld(v); } },
+          { name: "Icosahedron", sub: "20 faces", at: function (v) { polys[0].g.getWorldPosition(v); v.y += 3.2; } }
+        ],
+        update: function (t) {
+          var a = 1.4 + t * 0.02 + px * 0.2, r = 36;
+          cam.position.set(Math.cos(a) * r, 3 + Math.sin(t * 0.09) * 2 - py * 4, Math.sin(a) * r);
+          cam.lookAt(0, 2 - py * 2, 0);
+          sky.position.copy(cam.position);
+          spin.rotation.z = t * 0.02;
+          glyphs.forEach(function (g) { var ga = g.off + t * g.sp; g.m.position.set(Math.cos(ga) * g.r, Math.sin(ga) * g.r, 0); g.m.rotation.set(t * 0.7, t * 0.5, 0); });
+          core.rotation.set(t * 0.1, t * 0.13, 0); coreW.rotation.copy(core.rotation);
+          polyRig.rotation.y = t * 0.012;
+          polys.forEach(function (p) { p.g.rotation.x = t * p.sx; p.g.rotation.y = t * p.sy; p.g.position.y = p.y + Math.sin(t * 0.3 + p.bob) * 0.5; });
+          watcher.lookAt(cam.position); watcher.rotateZ(t * 0.01);
+          moon.rotation.y = t * 0.02;
+          var sa = t * 0.25; sat.position.set(Math.cos(sa) * 8.5, Math.sin(sa) * 8.5, 0); sat.rotation.y = t;
+        },
+        readout: function () {
+          var b = bearing(cam), ra = b / 15, h = Math.floor(ra), m = Math.floor((ra - h) * 60);
+          cam.getWorldDirection(tmp);
+          var dec = Math.asin(Math.max(-1, Math.min(1, tmp.y))) * 180 / Math.PI;
+          return [["RA", pad(h) + "h " + pad(m) + "m"], ["Dec", (dec < 0 ? "−" : "+") + pad(Math.abs(dec).toFixed(1), 4) + "°"], ["Epoch", "J2026.8"], ["Brg", pad(Math.round(b), 3) + "°"], ["Field", "60′"]];
+        }
+      };
+    }
+
+    var SC = [buildRuins(), buildTopo(), buildAstral()];
+
+    /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
+    var rtOpt = { minFilter: T.NearestFilter, magFilter: T.NearestFilter, depthBuffer: true, stencilBuffer: false };
+    var rtA = new T.WebGLRenderTarget(320, 180, rtOpt), rtB = new T.WebGLRenderTarget(320, 180, rtOpt);
+    var postMat = new T.ShaderMaterial({
+      depthTest: false, depthWrite: false,
+      uniforms: { tA: { value: rtA.texture }, tB: { value: rtB.texture }, uMix: { value: 1 }, uLow: { value: new T.Vector2(320, 180) }, uLevels: { value: 31.0 } },
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+      fragmentShader: [
+        "uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform vec2 uLow; uniform float uLevels; varying vec2 vUv;",
+        "float b2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }",
+        "float b4(vec2 a){ return b2(0.5 * a) * 0.25 + b2(a); }",
+        "void main(){",
+        "  vec2 px = floor(vUv * uLow);",
+        "  vec2 uv = (px + 0.5) / uLow;",
+        "  vec3 c = texture2D(tA, uv).rgb;",
+        "  if (uMix < 1.0) {",
+        "    vec2 blk = floor(px / 3.0);",
+        "    float n = fract(sin(dot(blk, vec2(12.9898, 78.233))) * 43758.5453);",
+        "    float th = mix(b4(blk), n, 0.55);",
+        "    c = mix(texture2D(tB, uv).rgb, c, step(th, uMix * 1.02 - 0.01));",
+        "  }",
+        "  vec2 q = vUv - 0.5; c *= 1.0 - dot(q, q) * 0.55;",
+        "  c = floor(c * uLevels + b4(px)) / uLevels;",
+        "  gl_FragColor = vec4(c, 1.0);",
+        "}"].join("\n")
+    });
+    var postScene = new T.Scene(), postCam = new T.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    var quad = new T.Mesh(new T.PlaneGeometry(2, 2), postMat); quad.frustumCulled = false; postScene.add(quad);
+
+    /* ---- labels ---- */
+    var labelLayer = $("#labels"), activeLabels = [];
+    function buildLabels(sc) {
+      labelLayer.innerHTML = "";
+      activeLabels = sc.labels.map(function (l) {
+        var d = document.createElement("div"); d.className = "lbl";
+        d.innerHTML = "<span>" + l.name + " <em>" + l.sub + "</em></span>"; labelLayer.appendChild(d);
+        return { l: l, el: d, em: d.querySelector("em") };
+      });
+    }
+
+    /* ---- sizing ---- */
+    var cssW = 1, cssH = 1, lw = 320, lh = 180;
+    function setSnap() { if (psxOn) U.uSnap.value.set(lw * 0.5, lh * 0.5); else U.uSnap.value.set(1e5, 1e5); }
+    function resize() {
+      cssW = Math.max(1, hero.clientWidth); cssH = Math.max(1, hero.clientHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(cssW, cssH, false);
+      SC.forEach(function (s) { s.cam.aspect = cssW / cssH; s.cam.fov = s.cam.aspect < 1 ? s.fov[1] : s.fov[0]; s.cam.updateProjectionMatrix(); });
+      lw = Math.max(200, Math.min(360, Math.round(cssW / 3.6))); lh = Math.max(120, Math.round(lw * cssH / cssW));
+      rtA.setSize(lw, lh); rtB.setSize(lw, lh); postMat.uniforms.uLow.value.set(lw, lh); setSnap(); dirty = true;
+    }
+    hero.addEventListener("pointermove", function (e) { var r = hero.getBoundingClientRect(); tpx = (e.clientX - r.left) / r.width - 0.5; tpy = (e.clientY - r.top) / r.height - 0.5; if (!motion) dirty = true; });
+
+    /* ---- readouts ---- */
+    var kEls = [0, 1, 2, 3, 4].map(function (i) { return $("#k" + i); }), vEls = [0, 1, 2, 3, 4].map(function (i) { return $("#v" + i); });
+    var rose = $("#compass-rose");
+    function readouts(sc) {
+      var r = sc.readout();
+      for (var i = 0; i < 5; i++) { kEls[i].textContent = r[i][0]; vEls[i].textContent = r[i][1]; }
+      rose.setAttribute("transform", "rotate(" + (-bearing(sc.cam)).toFixed(1) + ")");
+    }
+    function labels(sc) {
+      for (var i = 0; i < activeLabels.length; i++) {
+        var L = activeLabels[i];
+        L.l.at(tmp); tmp.project(sc.cam);
+        var vis = tmp.z < 1 && tmp.x > -0.95 && tmp.x < 0.8 && tmp.y > -0.25 && tmp.y < 0.85;
+        L.el.style.opacity = vis ? "1" : "0";
+        if (vis) L.el.style.transform = "translate(" + Math.round((tmp.x + 1) / 2 * cssW) + "px," + Math.round((1 - tmp.y) / 2 * cssH) + "px)";
+        if (L.l.sub2 && (frameN % 10 === 0 || !L.em.textContent)) L.em.textContent = L.l.sub2();
+      }
+    }
+
+    /* ---- animate ---- */
+    var t = 18, last = performance.now(), dirty = true, visible = true, frameN = 0;
+    var cur = Math.max(0, Math.min(2, sheetIdx)), prev = cur, mixT = 1;
+    buildLabels(SC[cur]);
+    function apply(sc) { U.uFogNear.value = sc.fog[0]; U.uFogFar.value = sc.fog[1]; }
+    function render() {
+      var sc = SC[cur];
+      if (psxOn) {
+        if (mixT < 1) { var ps = SC[prev]; apply(ps); renderer.setRenderTarget(rtB); renderer.render(ps.scene, ps.cam); }
+        apply(sc); renderer.setRenderTarget(rtA); renderer.render(sc.scene, sc.cam);
+        postMat.uniforms.uMix.value = mixT;
+        renderer.setRenderTarget(null); renderer.render(postScene, postCam);
+      } else { apply(sc); renderer.setRenderTarget(null); renderer.render(sc.scene, sc.cam); }
+    }
+    function loop(now) {
+      requestAnimationFrame(loop);
+      var dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if (!visible || document.hidden) return;
+      var transitioning = mixT < 1;
+      if (!motion && !dirty && !transitioning) return;
+      if (motion) t += dt;
+      if (transitioning) mixT = Math.min(1, mixT + dt / 0.7);
+      px += (tpx - px) * 0.05; py += (tpy - py) * 0.05;
+      U.uTime.value = t;
+      SC[cur].update(t);
+      if (mixT < 1) SC[prev].update(t);
+      render(); labels(SC[cur]);
+      if (frameN++ % 6 === 0 || dirty) readouts(SC[cur]);
+      dirty = false;
+    }
+    if ("IntersectionObserver" in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) dirty = true; }).observe(hero);
+    if ("ResizeObserver" in window) new ResizeObserver(resize).observe(hero); else window.addEventListener("resize", resize);
+    canvas.addEventListener("webglcontextlost", function (e) { e.preventDefault(); hero.classList.add("no-gl"); });
+    resize();
+    requestAnimationFrame(loop);
+
+    return {
+      setAccent: function (a) {
+        U.uAccent.value.set(a.hex); U.uAccent2.value.set(a.deep); U.uFogColor.value.set(a.fog); U.uZen.value.set(a.zen);
+        SC[0].moteMat.color.set(a.hex); dirty = true;
+      },
+      setSheet: function (i) {
+        if (i === cur) return;
+        prev = cur; cur = i;
+        mixT = (psxOn && !mqReduce.matches) ? 0 : 1;
+        buildLabels(SC[cur]); dirty = true;
+      },
+      setPsx: function () { setSnap(); dirty = true; },
+      poke: function () { dirty = true; last = performance.now(); }
+    };
+  }
+
+  /* ---------------- boot ---------------- */
+  var saved = parseInt(load("ruins-accent"), 10);
+  setAccent(saved >= 0 && saved < ACCENTS.length ? saved : 0, true);
+  var savedS = parseInt(load("ruins-sheet"), 10);
+  setSheet(savedS >= 0 && savedS < SHEETS.length ? savedS : 0, true);
+  try { gl = initScene(); } catch (err) { $("#home").classList.add("no-gl"); gl = null; }
+  if (gl) gl.setAccent(ACCENTS[accIdx]);
+  if (mqReduce.addEventListener) mqReduce.addEventListener("change", function (e) { setMotion(!e.matches); });
+  say(motion ? "press ? for keys · j/k move the index" : "reduced motion: scene paused · p to play");
+})();
+</script>

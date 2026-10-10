@@ -103,7 +103,7 @@ const CV = () => {
     <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-4xl animate-fade-in mx-auto">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
         <div>
-          <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+          <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
             ( 04 &mdash; CREDENTIALS )
           </p>
           <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
@@ -149,7 +149,7 @@ const CV = () => {
         <h2 className="text-3xl font-display font-light mb-8">Technical Projects</h2>
         <div className="space-y-8">
           {projects.map((project, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
+            <div key={index} className="border-l border-border pl-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                 <h3 className="text-xl font-display">{project.title}</h3>
                 <span className="text-sm px-2 py-0.5 border border-foreground/40 text-foreground bg-foreground/5 w-fit">
@@ -170,7 +170,7 @@ const CV = () => {
         <h2 className="text-3xl font-display font-light mb-8">Education</h2>
         <div className="space-y-8">
           {education.map((edu, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
+            <div key={index} className="border-l border-border pl-6">
               <h3 className="text-xl font-display mb-2">{edu.degree}</h3>
               <p className="text-muted-foreground mb-2">
                 {edu.institution} • {edu.period}
@@ -206,7 +206,7 @@ const CV = () => {
         <h2 className="text-3xl font-display font-light mb-8">Languages</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {languages.map((lang, index) => (
-            <div key={index} className="border-l-2 border-border pl-6">
+            <div key={index} className="border-l border-border pl-6">
               <h3 className="text-xl font-display mb-1">{lang.name}</h3>
               <p className="text-muted-foreground">{lang.proficiency}</p>
             </div>

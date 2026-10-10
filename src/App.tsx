@@ -7,6 +7,7 @@ import SmoothScroll from "./components/SmoothScroll";
 import CustomCursor from "./components/CustomCursor";
 import ScrollProgress from "./components/ScrollProgress";
 import TerminalHost from "./components/TerminalHost";
+import Keys from "./theme/Keys";
 
 // Toast viewports render nothing until something fires a toast, and only
 // two lazily-routed pages ever do — no reason to ship them up front.
@@ -39,6 +40,7 @@ const App = () => (
         <CustomCursor />
         <ScrollProgress />
         <TerminalHost />
+        <Keys />
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />

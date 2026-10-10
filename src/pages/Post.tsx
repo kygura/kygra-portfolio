@@ -9,8 +9,22 @@ import PostImage from "../components/PostImage";
 import Alert from "../components/Alert";
 
 type MarkdownCodeProps = React.ComponentPropsWithoutRef<"code"> & {
-  inline?: boolean;
   node?: unknown;
+};
+
+type MarkdownHeadingProps = React.ComponentPropsWithoutRef<"h2"> & {
+  node?: unknown;
+};
+
+// Recursively extract the text content of rendered markdown children.
+const extractText = (node: React.ReactNode): string => {
+  if (!node) return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join("");
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return extractText(node.props.children);
+  }
+  return "";
 };
 
 type MarkdownImageProps = React.ComponentPropsWithoutRef<"img"> & {
@@ -52,7 +66,7 @@ const Post = () => {
   if (loading) {
     return (
       <div className="page-shell page-shell--narrow animate-fade-in">
-        <div className="border-2 border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
           Loading post...
         </div>
       </div>
@@ -62,7 +76,7 @@ const Post = () => {
   if (error) {
     return (
       <div className="page-shell page-shell--narrow animate-fade-in">
-        <div className="border-2 border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
+        <div className="border border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
           {error}
         </div>
       </div>
@@ -115,30 +129,38 @@ const Post = () => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            pre({ children }) {
-              // Return a fragment or unstyled div to avoid double styling by prose-minimal pre
-              return <div className="not-prose my-6">{children}</div>;
+            // The page title owns the only <h1>; a markdown h1 is a section.
+            h1({ node, ...props }: MarkdownHeadingProps) {
+              void node;
+              return <h2 {...props} />;
             },
-            code({ inline, className, children, ...props }: MarkdownCodeProps) {
-              const match = /language-(\w+)/.exec(className || "");
-
-              if (!inline) {
-                return (
+            pre({ children }) {
+              // Fenced blocks arrive as <pre><code class="language-x">. The
+              // <pre> is what marks a block: react-markdown no longer passes an
+              // `inline` flag, so deciding inside `code` turned every inline
+              // `code` span into a full CodeBlock.
+              const code = React.Children.toArray(children).find(React.isValidElement) as
+                | React.ReactElement<{ className?: string; children?: React.ReactNode }>
+                | undefined;
+              const match = /language-(\w+)/.exec(code?.props.className || "");
+              return (
+                <div className="not-prose my-6">
                   <CodeBlock
                     language={match ? match[1] : undefined}
-                    value={String(children).replace(/\n$/, "")}
-                    className={className}
+                    value={extractText(code?.props.children).replace(/\n$/, "")}
+                    className={code?.props.className}
                   />
-                );
-              }
-
-              return (
-                <code className={className} {...props}>
-                  {children}
-                </code>
+                </div>
               );
             },
-            img(props: MarkdownImageProps) {
+            code({ node, ...props }: MarkdownCodeProps) {
+              // Only inline code reaches here as a plain element; `node` is
+              // the hast node and must not land on the DOM.
+              void node;
+              return <code {...props} />;
+            },
+                        img({ node, ...props }: MarkdownImageProps) {
+              void node;
               return (
                 <PostImage
                   {...props}
@@ -146,17 +168,8 @@ const Post = () => {
                 />
               );
             },
-            blockquote({ children, ...props }: MarkdownBlockquoteProps) {
-              // Helper to recursively extract text content from React nodes
-              const extractText = (node: React.ReactNode): string => {
-                if (!node) return "";
-                if (typeof node === "string") return node;
-                if (Array.isArray(node)) return node.map(extractText).join("");
-                if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
-                  return extractText(node.props.children);
-                }
-                return "";
-              };
+            blockquote({ node, children, ...props }: MarkdownBlockquoteProps) {
+              void node;
 
               const childrenArray = React.Children.toArray(children);
 

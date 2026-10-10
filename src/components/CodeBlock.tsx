@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import SyntaxHighlighter from "react-syntax-highlighter/dist/esm/prism-light";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import bash from "react-syntax-highlighter/dist/esm/languages/prism/bash";
 import css from "react-syntax-highlighter/dist/esm/languages/prism/css";
 import diff from "react-syntax-highlighter/dist/esm/languages/prism/diff";
@@ -41,6 +40,45 @@ SyntaxHighlighter.registerLanguage("html", markup);
 SyntaxHighlighter.registerLanguage("xml", markup);
 SyntaxHighlighter.registerLanguage("yml", yaml);
 
+/**
+ * Prism theme drawn from the site tokens: comments recede to ink-3, keywords
+ * take the accent, literals sit at ink-2. CSS variables keep it in step with
+ * the accent switch.
+ */
+const base = { color: "var(--ink)", background: "none", fontFamily: "var(--f-mono)" };
+const tokenTheme: Record<string, React.CSSProperties> = {
+  'code[class*="language-"]': base,
+  'pre[class*="language-"]': base,
+  comment: { color: "var(--ink-3)", fontStyle: "italic" },
+  prolog: { color: "var(--ink-3)" },
+  doctype: { color: "var(--ink-3)" },
+  cdata: { color: "var(--ink-3)" },
+  punctuation: { color: "var(--ink-2)" },
+  keyword: { color: "var(--accent)" },
+  atrule: { color: "var(--accent)" },
+  important: { color: "var(--accent)" },
+  builtin: { color: "var(--accent)" },
+  "class-name": { color: "var(--ink)", fontStyle: "italic" },
+  function: { color: "var(--ink)" },
+  tag: { color: "var(--accent)" },
+  selector: { color: "var(--accent)" },
+  "attr-name": { color: "var(--ink-2)" },
+  property: { color: "var(--ink-2)" },
+  string: { color: "var(--ink-2)" },
+  char: { color: "var(--ink-2)" },
+  "attr-value": { color: "var(--ink-2)" },
+  regex: { color: "var(--ink-2)" },
+  number: { color: "var(--ink-2)" },
+  boolean: { color: "var(--ink-2)" },
+  constant: { color: "var(--ink-2)" },
+  variable: { color: "var(--ink)" },
+  operator: { color: "var(--ink-2)" },
+  inserted: { color: "var(--accent)" },
+  deleted: { color: "var(--danger)" },
+  bold: { fontWeight: 600 },
+  italic: { fontStyle: "italic" },
+};
+
 interface CodeBlockProps {
   language?: string;
   value: string;
@@ -62,26 +100,26 @@ const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
   };
 
   return (
-    <div className={cn("relative group rounded-lg overflow-hidden my-6 border border-border bg-[#1e1e1e]", className)}>
+    <div className={cn("codeblock relative group overflow-hidden my-6 border", className)}>
       <div className="absolute right-4 top-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
           onClick={handleCopy}
-          className="p-2 rounded-md bg-secondary/10 hover:bg-secondary/20 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-2 border border-[var(--rule-2)] bg-[var(--bg-2)] text-[var(--ink-2)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors"
           aria-label="Copy code"
         >
           {isCopied ? (
-            <Check className="w-4 h-4 text-green-500" />
+            <Check className="w-4 h-4 text-[var(--accent)]" />
           ) : (
             <Copy className="w-4 h-4" />
           )}
         </button>
       </div>
-      <div className="pt-2 pl-4 text-xs text-muted-foreground select-none uppercase tracking-wider font-mono">
+      <div className="pt-2 pl-4 text-xs text-[var(--ink-3)] select-none uppercase tracking-wider font-mono">
         {language || "text"}
       </div>
       <SyntaxHighlighter
         language={language || "text"}
-        style={vscDarkPlus}
+        style={tokenTheme}
         PreTag="div"
         codeTagProps={{
           style: {
@@ -100,7 +138,7 @@ const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
         lineNumberStyle={{
           minWidth: "2.5em",
           paddingRight: "1em",
-          color: "#6e7681",
+          color: "var(--ink-3)",
           textAlign: "right",
         }}
         wrapLines={true}

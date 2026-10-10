@@ -32,7 +32,7 @@ const Writings = () => {
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
       <div className="mb-10 sm:mb-16 pb-6 sm:pb-8 border-b border-[var(--border-muted)] relative">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
           ( 01 &mdash; WRITINGS )
         </p>
         <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">Writings</h1>
@@ -68,13 +68,13 @@ const Writings = () => {
       </div>
 
       {loading && (
-        <div className="border-2 border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
           Loading writings...
         </div>
       )}
 
       {error && !loading && (
-        <div className="border-2 border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
+        <div className="border border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
           {error}
         </div>
       )}
@@ -86,7 +86,7 @@ const Writings = () => {
           return (
             <article
               key={post.slug}
-              className="relative group border-b-2 border-dashed border-muted pb-8 sm:pb-12 last:border-0 pl-3 sm:pl-4 transition-colors duration-300 hover:bg-accent/[0.04]"
+              className="relative group border-b border-dashed border-muted pb-8 sm:pb-12 last:border-0 pl-3 sm:pl-4 transition-colors duration-300 hover:bg-accent/[0.04]"
               style={{ animationDelay: `${index * 100}ms` }}
             >
               {/* left border sweep */}
@@ -138,7 +138,7 @@ const Writings = () => {
         })}
 
         {!loading && !error && filteredPosts.length === 0 && (
-          <div className="border-2 border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
             No writings found.
           </div>
         )}

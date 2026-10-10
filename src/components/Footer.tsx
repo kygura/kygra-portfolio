@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { QUOTES_ARRAY } from "../lib/consts";
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { isTyping } from "@/theme/keymap";
 
 function initQuote(list: string[]) {
   const r = Math.floor(Math.random() * list.length);
@@ -36,6 +37,9 @@ const Footer = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // A key already claimed (the second half of a g-chord) or typed into
+      // a field is not a quote key.
+      if (e.defaultPrevented || isTyping(e.target)) return;
       if (e.key === "a" || e.key === "A") handlePrev();
       else if (e.key === "d" || e.key === "D") handleNext();
     };
@@ -59,8 +63,7 @@ const Footer = () => {
       <div
         className="w-full h-px mx-auto"
         style={{
-          background:
-            "linear-gradient(90deg, transparent, var(--border-muted) 20%, var(--border-muted) 80%, transparent)",
+          background: "var(--rule-2)",
           maxWidth: "900px",
         }}
       />

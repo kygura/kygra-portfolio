@@ -11,7 +11,7 @@ const NotFound = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
-        <p className="font-mono text-[10.5px] tracking-[0.2em] uppercase text-[var(--text-secondary)] mb-6">
+        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
           ( 404 &mdash; OFF THE MAP )
         </p>
         <h1 className="mb-4 text-6xl font-display leading-[0.9]">404</h1>
