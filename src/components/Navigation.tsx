@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
 import { NavLink } from "@/components/NavLink";
 import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
 import { CHORD_FOR } from "@/theme/keymap";
@@ -19,51 +18,93 @@ const NAV_ITEMS = [
   { path: "/cv", label: "CV" },
 ];
 
-function MagneticNavLink({ path, label, end }: { path: string; label: string; end?: boolean }) {
-  const ref = useRef<HTMLLIElement>(null);
-  const rawX = useMotionValue(0);
-  const rawY = useMotionValue(0);
-  const x = useSpring(rawX, { stiffness: 400, damping: 25 });
-  const y = useSpring(rawY, { stiffness: 400, damping: 25 });
-
-  const handleMove = (e: React.MouseEvent) => {
-    const el = ref.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const dx = e.clientX - (rect.left + rect.width / 2);
-    const dy = e.clientY - (rect.top + rect.height / 2);
-    rawX.set(dx * 0.22);
-    rawY.set(dy * 0.22);
-  };
-
-  const handleLeave = () => {
-    rawX.set(0);
-    rawY.set(0);
-  };
-
+function NavItem({ path, label, end }: { path: string; label: string; end?: boolean }) {
   return (
-    <li ref={ref} onMouseMove={handleMove} onMouseLeave={handleLeave}>
-      <motion.div style={{ x, y }}>
-        <NavLink
-          to={path}
-          end={end}
-          className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.16em]"
-          activeClassName="nav-link--active"
-          title={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
-          aria-keyshortcuts={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
-        >
-          {label}
-        </NavLink>
-      </motion.div>
+    <li>
+      <NavLink
+        to={path}
+        end={end}
+        className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.14em]"
+        activeClassName="nav-link--active"
+        title={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
+        aria-keyshortcuts={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
+      >
+        <span className="nav-br" aria-hidden="true">[</span>
+        <span className="nav-cur" aria-hidden="true">&gt;</span>
+        {label}
+        <span className="nav-br" aria-hidden="true">]</span>
+      </NavLink>
     </li>
+  );
+}
+
+function ThemeMenu() {
+  const accent = useAccent();
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const current = ACCENTS[accent];
+  return (
+    <div className="theme-menu" ref={root}>
+      <button
+        type="button"
+        className="theme-trigger font-mono uppercase"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-controls="theme-list"
+        onClick={() => setOpen((o) => !o)}
+        title="Theme (1–5)"
+      >
+        <i className="theme-sw" style={{ "--sw": current.hex } as React.CSSProperties} />
+        <span className="theme-trigger-label">Theme</span>
+        <span aria-hidden="true" className="theme-caret">{open ? "▴" : "▾"}</span>
+      </button>
+      {open && (
+        <ul id="theme-list" className="theme-list font-mono" role="group" aria-label="Theme">
+          {ACCENTS.map((a, i) => (
+            <li key={a.id}>
+              <button
+                type="button"
+                className="theme-opt"
+                aria-pressed={i === accent}
+                aria-keyshortcuts={String(i + 1)}
+                onClick={() => {
+                  setAccent(i);
+                  setOpen(false);
+                }}
+              >
+                <span className="theme-opt-cur" aria-hidden="true">&gt;</span>
+                <i className="theme-sw" style={{ "--sw": a.hex } as React.CSSProperties} />
+                <span className="theme-opt-name">{a.name}</span>
+                <kbd>{i + 1}</kbd>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
 const Navigation = () => {
   const [scrolled, setScrolled] = useState(false);
   const [clock, setClock] = useState("--:--");
-  const accent = useAccent();
-
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -85,7 +126,7 @@ const Navigation = () => {
 
   return (
     <nav
-      className={`nav-bar px-3 sm:px-6 md:px-12 lg:px-16 sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
+      className={`nav-bar sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
         scrolled ? "border-[var(--border-subtle)]" : "border-transparent"
       }`}
       style={{
@@ -96,7 +137,7 @@ const Navigation = () => {
           : "transparent",
       }}
     >
-      <div className="flex h-full justify-between items-center gap-2 sm:gap-4 md:gap-8">
+      <div className="flex h-full justify-between items-center gap-2 sm:gap-6">
         <div className="nav-micro flex items-baseline gap-1.5 sm:gap-2.5 font-mono tracking-[0.16em] font-medium whitespace-nowrap">
           <span className="wordmark text-foreground">
             <b>NCA</b> <em>Ventures</em>
@@ -104,9 +145,9 @@ const Navigation = () => {
           <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
-        <ul className="nav-items flex flex-nowrap min-w-0 gap-0.5 sm:gap-1 md:gap-3 items-center">
+        <ul className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-3 items-center">
           {NAV_ITEMS.map((item) => (
-            <MagneticNavLink
+            <NavItem
               key={item.path}
               path={item.path}
               label={item.label}
@@ -119,21 +160,7 @@ const Navigation = () => {
           <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock}
           </span>
-          {/* Accent picker in the slot the day/night toggle used. Keys 1–5. */}
-          <div className="accent-pick" role="group" aria-label="Accent">
-            {ACCENTS.map((a, i) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => setAccent(i)}
-                aria-pressed={i === accent}
-                aria-label={`Accent: ${a.name}`}
-                title={`${a.name} (${i + 1})`}
-                aria-keyshortcuts={String(i + 1)}
-                style={{ "--sw": a.hex } as React.CSSProperties}
-              />
-            ))}
-          </div>
+          <ThemeMenu />
         </div>
       </div>
     </nav>
