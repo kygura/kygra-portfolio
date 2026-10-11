@@ -7,11 +7,24 @@ import {
   type NotionPostMetadata,
 } from "../../content/posts.ts";
 
+type NotionProp = {
+  type?: string;
+  title?: unknown;
+  rich_text?: unknown;
+  checkbox?: unknown;
+  date?: { start?: unknown } | null;
+  multi_select?: unknown;
+};
+
+type NotionProps = Record<string, NotionProp | undefined>;
+
+type NotionTextItem = { plain_text?: unknown; name?: unknown } | null | undefined;
+
 type NotionPage = {
   id: string;
   created_time?: string;
   last_edited_time?: string;
-  properties?: Record<string, any>;
+  properties?: NotionProps;
   parent?: {
     type?: string;
     data_source_id?: string;
@@ -23,29 +36,29 @@ type NotionPage = {
 // Property helpers
 // ---------------------------------------------------------------------------
 
-function readTitleProperty(props: Record<string, any>, ...keys: string[]): string {
+function readTitleProperty(props: NotionProps, ...keys: string[]): string {
   for (const key of keys) {
     const prop = props[key];
     if (!prop || prop.type !== "title") continue;
-    const items: any[] = Array.isArray(prop.title) ? prop.title : [];
+    const items: NotionTextItem[] = Array.isArray(prop.title) ? prop.title : [];
     const text = items.map((t) => (typeof t?.plain_text === "string" ? t.plain_text : "")).join("");
     if (text.trim()) return text.trim();
   }
   return "";
 }
 
-function readRichTextProperty(props: Record<string, any>, ...keys: string[]): string {
+function readRichTextProperty(props: NotionProps, ...keys: string[]): string {
   for (const key of keys) {
     const prop = props[key];
     if (!prop || prop.type !== "rich_text") continue;
-    const items: any[] = Array.isArray(prop.rich_text) ? prop.rich_text : [];
+    const items: NotionTextItem[] = Array.isArray(prop.rich_text) ? prop.rich_text : [];
     const text = items.map((t) => (typeof t?.plain_text === "string" ? t.plain_text : "")).join("");
     if (text.trim()) return text.trim();
   }
   return "";
 }
 
-function readCheckboxProperty(props: Record<string, any>, ...keys: string[]): boolean {
+function readCheckboxProperty(props: NotionProps, ...keys: string[]): boolean {
   for (const key of keys) {
     const prop = props[key];
     if (!prop || prop.type !== "checkbox") continue;
@@ -54,7 +67,7 @@ function readCheckboxProperty(props: Record<string, any>, ...keys: string[]): bo
   return false;
 }
 
-function readDateProperty(props: Record<string, any>, ...keys: string[]): string {
+function readDateProperty(props: NotionProps, ...keys: string[]): string {
   for (const key of keys) {
     const prop = props[key];
     if (!prop || prop.type !== "date") continue;
@@ -64,11 +77,11 @@ function readDateProperty(props: Record<string, any>, ...keys: string[]): string
   return "";
 }
 
-function readMultiSelectProperty(props: Record<string, any>, ...keys: string[]): string[] {
+function readMultiSelectProperty(props: NotionProps, ...keys: string[]): string[] {
   for (const key of keys) {
     const prop = props[key];
     if (!prop || prop.type !== "multi_select") continue;
-    const items: any[] = Array.isArray(prop.multi_select) ? prop.multi_select : [];
+    const items: NotionTextItem[] = Array.isArray(prop.multi_select) ? prop.multi_select : [];
     return items
       .map((item) => (typeof item?.name === "string" ? item.name.trim() : ""))
       .filter((name) => name.length > 0);

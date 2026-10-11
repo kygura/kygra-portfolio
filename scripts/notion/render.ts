@@ -29,7 +29,7 @@ function renderBlockList(blocks: NotionBlock[], depth: number): string {
       // Collect the consecutive run of this same list type
       const runType = btype;
       const run: NotionBlock[] = [];
-      let numberedCounter = 1;
+      const numberedCounter = 1;
 
       while (i < blocks.length && isListType(blocks[i].type)) {
         run.push(blocks[i]);
