@@ -6,6 +6,7 @@ type Kind = "box" | "cyl" | "taper";
 
 export function buildOcean(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view } = k;
+  const PIVOT = new THREE.Vector3(0, 8, 0);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(64, 16 / 9, 0.1, 320);
   const sky = k.skyDome(0, 0.3, 2.2);
@@ -297,7 +298,7 @@ export function buildOcean(k: PsxKit): SceneDef {
 
   const tmpV = new THREE.Vector3();
   return {
-    scene, cam, fog: [25, 120], fov: [64, 74],
+    scene, cam, fog: [25, 120], fov: [64, 74], limits: { pitch: [-0.05, 0.7], zoom: [0.55, 1.5] },
     labels: [
       { name: "Drowned spire", sub: "canopy reclaimed", at: (v) => { v.set(0, spireTop, 0); } },
       { name: "Wing-ship", sub: "moored · 2 sails", at: (v) => { v.set(-2, 9.6, 0); ship.localToWorld(v); } },
@@ -333,11 +334,12 @@ export function buildOcean(k: PsxKit): SceneDef {
         g.l.scale.y = Math.sin(t * 6 + g.ph * 3);
       }
 
-      const a = -1.09 + Math.sin(t * 0.035) * 0.18 + view.px * 0.12, r = 34 + Math.sin(t * 0.05) * 2;
+      const a = -1.09 + Math.sin(t * 0.035) * 0.18 + view.px * 0.12 + view.yaw, r = 34 + Math.sin(t * 0.05) * 2;
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
       cam.position.set(x, 3.4 + wave(x, z, t) * 0.45 - view.py * 0.6, z);
       cam.lookAt(0, 8 - view.py * 1.2, 0);
       cam.rotateZ(Math.sin(t * 0.7) * 0.012);
+      k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);
       sunA.lookAt(cam.position);
       sunB.lookAt(cam.position);

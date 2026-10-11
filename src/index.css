@@ -151,8 +151,13 @@
   height: 100vh;
   height: 100svh;
   overflow: hidden;
-  cursor: crosshair;
+  cursor: grab;
+  /* Sideways drags orbit the scene; vertical pans still scroll the page. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
+.hero__stage.is-dragging { cursor: grabbing; }
 
 .hero__canvas {
   position: absolute;
@@ -278,8 +283,8 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 45vh;
-  height: 45svh;
+  height: 70vh;
+  height: 70svh;
   padding-bottom: 3rem;
   font-size: 10.5px;
   letter-spacing: 0.2em;
@@ -290,13 +295,13 @@
 
 @media (min-width: 640px) {
   .hero__intro { top: 26vh; top: 26svh; }
-  .hero__marker { height: 65vh; height: 65svh; }
+  .hero__marker { height: 100vh; height: 100svh; }
 }
 
 @media (min-width: 768px) {
   .hero__intro { top: 28vh; top: 28svh; }
   .hero__mark { bottom: calc(7vh + 18px); bottom: calc(7svh + 18px); }
-  .hero__marker { height: 100vh; height: 100svh; }
+  .hero__marker { height: 150vh; height: 150svh; }
 }
 
 /* Landscape phones and other short viewports: the display type has to
@@ -309,7 +314,7 @@
      phone lands the monogram on top of the footer strip. */
   .hero__mark { bottom: 70px; }
   .hero__mark-text { font-size: clamp(64px, 11vw, 140px); }
-  .hero__marker { height: 60vh; height: 60svh; }
+  .hero__marker { height: 90vh; height: 90svh; }
 }
 
 /* ─────────────────────────────────────────────
@@ -1608,6 +1613,8 @@ kbd {
 .hero__sheet[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); position: relative; }
 .hero__sheet[aria-pressed="true"] small { color: var(--on-accent); }
 .hero__sheet-keys { display: inline-flex; gap: 3px; padding-left: 10px; font-size: 10px; }
+.hero__orbit-hint { padding-left: 18px; font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.08em; color: var(--ink-3); white-space: nowrap; }
+@media (max-width: 1100px) { .hero__orbit-hint { display: none; } }
 @media (max-width: 480px) {
   .hero__sheet-keys { display: none; }
   .hero__sheet small { display: none; }

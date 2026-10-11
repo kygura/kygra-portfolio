@@ -229,7 +229,7 @@ export function buildRail(k: PsxKit): SceneDef {
   scene.add(glints);
 
   return {
-    scene, cam, fog: [30, 260], fov: [58, 72],
+    scene, cam, fog: [30, 260], fov: [58, 72], limits: { pitch: [-0.3, 0.35], zoom: [0.8, 2.4], yaw: 0.85 },
     labels: [
       {
         name: "Inbound", sub: "4 cars",
@@ -258,6 +258,7 @@ export function buildRail(k: PsxKit): SceneDef {
       const x = CX + Math.sin(t * 0.05) * 0.25 + view.px * 0.6, z = CZ + Math.sin(t * 0.031) * 0.4;
       cam.position.set(x, PT + 1.55 + Math.sin(t * 0.6) * 0.015 - view.py * 0.3, z);
       cam.lookAt(1.5 + view.px * 6 + Math.sin(t * 0.04) * 3, 6 - view.py * 4, -80);
+      k.look(cam);
       sky.position.copy(cam.position);
       sunA.lookAt(cam.position);
       sunB.lookAt(cam.position);

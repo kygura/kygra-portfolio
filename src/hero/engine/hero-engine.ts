@@ -58,6 +58,10 @@ export interface HeroEngine {
   setSheet: (i: number) => void;
   setPsx: (on: boolean) => void;
   setMotion: (on: boolean) => void;
+  /** Step the camera: yaw/pitch in radians, zoom as a multiplier (>1 = closer). */
+  nudge: (yaw: number, pitch: number, zoom?: number) => void;
+  /** Ease the camera back to the scene's own path. */
+  resetView: () => void;
   dispose: () => void;
 }
 
@@ -104,6 +108,20 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let frameN = 0;
   let raf = 0;
   let tpx = 0, tpy = 0;
+  // Manual camera: targets are set by input, kit.view eases toward them.
+  const view = kit.view;
+  let yawT = 0, pitchT = 0, zoomT = 1;
+  let yawV = 0, pitchV = 0;
+  let drag: { id: number; x: number; y: number } | null = null;
+  const clampView = () => {
+    const lim = SC[cur].limits;
+    if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
+    pitchT = Math.max(lim.pitch[0], Math.min(lim.pitch[1], pitchT));
+    zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
+  };
+  const viewSettled = () =>
+    !drag && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&
+    Math.abs(yawT - view.yaw) < 5e-4 && Math.abs(pitchT - view.pitch) < 5e-4 && Math.abs(zoomT - view.zoom) < 5e-4;
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
 
@@ -196,7 +214,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
-  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1);
+  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled());
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -205,6 +223,19 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (mixT < 1) mixT = Math.min(1, mixT + dt / 0.7);
     kit.view.px += (tpx - kit.view.px) * 0.05;
     kit.view.py += (tpy - kit.view.py) * 0.05;
+    if (!drag && (yawV || pitchV)) {
+      // Release inertia, frame-rate independent.
+      yawT += yawV;
+      pitchT += pitchV;
+      const decay = Math.pow(0.9, dt * 60);
+      yawV = Math.abs(yawV * decay) < 1e-4 ? 0 : yawV * decay;
+      pitchV = Math.abs(pitchV * decay) < 1e-4 ? 0 : pitchV * decay;
+    }
+    clampView();
+    const ease = 1 - Math.pow(1 - 0.16, dt * 60);
+    view.yaw += (yawT - view.yaw) * ease;
+    view.pitch += (pitchT - view.pitch) * ease;
+    view.zoom += (zoomT - view.zoom) * ease;
     U.uTime.value = t;
     SC[cur].update(t);
     if (mixT < 1) SC[prev].update(t);
@@ -222,10 +253,58 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- observers ---- */
   const onPointer = (e: PointerEvent) => {
-    if (!motion) return;
+    if (!motion || drag) return;
     const r = host.getBoundingClientRect();
     tpx = (e.clientX - r.left) / r.width - 0.5;
     tpy = (e.clientY - r.top) / r.height - 0.5;
+  };
+  /* Drag to orbit. Vertical pans stay with the page on touch (touch-action:
+     pan-y), so a sideways swipe turns the scene and an up/down swipe scrolls. */
+  const RAD_PER_PX = 0.0065;
+  const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
+  const onDown = (e: PointerEvent) => {
+    if (e.button !== 0 || !e.isPrimary || interactive(e.target)) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    yawV = pitchV = 0;
+    tpx = tpy = 0;
+    host.setPointerCapture(e.pointerId);
+    host.classList.add("is-dragging");
+    kick();
+  };
+  const onDragMove = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.x = e.clientX;
+    drag.y = e.clientY;
+    // Closer in = finer steering.
+    const k = RAD_PER_PX / Math.sqrt(zoomT);
+    yawT += dx * k;
+    pitchT += dy * k;
+    yawV = dx * k * 0.6;
+    pitchV = dy * k * 0.6;
+    clampView();
+    dirty = true;
+    kick();
+  };
+  const onUp = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    host.classList.remove("is-dragging");
+    if (host.hasPointerCapture(e.pointerId)) host.releasePointerCapture(e.pointerId);
+    kick();
+  };
+  // Ctrl/⌘ + wheel (also what a trackpad pinch sends) zooms; a plain wheel scrolls the page.
+  const onWheel = (e: WheelEvent) => {
+    if (!(e.ctrlKey || e.metaKey) || interactive(e.target)) return;
+    e.preventDefault();
+    zoomT *= Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0022));
+    clampView();
+    dirty = true;
+    kick();
+  };
+  const onDouble = (e: MouseEvent) => {
+    if (interactive(e.target)) return;
+    api.resetView();
   };
   const onVisibility = () => {
     if (!document.hidden) { dirty = true; kick(); }
@@ -238,6 +317,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     o.onContextLost();
   };
   host.addEventListener("pointermove", onPointer);
+  host.addEventListener("pointerdown", onDown);
+  host.addEventListener("pointermove", onDragMove);
+  host.addEventListener("pointerup", onUp);
+  host.addEventListener("pointercancel", onUp);
+  host.addEventListener("wheel", onWheel, { passive: false });
+  host.addEventListener("dblclick", onDouble);
   document.addEventListener("visibilitychange", onVisibility);
   canvas.addEventListener("webglcontextlost", onLost);
   const io = new IntersectionObserver((es) => {
@@ -251,7 +336,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   buildLabels(SC[cur]);
   resize();
 
-  return {
+  const api: HeroEngine = {
     setAccent(a) {
       U.uAccent.value.set(a.hex);
       U.uAccent2.value.set(a.deep);
@@ -266,6 +351,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       if (i === cur) return;
       prev = cur;
       cur = i;
+      yawT = pitchT = yawV = pitchV = 0;
+      zoomT = 1;
       mixT = psxOn && !o.reducedMotion ? 0 : 1;
       buildLabels(SC[cur]);
       dirty = true;
@@ -282,12 +369,33 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       dirty = true;
       kick();
     },
+    nudge(yaw, pitch, zoom = 1) {
+      yawT += yaw;
+      pitchT += pitch;
+      zoomT *= zoom;
+      clampView();
+      dirty = true;
+      kick();
+    },
+    resetView() {
+      yawT = pitchT = yawV = pitchV = 0;
+      zoomT = 1;
+      dirty = true;
+      kick();
+    },
     dispose() {
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
+      host.removeEventListener("pointerdown", onDown);
+      host.removeEventListener("pointermove", onDragMove);
+      host.removeEventListener("pointerup", onUp);
+      host.removeEventListener("pointercancel", onUp);
+      host.removeEventListener("wheel", onWheel);
+      host.removeEventListener("dblclick", onDouble);
+      host.classList.remove("is-dragging");
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();
@@ -308,4 +416,5 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       o.labelLayer?.replaceChildren();
     },
   };
+  return api;
 }

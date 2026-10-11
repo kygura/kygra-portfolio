@@ -83,12 +83,27 @@ const CartographicHero = () => {
 
   const goSheet = (i: number) => setSheet(((i % SHEETS.length) + SHEETS.length) % SHEETS.length);
 
-  // [ ] cycle scenes while the hero is mounted.
+  // [ ] cycle scenes; Shift+arrows orbit, + / - dolly, 0 resets the camera
+  // (while the stage is on screen).
   useEffect(() => {
+    const STEP = 0.18;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || isTyping(e.target)) return;
-      if (e.key === "[") setSheet((s) => (s + SHEETS.length - 1) % SHEETS.length);
-      else if (e.key === "]") setSheet((s) => (s + 1) % SHEETS.length);
+      if (e.key === "[") return setSheet((s) => (s + SHEETS.length - 1) % SHEETS.length);
+      if (e.key === "]") return setSheet((s) => (s + 1) % SHEETS.length);
+      const eng = engineRef.current;
+      const r = stageRef.current?.getBoundingClientRect();
+      if (!eng || !r || r.bottom < window.innerHeight * 0.4 || r.top > window.innerHeight * 0.6) return;
+      let used = true;
+      if (e.shiftKey && e.key === "ArrowLeft") eng.nudge(-STEP, 0);
+      else if (e.shiftKey && e.key === "ArrowRight") eng.nudge(STEP, 0);
+      else if (e.shiftKey && e.key === "ArrowUp") eng.nudge(0, -STEP * 0.6);
+      else if (e.shiftKey && e.key === "ArrowDown") eng.nudge(0, STEP * 0.6);
+      else if (e.key === "+" || e.key === "=") eng.nudge(0, 0, 1.2);
+      else if (e.key === "-" || e.key === "_") eng.nudge(0, 0, 1 / 1.2);
+      else if (e.key === "0") eng.resetView();
+      else used = false;
+      if (used) e.preventDefault();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -282,6 +297,9 @@ const CartographicHero = () => {
             <span className="hero__sheet-keys" aria-hidden="true">
               <kbd>[</kbd>
               <kbd>]</kbd>
+            </span>
+            <span className="hero__orbit-hint" aria-hidden="true">
+              DRAG TO ORBIT &middot; CTRL+WHEEL TO ZOOM &middot; DOUBLE-CLICK TO RESET
             </span>
           </div>
           <div ref={cueRef} className="hero__cue">
