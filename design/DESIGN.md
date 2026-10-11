@@ -45,7 +45,7 @@ Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline
 - **01 Ocean** (replaced the mock's Ruins sheet): endless swell, overgrown half-drowned towers with lit bands, palm islands, a wing-sail ship moored at a pier, twin suns with glitter on the water, gulls.
 - **02 Topo**: animated relief, marching-squares contours, draped grid, trig points, sweep. The relief is 180 m across under a steeper camera, so the map fills the frame at any aspect (no sky or edge showing).
 - **03 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite.
-- **04 Ruins**: misty forest ruins: mossy stone circle with a trilithon around a shrine, floating ward crystal with a rune ring, collapsed arch, an old tree gripping a fallen column, glowing mushrooms, drifting mist layers, light shafts, wisps.
+- **04 Ruins**: misty forest ruins: an outer ring of mixed pieces (capped and broken fluted columns, a leaning column, monoliths, an obelisk, a fallen column) and a small inner colonnade with a surviving ring beam around the shrine; the camera drifts between the two rings so nothing crosses the centrepiece. Floating ward crystal with a rune ring, collapsed arch, an old tree gripping a fallen column, glowing mushrooms, drifting mist layers, light shafts, wisps.
 
 Scene tabs (`01 Ocean / 02 Topo / 03 Astral / 04 Ruins` + `[` `]` hint) sit at the left end of the existing bottom strip, opposite the scroll cue. Pinned scene labels float in the stage beneath the type; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
 

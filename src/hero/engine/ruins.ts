@@ -1,4 +1,4 @@
-/** Sheet 04 · Ruins: a misty stone circle and shrine in old forest, a floating ward crystal, runes, wisps and light shafts. */
+/** Sheet 04 · Ruins: a misty ring of mixed ruins around a colonnaded shrine in old forest, a floating ward crystal, runes, wisps and light shafts. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
@@ -54,26 +54,78 @@ export function buildRuins(k: PsxKit): SceneDef {
     add(facet(new THREE.BoxGeometry(0.5, 0.06, 0.04)), M.glyph, Math.cos(a) * 0.66, 1.5, Math.sin(a) * 0.66, 0, -a + Math.PI / 2, 0);
   }
 
-  /* ---- stone circle: nine monoliths, two down, one trilithon ---- */
-  const SR = 8.2;
-  const circleTop: THREE.Vector3[] = [];
-  const heights = [3.6, 4.4, 0, 3.9, 4.0, 2.4, 0, 3.8, 4.2];
-  heights.forEach((h, i) => {
-    const a = (i / heights.length) * Math.PI * 2 + 0.15, x = Math.cos(a) * SR, z = Math.sin(a) * SR, y = ground(x, z);
-    const w = 1.1 + rnd() * 0.3;
-    if (!h) {
-      add(facet(new THREE.BoxGeometry(w, 3.4, 0.7, 1, 3, 1), 0.12), mat.rock2, x + Math.cos(a) * 1.4, y + 0.3, z + Math.sin(a) * 1.4, Math.PI / 2 - 0.1, -a, 0.2);
-      return;
+  /* ---- ruin pieces: built upright in local space (+z points away from the centre), then leaned and placed ---- */
+  type Part = [THREE.BufferGeometry, THREE.Material, number];
+  const lm4 = new THREE.Matrix4(), rm4 = new THREE.Matrix4();
+  const piece = (x: number, z: number, a: number, tilt: number, parts: Part[]) => {
+    lm4.makeTranslation(x, ground(x, z) - 0.15, z).multiply(rm4.makeRotationY(-a + Math.PI / 2)).multiply(new THREE.Matrix4().makeRotationX(tilt));
+    for (const [g, m, y] of parts) add(g.clone().translate(0, y, 0).applyMatrix4(lm4), m);
+  };
+  const stone = () => (rnd() > 0.5 ? mat.rock : mat.rock2);
+  // Fluted column on a plinth; `broken` leaves a jagged stump with a drum toppled beside it.
+  const column = (r: number, h: number, o: { cap?: boolean; broken?: boolean; band?: boolean } = {}): Part[] => {
+    const p: Part[] = [[facet(new THREE.BoxGeometry(r * 2.9, r * 0.9, r * 2.9), 0.06), mat.rock2, r * 0.45]];
+    const base = r * 0.9;
+    p.push([facet(new THREE.CylinderGeometry(r * 0.92, r, h, 10, Math.max(1, Math.ceil(h / 1.1))), o.broken ? 0.16 : 0.07), stone(), base + h / 2]);
+    if (o.cap) {
+      p.push([facet(new THREE.CylinderGeometry(r * 1.3, r * 0.92, r * 0.6, 10), 0.05), mat.rock, base + h + r * 0.3]);
+      p.push([facet(new THREE.BoxGeometry(r * 3, r * 0.7, r * 3), 0.07), mat.rock, base + h + r * 0.95]);
     }
-    add(facet(new THREE.BoxGeometry(w, h, 0.75, 1, Math.ceil(h / 1.2), 1), 0.14), i % 2 ? mat.rock : mat.rock2, x, y + h / 2 - 0.2, z,
-      (rnd() - 0.5) * 0.1, -a + Math.PI / 2, (rnd() - 0.5) * 0.12);
-    // rune strip on the inner face
-    add(facet(new THREE.BoxGeometry(0.16, h * 0.55, 0.04)), M.glyph, x - Math.cos(a) * 0.4, y + h * 0.5, z - Math.sin(a) * 0.4, 0, -a + Math.PI / 2, 0);
-    circleTop.push(new THREE.Vector3(x, y + h, z));
+    if (o.band) p.push([facet(new THREE.CylinderGeometry(r * 0.97, r * 0.97, 0.08, 10)), M.glyph, base + h * 0.42]);
+    if (o.broken) p.push([facet(new THREE.CylinderGeometry(r * 0.92, r * 0.92, r * 2.2, 10).rotateZ(Math.PI / 2).translate(r * 2.4, 0, r * 1.6), 0.1), stone(), r]);
+    return p;
+  };
+  const monolith = (w: number, h: number): Part[] => [
+    [facet(new THREE.BoxGeometry(w, h, 0.75, 1, Math.ceil(h / 1.2), 1), 0.14), stone(), h / 2],
+    [facet(new THREE.BoxGeometry(0.16, h * 0.55, 0.04).translate(0, 0, -0.4)), M.glyph, h * 0.52],
+  ];
+  const obelisk = (h: number): Part[] => [
+    [facet(new THREE.BoxGeometry(1.5, 0.5, 1.5), 0.06), mat.rock2, 0.25],
+    [facet(new THREE.CylinderGeometry(0.36, 0.6, h, 4, 3).rotateY(Math.PI / 4), 0.06), mat.rock, 0.5 + h / 2],
+    [facet(new THREE.ConeGeometry(0.5, 0.8, 4).rotateY(Math.PI / 4)), mat.rock, 0.9 + h],
+    [facet(new THREE.BoxGeometry(0.1, h * 0.7, 0.04).translate(0, 0, -0.5)), M.glyph, 0.5 + h * 0.45],
+  ];
+  // Column lying where it fell: three drums in a rough line, plus the toppled capital.
+  const fallen = (r: number): Part[] => [0, 1, 2].map((d): Part => [
+    facet(new THREE.CylinderGeometry(r, r, 1.5, 10).rotateZ(Math.PI / 2 + (rnd() - 0.5) * 0.3).rotateY((rnd() - 0.5) * 0.4).translate(-1.7 + d * 1.6, 0, 0.4 + d * 0.3), 0.1), stone(), r - 0.05,
+  ]).concat([[facet(new THREE.BoxGeometry(r * 3, r * 0.7, r * 3).rotateZ(0.5).translate(2.9, 0, 1.2), 0.07), mat.rock, r * 0.9]]);
+
+  /* ---- outer circle: eleven mixed pieces, slot 1 left to the old tree ---- */
+  const SR = 10.5;
+  const circleTop: THREE.Vector3[] = [];
+  let standing = 0;
+  const outer: [string, number][] = [
+    ["col", 4.6], ["gap", 0], ["mono", 3.6], ["broken", 1.6], ["obelisk", 4.2], ["col", 3.9],
+    ["lean", 4.4], ["mono", 4.3], ["fallen", 0], ["col", 5], ["broken", 2.2], ["mono", 2.8],
+  ];
+  outer.forEach(([kind, h], i) => {
+    const a = 0.1 + (i / outer.length) * Math.PI * 2, r = SR + (rnd() - 0.5) * 0.8, x = Math.cos(a) * r, z = Math.sin(a) * r;
+    let top = h;
+    if (kind === "gap") return;
+    if (kind === "col") { piece(x, z, a, (rnd() - 0.5) * 0.05, column(0.5, h, { cap: true, band: i % 2 === 1 })); top = h + 1.6; }
+    else if (kind === "lean") piece(x, z, a, 0.24, column(0.48, h, { cap: true }));
+    else if (kind === "broken") piece(x, z, a, 0.04, column(0.52, h, { broken: true, band: true }));
+    else if (kind === "mono") piece(x, z, a, (rnd() - 0.5) * 0.08, monolith(1.1 + rnd() * 0.4, h));
+    else if (kind === "obelisk") { piece(x, z, a, 0.03, obelisk(h)); top = h + 1.3; }
+    else { piece(x, z, a, 0, fallen(0.5)); return; }
+    standing++;
+    circleTop.push(new THREE.Vector3(x, ground(x, z) + top, z));
   });
-  {
-    const a0 = (3 / 9) * Math.PI * 2 + 0.15, a1 = (4 / 9) * Math.PI * 2 + 0.15, am = (a0 + a1) / 2;
-    add(facet(new THREE.BoxGeometry(SR * 0.76, 0.6, 0.8, 3, 1, 1), 0.12), mat.rock, Math.cos(am) * SR * 0.97, ground(Math.cos(am) * SR, Math.sin(am) * SR) + 4.05, Math.sin(am) * SR * 0.97, 0, -am + Math.PI / 2, 0.06);
+
+  /* ---- inner ring: a small low colonnade around the dais, kept below the crystal's sightline ---- */
+  const IR = 3.9, IN = 10;
+  const ipos = (i: number) => (i / IN) * Math.PI * 2 + 0.3;
+  const iheights = [1.9, 1.9, 1.9, 1.9, 0.9, 1.6, 0, 1.9, 1.5, 1.9];
+  iheights.forEach((h, i) => {
+    const a = ipos(i), x = Math.cos(a) * IR, z = Math.sin(a) * IR;
+    if (!h) { piece(x + Math.cos(a) * 0.9, z + Math.sin(a) * 0.9, a, 0, fallen(0.24)); return; }
+    piece(x, z, a, 0, column(0.24, h, { cap: h > 1.7, broken: h < 1, band: true }));
+  });
+  // ring beam still spanning the first four bays
+  for (let i = 0; i < 4; i++) {
+    const a = (ipos(i) + ipos(i + 1)) / 2, chord = 2 * IR * Math.sin(Math.PI / IN);
+    const x = Math.cos(a) * IR * Math.cos(Math.PI / IN), z = Math.sin(a) * IR * Math.cos(Math.PI / IN);
+    add(facet(new THREE.BoxGeometry(chord + 0.5, 0.3, 0.55), 0.05), stone(), x, ground(x, z) + 2.43, z, 0, -a + Math.PI / 2, 0);
   }
 
   /* ---- collapsed arch on the north path ---- */
@@ -214,19 +266,19 @@ export function buildRuins(k: PsxKit): SceneDef {
   scene.add(motes);
   const moteBase = mp.slice();
   const wispG = facet(new THREE.IcosahedronGeometry(0.1, 0));
-  const wisps = Array.from({ length: 6 }, (_, i) => ({ m: mesh(wispG, M.glyph, scene), r: 2.2 + i * 0.7, ph: i * 1.7, sp: 0.25 + rnd() * 0.25 }));
+  const wisps = Array.from({ length: 6 }, (_, i) => ({ m: mesh(wispG, M.glyph, scene), r: 1.7 + i * 0.4, ph: i * 1.7, sp: 0.25 + rnd() * 0.25 }));
 
   return {
     scene, cam, fog: [5, 34], fov: [64, 74], moteMat,
     labels: [
       { name: "Ward stone", sub: "still lit", at: (v) => { v.copy(crystal.position).y += 1.4; } },
-      { name: "Stone circle", sub: "7 of 9 standing", at: (v) => { v.copy(circleTop[1]).y += 0.6; } },
+      { name: "Stone circle", sub: `${standing} of 12 standing`, at: (v) => { v.copy(circleTop[0]).y += 0.6; } },
       { name: "Old growth", sub: "roots over the colonnade", at: (v) => { v.set(OX, OY + 12, OZ); } },
     ],
     update(t) {
-      const a = 2.1 + t * 0.018 + view.px * 0.12, r = 15.5 + Math.sin(t * 0.07) * 1.2, x = Math.cos(a) * r, z = Math.sin(a) * r;
-      cam.position.set(x, ground(x, z) + 2.6 + Math.sin(t * 0.11) * 0.3 - view.py * 0.6, z);
-      cam.lookAt(0, 2.8 - view.py * 1.2, 0);
+      const a = 2.1 + t * 0.018 + view.px * 0.12, r = 7.6 + Math.sin(t * 0.07) * 0.5, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      cam.position.set(x, ground(x, z) + 2.1 + Math.sin(t * 0.11) * 0.2 - view.py * 0.4, z);
+      cam.lookAt(0, 3.1 - view.py * 1.0, 0);
       sky.position.copy(cam.position);
 
       crystal.position.y = CY + Math.sin(t * 0.9) * 0.15;
