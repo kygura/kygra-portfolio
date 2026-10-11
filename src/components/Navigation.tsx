@@ -24,14 +24,14 @@ function NavItem({ path, label, end }: { path: string; label: string; end?: bool
       <NavLink
         to={path}
         end={end}
-        className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.14em]"
+        className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.16em]"
         activeClassName="nav-link--active"
         title={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
         aria-keyshortcuts={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
       >
         <span className="nav-br" aria-hidden="true">[</span>
         <span className="nav-cur" aria-hidden="true">&gt;</span>
-        {label}
+        <span className="nav-label">{label}</span>
         <span className="nav-br" aria-hidden="true">]</span>
       </NavLink>
     </li>
@@ -145,7 +145,7 @@ const Navigation = () => {
           <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
-        <ul className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-3 items-center">
+        <ul className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-4 md:gap-7 items-center">
           {NAV_ITEMS.map((item) => (
             <NavItem
               key={item.path}
