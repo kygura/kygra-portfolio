@@ -96,7 +96,7 @@ const Footer = () => {
             aria-hidden="true"
           >
             <p
-              className="font-serif font-normal text-base sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-0 sm:px-4 text-center"
+              className="font-serif font-normal text-sm sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-0 sm:px-4 text-center"
               style={{ fontStyle: "italic" }}
             >
               {longestQuote.map((line, i) => (
@@ -106,7 +106,7 @@ const Footer = () => {
                       i === 0 && longestQuote.length > 1
                         ? "mb-4"
                         : i > 0
-                          ? "text-muted-foreground font-light text-sm sm:text-lg md:text-xl"
+                          ? "text-muted-foreground font-light text-xs sm:text-lg md:text-xl"
                           : ""
                     }`}
                 >
@@ -129,7 +129,7 @@ const Footer = () => {
               className="absolute inset-0 w-full flex flex-col items-center justify-center"
             >
               <p
-                className="font-serif font-normal text-base sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-0 sm:px-4 text-center"
+                className="font-serif font-normal text-sm sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-0 sm:px-4 text-center"
                 style={{ fontStyle: "italic" }}
               >
                 {lines.map((line, i) => (
@@ -139,7 +139,7 @@ const Footer = () => {
                       i === 0 && lines.length > 1
                         ? "mb-4"
                         : i > 0
-                          ? "text-muted-foreground font-light text-sm sm:text-lg md:text-xl"
+                          ? "text-muted-foreground font-light text-xs sm:text-lg md:text-xl"
                           : ""
                     }`}
                   >
@@ -171,7 +171,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-3 text-center leading-relaxed font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
+      <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-3 text-center leading-relaxed font-mono text-[0.55rem] sm:text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
         Today is {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
       </div>
     </footer>
