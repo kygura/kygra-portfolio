@@ -68,28 +68,33 @@ const Footer = () => {
         }}
       />
 
-      <div className="relative w-full max-w-4xl mx-auto py-7 sm:py-8 md:py-10 px-3 sm:px-6 flex items-center justify-center">
+      <div className="relative w-full max-w-4xl mx-auto py-6 sm:py-8 md:py-10 px-4 sm:px-6 grid grid-cols-2 gap-y-3 sm:flex items-center justify-center">
         {/* Left */}
-        <div className="absolute left-0 sm:left-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
-          <button
+        <div className="justify-self-start sm:absolute sm:left-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
+          <motion.button
             onClick={hasPrev ? handlePrev : undefined}
             disabled={!hasPrev}
-            className={`p-1.5 sm:p-2 border border-transparent transition-all duration-300 ${
+            whileTap={hasPrev ? { scale: 0.85 } : undefined}
+            transition={{ type: "spring", stiffness: 500, damping: 22 }}
+            className={`group p-2 border border-transparent transition-all duration-300 ${
               hasPrev
                 ? "hover:border-[var(--accent-terracotta)] hover:text-[var(--accent-terracotta)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Previous quote"
           >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" strokeWidth={1.5} />
-          </button>
+            <ArrowLeft
+              className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ease-out group-hover:-translate-x-1 group-active:-translate-x-1.5"
+              strokeWidth={1.5}
+            />
+          </motion.button>
           <span className="hidden sm:block text-[9px] font-mono text-muted-foreground tracking-widest">
             [A]
           </span>
         </div>
 
         {/* Quote */}
-        <div className="w-full px-10 sm:px-16 md:px-24 overflow-hidden relative z-0 flex items-center">
+        <div className="col-span-2 order-first w-full px-0 sm:px-16 md:px-24 overflow-hidden relative z-0 flex items-center">
           {/* Hidden sizer: renders the tallest quote to reserve consistent height */}
           <div
             className="w-full flex flex-col items-center invisible"
@@ -152,19 +157,24 @@ const Footer = () => {
         </div>
 
         {/* Right */}
-        <div className="absolute right-0 sm:right-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
-          <button
+        <div className="justify-self-end sm:absolute sm:right-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
+          <motion.button
             onClick={hasNext ? handleNext : undefined}
             disabled={!hasNext}
-            className={`p-1.5 sm:p-2 border border-transparent transition-all duration-300 ${
+            whileTap={hasNext ? { scale: 0.85 } : undefined}
+            transition={{ type: "spring", stiffness: 500, damping: 22 }}
+            className={`group p-2 border border-transparent transition-all duration-300 ${
               hasNext
                 ? "hover:border-[var(--accent-sage)] hover:text-[var(--accent-sage)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
             }`}
             aria-label="Next quote"
           >
-            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" strokeWidth={1.5} />
-          </button>
+            <ArrowRight
+              className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ease-out group-hover:translate-x-1 group-active:translate-x-1.5"
+              strokeWidth={1.5}
+            />
+          </motion.button>
           <span className="hidden sm:block text-[9px] font-mono text-muted-foreground tracking-widest">
             [D]
           </span>
