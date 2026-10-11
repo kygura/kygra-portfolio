@@ -68,13 +68,13 @@ const Footer = () => {
         }}
       />
 
-      <div className="relative w-full max-w-4xl mx-auto py-7 sm:py-8 md:py-10 px-3 sm:px-6 flex items-center justify-center">
+      <div className="relative w-full max-w-4xl mx-auto py-6 sm:py-8 md:py-10 px-4 sm:px-6 flex items-center justify-center">
         {/* Left */}
-        <div className="absolute left-0 sm:left-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
+        <div className="absolute left-1 sm:left-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
           <button
             onClick={hasPrev ? handlePrev : undefined}
             disabled={!hasPrev}
-            className={`p-1.5 sm:p-2 border border-transparent transition-all duration-300 ${
+            className={`p-2.5 sm:p-2 border border-transparent transition-all duration-300 ${
               hasPrev
                 ? "hover:border-[var(--accent-terracotta)] hover:text-[var(--accent-terracotta)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
@@ -89,14 +89,14 @@ const Footer = () => {
         </div>
 
         {/* Quote */}
-        <div className="w-full px-10 sm:px-16 md:px-24 overflow-hidden relative z-0 flex items-center">
+        <div className="w-full px-11 sm:px-16 md:px-24 overflow-hidden relative z-0 flex items-center">
           {/* Hidden sizer: renders the tallest quote to reserve consistent height */}
           <div
             className="w-full flex flex-col items-center invisible"
             aria-hidden="true"
           >
             <p
-              className="font-serif font-normal text-base sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-1 sm:px-4 text-center"
+              className="font-serif font-normal text-base sm:text-xl md:text-2xl tracking-[0.04em] leading-relaxed max-w-3xl break-words px-0 sm:px-4 text-center"
               style={{ fontStyle: "italic" }}
             >
               {longestQuote.map((line, i) => (
@@ -129,7 +129,7 @@ const Footer = () => {
               className="absolute inset-0 w-full flex flex-col items-center justify-center"
             >
               <p
-                className="font-serif font-normal text-base sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-1 sm:px-4 text-center"
+                className="font-serif font-normal text-base sm:text-xl md:text-2xl text-foreground tracking-[0.04em] leading-relaxed max-w-3xl break-words px-0 sm:px-4 text-center"
                 style={{ fontStyle: "italic" }}
               >
                 {lines.map((line, i) => (
@@ -152,11 +152,11 @@ const Footer = () => {
         </div>
 
         {/* Right */}
-        <div className="absolute right-0 sm:right-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
+        <div className="absolute right-1 sm:right-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
           <button
             onClick={hasNext ? handleNext : undefined}
             disabled={!hasNext}
-            className={`p-1.5 sm:p-2 border border-transparent transition-all duration-300 ${
+            className={`p-2.5 sm:p-2 border border-transparent transition-all duration-300 ${
               hasNext
                 ? "hover:border-[var(--accent-sage)] hover:text-[var(--accent-sage)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
@@ -171,7 +171,7 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-4 sm:pb-3 text-center font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
+      <div className="px-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-3 text-center leading-relaxed font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
         Today is {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
       </div>
     </footer>
