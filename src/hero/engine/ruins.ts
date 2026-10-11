@@ -1,26 +1,35 @@
-/** Sheet 01 · Ruins: plaza, column ring, collapsed arch, fallen head, trees, motes, moon. */
+/** Act 01 · Sword: a cross-hilted sword set in a pedestal at the heart of
+ *  forest ruins by a lake. It wakes, throws a column of light at the sky,
+ *  and the camera pulls back and tilts up the beam into the stars. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
 export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
-  const { rnd, facet, mesh, psx, M, tex, view } = k;
+  const { rnd, facet, mesh, psx, M, tex, view, ramp, ease } = k;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(64, 16 / 9, 0.1, 320);
   const sky = k.skyDome(0, 1, 1);
   scene.add(sky);
 
+  // Lake east of the plaza; ground() sinks a basin under it.
+  const LX = 17, LZ = -2, LR = 7.5, LY = -0.75;
   const ground = (x: number, z: number) => {
     const r = Math.sqrt(x * x + z * z);
     let h = 1.1 * Math.sin(x * 0.16 + 1.3) * Math.cos(z * 0.14) + 0.55 * Math.sin(x * 0.41 + z * 0.27) + 0.25 * Math.sin(x * 1.1 - z * 0.9);
     h += Math.max(0, r - 13) * 0.34 + Math.max(0, r - 26) * 0.55;
     const f = Math.min(1, Math.max(0, (r - 5) / 8));
-    return h * f * f - 0.1 * (1 - f);
+    const w = ramp(Math.hypot(x - LX, z - LZ), LR - 4, LR + 2);
+    return (h * f * f - 0.1 * (1 - f)) * w - 1.7 * (1 - w);
   };
+  const inLake = (x: number, z: number, pad = 0) => Math.hypot(x - LX, z - LZ) < LR + pad;
   const tg = new THREE.PlaneGeometry(100, 100, 56, 56);
   tg.rotateX(-Math.PI / 2);
   const tp = tg.attributes.position;
   for (let i = 0; i < tp.count; i++) tp.setY(i, ground(tp.getX(i), tp.getZ(i)));
   mesh(facet(tg, 0), psx({ map: tex.tGround, uv: 24 }), scene);
+  const lakeG = new THREE.CircleGeometry(LR + 1.5, 20);
+  lakeG.rotateX(-Math.PI / 2);
+  mesh(lakeG, psx({ map: tex.tPlain, tint: "#4c6a74", amb: "#56646c", sun: "#3a4448", uv: 3 }), scene, LX, LY, LZ);
 
   // paving
   const slab = facet(new THREE.BoxGeometry(1.12, 0.22, 1.12), 0.06);
@@ -98,6 +107,7 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
   // rubble
   for (let st = 0; st < 46; st++) {
     const ra = rnd() * Math.PI * 2, rr = 3 + rnd() * 16, x0 = Math.cos(ra) * rr, z0 = Math.sin(ra) * rr, sc = 0.25 + rnd() * 0.7;
+    if (inLake(x0, z0, 1) || Math.hypot(x0, z0) < 2.4) continue;
     mesh(facet(new THREE.DodecahedronGeometry(sc, 0), sc * 0.35), rnd() > 0.4 ? M.stone2 : M.stone, scene,
       x0, ground(x0, z0) + sc * 0.4, z0, rnd() * 3, rnd() * 3, rnd() * 3);
   }
@@ -128,10 +138,41 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
     mesh(coneG[2], lm, g, 0, 4.9, 0, 0, rnd());
   };
   for (let tr = 0; tr < 64; tr++) {
-    const ta = rnd() * Math.PI * 2, trr = 19.5 + rnd() * 18;
-    tree(Math.cos(ta) * trr, Math.sin(ta) * trr, 1 + rnd() * 1.3);
+    const ta = rnd() * Math.PI * 2, trr = 19.5 + rnd() * 18, x = Math.cos(ta) * trr, z = Math.sin(ta) * trr;
+    if (!inLake(x, z, 2.5)) tree(x, z, 1 + rnd() * 1.3);
   }
   [[2.5, 11], [3.4, 10.5], [5.6, 11.5], [-0.4, 12]].forEach((p) => tree(Math.cos(p[0]) * p[1], Math.sin(p[0]) * p[1], 0.75 + rnd() * 0.3));
+
+  // pedestal and sword
+  const tiers: [number, number][] = [[3.0, 0.45], [2.2, 0.5], [1.4, 1.0]];
+  let top = ground(0, 0) + 0.03;
+  tiers.forEach(([w, h]) => {
+    mesh(facet(new THREE.BoxGeometry(w, h, w), 0.05), M.stone, scene, 0, top + h / 2, 0, 0, 0.4, 0);
+    top += h;
+  });
+  const steel = psx({ map: tex.tPlain, tint: "#b9bec2", amb: "#6c7880", sun: "#e4dccb", moss: 0 });
+  const sword = new THREE.Group();
+  sword.position.set(0, top, 0);
+  sword.rotation.set(0.04, 0.4, -0.03);
+  sword.scale.setScalar(1.6);
+  scene.add(sword);
+  mesh(facet(new THREE.BoxGeometry(0.2, 2.4, 0.07)), steel, sword, 0, -0.1, 0);
+  mesh(facet(new THREE.BoxGeometry(1.5, 0.17, 0.2), 0.02), steel, sword, 0, 1.16, 0);
+  mesh(facet(new THREE.CylinderGeometry(0.075, 0.075, 0.62, 5)), M.bark, sword, 0, 1.55, 0);
+  mesh(new THREE.OctahedronGeometry(0.17, 0), steel, sword, 0, 1.95, 0);
+  const SWORD_TOP = top + 2.1 * 1.6;
+  const sigil = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(k.circle(1.3, 24)), M.lAccent);
+  sigil.rotation.x = -Math.PI / 2;
+  sigil.position.y = top + 0.02;
+  scene.add(sigil);
+  const shock = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(k.circle(1, 40)), M.lAccent);
+  shock.rotation.x = -Math.PI / 2;
+  shock.position.y = ground(0, 0) + 0.3;
+  scene.add(shock);
+  const core = k.beam(0.28, 1.7);
+  const glow = k.beam(0.85, 0.35, 0.6);
+  core.position.y = glow.position.y = SWORD_TOP;
+  scene.add(core, glow);
 
   // motes
   const NM = 90, mp = new Float32Array(NM * 3);
@@ -150,15 +191,29 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
 
   return {
     scene, cam, fog: [12, 50], fov: [64, 74], moteMat,
+    dur: 15, key: 8, flash: 0,
     labels: [
+      { name: "Pedestal", sub: "sword set", at: (v) => { v.set(0, SWORD_TOP + 0.6, 0); } },
       { name: "Colossus head", sub: "fallen", at: (v) => { v.set(0, 3.2, 0); head.localToWorld(v); } },
       { name: "North arch", sub: "4 of 11 voussoirs lost", at: (v) => { v.set(-3.2, AY + 9.4, AZ); } },
       { name: "Column ring", sub: "9 of 10 standing", at: (v) => { v.copy(tallest); } },
     ],
-    update(t) {
-      const a = 1.25 + t * 0.022 + view.px * 0.12, r = 15.5 + Math.sin(t * 0.07) * 1.1, x = Math.cos(a) * r, z = Math.sin(a) * r;
-      cam.position.set(x, ground(x, z) + 2.6 + Math.sin(t * 0.11) * 0.35 - view.py * 0.6, z);
-      cam.lookAt(0, 4.4 - view.py * 1.2, 0);
+    update(t, p) {
+      // Wake (2.5–4.6 s), ignite (4.6 s), then pull back and tilt up the beam.
+      const wake = ramp(p, 2.5, 4.6), lit = ramp(p, 4.6, 5.3);
+      steel.uniforms.uEmit.value = 0.08 + 0.5 * wake + 0.25 * lit;
+      sigil.visible = p > 2.5;
+      sigil.scale.setScalar(0.3 + 0.7 * wake + 0.04 * Math.sin(t * 3));
+      shock.visible = p > 4.6 && p < 6.4;
+      shock.scale.setScalar(1 + (p - 4.6) * 13);
+      core.visible = glow.visible = p > 4.6;
+      core.scale.y = glow.scale.y = 1 + 260 * lit * lit;
+      this.flash = (p > 4.6 ? 0.55 * (1 - ramp(p, 4.6, 6)) : 0) + 0.4 * ramp(p, 13.8, 15);
+
+      const u = ease(Math.min(1, Math.max(0, (p - 5.2) / 9.8)));
+      const a = 2.75 + p * 0.03 + view.px * 0.12, r = 5.6 + 18.4 * u, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      cam.position.set(x, ground(x, z) + 2.4 + 13.6 * u + Math.sin(t * 0.11) * 0.3 - view.py * 0.6, z);
+      cam.lookAt(0, 3.6 + 70 * u * u - view.py * 1.2, 0);
       sky.position.copy(cam.position);
       moon.rotation.y = t * 0.01;
       for (let i = 0; i < NM; i++) {

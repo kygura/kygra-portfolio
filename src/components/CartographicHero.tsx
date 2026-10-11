@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, SHEET_KEY, storedIndex, useAccent, writeStored } from "@/theme/accent";
+import { ACCENTS, useAccent } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
@@ -7,7 +7,8 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
 /**
  * Cartographic hero — the sticky stage, name, tagline, accent initials,
  * hairline strip and scroll parallax are unchanged; the field behind them is
- * the PS1 three-scene renderer (ruins / topo / astral). three.js is fetched
+ * the PS1 renderer playing a three-act story (sword / eye / ping) that
+ * advances on its own; the tabs follow it and replay an act. three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
@@ -26,7 +27,8 @@ const reduceQuery = () =>
 
 const CartographicHero = () => {
   const accent = useAccent();
-  const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
+  // The story always opens on act 01; the engine reports where it is.
+  const [sheet, setSheet] = useState(0);
   const [noGl, setNoGl] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -39,6 +41,7 @@ const CartographicHero = () => {
   const taglineRef = useRef<HTMLParagraphElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const engineRef = useRef<HeroEngine | null>(null);
+  const barsRef = useRef<(HTMLElement | null)[]>([]);
   const live = useRef({ accent, sheet });
   live.current = { accent, sheet };
 
@@ -62,6 +65,12 @@ const CartographicHero = () => {
           psx: true,
           reducedMotion: reduced,
           onContextLost: () => setNoGl(true),
+          onSheet: setSheet,
+          onProgress: (i, f) => {
+            barsRef.current.forEach((b, j) => {
+              if (b) b.style.transform = `scaleX(${j < i ? 1 : j === i ? f.toFixed(3) : 0})`;
+            });
+          },
         });
         engineRef.current = engine;
       })
@@ -76,19 +85,20 @@ const CartographicHero = () => {
   }, []);
 
   useEffect(() => engineRef.current?.setAccent(ACCENTS[accent]), [accent]);
-  useEffect(() => {
-    engineRef.current?.setSheet(sheet);
-    writeStored(SHEET_KEY, String(sheet));
-  }, [sheet]);
 
-  const goSheet = (i: number) => setSheet(((i % SHEETS.length) + SHEETS.length) % SHEETS.length);
+  // Jump to an act (replaying it if it is the current one); the story plays on from there.
+  const goSheet = (i: number) => {
+    const n = ((i % SHEETS.length) + SHEETS.length) % SHEETS.length;
+    engineRef.current?.play(n);
+    setSheet(n);
+  };
 
-  // [ ] cycle scenes while the hero is mounted.
+  // [ ] step through acts while the hero is mounted.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || isTyping(e.target)) return;
-      if (e.key === "[") setSheet((s) => (s + SHEETS.length - 1) % SHEETS.length);
-      else if (e.key === "]") setSheet((s) => (s + 1) % SHEETS.length);
+      if (e.key === "[") goSheet(live.current.sheet - 1);
+      else if (e.key === "]") goSheet(live.current.sheet + 1);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -266,7 +276,7 @@ const CartographicHero = () => {
 
         {/* Hairline footer strip: scene tabs on the left, scroll cue right. */}
         <footer ref={footerRef} className="hero__strip">
-          <div className="hero__sheets" role="group" aria-label="Hero scene">
+          <div className="hero__sheets" role="group" aria-label="Hero story acts">
             {SHEETS.map((s, i) => (
               <button
                 key={s.id}
@@ -277,6 +287,13 @@ const CartographicHero = () => {
               >
                 <small>{s.no}</small>
                 {s.name}
+                <i
+                  ref={(el) => {
+                    barsRef.current[i] = el;
+                  }}
+                  className="hero__sheet-bar"
+                  aria-hidden="true"
+                />
               </button>
             ))}
             <span className="hero__sheet-keys" aria-hidden="true">

@@ -1,7 +1,7 @@
-/** Hero scene metadata. Kept free of three.js so the tabs can render
- *  before (or without) the lazily loaded engine. */
+/** Hero act metadata, in story order. Kept free of three.js so the tabs can
+ *  render before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ruins" | "topo" | "astral";
+  id: "ruins" | "astral" | "topo";
   no: string;
   name: string;
   aria: string;
@@ -11,19 +11,19 @@ export const SHEETS: SheetMeta[] = [
   {
     id: "ruins",
     no: "01",
-    name: "Ruins",
-    aria: "Animated low-poly scene: forest ruins with broken columns, a collapsed arch and a fallen stone head under a starry sky.",
-  },
-  {
-    id: "topo",
-    no: "02",
-    name: "Topo",
-    aria: "Animated low-poly relief map: a shifting terrain drawn with live contour lines, a survey grid and a sweeping scan.",
+    name: "Sword",
+    aria: "Animated low-poly scene: a cross-hilted sword set in a pedestal among forest ruins by a lake wakes and throws a column of light into the night sky.",
   },
   {
     id: "astral",
+    no: "02",
+    name: "Eye",
+    aria: "Animated solar system seen from above: the column of light leaves the third planet and reaches a giant eye above the ecliptic, which opens.",
+  },
+  {
+    id: "topo",
     no: "03",
-    name: "Astral",
-    aria: "Animated night sky: a ringed halo with orbiting glyphs, wireframe polyhedra, a watching eye figure and a moon with a satellite.",
+    name: "Ping",
+    aria: "Animated relief map with live contour lines: a scan sweeps the terrain, a pin drops beside a hollow and pings ring out from the marked spot.",
   },
 ];

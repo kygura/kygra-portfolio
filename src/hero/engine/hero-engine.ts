@@ -1,5 +1,8 @@
 /**
- * Hero engine: builds the three sheets once, renders only the active one
+ * Hero engine: builds the three acts once and plays them as one story —
+ * sword (01) → eye (02) → ping (03). Each act runs for its `dur`, then the
+ * engine dissolves into the next; the last one holds. It renders only the
+ * active act
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
  * target, then blits through a 15-bit quantize + Bayer dither pass.
  *
@@ -17,7 +20,7 @@ import { buildAstral } from "./astral";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
-uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform vec2 uLow; uniform float uLevels; varying vec2 vUv;
+uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform vec2 uLow; uniform float uLevels; uniform float uFlash; varying vec2 vUv;
 float b2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
 float b4(vec2 a){ return b2(0.5 * a) * 0.25 + b2(a); }
 void main(){
@@ -30,6 +33,7 @@ void main(){
     float th = mix(b4(blk), n, 0.55);
     c = mix(texture2D(tB, uv).rgb, c, step(th, uMix * 1.02 - 0.01));
   }
+  c = mix(c, vec3(1.0), uFlash);
   vec2 q = vUv - 0.5; c *= 1.0 - dot(q, q) * 0.55;
   c = floor(c * uLevels + b4(px)) / uLevels;
   gl_FragColor = vec4(c, 1.0);
@@ -49,11 +53,16 @@ export interface HeroEngineOptions {
   psx: boolean;
   reducedMotion: boolean;
   onContextLost: () => void;
+  /** The story moved to act `i` on its own. */
+  onSheet?: (i: number) => void;
+  /** Progress through act `i`, 0..1 (always 1 for the held last act). */
+  onProgress?: (i: number, f: number) => void;
 }
 
 export interface HeroEngine {
   setAccent: (a: Accent) => void;
-  setSheet: (i: number) => void;
+  /** Jump to act `i` and play the story on from its start. */
+  play: (i: number) => void;
   setPsx: (on: boolean) => void;
   setMotion: (on: boolean) => void;
   dispose: () => void;
@@ -67,7 +76,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildRuins(kit, o.accent.hex), buildTopo(kit), buildAstral(kit)];
+  const SC: SceneDef[] = [buildRuins(kit, o.accent.hex), buildAstral(kit), buildTopo(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -78,7 +87,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     depthWrite: false,
     uniforms: {
       tA: { value: rtA.texture }, tB: { value: rtB.texture }, uMix: { value: 1 },
-      uLow: { value: new THREE.Vector2(320, 180) }, uLevels: { value: 31.0 },
+      uLow: { value: new THREE.Vector2(320, 180) }, uLevels: { value: 31.0 }, uFlash: { value: 0 },
     },
     vertexShader: POST_V,
     fragmentShader: POST_F,
@@ -96,6 +105,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let prev = cur;
   let mixT = 1;
   let t = 18;
+  // Seconds into the current act, and into the outgoing one while it dissolves.
+  let actT = 0;
+  let prevT = 0;
   let last = performance.now();
   let dirty = true;
   let visible = true;
@@ -156,6 +168,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     for (const s of SC) {
       s.cam.aspect = cssW / cssH;
       s.cam.fov = s.cam.aspect < 1 ? s.fov[1] : s.fov[0];
+      // On wide screens the name covers the centre-left, so skew the frame
+      // to put each act's subject right of centre.
+      const shift = s.cam.aspect > 1.2 ? 0.17 : 0;
+      s.cam.filmOffset = -shift * 2 * Math.tan((s.cam.fov * Math.PI) / 360) * s.cam.aspect * s.cam.getFilmWidth();
       s.cam.updateProjectionMatrix();
     }
     lw = Math.max(200, Math.min(360, Math.round(cssW / 3.6)));
@@ -186,6 +202,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.setRenderTarget(rtA);
       renderer.render(sc.scene, sc.cam);
       postMat.uniforms.uMix.value = mixT;
+      postMat.uniforms.uFlash.value = sc.flash * mixT + (mixT < 1 ? SC[prev].flash * (1 - mixT) : 0);
       renderer.setRenderTarget(null);
       renderer.render(postScene, postCam);
     } else {
@@ -199,16 +216,28 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (motion) t += dt;
+    if (motion) {
+      t += dt;
+      actT += dt;
+      prevT += dt;
+      if (actT >= SC[cur].dur && cur < SC.length - 1) {
+        go(cur + 1);
+        o.onSheet?.(cur);
+      }
+    }
     if (mixT < 1) mixT = Math.min(1, mixT + dt / 0.7);
     kit.view.px += (tpx - kit.view.px) * 0.05;
     kit.view.py += (tpy - kit.view.py) * 0.05;
     U.uTime.value = t;
-    SC[cur].update(t);
-    if (mixT < 1) SC[prev].update(t);
+    SC[cur].update(t, motion ? actT : SC[cur].key);
+    if (mixT < 1) SC[prev].update(t, motion ? prevT : SC[prev].key);
     render();
     placeLabels(SC[cur]);
-    if (frameN++ % 6 === 0 || dirty) readouts(SC[cur]);
+    if (frameN++ % 6 === 0 || dirty) {
+      readouts(SC[cur]);
+      const d = SC[cur].dur;
+      o.onProgress?.(cur, motion && Number.isFinite(d) ? Math.min(1, actT / d) : 1);
+    }
     dirty = false;
     if (wants()) raf = requestAnimationFrame(loop);
   }
@@ -217,6 +246,17 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     last = performance.now();
     raf = requestAnimationFrame(loop);
   }
+
+  const go = (i: number) => {
+    if (i !== cur) {
+      prev = cur;
+      prevT = actT;
+      cur = i;
+      mixT = psxOn && !o.reducedMotion ? 0 : 1;
+      buildLabels(SC[cur]);
+    }
+    actT = 0;
+  };
 
   /* ---- observers ---- */
   const onPointer = (e: PointerEvent) => {
@@ -259,13 +299,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       dirty = true;
       kick();
     },
-    setSheet(i) {
-      i = ((i % SC.length) + SC.length) % SC.length;
-      if (i === cur) return;
-      prev = cur;
-      cur = i;
-      mixT = psxOn && !o.reducedMotion ? 0 : 1;
-      buildLabels(SC[cur]);
+    play(i) {
+      go(((i % SC.length) + SC.length) % SC.length);
       dirty = true;
       kick();
     },

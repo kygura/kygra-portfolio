@@ -41,7 +41,14 @@ export interface SceneDef {
   fov: [number, number];
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
-  update: (t: number) => void;
+  /** Seconds this act plays before the story moves on (Infinity: it holds). */
+  dur: number;
+  /** Act time shown when motion is off, so the still frame tells the act. */
+  key: number;
+  /** White-out written by update(), read by the post pass. */
+  flash: number;
+  /** `t` is ambient time, `p` is seconds into this act. */
+  update: (t: number, p: number) => void;
   readout: () => [string, string][];
 }
 
@@ -78,7 +85,7 @@ void main(){
 const F = `
 uniform sampler2D uMap; uniform sampler2D uMoss; uniform vec3 uTint; uniform float uMossAmt;
 uniform vec3 uFogColor; uniform float uFogNear; uniform float uFogFar; uniform float uFogAmt;
-uniform vec3 uAccent; uniform vec3 uAccent2; uniform float uSweep; uniform float uHypso; uniform float uTime; uniform float uEmit;
+uniform vec3 uAccent; uniform vec3 uAccent2; uniform float uSweep; uniform vec2 uSweepC; uniform float uSweepR; uniform float uHypso; uniform float uTime; uniform float uEmit;
 varying vec3 vAff; varying vec3 vLight; varying float vDepth; varying vec3 vWP; varying float vUp;
 void main(){
   vec2 uv = vAff.xy / vAff.z;
@@ -88,8 +95,9 @@ void main(){
   c = mix(c, texture2D(uMoss, vWP.xz * 0.35).rgb, m);
   c *= vLight;
   if (uSweep > 0.0) {
-    float r = length(vWP.xz);
-    float sw = smoothstep(1.4, 0.0, abs(r - mod(uTime * 3.2, 34.0)));
+    float r = length(vWP.xz - uSweepC);
+    float R = uSweepR < 0.0 ? mod(uTime * 3.2, 34.0) : uSweepR;
+    float sw = smoothstep(1.4, 0.0, abs(r - R));
     c = mix(c, uAccent, sw * uSweep);
   }
   c += uAccent * uEmit;
@@ -99,6 +107,17 @@ void main(){
 
 const LV = `uniform vec2 uSnap; varying float vDepth; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vec4 p = projectionMatrix * mv; p.xy = floor(p.xy / p.w * uSnap + 0.5) / uSnap * p.w; gl_Position = p; vDepth = -mv.z; }`;
 const LF = `uniform vec3 uColor; uniform vec3 uFogColor; uniform float uFade; varying float vDepth; void main(){ gl_FragColor = vec4(mix(uColor, uFogColor, clamp(vDepth / uFade, 0.0, 1.0) * 0.55), 1.0); }`;
+
+// Light column: open cylinder, base at y 0, length 1 (scale.y sets it). Additive,
+// banded along its length and brightest at the base.
+const BEAM_V = `uniform vec2 uSnap; varying vec2 vUv; void main(){ vUv = uv; vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); p.xy = floor(p.xy / p.w * uSnap + 0.5) / uSnap * p.w; gl_Position = p; }`;
+const BEAM_F = `
+uniform vec3 uAccent; uniform float uTime; uniform float uGain; uniform float uFall; varying vec2 vUv;
+void main(){
+  float band = 0.7 + 0.3 * sin(vUv.y * 60.0 - uTime * 14.0);
+  float k = uGain * band * mix(1.0, 0.25, pow(vUv.y, uFall));
+  gl_FragColor = vec4(mix(uAccent, vec3(1.0), 0.55) * k, 1.0);
+}`;
 
 const SKY_V = `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const SKY_F = `
@@ -117,6 +136,14 @@ void main(){
   c = mix(c, uAccent, g * 0.14 * uGrat);
   gl_FragColor = vec4(c, 1.0);
 }`;
+
+/** 0→1 over [a, b], smoothstepped. */
+export const ramp = (x: number, a: number, b: number) => {
+  const u = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return u * u * (3 - 2 * u);
+};
+/** Ease-in-out cubic on 0..1. */
+export const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
 
 export function createKit(accent: Accent) {
   let seed = 1337;
@@ -221,6 +248,8 @@ export function createKit(accent: Accent) {
         uAccent: U.uAccent,
         uAccent2: U.uAccent2,
         uSweep: { value: o.sweep ?? 0 },
+        uSweepC: { value: new THREE.Vector2() },
+        uSweepR: { value: -1 },
         uHypso: { value: o.hypso ?? 0 },
         uTime: U.uTime,
         uEmit: { value: o.emit ?? 0 },
@@ -233,6 +262,27 @@ export function createKit(accent: Accent) {
       fragmentShader: LF,
       uniforms: { uSnap: U.uSnap, uColor: colorU, uFogColor: U.uFogColor, uFade: { value: fade } },
     });
+
+  const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 8, 1, true);
+  beamGeo.translate(0, 0.5, 0);
+  const beamMat = (gain: number, fall = 1) =>
+    new THREE.ShaderMaterial({
+      vertexShader: BEAM_V,
+      fragmentShader: BEAM_F,
+      side: THREE.DoubleSide,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      uniforms: { uSnap: U.uSnap, uAccent: U.uAccent, uTime: U.uTime, uGain: { value: gain }, uFall: { value: fall } },
+    });
+  /** A light column of radius r; set scale.y for its length. */
+  const beam = (r: number, gain: number, fall = 1) => {
+    const m = new THREE.Mesh(beamGeo, beamMat(gain, fall));
+    m.scale.set(r, 1, r);
+    m.frustumCulled = false;
+    m.renderOrder = 2;
+    return m;
+  };
 
   /* ---- geometry helpers ---- */
   const hash3 = (x: number, y: number, z: number) => {
@@ -339,9 +389,9 @@ export function createKit(accent: Accent) {
     pad(Math.max(1, Math.min(9, Math.floor((z + span) / (span / 4)) + 1)));
 
   return {
-    U, rnd,
+    U, rnd, ease, ramp,
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain },
-    psx, lineMat, facet, mesh, segs, circle, skyDome, M,
+    psx, lineMat, facet, mesh, segs, circle, skyDome, beam, M,
     view: { px: 0, py: 0 },
     pad, dms, bearing, gridRef,
   };
