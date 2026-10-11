@@ -67,6 +67,48 @@
 :root[data-accent="astral"] { --accent: #86d3dc; --accent-deep: #2f6f9a; --on-accent: #08171b; --accent-h: 186 55% 69%; --on-accent-h: 193 54% 7%; }
 :root[data-accent="madder"] { --accent: #e5787f; --accent-deep: #7e2638; --on-accent: #1f0a0d; --accent-h: 356 68% 68%; --on-accent-h: 351 51% 8%; }
 
+/* Graphite: unlike the hue variants it also swaps the ground, ink, rules and
+   kit tokens for pure grays, so nothing on the sheet carries a colour. */
+:root[data-accent="mono"] {
+  --bg: #121212;
+  --bg-2: #181818;
+  --sheet: #1e1e1e;
+  --code: #0c0c0c;
+  --ink: #e2e2e2;
+  --ink-2: #a8a8a8;
+  --ink-3: #7c7c7c;
+  --rule: #2e2e2e;
+  --rule-2: #444444;
+  --grid: rgba(226, 226, 226, 0.035);
+  --scrim: rgba(12, 12, 12, 0.86);
+  --danger: #f5f5f5;
+  --accent: #d4d4d4;
+  --accent-deep: #6b6b6b;
+  --on-accent: #111111;
+  --accent-h: 0 0% 83%;
+  --on-accent-h: 0 0% 7%;
+
+  --background: 0 0% 7%;
+  --foreground: 0 0% 89%;
+  --card: 0 0% 9%;
+  --card-foreground: 0 0% 89%;
+  --popover: 0 0% 9%;
+  --popover-foreground: 0 0% 89%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 89%;
+  --destructive: 0 0% 96%;
+  --destructive-foreground: 0 0% 7%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 66%;
+  --border: 0 0% 18%;
+  --input: 0 0% 27%;
+  --sidebar-background: 0 0% 9%;
+  --sidebar-foreground: 0 0% 89%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-accent: 0 0% 12%;
+  --sidebar-accent-foreground: 0 0% 89%;
+}
+
 @media (min-width: 640px) {
   :root { --nav-h: 68px; }
 }

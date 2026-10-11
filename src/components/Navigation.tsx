@@ -119,7 +119,7 @@ const Navigation = () => {
           <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock}
           </span>
-          {/* Accent picker in the slot the day/night toggle used. Keys 1–4. */}
+          {/* Accent picker in the slot the day/night toggle used. Keys 1–5. */}
           <div className="accent-pick" role="group" aria-label="Accent">
             {ACCENTS.map((a, i) => (
               <button
