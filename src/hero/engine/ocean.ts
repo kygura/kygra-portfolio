@@ -39,16 +39,7 @@ export function buildOcean(k: PsxKit): SceneDef {
     g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
     return facet(g, 0.03);
   };
-  // World-space facade UVs so window rows line up across every tower face.
-  const wallUV = (g: THREE.BufferGeometry, s: number) => {
-    const p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
-    for (let i = 0; i < p.count; i++) {
-      const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
-      const u = ay > 0.7 || az >= ax ? p.getX(i) : p.getZ(i);
-      uv.setXY(i, u * s, (ay > 0.7 ? p.getZ(i) : p.getY(i)) * s);
-    }
-    return g;
-  };
+  const { wallUV } = k;
 
   /* ---- ocean: a grid denser near the camera, displaced every frame ---- */
   const WN = 72, WH = 170, WCX = 10, WCZ = -18;
@@ -279,23 +270,8 @@ export function buildOcean(k: PsxKit): SceneDef {
   scene.add(lines);
 
   /* ---- twin suns on the horizon ---- */
-  const sunDisc = (x: number, y: number, z: number, r: number, core: string, glow: string) => {
-    const g = new THREE.Group();
-    g.position.set(x, y, z);
-    scene.add(g);
-    g.add(new THREE.Mesh(new THREE.CircleGeometry(r, 14), new THREE.MeshBasicMaterial({ color: core })));
-    [[1.55, 0.32], [2.6, 0.14], [5, 0.035]].forEach(([s, o], i) => {
-      const halo = new THREE.Mesh(
-        new THREE.CircleGeometry(r * s, 14),
-        new THREE.MeshBasicMaterial({ color: glow, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false }),
-      );
-      halo.position.z = -0.5 - i * 0.5;
-      g.add(halo);
-    });
-    return g;
-  };
-  const sunA = sunDisc(-126.3, 30, 64.9, 14, "#fff3d2", "#ffc874");
-  const sunB = sunDisc(-135.4, 13, 38.2, 9, "#ffd0ae", "#ff8a5c");
+  const sunA = k.sunDisc(scene, -126.3, 30, 64.9, 14, "#fff3d2", "#ffc874");
+  const sunB = k.sunDisc(scene, -135.4, 13, 38.2, 9, "#ffd0ae", "#ff8a5c");
 
   // glitter on the swell along the line to the suns
   const NG = 160, gp = new Float32Array(NG * 3), gBase: number[] = [];
