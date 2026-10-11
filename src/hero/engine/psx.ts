@@ -283,6 +283,16 @@ export function createKit(accent: Accent) {
     g.computeVertexNormals();
     return g;
   };
+  // Planar UVs from local position, so window rows line up across every face of a facade.
+  const wallUV = (g: THREE.BufferGeometry, s: number) => {
+    const p = g.attributes.position, n = g.attributes.normal, uv = g.attributes.uv;
+    for (let i = 0; i < p.count; i++) {
+      const ax = Math.abs(n.getX(i)), ay = Math.abs(n.getY(i)), az = Math.abs(n.getZ(i));
+      const u = ay > 0.7 || az >= ax ? p.getX(i) : p.getZ(i);
+      uv.setXY(i, u * s, (ay > 0.7 ? p.getZ(i) : p.getY(i)) * s);
+    }
+    return g;
+  };
   const mesh = (
     geo: THREE.BufferGeometry,
     mat: THREE.Material,
@@ -342,6 +352,22 @@ export function createKit(accent: Accent) {
     s.renderOrder = -1;
     return s;
   };
+  // Flat sun disc with three additive halos; the caller turns it to face the camera each frame.
+  const sunDisc = (parent: THREE.Object3D, x: number, y: number, z: number, r: number, core: string, glow: string) => {
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    parent.add(g);
+    g.add(new THREE.Mesh(new THREE.CircleGeometry(r, 14), new THREE.MeshBasicMaterial({ color: core })));
+    [[1.55, 0.32], [2.6, 0.14], [5, 0.035]].forEach(([s, o], i) => {
+      const halo = new THREE.Mesh(
+        new THREE.CircleGeometry(r * s, 14),
+        new THREE.MeshBasicMaterial({ color: glow, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false }),
+      );
+      halo.position.z = -0.5 - i * 0.5;
+      g.add(halo);
+    });
+    return g;
+  };
 
   /* ---- shared materials ---- */
   const M = {
@@ -385,7 +411,7 @@ export function createKit(accent: Accent) {
   return {
     U, rnd,
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
-    psx, lineMat, facet, mesh, batcher, segs, circle, skyDome, M,
+    psx, lineMat, facet, wallUV, mesh, batcher, segs, circle, skyDome, sunDisc, M,
     view: { px: 0, py: 0 },
     pad, dms, bearing, gridRef,
   };
