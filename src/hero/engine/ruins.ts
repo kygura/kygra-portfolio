@@ -121,12 +121,7 @@ export function buildRuins(k: PsxKit): SceneDef {
     if (!h) { piece(x + Math.cos(a) * 0.9, z + Math.sin(a) * 0.9, a, 0, fallen(0.24)); return; }
     piece(x, z, a, 0, column(0.24, h, { cap: h > 1.7, broken: h < 1, band: true }));
   });
-  // ring beam still spanning the first four bays
-  for (let i = 0; i < 4; i++) {
-    const a = (ipos(i) + ipos(i + 1)) / 2, chord = 2 * IR * Math.sin(Math.PI / IN);
-    const x = Math.cos(a) * IR * Math.cos(Math.PI / IN), z = Math.sin(a) * IR * Math.cos(Math.PI / IN);
-    add(facet(new THREE.BoxGeometry(chord + 0.5, 0.3, 0.55), 0.05), stone(), x, ground(x, z) + 2.43, z, 0, -a + Math.PI / 2, 0);
-  }
+
 
   /* ---- collapsed arch on the north path ---- */
   const AZ = -13, AY = ground(0, AZ);
