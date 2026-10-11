@@ -41,6 +41,8 @@ export interface SceneDef {
   fov: [number, number];
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
+  /** Key light direction; scenes without one use the kit default. */
+  light?: V3;
   update: (t: number) => void;
   readout: () => [string, string][];
 }
@@ -198,6 +200,30 @@ export function createKit(accent: Accent) {
       put(d, i * 4, 200 * k, 200 * k, 196 * k);
     }
   });
+  const tWater = tex(32, (d, s) => {
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+      const k = 0.8 + rnd() * 0.3, crest = Math.sin((x + y * 0.5) * 0.6) > 0.82 && rnd() > 0.35;
+      if (crest) put(d, (y * s + x) * 4, 150, 184, 180); else put(d, (y * s + x) * 4, 52 * k, 92 * k, 100 * k);
+    }
+  });
+  const tSand = tex(32, (d, s) => {
+    for (let i = 0; i < s * s; i++) {
+      const k = 0.82 + rnd() * 0.26;
+      if (rnd() > 0.94) put(d, i * 4, 120, 108, 84); else put(d, i * 4, 196 * k, 176 * k, 132 * k);
+    }
+  });
+  // 4x4 windows per tile: concrete frame, dark glass, a few lit or blown-out panes.
+  const panes = Array.from({ length: 16 }, () => rnd());
+  const tFacade = tex(32, (d, s) => {
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+      const k = 0.84 + rnd() * 0.24, wx = x % 8, wy = y % 8, p = panes[Math.floor(y / 8) * 4 + Math.floor(x / 8)];
+      const i = (y * s + x) * 4;
+      if (wx < 2 || wy < 2) put(d, i, 168 * k, 164 * k, 150 * k);
+      else if (p > 0.9) put(d, i, 214 * k, 170 * k, 104 * k);
+      else if (p < 0.12) put(d, i, 24 * k, 28 * k, 28 * k);
+      else put(d, i, (54 + wy * 4) * k, (70 + wy * 4) * k, (80 + wy * 3) * k);
+    }
+  });
 
   const psx = (o: PsxOpts) =>
     new THREE.ShaderMaterial({
@@ -340,7 +366,7 @@ export function createKit(accent: Accent) {
 
   return {
     U, rnd,
-    tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain },
+    tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tFacade },
     psx, lineMat, facet, mesh, segs, circle, skyDome, M,
     view: { px: 0, py: 0 },
     pad, dms, bearing, gridRef,
