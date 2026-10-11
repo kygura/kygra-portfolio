@@ -1,5 +1,5 @@
 /**
- * The four accent variants and the one switch that applies them. CSS tokens
+ * The five accent variants and the one switch that applies them. CSS tokens
  * live in index.css under `:root[data-accent=…]` (an inline script in
  * index.html applies the saved one before first paint); the hero reads
  * `hex`/`deep`/`fog`/`zen` for its shader uniforms, so one switch recolours
@@ -8,7 +8,7 @@
 import { useSyncExternalStore } from "react";
 
 export interface Accent {
-  id: "lichen" | "torch" | "astral" | "madder";
+  id: "lichen" | "torch" | "astral" | "madder" | "mono";
   name: string;
   hex: string;
   deep: string;
@@ -21,6 +21,8 @@ export const ACCENTS: Accent[] = [
   { id: "torch", name: "Torch Amber", hex: "#eaa24c", deep: "#a24e1c", fog: "#4a453d", zen: "#15121a" },
   { id: "astral", name: "Astral Cyan", hex: "#86d3dc", deep: "#2f6f9a", fog: "#33475a", zen: "#0b1222" },
   { id: "madder", name: "Ritual Madder", hex: "#e5787f", deep: "#7e2638", fog: "#463a42", zen: "#140d14" },
+  // Graphite also neutralises the ground and ink (see index.css), so the whole sheet goes grayscale.
+  { id: "mono", name: "Graphite", hex: "#d4d4d4", deep: "#6b6b6b", fog: "#3f3f3f", zen: "#0e0e0e" },
 ];
 
 export const ACCENT_KEY = "nca-accent";

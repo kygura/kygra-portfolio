@@ -1,6 +1,6 @@
 /**
  * Additive keyboard layer: g-chords for the nav routes, `g g` to the top,
- * `1`–`4` for the accent, `?` for the help sheet. Pages add their own keys
+ * `1`–`5` for the accent, `?` for the help sheet. Pages add their own keys
  * (the hero listens for `[` `]`). Nothing fires while typing in a field or
  * with a modifier held, so the terminal's Ctrl+K and the backtick stay put.
  */
@@ -63,7 +63,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
           <div>
             <h3>View</h3>
             <dl>
-              <div><dt><K k="1" />–<K k="4" /></dt><dd>Accent</dd></div>
+              <div><dt><K k="1" />–<K k="5" /></dt><dd>Accent</dd></div>
               <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next hero scene (home)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
@@ -121,6 +121,7 @@ export default function Keys() {
         case "2":
         case "3":
         case "4":
+        case "5":
           setAccent(Number(e.key) - 1);
           return;
       }

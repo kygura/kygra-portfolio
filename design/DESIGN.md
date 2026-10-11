@@ -17,12 +17,13 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Keys `1`–`4`, or the four-swatch picker in the nav (the slot the old day/night toggle used). Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
+Keys `1`–`5`, or the Theme menu in the nav (a trigger that opens a vertical list below it, with a swatch, name and key per option). Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
 
 1. Lichen `#bcc77c` (default)
 2. Torch Amber `#eaa24c`
 3. Astral Cyan `#86d3dc`
 4. Ritual Madder `#e5787f`
+5. Graphite `#d4d4d4`: the monochrome option. Also swaps the ground, ink, rules, danger and shadcn kit tokens for pure grays (`:root[data-accent="mono"]` in `src/index.css`), so the sheet carries no hue. Errors read as the brightest ink rather than red.
 
 ## Type
 
