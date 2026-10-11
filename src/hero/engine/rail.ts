@@ -6,7 +6,7 @@ export function buildRail(k: PsxKit): SceneDef {
   const { rnd, facet, wallUV, mesh, psx, M, tex, view } = k;
   const { add, flush } = k.batcher();
   const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(58, 16 / 9, 0.1, 340);
+  const cam = new THREE.PerspectiveCamera(58, 16 / 9, 0.1, 520);
   const sky = k.skyDome(0, 0.15, 2.6);
   scene.add(sky);
 
@@ -27,9 +27,9 @@ export function buildRail(k: PsxKit): SceneDef {
     glass: psx({ map: tex.tGlass, tint: "#b9c6cc" }),
     dark: psx({ map: tex.tPlain, tint: "#2b3439", amb: "#3c464c" }),
     city: [
-      psx({ map: tex.tGlass, tint: "#b7c4ca", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.72 }),
-      psx({ map: tex.tGlass, tint: "#8f9eaa", amb: "#4a5862", sun: "#b8b09c", fogAmt: 0.72 }),
-      psx({ map: tex.tStone, tint: "#a9aba4", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.72 }),
+      psx({ map: tex.tGlass, tint: "#b7c4ca", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.62 }),
+      psx({ map: tex.tGlass, tint: "#8f9eaa", amb: "#4a5862", sun: "#b8b09c", fogAmt: 0.62 }),
+      psx({ map: tex.tStone, tint: "#a9aba4", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.62 }),
     ],
   };
   const up = new THREE.Vector3(0, 1, 0);
@@ -42,7 +42,7 @@ export function buildRail(k: PsxKit): SceneDef {
   };
 
   /* ---- sea: a grid denser near the camera, displaced every frame ---- */
-  const WN = 72, WH = 280, WCX = -2, WCZ = 12;
+  const WN = 72, WH = 420, WCX = -2, WCZ = 12;
   const warp = (u: number) => Math.sign(u) * Math.pow(Math.abs(u), 1.8) * WH;
   const wg = new THREE.PlaneGeometry(2, 2, WN, WN);
   wg.rotateX(-Math.PI / 2);
@@ -59,7 +59,7 @@ export function buildRail(k: PsxKit): SceneDef {
   mesh(water, mat.water, scene).frustumCulled = false;
 
   /* ---- causeway: a low slab just clear of the water, running to the horizon ---- */
-  const Z0 = -300, Z1 = 70, ZN = -90, DECK = 0.42, GAUGE = 0.72, WIRE = 5.2;
+  const Z0 = -390, Z1 = 70, ZN = -90, DECK = 0.42, GAUGE = 0.72, WIRE = 5.2;
   add(wallUV(facet(new THREE.BoxGeometry(2.6, 0.5, Z1 - Z0, 1, 1, 60)), 0.5), mat.deck, 0, DECK - 0.25, (Z0 + Z1) / 2);
   const sleeper = facet(new THREE.BoxGeometry(2.1, 0.1, 0.32), 0.02);
   for (let z = ZN; z < Z1; z += 0.9) add(sleeper, mat.sleeper, 0, DECK + 0.05, z, 0, (rnd() - 0.5) * 0.04, 0);
@@ -73,7 +73,7 @@ export function buildRail(k: PsxKit): SceneDef {
   const pole = facet(new THREE.CylinderGeometry(0.09, 0.12, WIRE + 0.6 - DECK, 5));
   const arm = facet(new THREE.BoxGeometry(2.3, 0.08, 0.08));
   let prevZ = Z0;
-  for (let z = -285, n = 0; z <= 60; z += 15, n++) {
+  for (let z = -375, n = 0; z <= 60; z += 15, n++) {
     add(pole, mat.steel, 1.9, (WIRE + 0.6 + DECK) / 2, z);
     add(arm, mat.steel, 0.85, WIRE + 0.5, z);
     if (n % 4 === 2) add(facet(new THREE.BoxGeometry(0.16, 0.16, 0.16)), M.glyph, 1.9, WIRE + 0.75, z);
@@ -118,10 +118,10 @@ export function buildRail(k: PsxKit): SceneDef {
   /* ---- skyline: a city of towers standing in the sea, tallest where the line runs in ---- */
   let peak = new THREE.Vector3(0, 0, -200);
   for (let i = 0; i < 70; i++) {
-    const x = (rnd() - 0.5) * 340, z = -172 - rnd() * 72;
+    const x = (rnd() - 0.5) * 460, z = -290 - rnd() * 80;
     if (Math.abs(x) < 5) continue;
-    const h = 14 + rnd() * 18 + 80 * Math.exp(-(((x - 8) / 60) ** 2)) * (0.45 + rnd() * 0.55);
-    const w = 5 + rnd() * 7, d = w * (0.7 + rnd() * 0.4), ry = (rnd() - 0.5) * 0.5;
+    const h = 16 + rnd() * 20 + 92 * Math.exp(-(((x - 10) / 80) ** 2)) * (0.45 + rnd() * 0.55);
+    const w = 6 + rnd() * 8, d = w * (0.7 + rnd() * 0.4), ry = (rnd() - 0.5) * 0.5;
     const clad = mat.city[Math.floor(rnd() * 3)], kind = rnd();
     let top = h;
     if (kind < 0.55) {
@@ -155,8 +155,8 @@ export function buildRail(k: PsxKit): SceneDef {
   flush(scene);
 
   /* ---- two suns, high over the horizon ---- */
-  const sunA = k.sunDisc(scene, 85, 132, -255, 14, "#fff3d2", "#ffc874");
-  const sunB = k.sunDisc(scene, -45, 108, -265, 9, "#ffd8b8", "#ff9a68");
+  const sunA = k.sunDisc(scene, 130, 205, -420, 22, "#fff3d2", "#ffc874");
+  const sunB = k.sunDisc(scene, -70, 168, -435, 14, "#ffd8b8", "#ff9a68");
 
   /* ---- the train: four cars, lead car with a raked nose; local z = 0 is its front ---- */
   const train = new THREE.Group();
@@ -192,7 +192,7 @@ export function buildRail(k: PsxKit): SceneDef {
   flush(train);
 
   // Timetable: brake in from beyond the fog, stand at the halt, pull out past the camera, repeat.
-  const ZSTOP = 12, D = 320, TA = 24, TW = 9, TD = 14, TP = TA + TW + TD;
+  const ZSTOP = 12, D = 420, TA = 24, TW = 9, TD = 14, TP = TA + TW + TD;
   let speed = 0, phase = 0;
   const run = (t: number) => {
     const u = (((t - 1) % TP) + TP) % TP;
@@ -219,7 +219,7 @@ export function buildRail(k: PsxKit): SceneDef {
   for (let i = 0; i < NG; i++) {
     const s = i % 3 ? sunA.position : sunB.position;
     const dx = s.x - CX, dz = s.z - CZ, l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l;
-    const d = 8 + Math.pow(rnd(), 0.6) * 200, w = (rnd() - 0.5) * (0.6 + d * 0.1);
+    const d = 8 + Math.pow(rnd(), 0.6) * 280, w = (rnd() - 0.5) * (0.6 + d * 0.1);
     gBase.push(CX + ux * d - uz * w, CZ + uz * d + ux * w);
   }
   const glintGeo = new THREE.BufferGeometry();

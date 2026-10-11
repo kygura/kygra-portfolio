@@ -226,8 +226,8 @@
 .hero__mark {
   position: absolute;
   right: var(--hero-gutter);
-  bottom: 9vh;
-  bottom: 9svh;
+  bottom: calc(9vh + 18px);
+  bottom: calc(9svh + 18px);
   transform-origin: center center;
   pointer-events: none;
   will-change: transform, opacity;
@@ -251,7 +251,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem 1.25rem;
-  padding: 13px var(--hero-gutter);
+  padding: 22px var(--hero-gutter);
   font-size: 10.5px;
   letter-spacing: 0.16em;
   border-top: 1px solid var(--rule-2);
@@ -295,7 +295,7 @@
 
 @media (min-width: 768px) {
   .hero__intro { top: 28vh; top: 28svh; }
-  .hero__mark { bottom: 7vh; bottom: 7svh; }
+  .hero__mark { bottom: calc(7vh + 18px); bottom: calc(7svh + 18px); }
   .hero__marker { height: 100vh; height: 100svh; }
 }
 
@@ -307,7 +307,7 @@
   .hero__tagline { font-size: 14px; width: clamp(220px, 34vw, 320px); }
   /* A fixed offset, not a percentage: 5svh of a 390px-tall landscape
      phone lands the monogram on top of the footer strip. */
-  .hero__mark { bottom: 52px; }
+  .hero__mark { bottom: 70px; }
   .hero__mark-text { font-size: clamp(64px, 11vw, 140px); }
   .hero__marker { height: 60vh; height: 60svh; }
 }
