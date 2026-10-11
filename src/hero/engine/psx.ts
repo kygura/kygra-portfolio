@@ -5,6 +5,7 @@
  * and handed to every scene builder.
  */
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Accent } from "@/theme/accent";
 
 // The scene was tuned against three r128, which had no colour management:
@@ -294,6 +295,27 @@ export function createKit(accent: Accent) {
     parent.add(m);
     return m;
   };
+  // Static parts collected per material, then merged into one mesh each per parent.
+  const batcher = () => {
+    const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler();
+    const pv = new THREE.Vector3(), sv = new THREE.Vector3();
+    return {
+      add(geo: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) {
+        m4.compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s));
+        const list = batches.get(m) ?? [];
+        list.push(geo.clone().applyMatrix4(m4));
+        batches.set(m, list);
+      },
+      flush(parent: THREE.Object3D) {
+        for (const [m, list] of batches) {
+          const merged = mergeGeometries(list);
+          if (merged) mesh(merged, m, parent);
+        }
+        batches.clear();
+      },
+    };
+  };
   const segs = (pts: V3[], mat: THREE.Material) =>
     new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), mat);
   const circle = (r: number, n: number) => {
@@ -363,7 +385,7 @@ export function createKit(accent: Accent) {
   return {
     U, rnd,
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
-    psx, lineMat, facet, mesh, segs, circle, skyDome, M,
+    psx, lineMat, facet, mesh, batcher, segs, circle, skyDome, M,
     view: { px: 0, py: 0 },
     pad, dms, bearing, gridRef,
   };

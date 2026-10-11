@@ -14,6 +14,7 @@ import { createKit, type SceneDef } from "./psx";
 import { buildOcean } from "./ocean";
 import { buildTopo } from "./topo";
 import { buildAstral } from "./astral";
+import { buildRuins } from "./ruins";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
@@ -67,7 +68,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildOcean(kit), buildTopo(kit), buildAstral(kit)];
+  const SC: SceneDef[] = [buildOcean(kit), buildTopo(kit), buildAstral(kit), buildRuins(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -255,7 +256,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       U.uAccent2.value.set(a.deep);
       U.uFogColor.value.set(a.fog);
       U.uZen.value.set(a.zen);
-      SC[0].moteMat?.color.set(a.hex);
+      for (const s of SC) s.moteMat?.color.set(a.hex);
       dirty = true;
       kick();
     },

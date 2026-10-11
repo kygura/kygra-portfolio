@@ -1,6 +1,5 @@
 /** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, a moored wing-sail ship, twin suns. */
 import * as THREE from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { PsxKit, SceneDef, V3 } from "./psx";
 
 type Kind = "box" | "cyl" | "taper";
@@ -31,23 +30,7 @@ export function buildOcean(k: PsxKit): SceneDef {
     sail: psx({ map: tex.tPlain, tint: "#e9e4d4", amb: "#7a8890" }),
   };
 
-  /* ---- batching: static parts merge into one mesh per material per parent ---- */
-  const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler();
-  const pv = new THREE.Vector3(), sv = new THREE.Vector3();
-  const add = (geo: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) => {
-    m4.compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s));
-    const list = batches.get(m) ?? [];
-    list.push(geo.clone().applyMatrix4(m4));
-    batches.set(m, list);
-  };
-  const flush = (parent: THREE.Object3D) => {
-    for (const [m, list] of batches) {
-      const merged = mergeGeometries(list);
-      if (merged) mesh(merged, m, parent);
-    }
-    batches.clear();
-  };
+  const { add, flush } = k.batcher();
   // Cylinder from a to b (geometry already in place).
   const up = new THREE.Vector3(0, 1, 0);
   const seg = (a: V3, b: V3, r0: number, r1: number, n = 5) => {

@@ -7,7 +7,7 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
 /**
  * Cartographic hero — the sticky stage, name, tagline, accent initials,
  * hairline strip and scroll parallax are unchanged; the field behind them is
- * the PS1 three-scene renderer (ocean / topo / astral). three.js is fetched
+ * the PS1 three-scene renderer (ocean / topo / astral / ruins). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *

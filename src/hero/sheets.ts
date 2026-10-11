@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "topo" | "astral";
+  id: "ocean" | "topo" | "astral" | "ruins";
   no: string;
   name: string;
   aria: string;
@@ -25,5 +25,11 @@ export const SHEETS: SheetMeta[] = [
     no: "03",
     name: "Astral",
     aria: "Animated night sky: a ringed halo with orbiting glyphs, wireframe polyhedra, a watching eye figure and a moon with a satellite.",
+  },
+  {
+    id: "ruins",
+    no: "04",
+    name: "Ruins",
+    aria: "Animated low-poly scene: misty forest ruins, a mossy stone circle around a shrine with a floating glowing crystal, rune lights and drifting wisps.",
   },
 ];
