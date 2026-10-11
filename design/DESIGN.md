@@ -42,7 +42,7 @@ Per-project accent hues on `/projects` were dropped for the site accent (they sa
 
 Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline, "C.A" accent initials, hairline strip and scroll parallax. Only the field behind them changed: the canvas-2D contour field is replaced by the PS1 three-scene renderer in `src/hero/` (`sheets.ts` metadata, `engine/` three.js r160: `psx.ts` shared materials and helpers, `ocean.ts`, `topo.ts`, `astral.ts`, `hero-engine.ts` loop + post). The engine is a dynamic import, so only `/` downloads three.
 
-- **01 Ocean**: endless animated swell, drowned skyscrapers (tilted, bent, twisted, toppled) overgrown with vines and roof palms, palm islands, wing-sail ships, two suns on the horizon with a glitter path. Replaced the mock's Ruins sheet; static geometry is merged per material, so the scene is about a dozen draws plus ships.
+- **01 Ocean**: endless animated swell, a drowned skyline on the horizon (tilted, bent, twisted, toppled towers, about half under water, dark tide line) overgrown with vines and roof palms, palm islands, wing-sail ships, two suns on the horizon with a glitter path. Replaced the mock's Ruins sheet; static geometry is merged per material, so the scene is about a dozen draws plus ships.
 - **02 Topo**: animated relief, marching-squares contours, draped grid, trig points, sweep.
 - **03 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite.
 

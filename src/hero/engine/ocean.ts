@@ -13,6 +13,8 @@ interface TowerSpec {
   yaw?: number;
   green?: number;
   base?: number;
+  /** Share of the height below the waterline when no explicit base is given. */
+  sub?: number;
   broken?: boolean;
 }
 
@@ -30,9 +32,9 @@ export function buildOcean(k: PsxKit): SceneDef {
 
   const warm = "#f6cf98", amb = "#6a7a7e";
   const mWater = psx({ map: tex.tWater, tint: "#9cbcbc", amb: "#4a626c", sun: "#e6c49a" });
-  const mFacade = psx({ map: tex.tFacade, tint: "#c4c2b4", moss: 0.9, sun: warm, amb });
-  const mFacade2 = psx({ map: tex.tFacade, tint: "#a3aaa2", moss: 1, sun: warm, amb });
-  const mConcrete = psx({ map: tex.tStone, tint: "#a8a698", moss: 0.95, uv: 1.5, sun: warm, amb });
+  const mFacade = psx({ map: tex.tFacade, tint: "#c4c2b4", moss: 0.9, sun: warm, amb, wet: 1 });
+  const mFacade2 = psx({ map: tex.tFacade, tint: "#a3aaa2", moss: 1, sun: warm, amb, wet: 1 });
+  const mConcrete = psx({ map: tex.tStone, tint: "#a8a698", moss: 0.95, uv: 1.5, sun: warm, amb, wet: 1 });
   const mSand = psx({ map: tex.tSand, tint: "#ffffff", uv: 2, sun: warm, amb });
   const mGrass = psx({ map: tex.tGround, tint: "#c4d2a0", moss: 0.55, uv: 2, sun: warm, amb });
   const mFoam = psx({ map: tex.tPlain, tint: "#d7e0da", sun: warm, amb: "#7a8a8e" });
@@ -210,7 +212,7 @@ export function buildOcean(k: PsxKit): SceneDef {
   const tower = (s: TowerSpec) => {
     const root = new THREE.Group();
     root.rotation.order = "ZXY";
-    root.position.set(s.x, s.base ?? -6, s.z);
+    root.position.set(s.x, s.base ?? -s.h * (s.sub ?? 0.45), s.z);
     root.rotation.set(s.lean?.[0] ?? 0, s.yaw ?? rnd() * Math.PI, s.lean?.[1] ?? 0);
     world.add(root);
     const segH = s.h / s.n, green = s.green ?? 1;
@@ -253,33 +255,40 @@ export function buildOcean(k: PsxKit): SceneDef {
       if (f < 2) { m.position.x = along; m.position.z = f ? -off : off; m.scale.set(0.35 + rnd() * 0.4, len, 0.2); }
       else { m.position.z = along; m.position.x = f === 2 ? off : -off; m.scale.set(0.2, len, 0.35 + rnd() * 0.4); }
     }
-    if (!s.lean || Math.abs(s.lean[0]) + Math.abs(s.lean[1]) < 0.6) foam(world, s.x, s.z, Math.max(s.w, s.d) * 0.72);
+    // Foam where the tower's axis meets the water, so leaning towers get it on the right side.
+    root.updateMatrixWorld(true);
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(root.quaternion);
+    if (up.y > 0.5) {
+      const k2 = -root.position.y / up.y;
+      foam(world, s.x + up.x * k2, s.z + up.z * k2, Math.max(s.w, s.d) * 0.75);
+    }
     return top;
   };
 
+  // The drowned city stands back on the horizon, roughly half of each tower under water.
   const towers: TowerSpec[] = [
-    { x: -19, z: -18, w: 5, d: 5, h: 34, n: 4, lean: [0, 0.23], yaw: 0.3 },
-    { x: -4, z: -31, w: 6, d: 4, h: 48, n: 6, bend: [0, -0.085], yaw: 0.1 },
-    { x: 10, z: -17, w: 4.5, d: 4.5, h: 30, n: 5, twist: 0.14 },
-    { x: 21, z: -40, w: 7, d: 5, h: 38, n: 3, lean: [0, -0.16], broken: true },
-    { x: -26, z: -48, w: 5, d: 5, h: 54, n: 7, bend: [0.05, 0.04], lean: [0, -0.08] },
-    { x: 30, z: -15, w: 4, d: 6, h: 22, n: 3, lean: [0.1, -0.32], green: 1.6 },
-    { x: 2, z: -48, w: 5, d: 5, h: 36, n: 3, lean: [0, -1.32], yaw: 0, base: -3.2, green: 1.8, broken: true },
-    { x: -40, z: -26, w: 4, d: 4, h: 30, n: 4, bend: [0, 0.09] },
-    { x: 43, z: -60, w: 8, d: 6, h: 62, n: 5, bend: [0, 0.05] },
-    { x: -12, z: -76, w: 6, d: 6, h: 66, n: 6, bend: [-0.03, -0.04] },
-    { x: 15, z: -79, w: 5, d: 4, h: 46, n: 4, lean: [0.14, 0.1] },
-    { x: -56, z: -60, w: 6, d: 5, h: 40, n: 3, lean: [0, 0.12], broken: true },
-    { x: 58, z: -33, w: 5, d: 5, h: 28, n: 3, bend: [0, 0.13] },
-    { x: -29, z: -7, w: 4, d: 4, h: 12, n: 2, lean: [0.12, 0.1], green: 2.2, broken: true },
+    { x: -30, z: -82, w: 7, d: 7, h: 60, n: 5, lean: [0, 0.24], yaw: 0.3 },
+    { x: -5, z: -100, w: 8, d: 6, h: 80, n: 7, bend: [0, -0.07], yaw: 0.1, sub: 0.5 },
+    { x: 22, z: -88, w: 6, d: 6, h: 56, n: 6, twist: 0.12 },
+    { x: 40, z: -110, w: 9, d: 7, h: 64, n: 4, lean: [0, -0.15], broken: true, sub: 0.5 },
+    { x: -45, z: -120, w: 7, d: 7, h: 90, n: 8, bend: [0.04, 0.04], lean: [0, -0.07] },
+    { x: 55, z: -78, w: 6, d: 8, h: 40, n: 3, lean: [0.08, -0.33], green: 1.6, sub: 0.5 },
+    { x: 5, z: -76, w: 7, d: 7, h: 50, n: 3, lean: [0, -1.3], yaw: 0, base: -6, green: 1.8, broken: true },
+    { x: -70, z: -92, w: 6, d: 6, h: 52, n: 4, bend: [0, 0.08], sub: 0.5 },
+    { x: 75, z: -130, w: 10, d: 8, h: 100, n: 6, bend: [0, 0.045] },
+    { x: -18, z: -140, w: 8, d: 8, h: 104, n: 7, bend: [-0.03, -0.035] },
+    { x: 18, z: -135, w: 7, d: 6, h: 76, n: 5, lean: [0.12, 0.09], sub: 0.5 },
+    { x: -85, z: -125, w: 8, d: 7, h: 64, n: 4, lean: [0, 0.12], broken: true, sub: 0.5 },
+    { x: 92, z: -95, w: 7, d: 7, h: 50, n: 4, bend: [0, 0.12], sub: 0.5 },
+    { x: -55, z: -75, w: 5, d: 5, h: 26, n: 2, lean: [0.1, 0.1], green: 2.2, broken: true, sub: 0.6 },
   ];
   const tops = towers.map(tower);
   const leanDeg = Math.round((towers[0].lean![1] * 180) / Math.PI);
 
   let atollPalms = 0;
   [
-    [-7, -9, 4], [7, -5, 2.6], [16, -30, 5], [-20, -36, 7], [28, -6, 2.5], [-36, -16, 4], [38, -47, 5],
-    [-4, -64, 7], [52, -21, 3], [-48, -40, 4], [25, -66, 6], [-31, -71, 5], [65, -72, 7], [-63, -25, 6],
+    [-7, -9, 4], [7, -5, 2.6], [16, -30, 5], [-20, -32, 5], [28, -6, 2.5], [-36, -16, 4], [38, -49, 5],
+    [-4, -64, 7], [52, -21, 3], [-48, -48, 4], [25, -66, 6], [-31, -71, 5], [65, -72, 7], [-63, -25, 6],
     [-44, 14, 4], [42, 12, 3.5], [-70, -2, 5], [74, -6, 4],
   ].forEach(([x, z, r], i) => {
     const n = island(x, z, r, i === 3 ? 9 : undefined);
@@ -301,7 +310,7 @@ export function buildOcean(k: PsxKit): SceneDef {
   });
   const labelAt = {
     tower: tops[0].localToWorld(new THREE.Vector3(0, 3, 0)),
-    atoll: new THREE.Vector3(-20, 6.5, -36),
+    atoll: new THREE.Vector3(-20, 6, -32),
   };
   scene.remove(world);
   loose.forEach((g) => g.dispose());
@@ -371,12 +380,12 @@ export function buildOcean(k: PsxKit): SceneDef {
     rig(g, -2.5, 1.3, 7.4, 2.4);
     return g;
   };
-  const SPAN = 115;
+  const SPAN = 150;
   const ships = [
     { g: trimaran(), z: 6, x0: -40, sp: 1.6, dir: 1 },
     { g: clipper(), z: -22, x0: 40, sp: 1.2, dir: -1 },
     { g: trimaran(), z: -55, x0: -50, sp: 1.4, dir: 1 },
-    { g: clipper(), z: -88, x0: 30, sp: 1, dir: -1 },
+    { g: clipper(), z: -40, x0: 30, sp: 1, dir: -1 },
   ];
   for (const s of ships) {
     s.g.scale.setScalar(1.3);
@@ -417,7 +426,7 @@ export function buildOcean(k: PsxKit): SceneDef {
 
   const shipLabel = ships[1];
   return {
-    scene, cam, fog: [18, 105], fov: [64, 74], light,
+    scene, cam, fog: [20, 230], fov: [64, 74], light,
     labels: [
       { name: "Leaning tower", sub: `${leanDeg}° off plumb`, at: (v) => { v.copy(labelAt.tower); } },
       { name: "Atoll", sub: `palm stand · ${atollPalms} trees`, at: (v) => { v.copy(labelAt.atoll); } },
@@ -436,12 +445,13 @@ export function buildOcean(k: PsxKit): SceneDef {
       swell(t);
       for (const s of ships) {
         const x = shipX(s, t), z = s.z;
-        s.g.position.set(x, wave(x, z, t) * 0.8 - 0.2, z);
+        // sink below the swell at the far ends of the lane, where it wraps
+        s.g.position.set(x, wave(x, z, t) * 0.8 - 0.2 - Math.max(0, Math.abs(x) - SPAN + 25) * 0.7, z);
         s.g.rotation.z = (wave(x + 2, z, t) - wave(x - 2, z, t)) * 0.12 * s.dir;
         s.g.rotation.x = (wave(x, z + 1.5, t) - wave(x, z - 1.5, t)) * 0.16 * s.dir;
       }
       for (const s of suns) {
-        s.g.position.copy(cam.position).addScaledVector(s.dir, 185);
+        s.g.position.copy(cam.position).addScaledVector(s.dir, 196);
         s.g.lookAt(cam.position);
       }
       for (let i = 0; i < NG; i++) {

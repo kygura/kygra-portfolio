@@ -59,6 +59,8 @@ interface PsxOpts {
   sweep?: number;
   hypso?: number;
   emit?: number;
+  /** Darkens and greens surfaces near the waterline (y≈0), for drowned things. */
+  wet?: number;
 }
 
 const V = `
@@ -80,7 +82,7 @@ void main(){
 const F = `
 uniform sampler2D uMap; uniform sampler2D uMoss; uniform vec3 uTint; uniform float uMossAmt;
 uniform vec3 uFogColor; uniform float uFogNear; uniform float uFogFar; uniform float uFogAmt;
-uniform vec3 uAccent; uniform vec3 uAccent2; uniform float uSweep; uniform float uHypso; uniform float uTime; uniform float uEmit;
+uniform vec3 uAccent; uniform vec3 uAccent2; uniform float uSweep; uniform float uHypso; uniform float uTime; uniform float uEmit; uniform float uWet;
 varying vec3 vAff; varying vec3 vLight; varying float vDepth; varying vec3 vWP; varying float vUp;
 void main(){
   vec2 uv = vAff.xy / vAff.z;
@@ -89,6 +91,7 @@ void main(){
   float m = smoothstep(0.35, 0.8, vUp) * uMossAmt;
   c = mix(c, texture2D(uMoss, vWP.xz * 0.35).rgb, m);
   c *= vLight;
+  c = mix(c, c * vec3(0.4, 0.5, 0.42), uWet * smoothstep(2.4, -0.3, vWP.y));
   if (uSweep > 0.0) {
     float r = length(vWP.xz);
     float sw = smoothstep(1.4, 0.0, abs(r - mod(uTime * 3.2, 34.0)));
@@ -250,6 +253,7 @@ export function createKit(accent: Accent) {
         uHypso: { value: o.hypso ?? 0 },
         uTime: U.uTime,
         uEmit: { value: o.emit ?? 0 },
+        uWet: { value: o.wet ?? 0 },
       },
     });
 
