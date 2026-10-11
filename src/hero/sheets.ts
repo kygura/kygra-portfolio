@@ -36,6 +36,6 @@ export const SHEETS: SheetMeta[] = [
     id: "rail",
     no: "05",
     name: "Rail",
-    aria: "Animated low-poly scene: a lone station platform in an endless still sea, a train arriving along a causeway over the water, abstract megastructures on the horizon, under two suns.",
+    aria: "Animated low-poly scene: a lone station platform in an endless still sea, a train arriving along a causeway over the water, a city skyline on the horizon, under two suns.",
   },
 ];

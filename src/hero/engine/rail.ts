@@ -1,4 +1,4 @@
-/** Sheet 05 · Rail: a halt on a causeway in a boundless shallow sea, a train coming in over the water, abstract megastructures on the horizon, two suns overhead. */
+/** Sheet 05 · Rail: a halt on a causeway in a boundless shallow sea, a train coming in over the water, a city skyline on the horizon, two suns overhead. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef, V3 } from "./psx";
 
@@ -26,8 +26,11 @@ export function buildRail(k: PsxKit): SceneDef {
     roof: psx({ map: tex.tPlain, tint: "#8d9496", amb: "#5a666c" }),
     glass: psx({ map: tex.tGlass, tint: "#b9c6cc" }),
     dark: psx({ map: tex.tPlain, tint: "#2b3439", amb: "#3c464c" }),
-    mega: psx({ map: tex.tPlain, tint: "#a3adb2", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.72 }),
-    mega2: psx({ map: tex.tPlain, tint: "#6f7c84", amb: "#4a5862", sun: "#b8b09c", fogAmt: 0.72 }),
+    city: [
+      psx({ map: tex.tGlass, tint: "#b7c4ca", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.72 }),
+      psx({ map: tex.tGlass, tint: "#8f9eaa", amb: "#4a5862", sun: "#b8b09c", fogAmt: 0.72 }),
+      psx({ map: tex.tStone, tint: "#a9aba4", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.72 }),
+    ],
   };
   const up = new THREE.Vector3(0, 1, 0);
   // Thin strut from a to b.
@@ -112,45 +115,48 @@ export function buildRail(k: PsxKit): SceneDef {
   add(facet(new THREE.BoxGeometry(0.3, 0.14, 0.3)), M.glyph, PX + 0.3, PT + 3.25, -15.3);
   flush(scene);
 
-  /* ---- horizon works: abstract megastructures standing in the sea ---- */
-  // great ring, half drowned, with lit arcs that turn slowly
-  const ring = new THREE.Group();
-  ring.position.set(-55, 14, -205);
-  ring.rotation.y = 0.35;
-  scene.add(ring);
-  mesh(facet(new THREE.TorusGeometry(34, 2.2, 6, 28)), mat.mega, ring);
-  const arcs = new THREE.Group();
-  ring.add(arcs);
-  for (let i = 0; i < 2; i++) mesh(facet(new THREE.TorusGeometry(31.4, 0.4, 4, 10, Math.PI * 0.45)), M.glyph, arcs, 0, 0, 0, 0, 0, i * Math.PI);
-  // twin monoliths with a lit seam
-  ([[38, 95, 5, 0.03, mat.mega], [52, 72, 15, -0.06, mat.mega2]] as const).forEach(([x, h, dz, rz, m]) => {
-    add(facet(new THREE.BoxGeometry(9, h, 5)), m, x, h / 2 - 1, -195 - dz, 0, 0.2, rz);
-    add(facet(new THREE.BoxGeometry(0.6, h * 0.6, 0.3).translate(0, h * 0.1, 2.6)), M.glyph, x, h / 2 - 1, -195 - dz, 0, 0.2, rz);
-  });
-  // a beam to nowhere on two legs
-  add(facet(new THREE.BoxGeometry(150, 4, 5)), mat.mega2, 95, 30, -228);
-  add(facet(new THREE.BoxGeometry(150, 0.4, 0.3)), M.glyph, 95, 27.9, -225.4);
-  for (const lx of [40, 130]) add(facet(new THREE.BoxGeometry(4, 60, 4)), mat.mega2, lx, 0, -228);
-  // drowned dome, stepped mass, needle
-  add(facet(new THREE.SphereGeometry(30, 10, 6)), mat.mega, 125, -6, -160);
-  [50, 38, 26, 14].forEach((w, i) => add(facet(new THREE.BoxGeometry(w, i ? 8 : 12, w * 0.7)), i % 2 ? mat.mega : mat.mega2, -140, i ? 2 + i * 8 : 0, -170));
-  add(facet(new THREE.BoxGeometry(10, 0.3, 0.3)), M.glyph, -140, 34.2, -165);
-  add(facet(new THREE.CylinderGeometry(0.6, 3, 120, 5)), mat.mega, -95, 55, -232);
-  add(facet(new THREE.BoxGeometry(1.2, 1.2, 1.2)), M.glyph, -95, 116, -232);
+  /* ---- skyline: a city of towers standing in the sea, tallest where the line runs in ---- */
+  let peak = new THREE.Vector3(0, 0, -200);
+  for (let i = 0; i < 70; i++) {
+    const x = (rnd() - 0.5) * 340, z = -172 - rnd() * 72;
+    if (Math.abs(x) < 5) continue;
+    const h = 14 + rnd() * 18 + 80 * Math.exp(-(((x - 8) / 60) ** 2)) * (0.45 + rnd() * 0.55);
+    const w = 5 + rnd() * 7, d = w * (0.7 + rnd() * 0.4), ry = (rnd() - 0.5) * 0.5;
+    const clad = mat.city[Math.floor(rnd() * 3)], kind = rnd();
+    let top = h;
+    if (kind < 0.55) {
+      // box, sometimes stepped back once or twice
+      const tiers = h > 50 ? 1 + Math.floor(rnd() * 3) : 1;
+      let y = 0, tw = w, td = d;
+      for (let t = 0; t < tiers; t++) {
+        const th = t === tiers - 1 ? h - y : (h - y) * (0.5 + rnd() * 0.2);
+        add(wallUV(facet(new THREE.BoxGeometry(tw, th + (t ? 0 : 3), td)), 1 / 12), clad, x, y + (th - (t ? 0 : 3)) / 2, z, 0, ry, 0);
+        y += th;
+        tw *= 0.72;
+        td *= 0.72;
+      }
+    } else if (kind < 0.8) {
+      add(wallUV(facet(new THREE.CylinderGeometry(w * 0.45, w * 0.5, h + 3, 8)), 1 / 12), clad, x, (h - 3) / 2, z, 0, ry, 0);
+    } else {
+      add(wallUV(facet(new THREE.CylinderGeometry(w * 0.3, w * 0.62, h + 3, 4).rotateY(Math.PI / 4)), 1 / 12), clad, x, (h - 3) / 2, z, 0, ry, 0);
+      top = h + 4;
+      add(facet(new THREE.ConeGeometry(w * 0.3, 8, 4).rotateY(Math.PI / 4)), clad, x, h + 4, z, 0, ry, 0);
+    }
+    // lit crown bands on the tall ones, masts with a beacon on some
+    if (h > 55) add(facet(new THREE.BoxGeometry(w * 0.62, 0.6, d * 0.62)), M.glyph, x, h * 0.86, z, 0, ry, 0);
+    if (rnd() > 0.45) {
+      const mh = 4 + rnd() * (h > 60 ? 16 : 6);
+      add(facet(new THREE.CylinderGeometry(0.2, 0.35, mh, 4)), mat.dark, x, top + mh / 2, z);
+      add(facet(new THREE.BoxGeometry(0.9, 0.9, 0.9)), M.glyph, x, top + mh, z);
+      top += mh;
+    }
+    if (top > peak.y) peak = new THREE.Vector3(x, top, z);
+  }
   flush(scene);
-  // floating octahedron, turning, with a ring of light beneath
-  const octo = new THREE.Group();
-  octo.position.set(8, 78, -235);
-  scene.add(octo);
-  mesh(facet(new THREE.OctahedronGeometry(14, 0)), mat.mega2, octo);
-  const halo = k.segs(k.circle(20, 24).flatMap((p, i, a) => [p, a[(i + 1) % a.length]]), M.lAccent);
-  halo.rotation.x = Math.PI / 2;
-  halo.position.y = -18;
-  octo.add(halo);
 
   /* ---- two suns, high over the horizon ---- */
-  const sunA = k.sunDisc(scene, 85, 120, -255, 14, "#fff3d2", "#ffc874");
-  const sunB = k.sunDisc(scene, -45, 85, -265, 9, "#ffd8b8", "#ff9a68");
+  const sunA = k.sunDisc(scene, 85, 132, -255, 14, "#fff3d2", "#ffc874");
+  const sunB = k.sunDisc(scene, -45, 108, -265, 9, "#ffd8b8", "#ff9a68");
 
   /* ---- the train: four cars, lead car with a raked nose; local z = 0 is its front ---- */
   const train = new THREE.Group();
@@ -230,7 +236,7 @@ export function buildRail(k: PsxKit): SceneDef {
         at: (v) => { v.set(0, FLOOR + CH + 1.2, train.position.z - 3); },
         sub2: () => (phase === 0 ? `${Math.round(speed * 3.6)} km/h` : phase === 1 ? "at the halt" : "departing"),
       },
-      { name: "Horizon works", sub: "scale unknown", at: (v) => { v.copy(ring.position).y += 40; } },
+      { name: "Skyline", sub: "lights still on", at: (v) => { v.copy(peak).y += 6; } },
       { name: "Twin suns", sub: "binary, high", at: (v) => { v.copy(sunA.position).y += 26; } },
     ],
     update(t) {
@@ -240,10 +246,6 @@ export function buildRail(k: PsxKit): SceneDef {
 
       train.position.z = run(t);
       train.position.y = Math.sin(t * 7.3) * 0.012 * Math.min(1, speed / 4);
-
-      arcs.rotation.z = t * 0.03;
-      octo.position.y = 78 + Math.sin(t * 0.2) * 2;
-      octo.rotation.y = t * 0.05;
 
       for (let i = 0; i < NG; i++) {
         const x = gBase[i * 2], z = gBase[i * 2 + 1], on = Math.sin(t * 2.3 + i * 1.73) > 0.4;
