@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ruins" | "topo" | "astral";
+  id: "monument" | "topo" | "astral";
   no: string;
   name: string;
   aria: string;
@@ -9,10 +9,10 @@ export interface SheetMeta {
 
 export const SHEETS: SheetMeta[] = [
   {
-    id: "ruins",
+    id: "monument",
     no: "01",
-    name: "Ruins",
-    aria: "Animated low-poly scene: forest ruins with broken columns, a collapsed arch and a fallen stone head under a starry sky.",
+    name: "Monument",
+    aria: "Animated low-poly scene: a pastel stone keep with towers, domes and a stair hovering above a still lake, mirrored in the water, with a small drift isle and mesas on the horizon.",
   },
   {
     id: "topo",
