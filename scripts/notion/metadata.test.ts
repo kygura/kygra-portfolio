@@ -9,8 +9,16 @@ import {
 // Fixture helpers
 // ---------------------------------------------------------------------------
 
+type TestPage = {
+  id: string;
+  created_time?: string;
+  last_edited_time?: string;
+  parent?: { type?: string; database_id?: string; data_source_id?: string };
+  properties: Record<string, Record<string, unknown>>;
+};
+
 function makeFullPage() {
-  return {
+  const page: TestPage = {
     id: "abc-123",
     created_time: "2026-05-01T00:00:00.000Z",
     last_edited_time: "2026-05-24T12:00:00.000Z",
@@ -34,6 +42,7 @@ function makeFullPage() {
       },
     },
   };
+  return page;
 }
 
 // ---------------------------------------------------------------------------
@@ -57,21 +66,21 @@ describe("extractPostMetadata", () => {
 
   it("falls back to created_time when Publication Date is null", () => {
     const page = makeFullPage();
-    (page.properties["Publication Date"] as any).date = null;
+    page.properties["Publication Date"].date = null;
     const meta = extractPostMetadata(page);
     assert.equal(meta.date, "2026-05-01T00:00:00.000Z");
   });
 
   it("falls back to created_time when Publication Date property is absent", () => {
     const page = makeFullPage();
-    delete (page.properties as any)["Publication Date"];
+    delete page.properties["Publication Date"];
     const meta = extractPostMetadata(page);
     assert.equal(meta.date, "2026-05-01T00:00:00.000Z");
   });
 
   it("uses optional Slug rich_text in preference to title-derived slug", () => {
     const page = makeFullPage();
-    (page.properties as any)["Slug"] = {
+    page.properties["Slug"] = {
       type: "rich_text",
       rich_text: [{ plain_text: "custom-slug" }],
     };
@@ -81,7 +90,7 @@ describe("extractPostMetadata", () => {
 
   it("populates excerpt from optional Description rich_text", () => {
     const page = makeFullPage();
-    (page.properties as any)["Description"] = {
+    page.properties["Description"] = {
       type: "rich_text",
       rich_text: [{ plain_text: "A short description." }],
     };
@@ -91,20 +100,20 @@ describe("extractPostMetadata", () => {
 
   it("defaults published to false when Published checkbox is absent", () => {
     const page = makeFullPage();
-    delete (page.properties as any)["Published"];
+    delete page.properties["Published"];
     const meta = extractPostMetadata(page);
     assert.equal(meta.published, false);
   });
 
   it("uses page.id as title fallback when Title is empty", () => {
     const page = makeFullPage();
-    (page.properties["Title"] as any).title = [];
+    page.properties["Title"].title = [];
     const meta = extractPostMetadata(page);
     assert.equal(meta.title, "abc-123");
   });
 
   it("falls back to last_edited_time for createdTime when created_time is absent", () => {
-    const page: any = {
+    const page = {
       id: "xyz-456",
       last_edited_time: "2026-05-20T00:00:00.000Z",
       properties: {
@@ -121,8 +130,8 @@ describe("extractPostMetadata", () => {
 
   it("falls back to alternate property key 'Tags' for tags", () => {
     const page = makeFullPage();
-    delete (page.properties as any)["Keywords"];
-    (page.properties as any)["Tags"] = {
+    delete page.properties["Keywords"];
+    page.properties["Tags"] = {
       type: "multi_select",
       multi_select: [{ name: "alt-tag" }],
     };
@@ -132,7 +141,7 @@ describe("extractPostMetadata", () => {
 
   it("returns empty tags array when multi_select is absent", () => {
     const page = makeFullPage();
-    delete (page.properties as any)["Keywords"];
+    delete page.properties["Keywords"];
     const meta = extractPostMetadata(page);
     assert.deepEqual(meta.tags, []);
   });
