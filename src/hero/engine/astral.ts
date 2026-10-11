@@ -1,16 +1,21 @@
-/** Sheet 03 · Astral: halo with orbiting glyphs, cored polyhedra, the watcher, a moon with a satellite. */
+/** Sheet 03 · Astral: the solar system inside the zodiac halo (a burning core
+ *  for the sun, platonic solids for planets, Earth with its moon), and the
+ *  watcher above it. The chapter opens beside Earth with the beam leaving it,
+ *  pulls back to the whole system, and when the beam reaches the watcher the
+ *  eye closes. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef, V3 } from "./psx";
 
 export function buildAstral(k: PsxKit): SceneDef {
-  const { rnd, facet, mesh, psx, M, tex, view, segs, circle } = k;
+  const { facet, mesh, psx, M, tex, view, segs, circle, U, ramp, ease } = k;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 400);
   const sky = k.skyDome(1, 1, 0.6, 0.75);
   scene.add(sky);
 
+  // The halo's plane is the ecliptic: planets orbit in its local XY.
   const halo = new THREE.Group();
-  halo.rotation.set(Math.PI / 2 - 0.45, 0, 0.2);
+  halo.rotation.set(Math.PI / 2 + 0.45, 0, 0.2);
   scene.add(halo);
   const spin = new THREE.Group();
   halo.add(spin);
@@ -34,76 +39,114 @@ export function buildAstral(k: PsxKit): SceneDef {
     halo.add(m);
     return { m, off: (gi / 6) * Math.PI * 2, sp: 0.06 + (gi % 3) * 0.025, r: HR + (gi % 2 ? 0.9 : -0.6) };
   });
-  const core = mesh(facet(new THREE.IcosahedronGeometry(1.6, 0), 0), M.solid, scene);
-  const coreW = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.66, 0)), M.lBone);
+
+  // sun
+  const core = mesh(facet(new THREE.IcosahedronGeometry(1.3, 0), 0), M.glyph, scene);
+  const coreW = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.7, 0)), M.lBone);
   scene.add(coreW);
 
-  const polyRig = new THREE.Group();
-  scene.add(polyRig);
-  const polyDefs: [THREE.BufferGeometry, number, number, number, THREE.Material][] = [
-    [new THREE.IcosahedronGeometry(2.6, 0), -16, 5, -6, M.lAccent],
-    [new THREE.OctahedronGeometry(2.1, 0), 15, 7, -10, M.lBone],
-    [new THREE.DodecahedronGeometry(1.9, 0), 13, -4, 7, M.lAccent],
-    [new THREE.TetrahedronGeometry(2.1, 0), -13, -4, 6, M.lBone],
-    [new THREE.IcosahedronGeometry(1.3, 1), 1, 14, 5, M.lDeep],
+  // planets: cored platonic solids on their orbits, Earth third out
+  // Phases are set so Earth's neighbours are across the system when the chapter opens beside it.
+  const planetDefs: [THREE.BufferGeometry | null, number, number, THREE.Material][] = [
+    [new THREE.OctahedronGeometry(0.5, 0), 3.0, 0.4, M.lBone],
+    [new THREE.IcosahedronGeometry(0.62, 0), 4.6, 4.8, M.lAccent],
+    [null, 6.4, 2.2, M.lDeep],
+    [new THREE.DodecahedronGeometry(0.8, 0), 8.3, 5.6, M.lAccent],
+    [new THREE.TetrahedronGeometry(0.85, 0), 9.9, 3.6, M.lBone],
   ];
-  const polys = polyDefs.map((p, idx) => {
-    const g = new THREE.Group();
-    g.position.set(p[1], p[2], p[3]);
-    polyRig.add(g);
-    const c = new THREE.Mesh(facet(p[0].clone(), 0), M.solid);
-    c.scale.setScalar(0.93);
-    g.add(c);
-    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(p[0]), p[4]));
-    if (idx === 0) g.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(1.2, 0)), M.lAccent));
-    return { g, sx: 0.05 + rnd() * 0.12, sy: 0.08 + rnd() * 0.15, bob: rnd() * 6, y: p[2] };
-  });
-
-  const watcher = new THREE.Group();
-  watcher.position.set(4, 8, -42);
-  watcher.scale.setScalar(1.7);
-  scene.add(watcher);
-  const wl: V3[] = [];
-  const arc = (cx: number, cy: number, r: number, a1: number, a2: number, n: number) => {
-    for (let i = 0; i < n; i++) {
-      const u = a1 + ((a2 - a1) * i) / n, v = a1 + ((a2 - a1) * (i + 1)) / n;
-      wl.push(new THREE.Vector3(cx + Math.cos(u) * r, cy + Math.sin(u) * r, 0), new THREE.Vector3(cx + Math.cos(v) * r, cy + Math.sin(v) * r, 0));
+  const planets = planetDefs.map(([g, r, off, lm], i) => {
+    halo.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(r, 96)), M.lDeep));
+    const p = new THREE.Group();
+    halo.add(p);
+    if (g) {
+      const c = new THREE.Mesh(facet(g.clone(), 0), M.solid);
+      c.scale.setScalar(0.93);
+      p.add(c, new THREE.LineSegments(new THREE.EdgesGeometry(g), lm));
     }
+    return { p, r, off, sp: 0.09 / Math.sqrt(r) + i * 0.002 };
+  });
+  const earth = planets[2];
+  const globe = mesh(facet(new THREE.IcosahedronGeometry(0.55, 1), 0.04), psx({ map: tex.tPlain, tint: "#6f8f96", amb: "#46565e", fogAmt: 0.2 }), earth.p);
+  const moonOrbit = new THREE.Group();
+  earth.p.add(moonOrbit);
+  moonOrbit.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(1.25, 48)), M.lDeep));
+  const moon = mesh(facet(new THREE.IcosahedronGeometry(0.2, 0), 0.02), psx({ map: tex.tPlain, tint: "#d6d0be", fogAmt: 0.1, amb: "#7d8590" }), moonOrbit);
+
+  // the watcher, above the system
+  const watcher = new THREE.Group();
+  watcher.position.set(4, 28, -34);
+  watcher.scale.setScalar(1.5);
+  scene.add(watcher);
+  const lid = (cy: number, a1: number, a2: number) => {
+    const pts: V3[] = [];
+    for (let i = 0; i < 18; i++) {
+      const u = a1 + ((a2 - a1) * i) / 18, v = a1 + ((a2 - a1) * (i + 1)) / 18;
+      pts.push(new THREE.Vector3(Math.cos(u) * 10, cy + Math.sin(u) * 10, 0), new THREE.Vector3(Math.cos(v) * 10, cy + Math.sin(v) * 10, 0));
+    }
+    return segs(pts, M.lAccent);
   };
-  arc(0, -6, 10, Math.PI * 0.2, Math.PI * 0.8, 18);
-  arc(0, 6, 10, -Math.PI * 0.2, -Math.PI * 0.8, 18);
-  arc(0, 0, 3, 0, Math.PI * 2, 20);
-  arc(0, 0, 1.2, 0, Math.PI * 2, 10);
+  const lidUp = lid(-6, Math.PI * 0.2, Math.PI * 0.8);
+  const lidLo = lid(6, -Math.PI * 0.2, -Math.PI * 0.8);
+  // Scaling the lids' y about the eye line closes them; the curves' ends sit on it.
+  const lidUpPts = lidUp.geometry.attributes.position;
+  for (let i = 0; i < lidUpPts.count; i++) lidUpPts.setY(i, lidUpPts.getY(i) + 6 - 10 * Math.sin(Math.PI * 0.2));
+  const lidLoPts = lidLo.geometry.attributes.position;
+  for (let i = 0; i < lidLoPts.count; i++) lidLoPts.setY(i, lidLoPts.getY(i) - 6 + 10 * Math.sin(Math.PI * 0.2));
+  const iris = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(3, 20)), M.lAccent);
+  const pupil = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(1.2, 10)), M.lAccent);
+  const rayPts: V3[] = [];
   for (let ry = 0; ry < 16; ry++) {
     const ru = (ry / 16) * Math.PI * 2, ro = ry % 4 ? 12 : 14;
-    wl.push(new THREE.Vector3(Math.cos(ru) * 11, Math.sin(ru) * 11, 0), new THREE.Vector3(Math.cos(ru) * ro, Math.sin(ru) * ro, 0));
+    rayPts.push(new THREE.Vector3(Math.cos(ru) * 11, Math.sin(ru) * 11, 0), new THREE.Vector3(Math.cos(ru) * ro, Math.sin(ru) * ro, 0));
   }
-  watcher.add(segs(wl, M.lAccent));
+  const rays = segs(rayPts, M.lAccent);
+  const lashPts: V3[] = [];
+  for (let li = -3; li <= 3; li++) {
+    const lx = li * 2.1;
+    lashPts.push(new THREE.Vector3(lx, 0, 0), new THREE.Vector3(lx * 1.12, -1.4 + Math.abs(li) * 0.15, 0));
+  }
+  const lashes = segs(lashPts, M.lAccent);
+  const eyeFace = new THREE.Group();
+  eyeFace.add(lidUp, lidLo, iris, pupil, rays, lashes);
+  watcher.add(eyeFace);
 
-  const moonRig = new THREE.Group();
-  moonRig.position.set(-30, 14, -30);
-  scene.add(moonRig);
-  const moon = mesh(facet(new THREE.IcosahedronGeometry(5, 1), 0.5), psx({ map: tex.tPlain, tint: "#d6d0be", fogAmt: 0.1, amb: "#7d8590" }), moonRig);
-  const orbit = new THREE.Group();
-  orbit.rotation.set(1.15, 0.3, 0);
-  moonRig.add(orbit);
-  orbit.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(8.5, 96)), M.lDeep));
-  const sat = mesh(new THREE.OctahedronGeometry(0.5, 0), M.glyph, orbit);
+  // the beam, from Earth to the watcher, with a glyph riding its head
+  const beamMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(), transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+  const shaftG = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true);
+  shaftG.translate(0, 0.5, 0);
+  const beam = new THREE.Mesh(shaftG, beamMat);
+  beam.frustumCulled = false;
+  scene.add(beam);
+  const beamLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]), M.lAccent);
+  beamLine.frustumCulled = false;
+  scene.add(beamLine);
+  const linePos = beamLine.geometry.attributes.position;
+  const head = mesh(new THREE.OctahedronGeometry(0.45, 0), M.glyph, scene);
+
+  const ePos = new THREE.Vector3(), wPos = new THREE.Vector3(), bDir = new THREE.Vector3(), hPos = new THREE.Vector3();
+  const anchor = new THREE.Vector3(), look = new THREE.Vector3();
+  const UP = new THREE.Vector3(0, 1, 0);
+  // Wide framing: the system low in frame, the watcher high.
+  const OUT = new THREE.Vector3(1, 0.7, 1.2).normalize();
+  const WIDE_LOOK = new THREE.Vector3(2, 10, -8);
   const dir = new THREE.Vector3();
+  let open = 1;
 
   return {
-    scene, cam, fog: [60, 170], fov: [60, 72],
+    scene, cam, fog: [60, 170], fov: [60, 72], dur: 16, still: 0.5,
     labels: [
       { name: "Halo", sub: "r 11.5 · 360°", at: (v) => { v.set(HR + 1.6, 0, 0); halo.localToWorld(v); } },
-      { name: "Watcher", sub: "fixed, faces observer", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },
-      { name: "Moon", sub: "1 satellite", at: (v) => { v.set(0, 6, 0); moonRig.localToWorld(v); } },
-      { name: "Icosahedron", sub: "20 faces", at: (v) => { polys[0].g.getWorldPosition(v); v.y += 3.2; } },
+      { name: "Watcher", sub: "faces the signal", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },
+      { name: "Earth", sub: "1 moon", at: (v) => { globe.getWorldPosition(v); v.y += 1.2; } },
     ],
-    update(t) {
-      const a = 1.4 + t * 0.02 + view.px * 0.2, r = 36;
-      cam.position.set(Math.cos(a) * r, 3 + Math.sin(t * 0.09) * 2 - view.py * 4, Math.sin(a) * r);
-      cam.lookAt(0, 2 - view.py * 2, 0);
-      sky.position.copy(cam.position);
+    update(t, p) {
+      // 0–.5 pull back from Earth · beam .02–.55 · hit .55 · lids close .6–.76 · beam fades .7–.84
+      const back = ease(ramp(p, 0, 0.5));
+      const reach = ease(ramp(p, 0.02, 0.55));
+      const hit = Math.max(0, 1 - Math.abs(p - 0.57) * 14);
+      open = 1 - ease(ramp(p, 0.6, 0.76));
+      const fade = ramp(p, 0.7, 0.84);
+
       spin.rotation.z = t * 0.02;
       glyphs.forEach((g) => {
         const ga = g.off + t * g.sp;
@@ -111,19 +154,59 @@ export function buildAstral(k: PsxKit): SceneDef {
         g.m.rotation.set(t * 0.7, t * 0.5, 0);
       });
       core.rotation.set(t * 0.1, t * 0.13, 0);
-      coreW.rotation.copy(core.rotation);
-      polyRig.rotation.y = t * 0.012;
-      polys.forEach((p) => {
-        p.g.rotation.x = t * p.sx;
-        p.g.rotation.y = t * p.sy;
-        p.g.position.y = p.y + Math.sin(t * 0.3 + p.bob) * 0.5;
+      coreW.rotation.set(-t * 0.06, t * 0.08, 0);
+      // Orbits run on chapter time, so every loop opens on the same arrangement.
+      const ct = p * 16;
+      planets.forEach((pl) => {
+        const pa = pl.off + ct * pl.sp;
+        pl.p.position.set(Math.cos(pa) * pl.r, Math.sin(pa) * pl.r, 0);
+        pl.p.rotation.set(t * 0.3, t * 0.2, 0);
       });
+      globe.rotation.y = t * 0.4;
+      moonOrbit.rotation.set(1.15, 0.3, t * 0.3);
+      moon.position.set(1.25, 0, 0);
+      halo.updateMatrixWorld();
+      globe.getWorldPosition(ePos);
+
+      // Camera: log pull-back from beside Earth out to the wide framing.
+      const d = 5 * Math.pow(46 / 5, back);
+      anchor.copy(ePos).multiplyScalar(1 - back);
+      cam.position.copy(anchor).addScaledVector(OUT, d);
+      cam.position.y += Math.sin(t * 0.09) * 1.5 * back - view.py * 4 * back;
+      cam.position.x += view.px * 6 * back;
+      watcher.getWorldPosition(wPos);
+      look.copy(ePos).addScaledVector(bDir.copy(wPos).sub(ePos).normalize(), 2.5).lerp(WIDE_LOOK, back);
+      cam.lookAt(look);
+      sky.position.copy(cam.position);
+
       watcher.lookAt(cam.position);
-      watcher.rotateZ(t * 0.01);
-      moon.rotation.y = t * 0.02;
-      const sa = t * 0.25;
-      sat.position.set(Math.cos(sa) * 8.5, Math.sin(sa) * 8.5, 0);
-      sat.rotation.y = t;
+      eyeFace.rotation.z = t * 0.01;
+      lidUp.scale.y = lidLo.scale.y = Math.max(0.001, open);
+      const dil = 1 + hit * 0.45;
+      iris.scale.set(dil, Math.max(0.001, open * dil), 1);
+      pupil.scale.set(dil * 1.3 - 0.3, Math.max(0.001, open * (dil * 1.3 - 0.3)), 1);
+      iris.visible = pupil.visible = open > 0.04;
+      rays.scale.setScalar(0.75 + 0.25 * open + hit * 0.15);
+      rays.visible = open > 0.15;
+      lashes.visible = open < 0.25;
+      lashes.scale.y = Math.max(0.001, 1 - open / 0.25);
+
+      // Beam: grows from Earth to the watcher, then thins out once the eye is shut.
+      const len = ePos.distanceTo(wPos) * reach;
+      bDir.copy(wPos).sub(ePos).normalize();
+      beam.position.copy(ePos);
+      beam.quaternion.setFromUnitVectors(UP, bDir);
+      const w = 0.22 * (1 - fade) + hit * 0.25;
+      beam.scale.set(w, Math.max(0.001, len), w);
+      beam.visible = beamLine.visible = fade < 1 && reach > 0;
+      beamMat.color.copy(U.uAccent.value);
+      hPos.copy(ePos).addScaledVector(bDir, len);
+      linePos.setXYZ(0, ePos.x, ePos.y, ePos.z);
+      linePos.setXYZ(1, hPos.x, hPos.y, hPos.z);
+      linePos.needsUpdate = true;
+      head.position.copy(hPos);
+      head.rotation.set(t * 2, t * 1.4, 0);
+      head.visible = reach > 0 && reach < 1;
     },
     readout() {
       const b = k.bearing(cam), ra = b / 15, h = Math.floor(ra), m = Math.floor((ra - h) * 60);
@@ -134,7 +217,7 @@ export function buildAstral(k: PsxKit): SceneDef {
         ["Dec", `${dec < 0 ? "−" : "+"}${k.pad(Math.abs(dec).toFixed(1), 4)}°`],
         ["Epoch", "J2026.8"],
         ["Brg", `${k.pad(Math.round(b), 3)}°`],
-        ["Field", "60′"],
+        ["Eye", open > 0.5 ? "open" : "closed"],
       ];
     },
   };

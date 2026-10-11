@@ -41,7 +41,12 @@ export interface SceneDef {
   fov: [number, number];
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
-  update: (t: number) => void;
+  /** Chapter length in seconds on the story timer. */
+  dur: number;
+  /** Chapter progress shown as the still frame when motion is off. */
+  still: number;
+  /** `t` is ambient time; `p` is chapter progress, 0 → 1 (past 1 while dissolving out). */
+  update: (t: number, p: number) => void;
   readout: () => [string, string][];
 }
 
@@ -320,6 +325,12 @@ export function createKit(accent: Accent) {
     lDeep: lineMat(U.uAccent2, 140),
   };
 
+  /* ---- timeline helpers ---- */
+  /** 0 → 1 as p runs from a to b, clamped. */
+  const ramp = (p: number, a: number, b: number) => Math.min(1, Math.max(0, (p - a) / (b - a)));
+  const ease = (x: number) => x * x * (3 - 2 * x);
+  const lerp = (a: number, b: number, x: number) => a + (b - a) * x;
+
   /* ---- readout helpers ---- */
   const tmp = new THREE.Vector3();
   const pad = (n: number | string, w = 2) => String(n).padStart(w, "0");
@@ -343,7 +354,7 @@ export function createKit(accent: Accent) {
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain },
     psx, lineMat, facet, mesh, segs, circle, skyDome, M,
     view: { px: 0, py: 0 },
-    pad, dms, bearing, gridRef,
+    pad, dms, bearing, gridRef, ramp, ease, lerp,
   };
 }
 

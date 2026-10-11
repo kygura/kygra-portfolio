@@ -1,9 +1,12 @@
-/** Sheet 01 · Ruins: plaza, column ring, collapsed arch, fallen head, trees, motes, moon. */
+/** Sheet 02 · Ruins: column ring round a lake, a tower floating over the water,
+ *  collapsed arch, fallen head, trees, motes, moon. Midway through, the tower's
+ *  lantern charges and fires a beam straight up, and the camera pulls back and
+ *  away along it into the sky. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
 export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
-  const { rnd, facet, mesh, psx, M, tex, view } = k;
+  const { rnd, facet, mesh, psx, M, tex, view, U, ramp, ease, lerp } = k;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(64, 16 / 9, 0.1, 320);
   const sky = k.skyDome(0, 1, 1);
@@ -14,7 +17,8 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
     let h = 1.1 * Math.sin(x * 0.16 + 1.3) * Math.cos(z * 0.14) + 0.55 * Math.sin(x * 0.41 + z * 0.27) + 0.25 * Math.sin(x * 1.1 - z * 0.9);
     h += Math.max(0, r - 13) * 0.34 + Math.max(0, r - 26) * 0.55;
     const f = Math.min(1, Math.max(0, (r - 5) / 8));
-    return h * f * f - 0.1 * (1 - f);
+    const bowl = Math.max(0, 1 - (r * r) / 19) * 0.7;
+    return h * f * f - 0.1 * (1 - f) - bowl;
   };
   const tg = new THREE.PlaneGeometry(100, 100, 56, 56);
   tg.rotateX(-Math.PI / 2);
@@ -22,13 +26,56 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
   for (let i = 0; i < tp.count; i++) tp.setY(i, ground(tp.getX(i), tp.getZ(i)));
   mesh(facet(tg, 0), psx({ map: tex.tGround, uv: 24 }), scene);
 
-  // paving
+  // paving: a broken rim round the lake
   const slab = facet(new THREE.BoxGeometry(1.12, 0.22, 1.12), 0.06);
   for (let sx = -4; sx <= 4; sx++) for (let sz = -4; sz <= 4; sz++) {
-    if (Math.hypot(sx, sz) > 4.6 || rnd() < 0.22) continue;
+    const sr = Math.hypot(sx, sz);
+    if (sr > 4.6 || sr < 3.7 || rnd() < 0.22) continue;
     mesh(slab, rnd() > 0.5 ? M.stone : M.stone2, scene, sx * 1.2, ground(sx * 1.2, sz * 1.2) + 0.02, sz * 1.2,
       (rnd() - 0.5) * 0.12, (rnd() - 0.5) * 0.2, (rnd() - 0.5) * 0.12);
   }
+
+  // lake
+  const lakeG = new THREE.CircleGeometry(4.5, 14);
+  lakeG.rotateX(-Math.PI / 2);
+  const lakeMat = psx({ map: tex.tPlain, tint: "#26363a", amb: "#2c3a40", sun: "#6f8a90", uv: 3 });
+  mesh(lakeG, lakeMat, scene, 0, -0.06, 0);
+
+  // the tower, floating over the water
+  const tower = new THREE.Group();
+  scene.add(tower);
+  const root = new THREE.ConeGeometry(1.9, 3.2, 7, 2);
+  root.rotateX(Math.PI);
+  mesh(facet(root, 0.35), M.stone2, tower, 0, 2.7, 0);
+  mesh(facet(new THREE.CylinderGeometry(1.1, 1.35, 3.2, 8, 2), 0.1), M.stone, tower, 0, 5.9, 0);
+  mesh(facet(new THREE.CylinderGeometry(1.0, 1.1, 2.9, 8, 2), 0.1), M.stone2, tower, 0.05, 8.95, 0, 0.03, 0.4, -0.02);
+  mesh(facet(new THREE.CylinderGeometry(1.6, 1.15, 0.5, 8), 0.08), M.stone, tower, 0, 10.6, 0);
+  const pillar = facet(new THREE.BoxGeometry(0.2, 1.7, 0.2), 0.03);
+  for (let pi = 0; pi < 4; pi++) {
+    const pa = (pi / 4) * Math.PI * 2 + 0.4;
+    mesh(pillar, M.stone, tower, Math.cos(pa) * 1.05, 11.7, Math.sin(pa) * 1.05, 0, -pa);
+  }
+  const lanternMat = psx({ map: tex.tPlain, tint: "#1a1d1c", emit: 0.3, fogAmt: 0.3 });
+  const lantern = mesh(new THREE.OctahedronGeometry(0.62, 0), lanternMat, tower, 0, 11.7, 0);
+  mesh(facet(new THREE.ConeGeometry(1.8, 1.7, 8), 0.1), M.stone2, tower, 0, 13.4, 0);
+  const debris = Array.from({ length: 7 }, (_, di) => {
+    const sz = 0.18 + rnd() * 0.3;
+    const m = mesh(facet(new THREE.DodecahedronGeometry(sz, 0), sz * 0.3), M.stone2, tower);
+    return { m, a: (di / 7) * Math.PI * 2, r: 2.1 + rnd() * 0.9, y: 1.4 + rnd() * 2.4, sp: 0.15 + rnd() * 0.2 };
+  });
+  const LANTERN_Y = 11.7;
+
+  // the beam: an additive shaft with a brighter core, grown from the lantern
+  const beamMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(accentHex), transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+  const coreMat = new THREE.MeshBasicMaterial({ color: new THREE.Color("#ffffff"), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false });
+  const shaftG = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true);
+  shaftG.translate(0, 0.5, 0);
+  const beam = new THREE.Group();
+  scene.add(beam);
+  const shaft = mesh(shaftG, beamMat, beam);
+  const shaftCore = mesh(shaftG, coreMat, beam);
+  shaft.frustumCulled = shaftCore.frustumCulled = false;
+  const BEAM_LEN = 300;
 
   // column ring
   const heights = [5.4, 3.1, 4.7, 0, 1.4, 5.8, 2.3, 4.1, 0.9, 3.6];
@@ -149,21 +196,50 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
   const moon = mesh(facet(new THREE.IcosahedronGeometry(6, 1), 0.5), M.moon, scene, -55, 34, -80);
 
   return {
-    scene, cam, fog: [12, 50], fov: [64, 74], moteMat,
+    scene, cam, fog: [12, 50], fov: [64, 74], moteMat, dur: 17, still: 0.62,
     labels: [
+      { name: "Tower", sub: "suspended, no footing", at: (v) => { v.set(0, 14.6, 0); tower.localToWorld(v); } },
       { name: "Colossus head", sub: "fallen", at: (v) => { v.set(0, 3.2, 0); head.localToWorld(v); } },
       { name: "North arch", sub: "4 of 11 voussoirs lost", at: (v) => { v.set(-3.2, AY + 9.4, AZ); } },
       { name: "Column ring", sub: "9 of 10 standing", at: (v) => { v.copy(tallest); } },
     ],
-    update(t) {
-      const a = 1.25 + t * 0.022 + view.px * 0.12, r = 15.5 + Math.sin(t * 0.07) * 1.1, x = Math.cos(a) * r, z = Math.sin(a) * r;
-      cam.position.set(x, ground(x, z) + 2.6 + Math.sin(t * 0.11) * 0.35 - view.py * 0.6, z);
-      cam.lookAt(0, 4.4 - view.py * 1.2, 0);
+    update(t, p) {
+      // 0–.45 orbit · .42–.56 lantern charges · .55 beam fires · .6→ pull back along the beam
+      const charge = ease(ramp(p, 0.42, 0.56));
+      const fire = ramp(p, 0.55, 0.62);
+      const away = ease(ramp(p, 0.6, 1));
+
+      const a = 1.25 + t * 0.022 + view.px * 0.12 + away * 0.5;
+      const r = lerp(15.5 + Math.sin(t * 0.07) * 1.1, 58, away), x = Math.cos(a) * r, z = Math.sin(a) * r;
+      cam.position.set(x, lerp(ground(x, z) + 2.6 + Math.sin(t * 0.11) * 0.35, 64, away) - view.py * 0.6, z);
+      cam.lookAt(0, lerp(6.2, 150, away * away) - view.py * 1.2, 0);
+
+      tower.position.y = Math.sin(t * 0.6) * 0.25;
+      tower.rotation.y = t * 0.05;
+      debris.forEach((d) => {
+        const da = d.a + t * d.sp;
+        d.m.position.set(Math.cos(da) * d.r, d.y + Math.sin(t * 0.8 + d.a) * 0.2, Math.sin(da) * d.r);
+        d.m.rotation.set(t * d.sp, t * 0.3, 0);
+      });
+      const flicker = 0.85 + 0.15 * Math.sin(t * 9.0);
+      lanternMat.uniforms.uEmit.value = (0.3 + 0.7 * charge) * (fire > 0 ? 1 : flicker) + Math.max(0, 1 - Math.abs(p - 0.555) * 40) * 0.6;
+      lakeMat.uniforms.uEmit.value = 0.06 * charge + 0.18 * Math.min(1, fire * 3) * (1 - away * 0.6);
+      lantern.rotation.y = t * (0.5 + 3 * charge);
+
+      beam.visible = fire > 0;
+      beam.position.set(0, tower.position.y + LANTERN_Y, 0);
+      const len = BEAM_LEN * fire * fire;
+      shaft.scale.set(0.42, len, 0.42);
+      shaftCore.scale.set(0.16, len, 0.16);
+      beamMat.color.copy(U.uAccent.value);
       sky.position.copy(cam.position);
       moon.rotation.y = t * 0.01;
+      // motes are drawn up toward the lantern while it charges
+      const pull = charge * (1 - away);
       for (let i = 0; i < NM; i++) {
-        mp[i * 3 + 1] = moteBase[i * 3 + 1] + ((t * 0.12 + i * 0.37) % 3);
-        mp[i * 3] = moteBase[i * 3] + Math.sin(t * 0.3 + i) * 0.3;
+        mp[i * 3 + 1] = lerp(moteBase[i * 3 + 1] + ((t * 0.12 + i * 0.37) % 3), LANTERN_Y - 1 + ((t * 0.9 + i * 0.37) % 3), pull * 0.7);
+        mp[i * 3] = lerp(moteBase[i * 3] + Math.sin(t * 0.3 + i) * 0.3, 0, pull * 0.6);
+        mp[i * 3 + 2] = lerp(moteBase[i * 3 + 2], 0, pull * 0.6);
       }
       moteGeo.attributes.position.needsUpdate = true;
     },

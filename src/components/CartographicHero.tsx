@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, SHEET_KEY, storedIndex, useAccent, writeStored } from "@/theme/accent";
+import { ACCENTS, useAccent } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
@@ -7,7 +7,8 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
 /**
  * Cartographic hero — the sticky stage, name, tagline, accent initials,
  * hairline strip and scroll parallax are unchanged; the field behind them is
- * the PS1 three-scene renderer (ruins / topo / astral). three.js is fetched
+ * the PS1 three-scene renderer, played as one story on a timer (topo → ruins
+ * → astral, looping); the tabs show and jump between chapters. three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
@@ -26,7 +27,8 @@ const reduceQuery = () =>
 
 const CartographicHero = () => {
   const accent = useAccent();
-  const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
+  // The story always starts at the first chapter.
+  const [sheet, setSheet] = useState(0);
   const [noGl, setNoGl] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -62,6 +64,7 @@ const CartographicHero = () => {
           psx: true,
           reducedMotion: reduced,
           onContextLost: () => setNoGl(true),
+          onChapter: (i) => setSheet(i),
         });
         engineRef.current = engine;
       })
@@ -76,10 +79,8 @@ const CartographicHero = () => {
   }, []);
 
   useEffect(() => engineRef.current?.setAccent(ACCENTS[accent]), [accent]);
-  useEffect(() => {
-    engineRef.current?.setSheet(sheet);
-    writeStored(SHEET_KEY, String(sheet));
-  }, [sheet]);
+  // No-op when the engine's own timer made the change.
+  useEffect(() => engineRef.current?.setSheet(sheet), [sheet]);
 
   const goSheet = (i: number) => setSheet(((i % SHEETS.length) + SHEETS.length) % SHEETS.length);
 

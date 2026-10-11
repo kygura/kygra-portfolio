@@ -1533,6 +1533,11 @@ kbd {
 .hero__sheet:hover { color: var(--ink); }
 .hero__sheet[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); position: relative; }
 .hero__sheet[aria-pressed="true"] small { color: var(--on-accent); }
+/* Chapter progress: the engine writes --chapter (0–1) on the stage. */
+.hero__sheet[aria-pressed="true"]::after {
+  content: ""; position: absolute; left: 0; bottom: -3px; height: 1px; background: var(--accent);
+  width: calc(var(--chapter, 0) * 100%);
+}
 .hero__sheet-keys { display: inline-flex; gap: 3px; padding-left: 10px; font-size: 10px; }
 @media (max-width: 480px) {
   .hero__sheet-keys { display: none; }

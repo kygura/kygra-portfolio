@@ -42,15 +42,17 @@ Per-project accent hues on `/projects` were dropped for the site accent (they sa
 
 Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline, "C.A" accent initials, hairline strip and scroll parallax. Only the field behind them changed: the canvas-2D contour field is replaced by the PS1 three-scene renderer in `src/hero/` (`sheets.ts` metadata, `engine/` three.js r160: `psx.ts` shared materials and helpers, `ruins.ts`, `topo.ts`, `astral.ts`, `hero-engine.ts` loop + post). The engine is a dynamic import, so only `/` downloads three.
 
-- **01 Ruins**: plaza, column ring, collapsed arch, fallen head, trees, motes, moon.
-- **02 Topo**: animated relief, marching-squares contours, draped grid, trig points, sweep.
-- **03 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite.
+The three scenes are chapters of one story, played on a timer (~48 s, looping):
 
-Scene tabs (`01 Ruins / 02 Topo / 03 Astral` + `[` `]` hint) sit at the left end of the existing bottom strip, opposite the scroll cue. Pinned scene labels float in the stage beneath the type; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
+- **01 Topo** (15 s): a ping on a contour-drawn world map at the ruins' coordinates (47°12′N 8°31′E); the view zooms in exponentially and tilts to isometric as the local relief rises: marching-squares contours, draped grid, trig points, sweep, a lake with the tower glyph over it.
+- **02 Ruins** (17 s): column ring round a lake, a stone tower floating over the water, collapsed arch, fallen head, trees, motes, moon. The lantern charges (motes drawn toward it), fires a beam straight up, and the camera pulls back and away along it.
+- **03 Astral** (16 s): opens beside Earth with the beam leaving it, pulls back to the solar system inside the zodiac halo (burning core for the sun, platonic-solid planets), and the beam reaches the watcher, which closes its eye.
 
-PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching scenes dissolves through the dither matrix (hard cut under reduced motion). Last scene stored in `localStorage["nca-sheet"]`. The mock's scrims (top and lower half) keep the type legible over every scene.
+Each chapter hands off through the dither dissolve. Scene tabs (`01 Topo / 02 Ruins / 03 Astral` + `[` `]` hint) sit at the left end of the existing bottom strip, opposite the scroll cue; they follow the timer, show chapter progress as an underline on the active tab, and jump to a chapter's start. Pinned scene labels float in the stage beneath the type; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
 
-Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
+PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching scenes dissolves through the dither matrix (hard cut under reduced motion). The story always starts at chapter 01. The mock's scrims (top and lower half) keep the type legible over every scene.
+
+Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on each chapter's still frame (the timer does not run; tabs switch chapters). Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
 
 ## Keyboard
 
@@ -61,7 +63,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `g h` / `g w` / `g s` / `g b` / `g c` | Home / Writings / Software / Guestbook / CV |
 | `g g` | Top of page |
 | `1`–`4` | Accent |
-| `[` `]` | Previous / next hero scene (home) |
+| `[` `]` | Previous / next hero chapter (home) |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
 

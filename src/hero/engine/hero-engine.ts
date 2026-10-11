@@ -3,6 +3,12 @@
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
  * target, then blits through a 15-bit quantize + Bayer dither pass.
  *
+ * The sheets are chapters of one story on a timer: a ping on the world map
+ * zooms into isometric relief (topo), the floating tower over the ruins' lake
+ * fires a beam skyward (ruins), and the beam crosses the solar system to the
+ * watcher, which closes its eye (astral). Each chapter hands off to the next
+ * through the dissolve, and the last loops back to the first.
+ *
  * Loaded with a dynamic import from <CartographicHero/>, so three.js stays out of every
  * other route's bundle. The render loop only runs while there is something
  * to draw: it stops when the hero is offscreen, the tab is hidden, or motion
@@ -49,6 +55,8 @@ export interface HeroEngineOptions {
   psx: boolean;
   reducedMotion: boolean;
   onContextLost: () => void;
+  /** Called when the story timer moves to another chapter. */
+  onChapter?: (i: number) => void;
 }
 
 export interface HeroEngine {
@@ -67,7 +75,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildRuins(kit, o.accent.hex), buildTopo(kit), buildAstral(kit)];
+  // Story order: map → ruins → sky. Matches SHEETS in ../sheets.ts.
+  const SC: SceneDef[] = [buildTopo(kit), buildRuins(kit, o.accent.hex), buildAstral(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -95,6 +104,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let cur = Math.max(0, Math.min(SC.length - 1, o.sheet));
   let prev = cur;
   let mixT = 1;
+  let mixDur = 0.7;
+  let ct = 0; // seconds into the current chapter
   let t = 18;
   let last = performance.now();
   let dirty = true;
@@ -102,6 +113,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let frameN = 0;
   let raf = 0;
   let tpx = 0, tpy = 0;
+  let prevCt = 0; // where the outgoing chapter was when it was left; it keeps running while it dissolves out
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
 
@@ -194,18 +206,37 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
+  const progress = (i: number, at: number) => (motion ? at / SC[i].dur : SC[i].still);
+  const go = (i: number, dissolve: number) => {
+    prev = cur;
+    prevCt = ct;
+    cur = i;
+    ct = 0;
+    mixDur = dissolve;
+    mixT = psxOn && !o.reducedMotion ? 0 : 1;
+    buildLabels(SC[cur]);
+    dirty = true;
+  };
   const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1);
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
-    if (motion) t += dt;
-    if (mixT < 1) mixT = Math.min(1, mixT + dt / 0.7);
+    if (motion) {
+      t += dt;
+      ct += dt;
+      if (ct >= SC[cur].dur) {
+        go((cur + 1) % SC.length, 1.2);
+        o.onChapter?.(cur);
+      }
+    }
+    if (mixT < 1) mixT = Math.min(1, mixT + dt / mixDur);
     kit.view.px += (tpx - kit.view.px) * 0.05;
     kit.view.py += (tpy - kit.view.py) * 0.05;
     U.uTime.value = t;
-    SC[cur].update(t);
-    if (mixT < 1) SC[prev].update(t);
+    SC[cur].update(t, progress(cur, ct));
+    if (mixT < 1) SC[prev].update(t, progress(prev, prevCt + ct));
+    if (frameN % 3 === 0) host.style.setProperty("--chapter", progress(cur, ct).toFixed(3));
     render();
     placeLabels(SC[cur]);
     if (frameN++ % 6 === 0 || dirty) readouts(SC[cur]);
@@ -262,11 +293,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     setSheet(i) {
       i = ((i % SC.length) + SC.length) % SC.length;
       if (i === cur) return;
-      prev = cur;
-      cur = i;
-      mixT = psxOn && !o.reducedMotion ? 0 : 1;
-      buildLabels(SC[cur]);
-      dirty = true;
+      go(i, 0.7);
       kick();
     },
     setPsx(on) {
@@ -304,6 +331,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       rtB.dispose();
       renderer.dispose();
       o.labelLayer?.replaceChildren();
+      host.style.removeProperty("--chapter");
     },
   };
 }
