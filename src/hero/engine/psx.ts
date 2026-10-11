@@ -5,6 +5,7 @@
  * and handed to every scene builder.
  */
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { Accent } from "@/theme/accent";
 
 // The scene was tuned against three r128, which had no colour management:
@@ -192,6 +193,28 @@ export function createKit(accent: Accent) {
       else put(d, i * 4, 70 * k, 86 * k, 54 * k);
     }
   });
+  const tWater = tex(32, (d, s) => {
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+      const k = 0.8 + rnd() * 0.25, crest = (y + Math.round(Math.sin(x * 0.4) * 2)) % 8 === 0 && rnd() > 0.35;
+      if (crest) put(d, (y * s + x) * 4, 168, 196, 192); else put(d, (y * s + x) * 4, 70 * k, 118 * k, 128 * k);
+    }
+  });
+  const tSand = tex(32, (d, s) => {
+    for (let i = 0; i < s * s; i++) {
+      const k = 0.82 + rnd() * 0.26;
+      if (rnd() > 0.94) put(d, i * 4, 150, 140, 112); else put(d, i * 4, 206 * k, 190 * k, 148 * k);
+    }
+  });
+  // Curtain-wall facade: 4px window grid, dark glass, a few lit panes.
+  const tGlass = tex(32, (d, s) => {
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+      const frame = x % 4 === 0 || y % 4 === 0, k = 0.8 + rnd() * 0.3;
+      const lit = !frame && ((Math.floor(x / 4) * 7 + Math.floor(y / 4) * 13) % 11 === 0);
+      if (frame) put(d, (y * s + x) * 4, 176 * k, 180 * k, 172 * k);
+      else if (lit) put(d, (y * s + x) * 4, 230, 206, 150);
+      else put(d, (y * s + x) * 4, 58 * k, 78 * k, 92 * k);
+    }
+  });
   const tPlain = tex(16, (d, s) => {
     for (let i = 0; i < s * s; i++) {
       const k = 0.9 + rnd() * 0.12;
@@ -272,6 +295,27 @@ export function createKit(accent: Accent) {
     parent.add(m);
     return m;
   };
+  // Static parts collected per material, then merged into one mesh each per parent.
+  const batcher = () => {
+    const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler();
+    const pv = new THREE.Vector3(), sv = new THREE.Vector3();
+    return {
+      add(geo: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) {
+        m4.compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s));
+        const list = batches.get(m) ?? [];
+        list.push(geo.clone().applyMatrix4(m4));
+        batches.set(m, list);
+      },
+      flush(parent: THREE.Object3D) {
+        for (const [m, list] of batches) {
+          const merged = mergeGeometries(list);
+          if (merged) mesh(merged, m, parent);
+        }
+        batches.clear();
+      },
+    };
+  };
   const segs = (pts: V3[], mat: THREE.Material) =>
     new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), mat);
   const circle = (r: number, n: number) => {
@@ -340,8 +384,8 @@ export function createKit(accent: Accent) {
 
   return {
     U, rnd,
-    tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain },
-    psx, lineMat, facet, mesh, segs, circle, skyDome, M,
+    tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
+    psx, lineMat, facet, mesh, batcher, segs, circle, skyDome, M,
     view: { px: 0, py: 0 },
     pad, dms, bearing, gridRef,
   };

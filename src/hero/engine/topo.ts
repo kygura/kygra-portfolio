@@ -16,7 +16,8 @@ export function buildTopo(k: PsxKit): SceneDef {
   const sky = k.skyDome(0, 0.35, 0.6);
   scene.add(sky);
 
-  const S = 40, N = 40, half = S / 2, cs = S / N, W = N + 1;
+  // Big enough that the frame never reaches its edge, at any aspect: 5 m grid every 3 cells.
+  const S = 180, N = 108, half = S / 2, cs = S / N, W = N + 1, GS = 3;
   const hg = new Float32Array(W * W);
   const field = (x: number, z: number, t: number) => {
     const u = x * 0.12, v = z * 0.12;
@@ -39,7 +40,7 @@ export function buildTopo(k: PsxKit): SceneDef {
   const LV0 = -5, LSTEP = 0.5, NLV = 24;
   const minPos = new Float32Array(N * N * 4 * 8 * 3);
   const idxPos = new Float32Array(N * N * 4 * 4 * 3);
-  const gridPos = new Float32Array(2 * 9 * N * 2 * 3);
+  const gridPos = new Float32Array(2 * (Math.floor(N / GS) + 1) * N * 2 * 3);
   const lineBuf = (arr: Float32Array, mat: THREE.Material) => {
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
@@ -94,7 +95,7 @@ export function buildTopo(k: PsxKit): SceneDef {
     gMin.setDrawRange(0, cnt[0] / 3); gMin.attributes.position.needsUpdate = true;
     gIdx.setDrawRange(0, cnt[1] / 3); gIdx.attributes.position.needsUpdate = true;
     let n = 0;
-    for (let gl = 0; gl <= N; gl += 5) for (let sg = 0; sg < N; sg++) {
+    for (let gl = 0; gl <= N; gl += GS) for (let sg = 0; sg < N; sg++) {
       gridPos[n++] = -half + gl * cs; gridPos[n++] = hg[sg * W + gl] + 0.14; gridPos[n++] = -half + sg * cs;
       gridPos[n++] = -half + gl * cs; gridPos[n++] = hg[(sg + 1) * W + gl] + 0.14; gridPos[n++] = -half + (sg + 1) * cs;
       gridPos[n++] = -half + sg * cs; gridPos[n++] = hg[gl * W + sg] + 0.14; gridPos[n++] = -half + gl * cs;
@@ -107,18 +108,18 @@ export function buildTopo(k: PsxKit): SceneDef {
   const elev = (p: THREE.Vector3) => `${Math.round(400 + p.y * 10)} m`;
 
   return {
-    scene, cam, fog: [42, 95], fov: [50, 64],
+    scene, cam, fog: [55, 150], fov: [50, 64],
     labels: [
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[0]); v.y += 1.2; }, sub2: () => elev(trig[0]) },
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[1]); v.y += 1.2; }, sub2: () => elev(trig[1]) },
       { name: "Hollow", sub: "closed depression", at: (v) => { v.set(-8, field(-8, 7, U.uTime.value) + 0.6, 7); } },
     ],
     update(t) {
-      const a = 0.9 + t * 0.03 + view.px * 0.15, r = 33;
-      cam.position.set(Math.cos(a) * r, 24 - view.py * 4, Math.sin(a) * r);
+      const a = 0.9 + t * 0.03 + view.px * 0.15, r = 22;
+      cam.position.set(Math.cos(a) * r, 34 - view.py * 4, Math.sin(a) * r);
       cam.lookAt(0, -1.5, 0);
       sky.position.copy(cam.position);
-      if (Math.abs(t - lastT) > 0.03 || lastT < 0) { rebuild(t); lastT = t; }
+      if (Math.abs(t - lastT) > 0.06 || lastT < 0) { rebuild(t); lastT = t; }
     },
     readout() {
       return [
