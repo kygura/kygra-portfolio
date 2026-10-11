@@ -1,6 +1,7 @@
-/** Act 01 · Sword: a cross-hilted sword set in a pedestal at the heart of
- *  forest ruins by a lake. It wakes, throws a column of light at the sky,
- *  and the camera pulls back and tilts up the beam into the stars. */
+/** Act 02 · Sword: a cross-hilted sword set in a pedestal at the heart of
+ *  forest ruins by a lake, the spot the map pinged. It wakes, throws a
+ *  column of light at the sky, and the camera rises out of the ruins until
+ *  they are a speck under the beam. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
@@ -199,7 +200,7 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
       { name: "Column ring", sub: "9 of 10 standing", at: (v) => { v.copy(tallest); } },
     ],
     update(t, p) {
-      // Wake (2.5–4.6 s), ignite (4.6 s), then pull back and tilt up the beam.
+      // Wake (2.5–4.6 s), ignite (4.6 s), then rise out over the plaza.
       const wake = ramp(p, 2.5, 4.6), lit = ramp(p, 4.6, 5.3);
       steel.uniforms.uEmit.value = 0.08 + 0.5 * wake + 0.25 * lit;
       sigil.visible = p > 2.5;
@@ -208,12 +209,15 @@ export function buildRuins(k: PsxKit, accentHex: string): SceneDef {
       shock.scale.setScalar(1 + (p - 4.6) * 13);
       core.visible = glow.visible = p > 4.6;
       core.scale.y = glow.scale.y = 1 + 260 * lit * lit;
-      this.flash = (p > 4.6 ? 0.55 * (1 - ramp(p, 4.6, 6)) : 0) + 0.4 * ramp(p, 13.8, 15);
+      this.flash = (p > 4.6 ? 0.55 * (1 - ramp(p, 4.6, 6)) : 0) + 0.3 * ramp(p, 14, 15);
 
       const u = ease(Math.min(1, Math.max(0, (p - 5.2) / 9.8)));
-      const a = 2.75 + p * 0.03 + view.px * 0.12, r = 5.6 + 18.4 * u, x = Math.cos(a) * r, z = Math.sin(a) * r;
-      cam.position.set(x, ground(x, z) + 2.4 + 13.6 * u + Math.sin(t * 0.11) * 0.3 - view.py * 0.6, z);
-      cam.lookAt(0, 3.6 + 70 * u * u - view.py * 1.2, 0);
+      const a = 2.75 + p * 0.03 + view.px * 0.12, r = 5.6 + 12 * u, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      cam.position.set(x, ground(x, z) * (1 - u) + 2.4 + 85 * u * u + Math.sin(t * 0.11) * 0.3 - view.py * 0.6, z);
+      cam.lookAt(0, 3.6 * (1 - u) - view.py * 1.2, 0);
+      // Let the haze thin as the camera climbs, so the ruins shrink rather than fog out.
+      this.fog[0] = 12 + 50 * u;
+      this.fog[1] = 50 + 110 * u;
       sky.position.copy(cam.position);
       moon.rotation.y = t * 0.01;
       for (let i = 0; i < NM; i++) {

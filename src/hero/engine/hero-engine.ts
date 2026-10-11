@@ -1,6 +1,6 @@
 /**
  * Hero engine: builds the three acts once and plays them as one story —
- * sword (01) → eye (02) → ping (03). Each act runs for its `dur`, then the
+ * ping (01) → sword (02) → eye (03). Each act runs for its `dur`, then the
  * engine dissolves into the next; the last one holds. It renders only the
  * active act
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
@@ -76,7 +76,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildRuins(kit, o.accent.hex), buildAstral(kit), buildTopo(kit)];
+  const SC: SceneDef[] = [buildTopo(kit), buildRuins(kit, o.accent.hex), buildAstral(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -295,7 +295,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       U.uAccent2.value.set(a.deep);
       U.uFogColor.value.set(a.fog);
       U.uZen.value.set(a.zen);
-      SC[0].moteMat?.color.set(a.hex);
+      for (const s of SC) s.moteMat?.color.set(a.hex);
       dirty = true;
       kick();
     },

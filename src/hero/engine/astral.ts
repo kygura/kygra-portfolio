@@ -1,6 +1,7 @@
-/** Act 02 · Eye: satellite view of a small solar system. The column of light
- *  leaves the third planet, crosses the dark and reaches a giant eye above
- *  the ecliptic, which opens as it lands. */
+/** Act 03 · Eye: the camera keeps rising from the ruins, over the third
+ *  planet and out to the whole solar system. The column of light crosses the
+ *  dark to a giant eye above the ecliptic, which opens as it lands; the
+ *  story holds there. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef, V3 } from "./psx";
 
@@ -84,12 +85,12 @@ export function buildAstral(k: PsxKit): SceneDef {
   scene.add(core, glow, packet);
   const UP = new THREE.Vector3(0, 1, 0);
   const dir = new THREE.Vector3(), tmp = new THREE.Vector3(), look = new THREE.Vector3();
-  const A = new THREE.Vector3(), W = new THREE.Vector3(24, 30, 46), C = new THREE.Vector3(12, 18, 26), D = new THREE.Vector3();
+  const A = new THREE.Vector3(), W = new THREE.Vector3(6, 66, 30), C = new THREE.Vector3(12, 18, 26), D = new THREE.Vector3();
   let dist = 1;
 
   return {
     scene, cam, fog: [60, 170], fov: [55, 70],
-    dur: 15, key: 10.5, flash: 0,
+    dur: Infinity, key: 11, flash: 0,
     labels: [
       { name: "Sun", sub: "G-type", at: (v) => { v.set(0, 4.5, 0); } },
       { name: "Third planet", sub: "origin of signal", at: (v) => { earth.getWorldPosition(v); v.y += 2; } },
@@ -108,31 +109,31 @@ export function buildAstral(k: PsxKit): SceneDef {
       dir.subVectors(EYE, earth.position);
       dist = dir.length();
       dir.normalize();
-      const L = 4 + (dist - 4) * ease(Math.min(1, Math.max(0, (p - 0.5) / 8.5)));
+      const L = 4 + (dist - 4) * ease(Math.min(1, Math.max(0, (p - 0.5) / 9)));
       for (const b of [core, glow]) {
         b.position.copy(earth.position);
         b.quaternion.setFromUnitVectors(UP, dir);
         b.scale.y = L;
       }
-      packet.visible = p < 9;
+      packet.visible = p < 9.5;
       packet.position.copy(earth.position).addScaledVector(dir, L);
       packet.rotation.set(t * 2, t * 1.4, 0);
 
-      const hit = ramp(p, 9, 9.7);
+      const hit = ramp(p, 9.5, 10.2);
       eye.lookAt(earth.position);
       lids.scale.y = 0.22 + 0.78 * hit;
       iris.scale.y = Math.min(1, lids.scale.y * 1.4);
       pupil.scale.setScalar(1 - 0.45 * hit);
       rays.scale.setScalar(1 + 0.2 * hit + 0.03 * Math.sin(t * 2));
       rays.rotation.z = t * 0.02;
-      this.flash = 0.4 * (1 - ramp(p, 0, 1.4)) + (p > 9 ? 0.5 * (1 - ramp(p, 9, 10.8)) : 0);
+      this.flash = 0.4 * (1 - ramp(p, 0, 1.4)) + (p > 9.5 ? 0.5 * (1 - ramp(p, 9.5, 11.3)) : 0);
 
-      // Close on the planet → wide system → frame the eye → push in.
-      A.copy(earth.position).add(tmp.set(2.6, 1.2, 3.4));
-      look.copy(earth.position).addScaledVector(dir, 3);
-      const u1 = ease(Math.min(1, Math.max(0, (p - 1.2) / 6.3)));
-      const u2 = ease(Math.min(1, Math.max(0, (p - 7.2) / 3.6)));
-      const u3 = ease(Math.min(1, Math.max(0, (p - 10.5) / 4.5)));
+      // Straight up off the planet → the whole system from above → frame the eye → push in.
+      A.copy(earth.position).add(tmp.set(0.6, 3.4, 1.2));
+      look.copy(earth.position);
+      const u1 = ease(Math.min(1, Math.max(0, (p - 0.3) / 6.7)));
+      const u2 = ease(Math.min(1, Math.max(0, (p - 7.8) / 3.4)));
+      const u3 = ease(Math.min(1, Math.max(0, (p - 11) / 4.5)));
       cam.position.lerpVectors(A, W, u1);
       look.lerp(tmp.set(0, 0, 0), u1);
       cam.position.lerp(C, u2);

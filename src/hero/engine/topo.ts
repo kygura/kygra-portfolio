@@ -1,7 +1,7 @@
-/** Act 03 · Ping: the survey map. Shifting relief with marching-squares
+/** Act 01 · Ping: the survey map. Shifting relief with marching-squares
  *  contours, a draped 5 m grid and trig points. The scan sweep searches, the
- *  event is fixed beside the hollow, a pin drops and three pings ring out;
- *  then the map holds on the marked spot. */
+ *  spot beside the hollow is fixed, a pin drops and pings ring out, then the
+ *  camera dives onto the pin: the ruins where the sword waits. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
@@ -69,16 +69,16 @@ export function buildTopo(k: PsxKit): SceneDef {
   const trigM = trig.map((p) => mesh(trigG, M.glyph, scene, p.x, 0, p.z));
   let lo = 0, hi = 0, lastT = -1;
 
-  // The event: beside the hollow, where the lake sat in act 01.
+  // The spot: beside the hollow, which is the lake by the ruins in act 02.
   const EV = new THREE.Vector3(-3.5, 0, 4);
-  const pin = mesh(new THREE.OctahedronGeometry(0.55, 0), M.glyph, scene);
+  const pin = mesh(new THREE.OctahedronGeometry(0.85, 0), M.glyph, scene);
   pin.scale.y = 1.8;
   const beacon = k.beam(0.1, 1.1, 2);
   scene.add(beacon);
   const reticle = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(k.circle(1.6, 4)), M.lAccent);
   reticle.rotation.x = -Math.PI / 2;
   scene.add(reticle);
-  const look = new THREE.Vector3(), top = new THREE.Vector3(0, 62, 0.1);
+  const look = new THREE.Vector3(), top = new THREE.Vector3(0, 62, 0.1), dive = new THREE.Vector3();
   let fixed = false;
 
   const rebuild = (t: number) => {
@@ -123,31 +123,38 @@ export function buildTopo(k: PsxKit): SceneDef {
 
   return {
     scene, cam, fog: [42, 95], fov: [50, 64],
-    dur: Infinity, key: 9, flash: 0,
+    dur: 12, key: 6.5, flash: 0,
     labels: [
-      { name: "Event", sub: "signal fixed", at: (v) => { v.copy(EV); v.y += 3.4; } },
+      { name: "Fix", sub: "ruins, by the lake", at: (v) => { v.copy(EV); v.y += 3.4; } },
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[0]); v.y += 1.2; }, sub2: () => elev(trig[0]) },
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[1]); v.y += 1.2; }, sub2: () => elev(trig[1]) },
       { name: "Hollow", sub: "closed depression", at: (v) => { v.set(-8, field(-8, 7, U.uTime.value) + 0.6, 7); } },
     ],
     update(t, p) {
-      // Eye's-view descent onto the oblique orbit, then hold there.
-      const u = ease(Math.min(1, p / 5.5));
+      // Overhead descent onto the oblique orbit, then a dive onto the pin.
+      const u = ease(Math.min(1, p / 3.5));
       const a = 0.9 + t * 0.03 + view.px * 0.15, r = 33;
       cam.position.set(Math.cos(a) * r, 24 - view.py * 4, Math.sin(a) * r).lerp(top, 1 - u);
       look.set(EV.x * 0.4 * u, -1.5, EV.z * 0.4 * u);
+      const d = ease(Math.min(1, Math.max(0, (p - 8.6) / 3.4)));
+      if (d > 0) {
+        dive.subVectors(cam.position, EV).setLength(6).add(EV);
+        dive.y = Math.max(dive.y, EV.y + 7);
+        cam.position.lerp(dive, d);
+        look.lerp(EV, d);
+      }
       cam.lookAt(look);
       sky.position.copy(cam.position);
       if (Math.abs(t - lastT) > 0.03 || lastT < 0) { rebuild(t); lastT = t; }
 
-      // Scan sweep from the origin until the fix at 3.6 s; pings 4.4–10.4 s.
+      // Scan sweep from the origin until the fix at 3.6 s; pings 4.4–8.4 s.
       EV.y = field(EV.x, EV.z, t);
       fixed = p > 3.6;
       const sw = tmat.uniforms;
       const q = p - 4.4;
       if (!fixed) {
         sw.uSweepC.value.set(0, 0); sw.uSweepR.value = -1; sw.uSweep.value = 0.4;
-      } else if (q > 0 && q < 6) {
+      } else if (q > 0 && q < 4) {
         const ph = (q % 2) / 2;
         sw.uSweepC.value.set(EV.x, EV.z); sw.uSweepR.value = ph * 24; sw.uSweep.value = 0.95 * (1 - ph);
       } else {
@@ -158,11 +165,11 @@ export function buildTopo(k: PsxKit): SceneDef {
       pin.position.set(EV.x, EV.y + 1.4 + (1 - drop) * 26 + Math.sin(t * 1.6) * 0.15 * drop, EV.z);
       pin.rotation.y = t * 0.8;
       beacon.position.set(EV.x, EV.y, EV.z);
-      beacon.scale.y = 0.01 + 14 * ramp(p, 4.3, 5);
+      beacon.scale.y = 0.01 + 4 * ramp(p, 4.3, 5);
       reticle.position.set(EV.x, EV.y + 0.25, EV.z);
       reticle.scale.setScalar(4 - 3 * ramp(p, 3.6, 4.6));
       reticle.rotation.z = t * 0.4;
-      this.flash = q > 0 ? 0.25 * (1 - ramp(q, 0, 0.8)) : 0;
+      this.flash = (q > 0 ? 0.25 * (1 - ramp(q, 0, 0.8)) : 0) + 0.35 * ramp(p, 11, 12);
     },
     readout() {
       return [
