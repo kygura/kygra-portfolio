@@ -1417,24 +1417,27 @@
 .nav-link {
   display: inline-flex;
   align-items: baseline;
-  padding: 0.5rem 0.35rem;
+  padding: 0.5rem 0.35rem 0.3rem;
   color: var(--ink-2);
   text-decoration: none;
   transition: color 0.18s ease, opacity 0.12s ease;
 }
 
-/* Underline sits under the label only. It fades in on hover/focus and stays
-   on for the current route; colour change only, so nothing moves. */
+/* Underline sits under the label only and draws in from the left like a
+   traversal: hover/focus sweeps it in, the current route keeps it on. It
+   retracts leftwards on leave. Paint only, so nothing moves. */
 .nav-label {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.45em;
-  text-decoration-color: transparent;
-  transition: text-decoration-color 0.28s ease;
+  display: inline-block;
+  padding-bottom: 0.2em;
+  background-image: linear-gradient(var(--ul, var(--ink-3)), var(--ul, var(--ink-3)));
+  background-repeat: no-repeat;
+  background-position: left 100%;
+  background-size: 0% 1px;
+  transition: background-size 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .nav-link:hover .nav-label,
-.nav-link:focus-visible .nav-label { text-decoration-color: var(--ink-3); }
-.nav-link--active .nav-label { text-decoration-color: var(--accent); }
+.nav-link:focus-visible .nav-label { background-size: 100% 1px; }
+.nav-link--active .nav-label { --ul: var(--accent); background-size: 100% 1px; }
 .nav-link:active { opacity: 0.7; }
 
 /* The cursor on the current route blinks slowly, like an idle prompt. */
