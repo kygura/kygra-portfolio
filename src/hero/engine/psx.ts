@@ -192,6 +192,28 @@ export function createKit(accent: Accent) {
       else put(d, i * 4, 70 * k, 86 * k, 54 * k);
     }
   });
+  const tWater = tex(32, (d, s) => {
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+      const k = 0.8 + rnd() * 0.25, crest = (y + Math.round(Math.sin(x * 0.4) * 2)) % 8 === 0 && rnd() > 0.35;
+      if (crest) put(d, (y * s + x) * 4, 168, 196, 192); else put(d, (y * s + x) * 4, 70 * k, 118 * k, 128 * k);
+    }
+  });
+  const tSand = tex(32, (d, s) => {
+    for (let i = 0; i < s * s; i++) {
+      const k = 0.82 + rnd() * 0.26;
+      if (rnd() > 0.94) put(d, i * 4, 150, 140, 112); else put(d, i * 4, 206 * k, 190 * k, 148 * k);
+    }
+  });
+  // Curtain-wall facade: 4px window grid, dark glass, a few lit panes.
+  const tGlass = tex(32, (d, s) => {
+    for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+      const frame = x % 4 === 0 || y % 4 === 0, k = 0.8 + rnd() * 0.3;
+      const lit = !frame && ((Math.floor(x / 4) * 7 + Math.floor(y / 4) * 13) % 11 === 0);
+      if (frame) put(d, (y * s + x) * 4, 176 * k, 180 * k, 172 * k);
+      else if (lit) put(d, (y * s + x) * 4, 230, 206, 150);
+      else put(d, (y * s + x) * 4, 58 * k, 78 * k, 92 * k);
+    }
+  });
   const tPlain = tex(16, (d, s) => {
     for (let i = 0; i < s * s; i++) {
       const k = 0.9 + rnd() * 0.12;
@@ -340,7 +362,7 @@ export function createKit(accent: Accent) {
 
   return {
     U, rnd,
-    tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain },
+    tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
     psx, lineMat, facet, mesh, segs, circle, skyDome, M,
     view: { px: 0, py: 0 },
     pad, dms, bearing, gridRef,
