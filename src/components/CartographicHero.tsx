@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
@@ -16,6 +16,32 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
  */
 
 const NAME = "NICOLAS";
+const MARK = "C.A";
+
+/** Types NAME, then MARK, one character at a time; the caret rides the one being typed. */
+function useTyping(reduced: boolean) {
+  const total = NAME.length + MARK.length;
+  const [n, setN] = useState(reduced ? total : 0);
+  const [caret, setCaret] = useState(!reduced);
+  useEffect(() => {
+    if (reduced) return;
+    let i = 0, t = 0;
+    const step = () => {
+      i++;
+      setN(i);
+      if (i >= total) {
+        t = window.setTimeout(() => setCaret(false), 3000);
+        return;
+      }
+      t = window.setTimeout(step, i === NAME.length ? 420 : i < NAME.length ? 95 : 150);
+    };
+    t = window.setTimeout(step, 650);
+    return () => window.clearTimeout(t);
+  }, [reduced, total]);
+  return { name: Math.min(n, NAME.length), mark: Math.max(0, n - NAME.length), caret };
+}
+
+const Caret = () => <span className="hero__caret" aria-hidden="true" />;
 
 const readFound = (): string[] => {
   try {
@@ -33,6 +59,7 @@ const CartographicHero = () => {
   const accent = useAccent();
   const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
   const [noGl, setNoGl] = useState(false);
+  const typing = useTyping(Boolean(reduceQuery()?.matches));
   const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
   const found = useRef<Set<string> | null>(null);
   const eggTimer = useRef(0);
@@ -162,11 +189,15 @@ const CartographicHero = () => {
             </div>
             <div className="hero__win-body">
               <div className="hero__name">
-                <h1 className="hero__name-text">
+                <h1 className="hero__name-text" aria-label={NAME}>
+                  {typing.caret && typing.name === 0 && <Caret />}
                   {NAME.split("").map((ch, i) => (
-                    <span key={i} data-letter className="hero__letter">
-                      {ch}
-                    </span>
+                    <Fragment key={i}>
+                      <span data-letter className="hero__letter" aria-hidden="true" data-pending={i >= typing.name || undefined}>
+                        {ch}
+                      </span>
+                      {typing.caret && typing.mark === 0 && typing.name === i + 1 && <Caret />}
+                    </Fragment>
                   ))}
                 </h1>
               </div>
@@ -185,7 +216,16 @@ const CartographicHero = () => {
               <i /><i /><i />
               <span>c.a</span>
             </div>
-            <div className="hero__mark-text">C.A</div>
+            <div className="hero__mark-text" aria-label={MARK}>
+              {MARK.split("").map((ch, i) => (
+                <Fragment key={i}>
+                  <span className="hero__letter" aria-hidden="true" data-pending={i >= typing.mark || undefined}>
+                    {ch}
+                  </span>
+                  {typing.caret && typing.name === NAME.length && typing.mark === i + 1 && <Caret />}
+                </Fragment>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -219,8 +259,6 @@ const CartographicHero = () => {
         </footer>
       </div>
 
-      {/* Marker leading into the Manifesto. */}
-      <div className="hero__marker">( 02 &mdash; ON SOFTWARE CRAFT &middot; NEXT )</div>
     </div>
   );
 };

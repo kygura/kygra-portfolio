@@ -27,15 +27,20 @@ export default function CustomCursor() {
   return hasPointer ? <Cursor /> : null;
 }
 
+const SIZE = { rest: 20, hover: 38 };
+
 function Cursor() {
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
-  const ringX = useSpring(cursorX, { stiffness: 180, damping: 22 });
-  const ringY = useSpring(cursorY, { stiffness: 180, damping: 22 });
+  const ringX = useSpring(cursorX, { stiffness: 220, damping: 24 });
+  const ringY = useSpring(cursorY, { stiffness: 220, damping: 24 });
   const [isHovering, setIsHovering] = useState(false);
+  const [isDown, setIsDown] = useState(false);
   const [accentColor, setAccentColor] = useState<string>("var(--accent-amber)");
+  const [clicks, setClicks] = useState<{ id: number; x: number; y: number }[]>([]);
 
   useEffect(() => {
+    let id = 0;
     const onMove = (e: MouseEvent) => {
       cursorX.set(e.clientX);
       cursorY.set(e.clientY);
@@ -46,105 +51,94 @@ function Cursor() {
       const closest = target.closest("a, button, [data-cursor]");
       if (closest) {
         const dataColor = (closest as HTMLElement).dataset.cursorColor;
-        if (dataColor) setAccentColor(dataColor);
-        else setAccentColor("var(--accent-amber)");
+        setAccentColor(dataColor || "var(--accent-amber)");
         setIsHovering(true);
       }
     };
 
     const onLeave = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      const closest = target.closest("a, button, [data-cursor]");
-      if (closest) {
+      if (target.closest("a, button, [data-cursor]")) {
         setIsHovering(false);
         setAccentColor("var(--accent-amber)");
       }
     };
 
+    // Press squeezes the ring; the click leaves a square that expands and fades.
+    const onDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
+      setIsDown(true);
+      const n = ++id;
+      setClicks((c) => [...c.slice(-3), { id: n, x: e.clientX, y: e.clientY }]);
+      window.setTimeout(() => setClicks((c) => c.filter((k) => k.id !== n)), 520);
+    };
+    const onUp = () => setIsDown(false);
+
     window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mousedown", onDown, { passive: true });
+    window.addEventListener("mouseup", onUp, { passive: true });
     document.addEventListener("mouseover", onEnter, { passive: true });
     document.addEventListener("mouseout", onLeave, { passive: true });
 
     return () => {
       window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("mouseup", onUp);
       document.removeEventListener("mouseover", onEnter);
       document.removeEventListener("mouseout", onLeave);
     };
   }, [cursorX, cursorY]);
 
+  const ring = isHovering ? SIZE.hover : SIZE.rest;
   return (
     <>
-      {/* Dot — always visible, shrinks slightly on hover.
-          Painted in the theme's ink rather than mix-blend-difference:
-          a blended fixed layer forces the browser to re-blend against the
-          page backdrop, which defeats layer isolation for the animating
-          hero canvas underneath. */}
+      {/* Dot: painted in the theme's ink rather than mix-blend-difference,
+          which would force re-blending against the animating hero canvas. */}
       <motion.div
         style={{ x: cursorX, y: cursorY }}
         className="fixed top-0 left-0 z-[99999] pointer-events-none"
-        animate={{
-          width: isHovering ? 6 : 8,
-          height: isHovering ? 6 : 8,
-          opacity: isHovering ? 0 : 1,
-        }}
+        animate={{ width: isHovering ? 4 : 6, height: isHovering ? 4 : 6, scale: isDown ? 0.6 : 1 }}
         transition={{ duration: 0.15, ease: "easeOut" }}
       >
-        <div
-          className="-translate-x-1/2 -translate-y-1/2"
-          style={{
-            width: "100%",
-            height: "100%",
-            background: "var(--text-primary)",
-          }}
-        />
+        <div className="-translate-x-1/2 -translate-y-1/2" style={{ width: "100%", height: "100%", background: "var(--text-primary)" }} />
       </motion.div>
 
-      {/* Default ring — small, subtle, always present */}
+      {/* One square ring: small at rest, grows and takes the accent over
+          links and buttons, squeezes while the button is down. */}
       <motion.div
         style={{ x: ringX, y: ringY }}
         className="fixed top-0 left-0 z-[99998] pointer-events-none"
-        animate={{
-          width: 36,
-          height: 36,
-        }}
-        transition={{ duration: 0.25, ease: "easeOut" }}
+        animate={{ width: ring, height: ring, scale: isDown ? 0.82 : 1 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
       >
         <div
           className="-translate-x-1/2 -translate-y-1/2"
           style={{
             width: "100%",
             height: "100%",
-            border: "1px solid color-mix(in srgb, var(--text-primary) 35%, transparent)",
-            opacity: isHovering ? 0 : 1,
-            transition: "opacity 0.3s ease",
+            border: `1px solid ${isHovering ? accentColor : "color-mix(in srgb, var(--text-primary) 35%, transparent)"}`,
+            background: isHovering ? `color-mix(in srgb, ${accentColor} 7%, transparent)` : "transparent",
+            transition: "border-color 0.2s ease, background 0.2s ease",
           }}
         />
       </motion.div>
 
-      {/* Hover ring — fades in only over clickable elements */}
       <AnimatePresence>
-        {isHovering && (
+        {clicks.map((c) => (
           <motion.div
-            key="hover-ring"
-            style={{ x: ringX, y: ringY }}
-            className="fixed top-0 left-0 z-[99998] pointer-events-none"
-            initial={{ width: 36, height: 36, opacity: 0 }}
-            animate={{ width: 42, height: 42, opacity: 1 }}
-            exit={{ width: 36, height: 36, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            key={c.id}
+            className="fixed top-0 left-0 z-[99997] pointer-events-none"
+            style={{ x: c.x, y: c.y }}
           >
-            <div
+            <motion.div
               className="-translate-x-1/2 -translate-y-1/2"
-              style={{
-                width: "100%",
-                height: "100%",
-                border: `1px solid ${accentColor}`,
-                background: `color-mix(in srgb, ${accentColor} 7%, transparent)`,
-                transition: "border-color 0.2s ease, background 0.2s ease",
-              }}
+              initial={{ width: 14, height: 14, opacity: 0.85 }}
+              animate={{ width: 56, height: 56, opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              style={{ border: "1px solid var(--accent)" }}
             />
           </motion.div>
-        )}
+        ))}
       </AnimatePresence>
     </>
   );

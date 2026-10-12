@@ -53,6 +53,8 @@ Scene tabs (`01 Ocean / 02 Astral / 03 Ruins / 04 Rail / 05 Field` + `[` `]` hin
 
 Easter eggs: every scene hides one to four tap targets (`SceneDef.eggs` in `psx.ts`: a world position, a screen-pixel radius and a `fire` that starts a one-shot reaction and returns a caption). A tap (under 8px of travel) on or near one fires the nearest; drags, orbit and the Field's pulse are untouched, and a hit on the Field's benchmark suppresses that tap's pulse. The caption shows as a hairline readout above the strip (`FOUND 03/15` the first time, `AGAIN` after). Found ids persist in `localStorage["nca-eggs"]`. Nothing marks the targets.
 
+Home is the hero alone: the Manifesto section and the "02 — On software craft" marker are gone. NICOLAS and C.A type in on load (95 ms and 150 ms per character, a caret rides the active one and hides 3 s after the last; instant under reduced motion). Pointer: a 20px square ring and 6px dot; over links and buttons the ring grows to 38px and takes the accent; a press squeezes it and a click leaves an expanding accent square.
+
 PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching scenes dissolves through the dither matrix (hard cut under reduced motion). Last scene stored in `localStorage["nca-sheet"]`. The mock's scrims (top and lower half) keep the type legible over every scene.
 
 Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
