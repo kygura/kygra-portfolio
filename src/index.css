@@ -293,6 +293,10 @@
   transition: color 0.6s ease;
 }
 
+@media (max-width: 767px) {
+  .hero__mark { bottom: calc(var(--strip-h, 88px) + 14px); }
+}
+
 @media (min-width: 640px) {
   .hero__intro { top: 26vh; top: 26svh; }
   .hero__marker { height: 100vh; height: 100svh; }

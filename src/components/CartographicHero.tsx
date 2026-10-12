@@ -81,6 +81,17 @@ const CartographicHero = () => {
     writeStored(SHEET_KEY, String(sheet));
   }, [sheet]);
 
+  // The strip wraps to two rows on phones; keep the monogram clear of its hairline.
+  useEffect(() => {
+    const stage = stageRef.current, strip = footerRef.current;
+    if (!stage || !strip) return;
+    const sync = () => stage.style.setProperty("--strip-h", `${strip.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(strip);
+    return () => ro.disconnect();
+  }, []);
+
   const goSheet = (i: number) => setSheet(((i % SHEETS.length) + SHEETS.length) % SHEETS.length);
 
   // [ ] cycle scenes; Shift+arrows orbit, + / - dolly, 0 resets the camera
