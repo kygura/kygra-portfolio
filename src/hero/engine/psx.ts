@@ -42,6 +42,8 @@ export interface SceneDef {
   fov: [number, number];
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
+  /** Orbit target for user navigation. Omitted: drags turn the camera in place. */
+  pivot?: [number, number, number];
   update: (t: number) => void;
   readout: () => [string, string][];
 }

@@ -58,6 +58,8 @@ export interface HeroEngine {
   setSheet: (i: number) => void;
   setPsx: (on: boolean) => void;
   setMotion: (on: boolean) => void;
+  /** Ease any user-driven camera offset back to the scene's own path. */
+  resetCamera: () => void;
   dispose: () => void;
 }
 
@@ -106,6 +108,81 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let tpx = 0, tpy = 0;
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
+
+  /* ---- camera navigation: a user offset layered over each scene's own path ---- */
+  const NAV_IDLE = 5; // seconds after the last input before the camera drifts home
+  const PITCH_MAX = 0.7;
+  const ZOOM_MIN = 0.7, ZOOM_MAX = 2.4;
+  const nav = { yaw: 0, pitch: 0, zoom: 1, yawT: 0, pitchT: 0, zoomT: 1, vYaw: 0, vPitch: 0, idle: 0, drag: false, hover: false };
+  const pointers = new Map<number, { x: number; y: number }>();
+  let pinch = 0;
+  const UP = new THREE.Vector3(0, 1, 0);
+  const off = new THREE.Vector3();
+  const axis = new THREE.Vector3();
+  const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+  const navActive = () =>
+    nav.drag || nav.idle < NAV_IDLE + 2 ||
+    Math.abs(nav.yaw - nav.yawT) + Math.abs(nav.pitch - nav.pitchT) + Math.abs(nav.zoom - nav.zoomT) > 1e-3 ||
+    Math.abs(nav.yaw) + Math.abs(nav.pitch) + Math.abs(nav.zoom - 1) > 1e-3;
+  const nudge = (dYaw: number, dPitch: number) => {
+    nav.yawT += dYaw;
+    nav.pitchT = clamp(nav.pitchT + dPitch, -PITCH_MAX, PITCH_MAX);
+    nav.idle = 0;
+  };
+  const zoomBy = (f: number) => {
+    nav.zoomT = clamp(nav.zoomT * f, ZOOM_MIN, ZOOM_MAX);
+    nav.idle = 0;
+  };
+  const stepNav = (dt: number) => {
+    if (!nav.drag) {
+      nav.idle += dt;
+      // Inertia after a flick, then a slow drift back to the authored path.
+      nav.yawT += nav.vYaw;
+      nav.pitchT = clamp(nav.pitchT + nav.vPitch, -PITCH_MAX, PITCH_MAX);
+      const damp = Math.pow(0.9, dt * 60);
+      nav.vYaw *= damp;
+      nav.vPitch *= damp;
+      if (nav.idle > NAV_IDLE) {
+        const k = 1 - Math.pow(0.5, dt / 0.9);
+        nav.yawT -= nav.yawT * k;
+        nav.pitchT -= nav.pitchT * k;
+        nav.zoomT += (1 - nav.zoomT) * k;
+      }
+    }
+    const e = 1 - Math.pow(0.001, dt * 1.6);
+    nav.yaw += (nav.yawT - nav.yaw) * e;
+    nav.pitch += (nav.pitchT - nav.pitch) * e;
+    nav.zoom += (nav.zoomT - nav.zoom) * e;
+    if (Math.abs(nav.yaw) < 1e-4 && Math.abs(nav.yawT) < 1e-4 && !nav.drag) { nav.yaw = 0; nav.yawT = 0; }
+  };
+  const applyNav = (sc: SceneDef) => {
+    const cam = sc.cam;
+    if (Math.abs(nav.yaw) > 1e-4 || Math.abs(nav.pitch) > 1e-4) {
+      if (sc.pivot) {
+        // Orbit: swing the camera round the scene's centre.
+        const [px, py, pz] = sc.pivot;
+        off.set(cam.position.x - px, cam.position.y - py, cam.position.z - pz);
+        off.applyAxisAngle(UP, -nav.yaw);
+        axis.crossVectors(UP, off).normalize();
+        off.applyAxisAngle(axis, -nav.pitch);
+        cam.position.set(px + off.x, py + off.y, pz + off.z);
+        cam.lookAt(px, py, pz);
+      } else {
+        // Look round from where the camera stands.
+        cam.rotateOnWorldAxis(UP, nav.yaw);
+        cam.rotateX(nav.pitch);
+      }
+    }
+    if (Math.abs(cam.zoom - nav.zoom) > 1e-3) {
+      cam.zoom = nav.zoom;
+      cam.updateProjectionMatrix();
+    }
+  };
+  const resetNav = () => {
+    nav.yawT = nav.pitchT = nav.vYaw = nav.vPitch = 0;
+    nav.zoomT = 1;
+    nav.idle = NAV_IDLE + 1;
+  };
 
   /* ---- pinned labels ---- */
   let activeLabels: { l: SceneDef["labels"][number]; el: HTMLDivElement; em: HTMLElement }[] = [];
@@ -196,7 +273,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
-  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1);
+  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || navActive());
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -206,7 +283,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     kit.view.px += (tpx - kit.view.px) * 0.05;
     kit.view.py += (tpy - kit.view.py) * 0.05;
     U.uTime.value = t;
+    stepNav(dt);
     SC[cur].update(t);
+    applyNav(SC[cur]);
     if (mixT < 1) SC[prev].update(t);
     render();
     placeLabels(SC[cur]);
@@ -222,10 +301,87 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- observers ---- */
   const onPointer = (e: PointerEvent) => {
+    if (nav.drag) return;
     if (!motion) return;
     const r = host.getBoundingClientRect();
     tpx = (e.clientX - r.left) / r.width - 0.5;
     tpy = (e.clientY - r.top) / r.height - 0.5;
+  };
+  const onDown = (e: PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button, a") || (e.pointerType === "mouse" && e.button !== 0)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    host.setPointerCapture?.(e.pointerId);
+    nav.drag = true;
+    nav.vYaw = nav.vPitch = 0;
+    nav.idle = 0;
+    if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      pinch = Math.hypot(a.x - b.x, a.y - b.y);
+    }
+    host.style.cursor = "grabbing";
+    kick();
+  };
+  const onDrag = (e: PointerEvent) => {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX;
+    p.y = e.clientY;
+    if (pointers.size >= 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (pinch > 0 && d > 0) zoomBy(d / pinch);
+      pinch = d;
+    } else {
+      // Radians per pixel scales with the view, so a drag across the stage is a fixed sweep.
+      const k = 2.6 / cssW;
+      const kp = e.pointerType === "touch" ? 0 : 2.6 / cssW;
+      nudge(dx * k, dy * kp);
+      nav.vYaw = dx * k * 0.35;
+      nav.vPitch = dy * kp * 0.35;
+    }
+    kick();
+  };
+  const onUp = (e: PointerEvent) => {
+    if (!pointers.delete(e.pointerId)) return;
+    host.releasePointerCapture?.(e.pointerId);
+    if (pointers.size === 0) {
+      nav.drag = false;
+      nav.idle = 0;
+      host.style.cursor = "";
+    } else nav.vYaw = nav.vPitch = 0;
+    pinch = 0;
+    kick();
+  };
+  const onWheel = (e: WheelEvent) => {
+    // Only ctrl/⌘-wheel (and trackpad pinch, which reports ctrlKey) zooms; plain wheel keeps scrolling the page.
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    zoomBy(Math.exp(-e.deltaY * 0.01));
+    kick();
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (!nav.hover || e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    const step = e.shiftKey ? 0.4 : 0.15;
+    if (e.key === "ArrowLeft") nudge(step, 0);
+    else if (e.key === "ArrowRight") nudge(-step, 0);
+    else if (e.shiftKey && e.key === "ArrowUp") nudge(0, step);
+    else if (e.shiftKey && e.key === "ArrowDown") nudge(0, -step);
+    else if (e.key === "+" || e.key === "=") zoomBy(1.15);
+    else if (e.key === "-" || e.key === "_") zoomBy(1 / 1.15);
+    else if (e.key === "0") resetNav();
+    else return;
+    e.preventDefault();
+    kick();
+  };
+  const onEnter = () => { nav.hover = true; };
+  const onLeave = () => { nav.hover = false; };
+  const onDbl = (e: MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button, a")) return;
+    resetNav();
+    kick();
   };
   const onVisibility = () => {
     if (!document.hidden) { dirty = true; kick(); }
@@ -238,6 +394,17 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     o.onContextLost();
   };
   host.addEventListener("pointermove", onPointer);
+  host.addEventListener("pointerdown", onDown);
+  host.addEventListener("pointermove", onDrag);
+  host.addEventListener("pointerup", onUp);
+  host.addEventListener("pointercancel", onUp);
+  host.addEventListener("wheel", onWheel, { passive: false });
+  host.addEventListener("dblclick", onDbl);
+  host.addEventListener("pointerenter", onEnter);
+  host.addEventListener("pointerleave", onLeave);
+  document.addEventListener("keydown", onKey);
+  // Vertical swipes still scroll the page on touch; horizontal ones turn the camera.
+  host.style.touchAction = "pan-y";
   document.addEventListener("visibilitychange", onVisibility);
   canvas.addEventListener("webglcontextlost", onLost);
   const io = new IntersectionObserver((es) => {
@@ -266,6 +433,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       if (i === cur) return;
       prev = cur;
       cur = i;
+      SC[prev].cam.zoom = 1;
+      SC[prev].cam.updateProjectionMatrix();
+      nav.yaw = nav.pitch = 0;
+      nav.zoom = 1;
+      resetNav();
       mixT = psxOn && !o.reducedMotion ? 0 : 1;
       buildLabels(SC[cur]);
       dirty = true;
@@ -275,6 +447,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       psxOn = on;
       setSnap();
       dirty = true;
+      kick();
+    },
+    resetCamera() {
+      resetNav();
       kick();
     },
     setMotion(on) {
@@ -288,6 +464,17 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
+      host.removeEventListener("pointerdown", onDown);
+      host.removeEventListener("pointermove", onDrag);
+      host.removeEventListener("pointerup", onUp);
+      host.removeEventListener("pointercancel", onUp);
+      host.removeEventListener("wheel", onWheel);
+      host.removeEventListener("dblclick", onDbl);
+      host.removeEventListener("pointerenter", onEnter);
+      host.removeEventListener("pointerleave", onLeave);
+      document.removeEventListener("keydown", onKey);
+      host.style.touchAction = "";
+      host.style.cursor = "";
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();

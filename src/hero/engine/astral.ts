@@ -92,7 +92,7 @@ export function buildAstral(k: PsxKit): SceneDef {
   const dir = new THREE.Vector3();
 
   return {
-    scene, cam, fog: [60, 170], fov: [60, 72],
+    scene, cam, fog: [60, 170], fov: [60, 72], pivot: [0, 2, 0],
     labels: [
       { name: "Halo", sub: "r 11.5 · 360°", at: (v) => { v.set(HR + 1.6, 0, 0); halo.localToWorld(v); } },
       { name: "Watcher", sub: "fixed, faces observer", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },

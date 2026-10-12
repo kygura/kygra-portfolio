@@ -108,7 +108,7 @@ export function buildTopo(k: PsxKit): SceneDef {
   const elev = (p: THREE.Vector3) => `${Math.round(400 + p.y * 10)} m`;
 
   return {
-    scene, cam, fog: [55, 150], fov: [50, 64],
+    scene, cam, fog: [55, 150], fov: [50, 64], pivot: [0, -1.5, 0],
     labels: [
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[0]); v.y += 1.2; }, sub2: () => elev(trig[0]) },
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[1]); v.y += 1.2; }, sub2: () => elev(trig[1]) },
