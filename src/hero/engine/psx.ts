@@ -44,6 +44,16 @@ export interface SceneDef {
   limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
+  /** Optional pointer bridge. A scene with one owns plain drags (orbit moves to Shift+drag). */
+  pointer?: {
+    /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */
+    aim: (ray: THREE.Ray | null, moved: boolean) => void;
+    press: () => void;
+    /** `tap`: released close to where it was pressed. */
+    release: (tap: boolean) => void;
+    /** True while the scene still has something to animate on its own. */
+    busy: () => boolean;
+  };
   update: (t: number) => void;
   readout: () => [string, string][];
 }

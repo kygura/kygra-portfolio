@@ -12,10 +12,10 @@ import * as THREE from "three";
 import type { Accent } from "@/theme/accent";
 import { createKit, type SceneDef } from "./psx";
 import { buildOcean } from "./ocean";
-import { buildTopo } from "./topo";
 import { buildAstral } from "./astral";
 import { buildRuins } from "./ruins";
 import { buildRail } from "./rail";
+import { buildField } from "./field";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
@@ -73,7 +73,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildOcean(kit), buildTopo(kit), buildAstral(kit), buildRuins(kit), buildRail(kit)];
+  const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -112,7 +112,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const view = kit.view;
   let yawT = 0, pitchT = 0, zoomT = 1;
   let yawV = 0, pitchV = 0;
-  let drag: { id: number; x: number; y: number } | null = null;
+  let drag: { id: number; x: number; y: number; own: boolean } | null = null;
   const clampView = () => {
     const lim = SC[cur].limits;
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
@@ -124,6 +124,27 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     Math.abs(yawT - view.yaw) < 5e-4 && Math.abs(pitchT - view.pitch) < 5e-4 && Math.abs(zoomT - view.zoom) < 5e-4;
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
+  // Pointer → world ray for scenes that take input; the scene turns it into a point on its own relief.
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const ptr = { x: 0, y: 0, in: false, moved: false };
+  const setPtr = (e: PointerEvent, moved: boolean) => {
+    const r = host.getBoundingClientRect();
+    ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    ptr.y = -(((e.clientY - r.top) / r.height) * 2 - 1);
+    ptr.in = true;
+    if (moved) ptr.moved = true;
+  };
+  const aimScene = (sc: SceneDef) => {
+    if (!sc.pointer) return;
+    if (ptr.in) {
+      ndc.set(ptr.x, ptr.y);
+      sc.cam.updateMatrixWorld();
+      raycaster.setFromCamera(ndc, sc.cam);
+    }
+    sc.pointer.aim(ptr.in ? raycaster.ray : null, ptr.moved);
+    ptr.moved = false;
+  };
 
   /* ---- pinned labels ---- */
   let activeLabels: { l: SceneDef["labels"][number]; el: HTMLDivElement; em: HTMLElement }[] = [];
@@ -214,7 +235,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
-  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled());
+  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled() || Boolean(SC[cur].pointer?.busy()));
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -237,6 +258,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     view.pitch += (pitchT - view.pitch) * ease;
     view.zoom += (zoomT - view.zoom) * ease;
     U.uTime.value = t;
+    aimScene(SC[cur]);
     SC[cur].update(t);
     if (mixT < 1) SC[prev].update(t);
     render();
@@ -253,6 +275,13 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- observers ---- */
   const onPointer = (e: PointerEvent) => {
+    if (SC[cur].pointer) {
+      // Touch only reports while a finger is down on the stage; the mouse hovers.
+      if (e.pointerType === "touch" ? drag?.own : !interactive(e.target)) setPtr(e, true);
+      else ptr.in = false;
+      dirty = true;
+      kick();
+    }
     if (!motion || drag) return;
     const r = host.getBoundingClientRect();
     tpx = (e.clientX - r.left) / r.width - 0.5;
@@ -264,15 +293,21 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0 || !e.isPrimary || interactive(e.target)) return;
-    drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    const sc = SC[cur], own = Boolean(sc.pointer) && !e.shiftKey;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, own };
     yawV = pitchV = 0;
     tpx = tpy = 0;
+    if (own) {
+      setPtr(e, false);
+      aimScene(sc);
+      sc.pointer!.press();
+    }
     host.setPointerCapture(e.pointerId);
     host.classList.add("is-dragging");
     kick();
   };
   const onDragMove = (e: PointerEvent) => {
-    if (!drag || e.pointerId !== drag.id) return;
+    if (!drag || e.pointerId !== drag.id || drag.own) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.x = e.clientX;
     drag.y = e.clientY;
@@ -288,6 +323,13 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const onUp = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.id) return;
+    if (drag.own) {
+      const sc = SC[cur], up = e.type === "pointerup";
+      if (up) { setPtr(e, false); aimScene(sc); }
+      sc.pointer?.release(up && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8);
+      if (e.pointerType === "touch") ptr.in = false;
+      dirty = true;
+    }
     drag = null;
     host.classList.remove("is-dragging");
     if (host.hasPointerCapture(e.pointerId)) host.releasePointerCapture(e.pointerId);
@@ -317,6 +359,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     o.onContextLost();
   };
   host.addEventListener("pointermove", onPointer);
+  const onLeave = () => {
+    ptr.in = false;
+    dirty = true;
+    kick();
+  };
+  host.addEventListener("pointerleave", onLeave);
   host.addEventListener("pointerdown", onDown);
   host.addEventListener("pointermove", onDragMove);
   host.addEventListener("pointerup", onUp);
@@ -349,8 +397,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     setSheet(i) {
       i = ((i % SC.length) + SC.length) % SC.length;
       if (i === cur) return;
+      SC[cur].pointer?.release(false);
       prev = cur;
       cur = i;
+      ptr.moved = false;
       yawT = pitchT = yawV = pitchV = 0;
       zoomT = 1;
       mixT = psxOn && !o.reducedMotion ? 0 : 1;
@@ -389,6 +439,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
+      host.removeEventListener("pointerleave", onLeave);
       host.removeEventListener("pointerdown", onDown);
       host.removeEventListener("pointermove", onDragMove);
       host.removeEventListener("pointerup", onUp);
