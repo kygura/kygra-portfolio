@@ -121,6 +121,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
     pitchT = Math.max(lim.pitch[0], Math.min(lim.pitch[1], pitchT));
     zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
+    const fitted = SC[cur].fit?.(pitchT, zoomT);
+    if (fitted) [pitchT, zoomT] = fitted;
   };
   const viewSettled = () =>
     !drag && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&

@@ -247,8 +247,57 @@ export function buildField(k: PsxKit): SceneDef {
     cascade.length > 0 || pressed || pulses.length > 0 || waveE > 0.004 || warpE > 0.01 || Math.abs(lift) > 0.01 ||
     (aimed && Math.hypot(px - hx, pz - hz) > 0.05);
 
+  /* ---- camera fit: the view never shows past the edge of the relief ----
+     A scratch camera replays the engine's orbit (base position, pitch about the
+     pivot, dolly by zoom) and the frame's edge rays must land on the ground inside
+     a circle that fits the square map, whatever the yaw. */
+  const PZ0 = 0.3, PZ1 = 1.8, PMAX = 0.5, EDGE = half - 4, GY = -6;
+  const tcam = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 400);
+  const toff = new THREE.Vector3(), tax = new THREE.Vector3(), tq = new THREE.Quaternion();
+  const tdir = new THREE.Vector3(), cpos = new THREE.Vector3();
+  const PROBES: [number, number][] = [[-1, 1], [1, 1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
+  const contained = (p: number, z: number) => {
+    tcam.fov = cam.fov;
+    tcam.aspect = cam.aspect;
+    tcam.updateProjectionMatrix();
+    tcam.position.set(22, 34, 0);
+    tcam.lookAt(PIVOT);
+    toff.copy(tcam.position).sub(PIVOT);
+    tax.set(toff.z, 0, -toff.x).normalize();
+    tq.setFromAxisAngle(tax, -p);
+    toff.applyQuaternion(tq);
+    tcam.quaternion.premultiply(tq);
+    tcam.position.copy(PIVOT).addScaledVector(toff, 1 / z);
+    tcam.updateMatrixWorld(true);
+    cpos.copy(tcam.position);
+    for (const [x, y] of PROBES) {
+      tdir.set(x, y, 0.5).unproject(tcam).sub(cpos).normalize();
+      if (tdir.y > -0.02) return false;
+      const t = (GY - cpos.y) / tdir.y;
+      if (Math.hypot(cpos.x + tdir.x * t, cpos.z + tdir.z * t) > EDGE) return false;
+    }
+    return true;
+  };
+  // Smallest value in [lo, hi] (hi assumed good) for which `ok` holds.
+  const smallest = (lo: number, hi: number, ok: (v: number) => boolean) => {
+    if (ok(lo)) return lo;
+    for (let i = 0; i < 14; i++) {
+      const mid = (lo + hi) / 2;
+      if (ok(mid)) hi = mid; else lo = mid;
+    }
+    return hi;
+  };
+  function fit(pitch: number, zoom: number): [number, number] {
+    if (contained(pitch, zoom)) return [pitch, zoom];
+    // Keep the pitch and zoom in first; only tilt toward top-down when even full zoom-in cannot hide the edge.
+    let p = pitch;
+    if (!contained(p, PZ1)) p = smallest(p, PMAX, (v) => contained(v, PZ1));
+    return [p, smallest(zoom, PZ1, (v) => contained(p, v))];
+  }
+
   return {
-    scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [-0.85, 0.4], zoom: [0.6, 1.8] },
+    scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [-0.85, 0.5], zoom: [PZ0, PZ1] },
+    fit,
     labels: [],
     eggs: [
       {
@@ -284,7 +333,7 @@ export function buildField(k: PsxKit): SceneDef {
       const dt = Math.max(0, Math.min(0.05, (now - lastNow) / 1000));
       lastNow = now;
 
-      const a = 0.6 + t * 0.025, r = 22;
+      const a = 0.6 + t * 0.025 + view.yaw, r = 22;
       cam.position.set(Math.cos(a) * r, 34 - view.py * 4, Math.sin(a) * r);
       cam.lookAt(0, -1.5, 0);
       k.orbit(cam, PIVOT);

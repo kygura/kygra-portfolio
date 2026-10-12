@@ -53,6 +53,8 @@ export interface SceneDef {
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
   limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
   labels: LabelDef[];
+  /** Optional last-word clamp on the manual camera: returns the pitch and zoom to use instead. */
+  fit?: (pitch: number, zoom: number) => [number, number];
   eggs?: EggDef[];
   moteMat?: THREE.PointsMaterial;
   /** Optional pointer bridge. A scene with one owns plain drags (orbit moves to Shift+drag). */
