@@ -8,6 +8,9 @@ export const CHORDS: Record<string, { to: string; label: string }> = {
   c: { to: "/cv", label: "CV" },
 };
 
+/** Pages in nav order, for `n` / `p`. */
+export const PAGES = Object.values(CHORDS).map((c) => c.to);
+
 /** Nav path → chord letter, for printing hints next to nav links. */
 export const CHORD_FOR: Record<string, string> = Object.fromEntries(
   Object.entries(CHORDS).map(([k, v]) => [v.to, k]),

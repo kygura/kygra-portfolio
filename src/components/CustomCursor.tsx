@@ -129,7 +129,7 @@ function Cursor() {
             style={{ x: ringX, y: ringY }}
             className="fixed top-0 left-0 z-[99998] pointer-events-none"
             initial={{ width: 36, height: 36, opacity: 0 }}
-            animate={{ width: 60, height: 60, opacity: 1 }}
+            animate={{ width: 42, height: 42, opacity: 1 }}
             exit={{ width: 36, height: 36, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
@@ -139,7 +139,7 @@ function Cursor() {
                 width: "100%",
                 height: "100%",
                 border: `1px solid ${accentColor}`,
-                background: `color-mix(in srgb, ${accentColor} 9%, transparent)`,
+                background: `color-mix(in srgb, ${accentColor} 7%, transparent)`,
                 transition: "border-color 0.2s ease, background 0.2s ease",
               }}
             />

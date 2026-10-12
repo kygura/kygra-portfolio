@@ -17,7 +17,7 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Keys `1`–`5`, or the Theme menu in the nav (a trigger that opens a vertical list below it, with a swatch, name and key per option). Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
+Keys `1`–`5`, or `t` to cycle, or the row of five squares at the right of the nav bar. Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
 
 1. Lichen `#bcc77c` (default)
 2. Torch Amber `#eaa24c`
@@ -64,8 +64,11 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | Keys | Action |
 | --- | --- |
 | `g h` / `g w` / `g s` / `g b` / `g c` | Home / Writings / Software / Guestbook / CV |
-| `g g` | Top of page |
-| `1`–`4` | Accent |
+| `g g` | Top of page (a hint strip lists the second keys while `g` is pending) |
+| `1`–`5` / `t` | Accent / cycle accent |
+| `n` / `p` | Next / previous page (nav order, wraps) |
+| `j` / `k` / `G` | Scroll down / up / bottom |
+| `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
