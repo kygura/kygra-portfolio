@@ -295,6 +295,7 @@
 
 @media (max-width: 767px) {
   .hero__mark { bottom: calc(var(--strip-h, 88px) + 14px); }
+  .hero__strip { padding-top: 32px; }
 }
 
 @media (min-width: 640px) {
