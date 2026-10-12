@@ -182,8 +182,8 @@
 /* Name and tagline share one column: one gutter, one vertical rhythm. */
 .hero__intro {
   position: absolute;
-  top: 24vh;
-  top: 24svh;
+  top: calc(var(--nav-h) + 3vh);
+  top: calc(var(--nav-h) + 3svh);
   left: var(--hero-gutter);
   right: var(--hero-gutter);
   pointer-events: none;
@@ -198,7 +198,7 @@
   margin: 0;
   font-family: var(--f-body);
   font-weight: 400;
-  font-size: clamp(56px, 17vw, 300px);
+  font-size: clamp(42px, 12.5vw, 216px);
   line-height: 0.82;
   letter-spacing: -0.015em;
   animation:
@@ -216,9 +216,9 @@
 .hero__tagline {
   margin: clamp(14px, 2.2vw, 26px) 0 0;
   max-width: 38ch;
-  width: clamp(240px, 26vw, 360px);
+  width: clamp(220px, 22vw, 320px);
   font-family: var(--f-body);
-  font-size: clamp(16px, 1.45vw, 23px);
+  font-size: clamp(14px, 1.25vw, 20px);
   line-height: 1.45;
   color: var(--ink);
   text-wrap: pretty;
@@ -230,8 +230,7 @@
 .hero__mark {
   position: absolute;
   right: var(--hero-gutter);
-  bottom: calc(9vh + 18px);
-  bottom: calc(9svh + 18px);
+  bottom: calc(var(--strip-h, 60px) + 24px);
   transform-origin: center center;
   pointer-events: none;
   will-change: transform, opacity;
@@ -240,7 +239,7 @@
 .hero__mark-text {
   font-family: var(--f-body);
   font-style: italic;
-  font-size: clamp(78px, 19vw, 360px);
+  font-size: clamp(56px, 14vw, 260px);
   line-height: 0.78;
   color: var(--accent);
   transition: color 0.6s ease;
@@ -277,29 +276,17 @@
 }
 
 @media (max-width: 767px) {
-  .hero__mark { bottom: calc(var(--strip-h, 88px) + 14px); }
   .hero__strip { padding-top: 32px; }
-}
-
-@media (min-width: 640px) {
-  .hero__intro { top: 26vh; top: 26svh; }
-}
-
-@media (min-width: 768px) {
-  .hero__intro { top: 28vh; top: 28svh; }
-  .hero__mark { bottom: calc(7vh + 18px); bottom: calc(7svh + 18px); }
 }
 
 /* Landscape phones and other short viewports: the display type has to
    give way or it collides with the accent mark and the footer strip. */
 @media (max-height: 620px) and (min-width: 640px) {
-  .hero__intro { top: 20vh; top: 20svh; }
-  .hero__name-text { font-size: clamp(44px, 9vw, 120px); }
+  .hero__name-text { font-size: clamp(36px, 7vw, 90px); }
   .hero__tagline { font-size: 14px; width: clamp(220px, 34vw, 320px); }
   /* A fixed offset, not a percentage: 5svh of a 390px-tall landscape
      phone lands the monogram on top of the footer strip. */
-  .hero__mark { bottom: 70px; }
-  .hero__mark-text { font-size: clamp(64px, 11vw, 140px); }
+  .hero__mark-text { font-size: clamp(48px, 8vw, 104px); }
 }
 
 /* ─────────────────────────────────────────────
