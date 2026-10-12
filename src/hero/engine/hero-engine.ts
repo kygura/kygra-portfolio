@@ -121,8 +121,6 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
     pitchT = Math.max(lim.pitch[0], Math.min(lim.pitch[1], pitchT));
     zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
-    const fitted = SC[cur].fit?.(pitchT, zoomT);
-    if (fitted) [pitchT, zoomT] = fitted;
   };
   const viewSettled = () =>
     !drag && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&
@@ -319,10 +317,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const RAD_PER_PX = 0.0065;
   const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
   const onDown = (e: PointerEvent) => {
-    // A scene that owns plain drags also orbits on right-drag (and Shift+drag).
+    // Plain drags orbit in every scene. A scene with a pointer bridge gets Shift+drag
+    // (the drag is its own) and taps; right-drag orbits there too.
     const rc = e.button === 2 && Boolean(SC[cur].pointer);
     if ((e.button !== 0 && !rc) || !e.isPrimary || interactive(e.target)) return;
-    const sc = SC[cur], own = Boolean(sc.pointer) && !e.shiftKey && !rc;
+    const sc = SC[cur], own = Boolean(sc.pointer) && e.shiftKey && !rc;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own };
     yawV = pitchV = 0;
     tpx = tpy = 0;
@@ -354,6 +353,16 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (!drag || e.pointerId !== drag.id) return;
     const tap = e.type === "pointerup" && e.button === 0 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
     const egg = tap && tryEgg(e);
+    if (tap && !egg && !drag.own && SC[cur].pointer) {
+      // An orbiting scene still takes a tap as a press at the pointer.
+      const sc = SC[cur];
+      setPtr(e, false);
+      aimScene(sc);
+      sc.pointer!.press();
+      sc.pointer!.release(true);
+      if (e.pointerType === "touch") ptr.in = false;
+      dirty = true;
+    }
     if (drag.own) {
       const sc = SC[cur], up = e.type === "pointerup";
       if (up) { setPtr(e, false); aimScene(sc); }

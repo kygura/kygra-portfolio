@@ -53,11 +53,9 @@ export interface SceneDef {
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
   limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
   labels: LabelDef[];
-  /** Optional last-word clamp on the manual camera: returns the pitch and zoom to use instead. */
-  fit?: (pitch: number, zoom: number) => [number, number];
   eggs?: EggDef[];
   moteMat?: THREE.PointsMaterial;
-  /** Optional pointer bridge. A scene with one owns plain drags (orbit moves to Shift+drag). */
+  /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene. */
   pointer?: {
     /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */
     aim: (ray: THREE.Ray | null, moved: boolean) => void;
