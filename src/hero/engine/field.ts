@@ -1,8 +1,7 @@
 /** Sheet 06 · Field: a living survey surface. Contours and a draped grid ride a
- *  drifting scalar field, a few thousand particles flow along it, and the
- *  pointer plays it: hover swells it, a press dents it, a drag drags the
- *  contours with it, and a tap sends a wavefront out from the touch point
- *  that the source answers when it arrives. */
+ *  drifting scalar field, and the pointer plays it: hover swells it, a press
+ *  dents it, a drag drags the contours with it, and a tap sends a wavefront
+ *  out from the touch point that the source answers when it arrives. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
@@ -21,7 +20,6 @@ const PULSE_W = 2.4;     // wavefront half-width
 const MAX_PULSES = 8;
 const MAX_WAKE = 28;
 const RING_SEGS = 72;
-const NP = 1500;         // particles
 
 export function buildField(k: PsxKit): SceneDef {
   const { mesh, psx, M, tex, view, U, lineMat } = k;
@@ -40,9 +38,8 @@ export function buildField(k: PsxKit): SceneDef {
   const echoes: number[] = [];       // seconds until the source answers a tap
   const cur = { x: 0, z: 0 };        // pointer, world
   const sm = { x: 0, z: 0 };         // smoothed pointer for the swell / dent
-  const pv = { x: 0, z: 0 };         // pointer velocity, world units / s
   const downAt = { x: 0, z: 0, t: 0 };
-  const last = { x: 0, z: 0, t: 0, wx: 0, wz: 0 };
+  const last = { wx: 0, wz: 0 };
   let inside = false, down = false, hover = 0, hold = 0, clock = 0, lastK = -1;
 
   const ray = new THREE.Raycaster();
@@ -217,75 +214,13 @@ export function buildField(k: PsxKit): SceneDef {
     }
   };
 
-  /* ---- particles: flow along the contours, shoved by pulses and the pointer ---- */
-  const pp = new Float32Array(NP * 3), pc = new Float32Array(NP * 3);
-  const px = new Float32Array(NP), pz = new Float32Array(NP), vx = new Float32Array(NP), vz = new Float32Array(NP);
-  const age = new Float32Array(NP), span = new Float32Array(NP);
-  const reseed = (i: number, scatter: boolean) => {
-    const a = k.rnd() * Math.PI * 2, r = Math.sqrt(k.rnd()) * 50;
-    px[i] = Math.cos(a) * r; pz[i] = Math.sin(a) * r;
-    vx[i] = 0; vz[i] = 0;
-    span[i] = 4 + k.rnd() * 6;
-    age[i] = scatter ? k.rnd() * span[i] : 0;
-  };
-  for (let i = 0; i < NP; i++) reseed(i, true);
-  const pgeo = new THREE.BufferGeometry();
-  pgeo.setAttribute("position", new THREE.BufferAttribute(pp, 3));
-  pgeo.setAttribute("color", new THREE.BufferAttribute(pc, 3));
-  const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1, sizeAttenuation: false, vertexColors: true });
-  const motes = new THREE.Points(pgeo, moteMat);
-  motes.frustumCulled = false;
-  scene.add(motes);
-
-  const stepParticles = (dt: number) => {
-    const ease = Math.min(1, dt * 2.5);
-    for (let i = 0; i < NP; i++) {
-      age[i] += dt;
-      const bx = px[i], bz = pz[i];
-      if (age[i] > span[i] || bx * bx + bz * bz > 3200) { reseed(i, false); continue; }
-      const ix = Math.max(1, Math.min(N - 1, Math.floor((bx + half) / cs)));
-      const iz = Math.max(1, Math.min(N - 1, Math.floor((bz + half) / cs)));
-      const gx = (hg[iz * W + ix + 1] - hg[iz * W + ix - 1]) / (2 * cs);
-      const gz = (hg[(iz + 1) * W + ix] - hg[(iz - 1) * W + ix]) / (2 * cs);
-      // along the contour, with a slow downhill drift so nothing circles forever
-      vx[i] += (-gz * 9 - gx * 3 - vx[i]) * ease;
-      vz[i] += (gx * 9 - gz * 3 - vz[i]) * ease;
-      for (let j = 0; j < pulses.length; j++) {
-        const p = pulses[j], ex = bx - p.x, ez = bz - p.z, d = Math.sqrt(ex * ex + ez * ez) + 1e-3, q = d - p.r;
-        if (q > -PULSE_W * 1.6 && q < PULSE_W * 1.6) {
-          const f = p.a0 * Math.exp(-p.age * 0.45) * Math.exp(-(q * q) / (PULSE_W * PULSE_W)) * 30 * dt;
-          vx[i] += (ex / d) * f;
-          vz[i] += (ez / d) * f;
-        }
-      }
-      if (down) {
-        const ex = bx - sm.x, ez = bz - sm.z, d2 = ex * ex + ez * ez;
-        if (d2 < 150) {
-          const f = Math.exp(-d2 / 60) * 6 * dt;
-          vx[i] += pv.x * f;
-          vz[i] += pv.z * f;
-        }
-      }
-      px[i] = bx + vx[i] * dt;
-      pz[i] = bz + vz[i] * dt;
-      const f = age[i] / span[i], sp = Math.sqrt(vx[i] * vx[i] + vz[i] * vz[i]);
-      const b = Math.pow(Math.sin(Math.PI * f), 0.7) * Math.min(1, 0.4 + sp * 0.12);
-      pc[i * 3] = pc[i * 3 + 1] = pc[i * 3 + 2] = b;
-      pp[i * 3] = px[i];
-      pp[i * 3 + 1] = heightAt(px[i], pz[i]) * RELIEF + 0.3;
-      pp[i * 3 + 2] = pz[i];
-    }
-    pgeo.attributes.position.needsUpdate = true;
-    pgeo.attributes.color.needsUpdate = true;
-  };
-
   /* ---- frame ---- */
   let lastT = -1, acc = 0;
   const busy = () =>
     down || hold > 0.002 || hover > 0.002 || pulses.length > 0 || wake.length > 0 || echoes.length > 0;
 
   return {
-    scene, cam, fog: [60, 160], fov: [50, 64], moteMat,
+    scene, cam, fog: [60, 160], fov: [50, 64],
     labels: [
       { name: "Source", sub: "", at: (v) => { v.set(SRC.x, srcMesh.position.y + 1.2, SRC.z); }, sub2: () => (pulses.length ? `${pulses.length} wavefront${pulses.length > 1 ? "s" : ""}` : "quiet") },
       { name: "Live field", sub: "tap · pulse   drag · warp", at: (v) => { v.set(-20, 1, 12); } },
@@ -302,16 +237,12 @@ export function buildField(k: PsxKit): SceneDef {
         if (!inside) { sm.x = cur.x; sm.z = cur.z; }
         inside = true; down = true;
         downAt.x = cur.x; downAt.z = cur.z; downAt.t = now;
-        last.wx = cur.x; last.wz = cur.z; last.t = now;
-        pv.x = 0; pv.z = 0;
+        last.wx = cur.x; last.wz = cur.z;
       } else if (e.kind === "move") {
         if (!inside) { sm.x = cur.x; sm.z = cur.z; }
         inside = e.touch ? down : true;
-        const dtm = Math.max(0.008, (now - last.t) / 1000);
         if (down) {
           const mx = cur.x - last.wx, mz = cur.z - last.wz, len = Math.hypot(mx, mz);
-          pv.x += (Math.max(-45, Math.min(45, mx / dtm)) - pv.x) * 0.35;
-          pv.z += (Math.max(-45, Math.min(45, mz / dtm)) - pv.z) * 0.35;
           if (len > 1.1) {
             const c = len > 5 ? 5 / len : 1;
             wake.push({ x: cur.x, z: cur.z, dx: mx * c, dz: mz * c, s: 1 });
@@ -319,7 +250,7 @@ export function buildField(k: PsxKit): SceneDef {
             last.wx = cur.x; last.wz = cur.z;
           }
         }
-        last.t = now;
+       
       } else if (e.kind === "up") {
         const wasClick = down && now - downAt.t < 450 && Math.hypot(cur.x - downAt.x, cur.z - downAt.z) < 3;
         down = false;
@@ -339,8 +270,6 @@ export function buildField(k: PsxKit): SceneDef {
       const sk = Math.min(1, dt * 10);
       sm.x += (cur.x - sm.x) * sk;
       sm.z += (cur.z - sm.z) * sk;
-      const damp = Math.exp(-dt * 5);
-      pv.x *= damp; pv.z *= damp;
 
       for (let i = wake.length - 1; i >= 0; i--) {
         wake[i].s *= Math.exp(-dt / 1.5);
@@ -375,7 +304,6 @@ export function buildField(k: PsxKit): SceneDef {
       srcMesh.rotation.y = t * 0.8;
       srcMesh.scale.setScalar(1 + 0.25 * Math.sin(clock * 3) * (pulses.length ? 1 : 0.3));
       placeRings();
-      stepParticles(Math.min(dt, 0.05));
     },
     readout() {
       return [
