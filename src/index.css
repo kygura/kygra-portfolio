@@ -146,8 +146,7 @@
    carries the same flat background, so the band revealed when the chrome
    retracts reads as a continuation of the field. */
 .hero__stage {
-  position: sticky;
-  top: 0;
+  position: relative;
   height: 100vh;
   height: 100svh;
   overflow: hidden;
@@ -277,15 +276,12 @@
   animation: cartoCueBob 1.6s ease-in-out infinite;
 }
 
-/* Scroll runway for the sticky stage. Its height is the hero's only
-   source of scroll travel, so stage and shell cannot drift apart. */
+/* Marker band between the stage and the Manifesto. */
 .hero__marker {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: 70vh;
-  height: 70svh;
-  padding-bottom: 3rem;
+  padding: 2.25rem var(--hero-gutter) 2.5rem;
   font-size: 10.5px;
   letter-spacing: 0.2em;
   text-align: center;
@@ -300,13 +296,11 @@
 
 @media (min-width: 640px) {
   .hero__intro { top: 26vh; top: 26svh; }
-  .hero__marker { height: 100vh; height: 100svh; }
 }
 
 @media (min-width: 768px) {
   .hero__intro { top: 28vh; top: 28svh; }
   .hero__mark { bottom: calc(7vh + 18px); bottom: calc(7svh + 18px); }
-  .hero__marker { height: 150vh; height: 150svh; }
 }
 
 /* Landscape phones and other short viewports: the display type has to
@@ -319,7 +313,6 @@
      phone lands the monogram on top of the footer strip. */
   .hero__mark { bottom: 70px; }
   .hero__mark-text { font-size: clamp(64px, 11vw, 140px); }
-  .hero__marker { height: 90vh; height: 90svh; }
 }
 
 /* ─────────────────────────────────────────────
