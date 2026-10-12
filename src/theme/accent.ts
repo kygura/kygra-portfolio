@@ -27,6 +27,7 @@ export const ACCENTS: Accent[] = [
 
 export const ACCENT_KEY = "nca-accent";
 export const SHEET_KEY = "nca-sheet";
+export const EGGS_KEY = "nca-eggs";
 
 export function readStored(key: string): string | null {
   try {

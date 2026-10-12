@@ -1,13 +1,14 @@
 /**
  * Additive keyboard layer: g-chords for the nav routes, `g g` to the top,
- * `1`–`5` for the accent, `?` for the help sheet. Pages add their own keys
+ * `n`/`p` for next/previous page, `1`–`5` and `t` for the accent, `j`/`k`/`G` to
+ * scroll, `?` for the help sheet. Pages add their own keys
  * (the hero listens for `[` `]`). Nothing fires while typing in a field or
  * with a modifier held, so the terminal's Ctrl+K and the backtick stay put.
  */
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { setAccent } from "./accent";
-import { CHORDS, isTyping } from "./keymap";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ACCENTS, setAccent, useAccent } from "./accent";
+import { CHORDS, PAGES, isTyping } from "./keymap";
 
 const K = ({ k }: { k: string }) => <kbd>{k}</kbd>;
 
@@ -63,7 +64,12 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
           <div>
             <h3>View</h3>
             <dl>
+              <div><dt><K k="n" /> <K k="p" /></dt><dd>Next / previous page</dd></div>
               <div><dt><K k="1" />–<K k="5" /></dt><dd>Accent</dd></div>
+              <div><dt><K k="t" /></dt><dd>Cycle accent</dd></div>
+              <div><dt><K k="j" /> <K k="k" /></dt><dd>Scroll down / up</dd></div>
+              <div><dt><K k="G" /></dt><dd>Bottom of page</dd></div>
+              <div><dt><K k="←" /> <K k="→" /></dt><dd>Move along the nav (when focused)</dd></div>
               <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next hero scene (home)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
@@ -79,7 +85,12 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
 
 export default function Keys() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const accent = useAccent();
   const [help, setHelp] = useState(false);
+  const [pending, setPending] = useState(false);
+  const live = useRef({ pathname, accent });
+  live.current = { pathname, accent };
   const chord = useRef(false);
   const timer = useRef(0);
 
@@ -92,6 +103,7 @@ export default function Keys() {
       }
       if (chord.current) {
         chord.current = false;
+        setPending(false);
         window.clearTimeout(timer.current);
         if (e.key === "g") {
           e.preventDefault();
@@ -110,8 +122,28 @@ export default function Keys() {
       switch (e.key) {
         case "g":
           chord.current = true;
+          setPending(true);
           window.clearTimeout(timer.current);
-          timer.current = window.setTimeout(() => (chord.current = false), 1400);
+          timer.current = window.setTimeout(() => {
+            chord.current = false;
+            setPending(false);
+          }, 1400);
+          return;
+        case "n":
+        case "p": {
+          const i = Math.max(0, PAGES.indexOf(live.current.pathname));
+          navigate(PAGES[(i + (e.key === "n" ? 1 : PAGES.length - 1)) % PAGES.length]);
+          return;
+        }
+        case "t":
+          setAccent((live.current.accent + 1) % ACCENTS.length);
+          return;
+        case "j":
+        case "k":
+          window.scrollBy({ top: e.key === "j" ? 140 : -140 });
+          return;
+        case "G":
+          window.scrollTo({ top: document.documentElement.scrollHeight });
           return;
         case "?":
           e.preventDefault();
@@ -133,5 +165,18 @@ export default function Keys() {
     };
   }, [navigate]);
 
-  return help ? <HelpOverlay onClose={() => setHelp(false)} /> : null;
+  return (
+    <>
+      {pending && !help && (
+        <div className="chord-hint" role="status">
+          <K k="g" />
+          {Object.entries(CHORDS).map(([k, v]) => (
+            <span key={k}><K k={k} /> {v.label}</span>
+          ))}
+          <span><K k="g" /> Top</span>
+        </div>
+      )}
+      {help && <HelpOverlay onClose={() => setHelp(false)} />}
+    </>
+  );
 }

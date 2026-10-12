@@ -51,6 +51,8 @@ export interface HeroEngineOptions {
   psx: boolean;
   reducedMotion: boolean;
   onContextLost: () => void;
+  /** A tap landed on a hidden egg. `total` counts the eggs across every scene. */
+  onEgg?: (egg: { id: string; text: string; total: number }) => void;
 }
 
 export interface HeroEngine {
@@ -74,6 +76,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const kit = createKit(o.accent);
   const { U } = kit;
   const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
+  const eggTotal = SC.reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -112,12 +115,14 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const view = kit.view;
   let yawT = 0, pitchT = 0, zoomT = 1;
   let yawV = 0, pitchV = 0;
-  let drag: { id: number; x: number; y: number; own: boolean } | null = null;
+  let drag: { id: number; x: number; y: number; sx: number; sy: number; own: boolean } | null = null;
   const clampView = () => {
     const lim = SC[cur].limits;
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
     pitchT = Math.max(lim.pitch[0], Math.min(lim.pitch[1], pitchT));
     zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
+    const fitted = SC[cur].fit?.(pitchT, zoomT);
+    if (fitted) [pitchT, zoomT] = fitted;
   };
   const viewSettled = () =>
     !drag && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&
@@ -144,6 +149,28 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     }
     sc.pointer.aim(ptr.in ? raycaster.ray : null, ptr.moved);
     ptr.moved = false;
+  };
+
+  /* ---- easter eggs: the nearest hidden target to a tap, within its screen radius ---- */
+  const tryEgg = (e: PointerEvent) => {
+    const sc = SC[cur];
+    if (!sc.eggs?.length) return false;
+    const r = host.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    sc.cam.updateMatrixWorld();
+    let best: (typeof sc.eggs)[number] | null = null, bd = Infinity;
+    for (const g of sc.eggs) {
+      g.at(tmp);
+      tmp.project(sc.cam);
+      if (tmp.z > 1) continue;
+      const d = Math.hypot(((tmp.x + 1) / 2) * r.width - mx, ((1 - tmp.y) / 2) * r.height - my);
+      if (d <= (g.r ?? 30) && d < bd) { best = g; bd = d; }
+    }
+    if (!best) return false;
+    const text = best.fire(t);
+    o.onEgg?.({ id: best.id, text, total: eggTotal });
+    dirty = true;
+    kick();
+    return true;
   };
 
   /* ---- pinned labels ---- */
@@ -292,9 +319,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const RAD_PER_PX = 0.0065;
   const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
   const onDown = (e: PointerEvent) => {
-    if (e.button !== 0 || !e.isPrimary || interactive(e.target)) return;
-    const sc = SC[cur], own = Boolean(sc.pointer) && !e.shiftKey;
-    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, own };
+    // A scene that owns plain drags also orbits on right-drag (and Shift+drag).
+    const rc = e.button === 2 && Boolean(SC[cur].pointer);
+    if ((e.button !== 0 && !rc) || !e.isPrimary || interactive(e.target)) return;
+    const sc = SC[cur], own = Boolean(sc.pointer) && !e.shiftKey && !rc;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own };
     yawV = pitchV = 0;
     tpx = tpy = 0;
     if (own) {
@@ -323,10 +352,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const onUp = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.id) return;
+    const tap = e.type === "pointerup" && e.button === 0 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
+    const egg = tap && tryEgg(e);
     if (drag.own) {
       const sc = SC[cur], up = e.type === "pointerup";
       if (up) { setPtr(e, false); aimScene(sc); }
-      sc.pointer?.release(up && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8);
+      sc.pointer?.release(up && !egg && tap);
       if (e.pointerType === "touch") ptr.in = false;
       dirty = true;
     }
@@ -365,6 +396,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     kick();
   };
   host.addEventListener("pointerleave", onLeave);
+  const onContext = (e: MouseEvent) => {
+    if (SC[cur].pointer && !interactive(e.target)) e.preventDefault();
+  };
+  host.addEventListener("contextmenu", onContext);
   host.addEventListener("pointerdown", onDown);
   host.addEventListener("pointermove", onDragMove);
   host.addEventListener("pointerup", onUp);
@@ -440,6 +475,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
       host.removeEventListener("pointerleave", onLeave);
+      host.removeEventListener("contextmenu", onContext);
       host.removeEventListener("pointerdown", onDown);
       host.removeEventListener("pointermove", onDragMove);
       host.removeEventListener("pointerup", onUp);

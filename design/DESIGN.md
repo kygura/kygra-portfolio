@@ -17,7 +17,7 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Keys `1`–`5`, or the Theme menu in the nav (a trigger that opens a vertical list below it, with a swatch, name and key per option). Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
+Keys `1`–`5`, or `t` to cycle, or the row of five squares at the right of the nav bar. Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
 
 1. Lichen `#bcc77c` (default)
 2. Torch Amber `#eaa24c`
@@ -47,9 +47,13 @@ Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline
 - **02 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite.
 - **03 Ruins**: misty forest ruins: an outer ring of mixed pieces (capped and broken fluted columns, a leaning column, monoliths, an obelisk, a fallen column) and a small inner ring of free-standing low columns around the shrine (no lintels or beams across the centre); the camera drifts between the two rings so nothing crosses the centrepiece. Floating ward crystal with a rune ring, collapsed arch, an old tree gripping a fallen column, glowing mushrooms, drifting mist layers, light shafts, wisps.
 - **04 Rail**: a lone halt standing in a boundless, near-still sea: a causeway runs from behind the camera to the horizon under a catenary, and a four-car train brakes in over the water, stands at the platform, then pulls out past the camera (47 s loop). A city skyline far out on the horizon (300 to 370 m off, hazed by fog): about seventy glass and concrete towers standing in the sea, with the line running into it, tallest where the line runs in, some stepped back or spired, lit crown bands and mast beacons; two suns high overhead with glitter on the water.
-- **05 Field**: the interactive sheet, a living relief on one shared height field (ambient drift + wave simulation + cursor swell). Click or tap sends a pulse out from that point (the wave equation carries it through the contours, with a dashed accent ring marking the front). Dragging pulls the contours and draped grid along and they relax back; moving the cursor lifts a soft swell with a reticle and leaves a wake. Scenes opt into input through `SceneDef.pointer`; such a scene owns plain drags and orbit moves to Shift+drag or the keyboard.
+- **05 Field**: the interactive sheet, a living relief on one shared height field (ambient drift + wave simulation + cursor swell). Click or tap sends a pulse out from that point (the wave equation carries it through the contours, with a dashed accent ring marking the front). Dragging pulls the contours and draped grid along and they relax back; moving the cursor lifts a soft swell with a reticle and leaves a wake. Scenes opt into input through `SceneDef.pointer`; such a scene owns plain drags and orbit moves to right-drag, Shift+drag or the keyboard (yaw, pitch and zoom like the other scenes; the Field also clamps them with `SceneDef.fit` so the frame never shows past the edge of the map).
 
 Scene tabs (`01 Ocean / 02 Astral / 03 Ruins / 04 Rail / 05 Field` + `[` `]` hint) sit at the left end of the existing bottom strip, opposite the scroll cue. Pinned scene labels float in the stage beneath the type; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
+
+Easter eggs: every scene hides one to four tap targets (`SceneDef.eggs` in `psx.ts`: a world position, a screen-pixel radius and a `fire` that starts a one-shot reaction and returns a caption). A tap (under 8px of travel) on or near one fires the nearest; drags, orbit and the Field's pulse are untouched, and a hit on the Field's benchmark suppresses that tap's pulse. The caption shows as a hairline readout above the strip (`FOUND 03/15` the first time, `AGAIN` after). Found ids persist in `localStorage["nca-eggs"]`. Nothing marks the targets.
+
+Home is the hero alone: the Manifesto section and the "02 — On software craft" marker are gone. The name, tagline and C.A are back to master's big type on the bare scene (no panels, no typing), about 25% smaller: name and tagline in the top-left corner, C.A in the bottom-right. Pointer: a 20px square ring and 6px dot; over links and buttons the ring grows to 38px and takes the accent; a press squeezes it and a click leaves an expanding accent square.
 
 PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching scenes dissolves through the dither matrix (hard cut under reduced motion). Last scene stored in `localStorage["nca-sheet"]`. The mock's scrims (top and lower half) keep the type legible over every scene.
 
@@ -62,8 +66,11 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | Keys | Action |
 | --- | --- |
 | `g h` / `g w` / `g s` / `g b` / `g c` | Home / Writings / Software / Guestbook / CV |
-| `g g` | Top of page |
-| `1`–`4` | Accent |
+| `g g` | Top of page (a hint strip lists the second keys while `g` is pending) |
+| `1`–`5` / `t` | Accent / cycle accent |
+| `n` / `p` | Next / previous page (nav order, wraps) |
+| `j` / `k` / `G` | Scroll down / up / bottom |
+| `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |

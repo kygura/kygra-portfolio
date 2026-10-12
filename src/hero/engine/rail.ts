@@ -1,6 +1,6 @@
 /** Sheet 05 · Rail: a halt on a causeway in a boundless shallow sea, a train coming in over the water, a city skyline on the horizon, two suns overhead. */
 import * as THREE from "three";
-import type { PsxKit, SceneDef, V3 } from "./psx";
+import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 
 export function buildRail(k: PsxKit): SceneDef {
   const { rnd, facet, wallUV, mesh, psx, M, tex, view } = k;
@@ -228,6 +228,11 @@ export function buildRail(k: PsxKit): SceneDef {
   glints.frustumCulled = false;
   scene.add(glints);
 
+  // easter eggs: start times; flares for the platform lamp and the skyline's tallest mast
+  let tHorn = -99, tSun = -99, tLamp = -99, tCity = -99;
+  const lampFlare = k.flare(scene, PX + 0.3, PT + 3.25, -15.3, 0.6);
+  const cityFlare = k.flare(scene, peak.x, peak.y + 1, peak.z, 9);
+
   return {
     scene, cam, fog: [30, 260], fov: [58, 72], limits: { pitch: [-0.3, 0.35], zoom: [0.8, 2.4], yaw: 0.85 },
     labels: [
@@ -239,13 +244,49 @@ export function buildRail(k: PsxKit): SceneDef {
       { name: "Skyline", sub: "lights still on", at: (v) => { v.copy(peak).y += 6; } },
       { name: "Twin suns", sub: "binary, high", at: (v) => { v.copy(sunA.position).y += 26; } },
     ],
+    eggs: [
+      {
+        id: "rail-horn", r: 44,
+        at: (v) => { v.set(0, FLOOR + CH / 2, train.position.z - 12); },
+        fire: (t) => { tHorn = t; return "INBOUND \u00b7 two short, one long."; },
+      },
+      {
+        id: "rail-lamp", r: 30,
+        at: (v) => { v.set(PX + 0.3, PT + 3.25, -15.3); },
+        fire: (t) => { tLamp = t; return "PLATFORM LAMP \u00b7 blinks twice. Someone is home."; },
+      },
+      {
+        id: "rail-skyline", r: 40,
+        at: (v) => { v.copy(peak).y += 1; },
+        fire: (t) => { tCity = t; return "SKYLINE \u00b7 every light blinked once."; },
+      },
+      {
+        id: "rail-suns", r: 44,
+        at: (v) => { v.copy(sunA.position); },
+        fire: (t) => { tSun = t; return "SUN \u00b7 don't look. You did."; },
+      },
+    ],
     update(t) {
       for (let i = 0; i < wpos.count; i++) wpos.setY(i, wave(wx[i], wz[i], t));
       wpos.needsUpdate = true;
       water.computeVertexNormals();
 
+      const eh = t - tHorn;
       train.position.z = run(t);
-      train.position.y = Math.sin(t * 7.3) * 0.012 * Math.min(1, speed / 4);
+      train.position.y = Math.sin(t * 7.3) * 0.012 * Math.min(1, speed / 4) +
+        0.07 * (pulse(eh, 0.3) + pulse(eh - 0.4, 0.3) + pulse(eh - 0.9, 0.7));
+
+      const el = t - tLamp;
+      lampFlare.g.visible = el > 0 && el < 1.4;
+      lampFlare.mat.opacity = 0.9 * Math.max(pulse(el, 0.35), pulse(el - 0.55, 0.35));
+      lampFlare.g.lookAt(cam.position);
+      const ec = t - tCity;
+      cityFlare.g.visible = ec > 0 && ec < 1.2;
+      cityFlare.mat.opacity = 0.8 * pulse(ec, 1.2);
+      cityFlare.g.lookAt(cam.position);
+      const esn = t - tSun;
+      sunA.scale.setScalar(1 + 0.35 * pulse(esn, 1.4));
+      sunB.scale.setScalar(1 + 0.45 * pulse(esn - 0.5, 1.4));
 
       for (let i = 0; i < NG; i++) {
         const x = gBase[i * 2], z = gBase[i * 2 + 1], on = Math.sin(t * 2.3 + i * 1.73) > 0.4;

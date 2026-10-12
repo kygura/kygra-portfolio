@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
 import { CHORD_FOR } from "@/theme/keymap";
@@ -38,68 +38,36 @@ function NavItem({ path, label, end }: { path: string; label: string; end?: bool
   );
 }
 
-function ThemeMenu() {
+function AccentPick() {
   const accent = useAccent();
-  const [open, setOpen] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (e: MouseEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
-  const current = ACCENTS[accent];
   return (
-    <div className="theme-menu" ref={root}>
-      <button
-        type="button"
-        className="theme-trigger font-mono uppercase"
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-controls="theme-list"
-        onClick={() => setOpen((o) => !o)}
-        title="Theme (1–5)"
-      >
-        <i className="theme-sw" style={{ "--sw": current.hex } as React.CSSProperties} />
-        <span className="theme-trigger-label">Theme</span>
-        <span aria-hidden="true" className="theme-caret">{open ? "▴" : "▾"}</span>
-      </button>
-      {open && (
-        <ul id="theme-list" className="theme-list font-mono" role="group" aria-label="Theme">
-          {ACCENTS.map((a, i) => (
-            <li key={a.id}>
-              <button
-                type="button"
-                className="theme-opt"
-                aria-pressed={i === accent}
-                aria-keyshortcuts={String(i + 1)}
-                onClick={() => {
-                  setAccent(i);
-                  setOpen(false);
-                }}
-              >
-                <span className="theme-opt-cur" aria-hidden="true">&gt;</span>
-                <i className="theme-sw" style={{ "--sw": a.hex } as React.CSSProperties} />
-                <span className="theme-opt-name">{a.name}</span>
-                <kbd>{i + 1}</kbd>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="accent-pick" role="group" aria-label="Accent">
+      {ACCENTS.map((a, i) => (
+        <button
+          key={a.id}
+          type="button"
+          onClick={() => setAccent(i)}
+          aria-pressed={i === accent}
+          aria-label={`Accent: ${a.name}`}
+          title={`${a.name} (${i + 1})`}
+          aria-keyshortcuts={String(i + 1)}
+          style={{ "--sw": a.hex } as React.CSSProperties}
+        />
+      ))}
     </div>
   );
+}
+
+/** Left/Right/Home/End move focus along the links, like a toolbar. */
+function arrowNav(e: React.KeyboardEvent<HTMLUListElement>) {
+  const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+  if (!keys.includes(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
+  const links = Array.from(e.currentTarget.querySelectorAll<HTMLAnchorElement>("a"));
+  const i = links.indexOf(document.activeElement as HTMLAnchorElement);
+  if (i < 0) return;
+  e.preventDefault();
+  const n = e.key === "Home" ? 0 : e.key === "End" ? links.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + links.length) % links.length;
+  links[n].focus();
 }
 
 const Navigation = () => {
@@ -145,7 +113,7 @@ const Navigation = () => {
           <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
-        <ul className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-4 md:gap-7 items-center">
+        <ul onKeyDown={arrowNav} className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-4 md:gap-7 items-center">
           {NAV_ITEMS.map((item) => (
             <NavItem
               key={item.path}
@@ -160,7 +128,7 @@ const Navigation = () => {
           <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock}
           </span>
-          <ThemeMenu />
+          <AccentPick />
         </div>
       </div>
     </nav>

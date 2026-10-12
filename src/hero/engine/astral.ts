@@ -1,6 +1,6 @@
 /** Sheet 03 · Astral: halo with orbiting glyphs, cored polyhedra, the watcher, a moon with a satellite. */
 import * as THREE from "three";
-import type { PsxKit, SceneDef, V3 } from "./psx";
+import { burst, pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 
 export function buildAstral(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view, segs, circle } = k;
@@ -92,6 +92,9 @@ export function buildAstral(k: PsxKit): SceneDef {
   const sat = mesh(new THREE.OctahedronGeometry(0.5, 0), M.glyph, orbit);
   const dir = new THREE.Vector3();
 
+  // easter eggs: start times
+  let tCore = -99, tWatch = -99, tSat = -99, tMoon = -99;
+
   return {
     scene, cam, fog: [60, 170], fov: [60, 72], limits: { pitch: [-0.7, 0.9], zoom: [0.5, 1.6] },
     labels: [
@@ -99,6 +102,28 @@ export function buildAstral(k: PsxKit): SceneDef {
       { name: "Watcher", sub: "fixed, faces observer", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },
       { name: "Moon", sub: "1 satellite", at: (v) => { v.set(0, 6, 0); moonRig.localToWorld(v); } },
       { name: "Icosahedron", sub: "20 faces", at: (v) => { polys[0].g.getWorldPosition(v); v.y += 3.2; } },
+    ],
+    eggs: [
+      {
+        id: "astral-core", r: 38,
+        at: (v) => { v.copy(core.position); },
+        fire: (t) => { tCore = t; return "CORE \u00b7 twenty faces, none of them honest."; },
+      },
+      {
+        id: "astral-watcher", r: 48,
+        at: (v) => { v.copy(watcher.position); },
+        fire: (t) => { tWatch = t; return "WATCHER \u00b7 blinked first. Probably."; },
+      },
+      {
+        id: "astral-satellite", r: 30,
+        at: (v) => { sat.getWorldPosition(v); },
+        fire: (t) => { tSat = t; return "SATELLITE \u00b7 ping. No reply, as usual."; },
+      },
+      {
+        id: "astral-moon", r: 46,
+        at: (v) => { v.copy(moonRig.position); },
+        fire: (t) => { tMoon = t; return "MOON \u00b7 tidally locked, as advertised."; },
+      },
     ],
     update(t) {
       const a = 1.4 + t * 0.02 + view.px * 0.2 + view.yaw, r = 36;
@@ -112,7 +137,8 @@ export function buildAstral(k: PsxKit): SceneDef {
         g.m.position.set(Math.cos(ga) * g.r, Math.sin(ga) * g.r, 0);
         g.m.rotation.set(t * 0.7, t * 0.5, 0);
       });
-      core.rotation.set(t * 0.1, t * 0.13, 0);
+      const ec = burst(t - tCore, 7, 3.5);
+      core.rotation.set(t * 0.1 + ec, t * 0.13 + ec * 0.7, 0);
       coreW.rotation.copy(core.rotation);
       polyRig.rotation.y = t * 0.012;
       polys.forEach((p) => {
@@ -122,8 +148,13 @@ export function buildAstral(k: PsxKit): SceneDef {
       });
       watcher.lookAt(cam.position);
       watcher.rotateZ(t * 0.01);
-      moon.rotation.y = t * 0.02;
-      const sa = t * 0.25;
+      const ew = t - tWatch;
+      watcher.scale.set(1.7, 1.7, 1.7);
+      watcher.scale.y = 1.7 * (1 - 0.9 * Math.max(pulse(ew, 0.35), pulse(ew - 0.5, 0.35)));
+      const em = t - tMoon;
+      moon.rotation.y = t * 0.02 + burst(em, 3, 3);
+      moonRig.position.y = 14 + 1.6 * pulse(em, 2.4);
+      const sa = t * 0.25 + burst(t - tSat, 5, 3);
       sat.position.set(Math.cos(sa) * 8.5, Math.sin(sa) * 8.5, 0);
       sat.rotation.y = t;
     },
