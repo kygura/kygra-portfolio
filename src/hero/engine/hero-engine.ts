@@ -12,7 +12,6 @@ import * as THREE from "three";
 import type { Accent } from "@/theme/accent";
 import { createKit, type SceneDef } from "./psx";
 import { buildOcean } from "./ocean";
-import { buildTopo } from "./topo";
 import { buildAstral } from "./astral";
 import { buildRuins } from "./ruins";
 import { buildRail } from "./rail";
@@ -74,7 +73,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildOcean(kit), buildTopo(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
+  const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };

@@ -1,10 +1,15 @@
-/** Sheet 06 · Field: a living relief. Contours, a draped survey grid and a
+/** Sheet 05 · Field: a living relief. Contours, a draped survey grid and a
  *  wave simulation share one height field. A tap sends a pulse out from the
  *  source, a drag drags the ambient fabric (contours and grid) along with it,
- *  and the cursor lifts a soft swell and leaves a wake. */
+ *  and the cursor lifts a faint swell and leaves a wake. Kept deliberately quiet. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
-import { MS } from "./topo";
+
+// Marching-squares edge pairs per cell case (edges: 0 top, 1 right, 2 bottom, 3 left).
+export const MS: Record<number, [number, number][]> = {
+  1: [[3, 2]], 2: [[2, 1]], 3: [[3, 1]], 4: [[0, 1]], 5: [[0, 1], [3, 2]], 6: [[0, 2]], 7: [[0, 3]],
+  8: [[0, 3]], 9: [[0, 2]], 10: [[0, 3], [2, 1]], 11: [[0, 1]], 12: [[3, 1]], 13: [[2, 1]], 14: [[3, 2]],
+};
 
 interface Pulse { x: number; z: number; age: number; seed: number }
 
@@ -27,12 +32,12 @@ export function buildField(k: PsxKit): SceneDef {
   for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
     const r = Math.hypot(-half + x * cs, -half + y * cs) / half;
     const e = Math.min(1, Math.max(0, (r - 0.7) / 0.3));
-    dmp[y * W + x] = 0.9 + 4 * e * e * (3 - 2 * e);
+    dmp[y * W + x] = 1.3 + 4 * e * e * (3 - 2 * e);
   }
 
   const ambient = (x: number, z: number, t: number) => {
     const u = x * 0.11, v = z * 0.11;
-    return 2.1 * Math.sin(u * 1.1 + t * 0.05) * Math.cos(v * 0.9 - t * 0.04) + 1.2 * Math.sin((u + v) * 0.7 + 1.3 + t * 0.03) +
+    return 1.7 * Math.sin(u * 1.1 + t * 0.05) * Math.cos(v * 0.9 - t * 0.04) + 1.2 * Math.sin((u + v) * 0.7 + 1.3 + t * 0.03) +
       3.2 * Math.exp(-((x - 8) * (x - 8) + (z + 6) * (z + 6)) * 0.012) - 2.4 * Math.exp(-((x + 10) * (x + 10) + (z - 9) * (z - 9)) * 0.018) +
       0.4 * Math.sin(u * 3.1 - v * 2.3 + t * 0.07);
   };
@@ -55,7 +60,7 @@ export function buildField(k: PsxKit): SceneDef {
   const terrain = mesh(tgeo, psx({ map: tex.tPlain, tint: "#56696a", uv: 1, hypso: 1, amb: "#3e4a52", sun: "#c9c2ae" }), scene);
   terrain.frustumCulled = false;
 
-  const LV0 = -10, LSTEP = 0.5, NLV = 48;
+  const LV0 = -10, LSTEP = 0.75, NLV = 32;
   const minPos = new Float32Array(N * N * 4 * 8 * 3);
   const idxPos = new Float32Array(N * N * 4 * 4 * 3);
   const gridPos = new Float32Array((Math.floor(N / GS) + 1) * N * 12);
@@ -88,7 +93,7 @@ export function buildField(k: PsxKit): SceneDef {
 
   /* ---- pointer state ---- */
   const pulses: Pulse[] = [];
-  const LIFE = 3.4, SPEED = 9, MAXP = 6;
+  const LIFE = 2.8, SPEED = 9, MAXP = 6;
   let seedN = 1;
   let aimed = false, px = 0, pz = 0, lx = 0, lz = 0, mvx = 0, mvz = 0;
   let pressed = false, hx = 0, hz = 0, lift = 0;
@@ -119,16 +124,16 @@ export function buildField(k: PsxKit): SceneDef {
     const z0 = Math.max(0, Math.floor((cz - rad + half) / cs)), z1 = Math.min(N, Math.ceil((cz + rad + half) / cs));
     for (let y = z0; y <= z1; y++) for (let x = x0; x <= x1; x++) {
       const ox = -half + x * cs - cx, oz = -half + y * cs - cz, i = y * W + x;
-      const g = Math.exp(-(ox * ox + oz * oz) * k2) * 0.9;
+      const g = Math.exp(-(ox * ox + oz * oz) * k2) * 0.6;
       wx[i] += dx * g; wz[i] += dz * g;
       const m = Math.hypot(wx[i], wz[i]);
-      if (m > 10) { wx[i] *= 10 / m; wz[i] *= 10 / m; }
+      if (m > 7) { wx[i] *= 7 / m; wz[i] *= 7 / m; }
     }
   };
   const spawn = (x: number, z: number) => {
     if (pulses.length >= MAXP) pulses.shift();
     pulses.push({ x, z, age: 0, seed: seedN++ * 17.31 });
-    bump(wh, x, z, 9, 1.8, 4.5);
+    bump(wh, x, z, 10, 2.4, 2.2);
   };
 
   /* ---- simulation ---- */
@@ -171,7 +176,7 @@ export function buildField(k: PsxKit): SceneDef {
       const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d);
       const k0 = Math.max(0, Math.ceil((mn - LV0) / LSTEP)), k1 = Math.min(NLV - 1, Math.floor((mx - LV0) / LSTEP));
       for (let lv = k0; lv <= k1; lv++) {
-        const l = LV0 + lv * LSTEP, isIdx = lv % 5 === 0, out = isIdx ? idxPos : minPos, ci = isIdx ? 1 : 0;
+        const l = LV0 + lv * LSTEP, isIdx = lv % 4 === 0, out = isIdx ? idxPos : minPos, ci = isIdx ? 1 : 0;
         const s = MS[(a > l ? 8 : 0) | (b > l ? 4 : 0) | (c > l ? 2 : 0) | (d > l ? 1 : 0)];
         if (!s) continue;
         for (let i = 0; i < s.length; i++) {
@@ -200,7 +205,7 @@ export function buildField(k: PsxKit): SceneDef {
   };
 
   const rh = (n: number) => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
-  const drawOverlays = (t: number) => {
+  const drawOverlays = () => {
     let n = 0;
     const put = (x: number, y: number, z: number) => { ringPos[n++] = x; ringPos[n++] = y; ringPos[n++] = z; };
     for (const p of pulses) {
@@ -215,15 +220,15 @@ export function buildField(k: PsxKit): SceneDef {
       }
       const y0 = hAt(p.x, p.z);
       put(p.x, y0, p.z);
-      put(p.x, y0 + 0.4 + 3.2 * keep, p.z);
+      put(p.x, y0 + 0.3 + 1.6 * keep, p.z);
     }
     gRing.setDrawRange(0, n / 3);
     gRing.attributes.position.needsUpdate = true;
 
     n = 0;
-    const show = aimed && Math.abs(lift) > 0.05;
+    const show = aimed && Math.abs(lift) > 0.03;
     if (show) {
-      const rad = (pressed ? 1.0 : 1.7) + Math.sin(t * 4) * 0.08;
+      const rad = pressed ? 0.9 : 1.5;
       const rp = (x: number, y: number, z: number) => { retPos[n++] = x; retPos[n++] = y; retPos[n++] = z; };
       for (let i = 0; i < 20; i++) {
         const a0 = (i / 20) * Math.PI * 2, a1 = ((i + 1) / 20) * Math.PI * 2;
@@ -231,8 +236,6 @@ export function buildField(k: PsxKit): SceneDef {
         rp(x0, hAt(x0, z0) + 0.3, z0);
         rp(x1, hAt(x1, z1) + 0.3, z1);
       }
-      rp(hx - 0.5, hAt(hx - 0.5, hz) + 0.3, hz); rp(hx + 0.5, hAt(hx + 0.5, hz) + 0.3, hz);
-      rp(hx, hAt(hx, hz - 0.5) + 0.3, hz - 0.5); rp(hx, hAt(hx, hz + 0.5) + 0.3, hz + 0.5);
     }
     gRet.setDrawRange(0, n / 3);
     gRet.attributes.position.needsUpdate = true;
@@ -279,7 +282,7 @@ export function buildField(k: PsxKit): SceneDef {
         const e = 1 - Math.pow(1 - 0.3, dt * 60);
         hx += (px - hx) * e; hz += (pz - hz) * e;
       }
-      const liftT = pressed ? -1.1 : aimed ? 0.8 : 0;
+      const liftT = pressed ? -0.5 : aimed ? 0.35 : 0;
       lift += (liftT - lift) * (1 - Math.pow(1 - 0.12, dt * 60));
       if (!aimed && Math.abs(lift) < 0.01) lift = 0;
 
@@ -287,14 +290,14 @@ export function buildField(k: PsxKit): SceneDef {
       if (dt > 0 && (mvx || mvz)) {
         const speed = Math.hypot(mvx, mvz) / dt;
         if (speed > 2) {
-          bump(wv, px, pz, 6, 1.5, -(pressed ? 12 : 7) * Math.min(speed, 30) / 30);
+          bump(wv, px, pz, 6, 1.5, -(pressed ? 5 : 2.5) * Math.min(speed, 30) / 30);
         }
         if (pressed) drag(px, pz, mvx, mvz);
       }
       mvx = mvz = 0;
 
       // Warp relaxes back; pulses age out.
-      const f = Math.exp(-dt / 3.2);
+      const f = Math.exp(-dt / 2.4);
       let we = 0;
       for (let i = 0; i < wx.length; i++) {
         wx[i] *= f; wz[i] *= f;
@@ -324,7 +327,7 @@ export function buildField(k: PsxKit): SceneDef {
         rebuild(t);
         lastT = t;
       }
-      drawOverlays(t);
+      drawOverlays();
     },
     readout() {
       return [
