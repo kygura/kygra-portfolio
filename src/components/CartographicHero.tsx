@@ -155,24 +155,38 @@ const CartographicHero = () => {
         {/* Display name + tagline share one column so their left edge and
             vertical gap hold at every width. */}
         <div className="hero__intro">
-          <div className="hero__name">
-            <h1 className="hero__name-text">
-              {NAME.split("").map((ch, i) => (
-                <span key={i} data-letter className="hero__letter">
-                  {ch}
-                </span>
-              ))}
-            </h1>
-          </div>
+          <div className="hero__win">
+            <div className="hero__win-bar" aria-hidden="true">
+              <i /><i /><i />
+              <span>nicolas.txt</span>
+            </div>
+            <div className="hero__win-body">
+              <div className="hero__name">
+                <h1 className="hero__name-text">
+                  {NAME.split("").map((ch, i) => (
+                    <span key={i} data-letter className="hero__letter">
+                      {ch}
+                    </span>
+                  ))}
+                </h1>
+              </div>
 
-          <p className="hero__tagline">
-            Software ventures &amp; craft &mdash; agentic systems, markets and the open web.
-          </p>
+              <p className="hero__tagline">
+                Software ventures &amp; craft &mdash; agentic systems, markets and the open web.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Italic accent initials */}
         <div className="hero__mark">
-          <div className="hero__mark-text">C.A</div>
+          <div className="hero__win hero__win--mark">
+            <div className="hero__win-bar" aria-hidden="true">
+              <i /><i /><i />
+              <span>c.a</span>
+            </div>
+            <div className="hero__mark-text">C.A</div>
+          </div>
         </div>
 
         {/* Hairline footer strip: scene tabs on the left, scroll cue right. */}
