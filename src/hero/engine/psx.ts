@@ -35,6 +35,12 @@ export interface LabelDef {
   sub2?: () => string;
 }
 
+/** A pointer position projected onto the scene's ground, in world XZ. */
+export interface TouchPoint {
+  x: number;
+  z: number;
+}
+
 export interface SceneDef {
   scene: THREE.Scene;
   cam: THREE.PerspectiveCamera;
@@ -42,6 +48,19 @@ export interface SceneDef {
   fov: [number, number];
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
   limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
+  /** Opt-in pointer interaction. When present, a plain drag goes to the scene
+   *  instead of orbiting (Shift+drag still orbits). */
+  touch?: {
+    /** Surface height at a world point, so picks land on the relief rather than y=0. */
+    ground: (x: number, z: number) => number;
+    /** Hover position every frame, or null once the pointer leaves. */
+    aim: (p: TouchPoint | null) => void;
+    tap: (p: TouchPoint) => void;
+    /** Drag step: current point plus the world-space move since the last one. */
+    drag: (p: TouchPoint, dx: number, dz: number) => void;
+    /** True while the scene is still settling, so the loop keeps running with motion paused. */
+    busy: () => boolean;
+  };
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
   update: (t: number) => void;

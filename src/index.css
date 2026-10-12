@@ -157,6 +157,8 @@
   -webkit-user-select: none;
 }
 .hero__stage.is-dragging { cursor: grabbing; }
+.hero__stage.is-field { cursor: crosshair; }
+.hero__stage.is-field.is-dragging { cursor: grabbing; }
 
 .hero__canvas {
   position: absolute;

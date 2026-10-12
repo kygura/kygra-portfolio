@@ -7,7 +7,7 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 three-scene renderer (ocean / topo / astral / ruins / rail). three.js is fetched
+ * the PS1 three-scene renderer (ocean / topo / astral / ruins / rail / field). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
@@ -160,7 +160,7 @@ const CartographicHero = () => {
               <kbd>]</kbd>
             </span>
             <span className="hero__orbit-hint" aria-hidden="true">
-              DRAG TO ORBIT &middot; CTRL+WHEEL TO ZOOM &middot; DOUBLE-CLICK TO RESET
+              {SHEETS[sheet].hint ?? "DRAG TO ORBIT \u00b7 CTRL+WHEEL TO ZOOM \u00b7 DOUBLE-CLICK TO RESET"}
             </span>
           </div>
           <div className="hero__cue">

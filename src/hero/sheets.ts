@@ -1,10 +1,12 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "topo" | "astral" | "ruins" | "rail";
+  id: "ocean" | "topo" | "astral" | "ruins" | "rail" | "field";
   no: string;
   name: string;
   aria: string;
+  /** Interaction hint for the strip; the orbit hint is used when omitted. */
+  hint?: string;
 }
 
 export const SHEETS: SheetMeta[] = [
@@ -37,5 +39,12 @@ export const SHEETS: SheetMeta[] = [
     no: "05",
     name: "Rail",
     aria: "Animated low-poly scene: a lone station platform in an endless still sea, a train arriving along a causeway over the water, a city skyline on the horizon, under two suns.",
+  },
+  {
+    id: "field",
+    no: "06",
+    name: "Field",
+    aria: "Interactive low-poly relief map: a living field of contour lines and drifting particles over shifting terrain. Clicking sends a pulse rippling out across the contours; dragging warps the ground.",
+    hint: "CLICK TO PULSE \u00b7 DRAG TO WARP \u00b7 SHIFT+DRAG TO ORBIT",
   },
 ];
