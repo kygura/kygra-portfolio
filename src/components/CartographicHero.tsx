@@ -1,11 +1,11 @@
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
 
 /**
- * Cartographic hero: stage, name, tagline, accent initials and hairline
+ * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
  * the PS1 five-scene renderer (ocean / astral / ruins / rail / field). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
@@ -16,32 +16,6 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
  */
 
 const NAME = "NICOLAS";
-const MARK = "C.A";
-
-/** Types NAME, then MARK, one character at a time; the caret rides the one being typed. */
-function useTyping(reduced: boolean) {
-  const total = NAME.length + MARK.length;
-  const [n, setN] = useState(reduced ? total : 0);
-  const [caret, setCaret] = useState(!reduced);
-  useEffect(() => {
-    if (reduced) return;
-    let i = 0, t = 0;
-    const step = () => {
-      i++;
-      setN(i);
-      if (i >= total) {
-        t = window.setTimeout(() => setCaret(false), 1000);
-        return;
-      }
-      t = window.setTimeout(step, i === NAME.length ? 140 : i < NAME.length ? 42 : 65);
-    };
-    t = window.setTimeout(step, 300);
-    return () => window.clearTimeout(t);
-  }, [reduced, total]);
-  return { name: Math.min(n, NAME.length), mark: Math.max(0, n - NAME.length), caret };
-}
-
-const Caret = () => <span className="hero__caret" aria-hidden="true" />;
 
 const readFound = (): string[] => {
   try {
@@ -59,7 +33,6 @@ const CartographicHero = () => {
   const accent = useAccent();
   const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
   const [noGl, setNoGl] = useState(false);
-  const typing = useTyping(Boolean(reduceQuery()?.matches));
   const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
   const found = useRef<Set<string> | null>(null);
   const eggTimer = useRef(0);
@@ -182,43 +155,24 @@ const CartographicHero = () => {
         {/* Display name + tagline share one column so their left edge and
             vertical gap hold at every width. */}
         <div className="hero__intro">
-          <div className="hero__win">
-            <div className="hero__win-body">
-              <div className="hero__name">
-                <h1 className="hero__name-text" aria-label={NAME}>
-                  {typing.caret && typing.name === 0 && <Caret />}
-                  {NAME.split("").map((ch, i) => (
-                    <Fragment key={i}>
-                      <span data-letter className="hero__letter" aria-hidden="true" data-pending={i >= typing.name || undefined}>
-                        {ch}
-                      </span>
-                      {typing.caret && typing.mark === 0 && typing.name === i + 1 && <Caret />}
-                    </Fragment>
-                  ))}
-                </h1>
-              </div>
-
-              <p className="hero__tagline">
-                Software ventures &amp; craft: agentic systems, markets and the open web.
-              </p>
-            </div>
+          <div className="hero__name">
+            <h1 className="hero__name-text">
+              {NAME.split("").map((ch, i) => (
+                <span key={i} data-letter className="hero__letter">
+                  {ch}
+                </span>
+              ))}
+            </h1>
           </div>
+
+          <p className="hero__tagline">
+            Software ventures &amp; craft: agentic systems, markets and the open web.
+          </p>
         </div>
 
         {/* Italic accent initials */}
         <div className="hero__mark">
-          <div className="hero__win hero__win--mark">
-            <div className="hero__mark-text" aria-label={MARK}>
-              {MARK.split("").map((ch, i) => (
-                <Fragment key={i}>
-                  <span className="hero__letter" aria-hidden="true" data-pending={i >= typing.mark || undefined}>
-                    {ch}
-                  </span>
-                  {typing.caret && typing.name === NAME.length && typing.mark === i + 1 && <Caret />}
-                </Fragment>
-              ))}
-            </div>
-          </div>
+          <div className="hero__mark-text">C.A</div>
         </div>
 
         {/* Hairline footer strip: scene tabs on the left, scroll cue right. */}
