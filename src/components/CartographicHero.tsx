@@ -5,7 +5,7 @@ import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
 
 /**
- * Cartographic hero — stage, name, tagline, accent initials and hairline
+ * Cartographic hero: stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
  * the PS1 five-scene renderer (ocean / astral / ruins / rail / field). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
@@ -183,10 +183,6 @@ const CartographicHero = () => {
             vertical gap hold at every width. */}
         <div className="hero__intro">
           <div className="hero__win">
-            <div className="hero__win-bar" aria-hidden="true">
-              <i /><i /><i />
-              <span>nicolas.txt</span>
-            </div>
             <div className="hero__win-body">
               <div className="hero__name">
                 <h1 className="hero__name-text" aria-label={NAME}>
@@ -203,7 +199,7 @@ const CartographicHero = () => {
               </div>
 
               <p className="hero__tagline">
-                Software ventures &amp; craft &mdash; agentic systems, markets and the open web.
+                Software ventures &amp; craft: agentic systems, markets and the open web.
               </p>
             </div>
           </div>
@@ -212,10 +208,6 @@ const CartographicHero = () => {
         {/* Italic accent initials */}
         <div className="hero__mark">
           <div className="hero__win hero__win--mark">
-            <div className="hero__win-bar" aria-hidden="true">
-              <i /><i /><i />
-              <span>c.a</span>
-            </div>
             <div className="hero__mark-text" aria-label={MARK}>
               {MARK.split("").map((ch, i) => (
                 <Fragment key={i}>
