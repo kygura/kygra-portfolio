@@ -33,9 +33,9 @@ function useTyping(reduced: boolean) {
         t = window.setTimeout(() => setCaret(false), 1000);
         return;
       }
-      t = window.setTimeout(step, i === NAME.length ? 420 : i < NAME.length ? 95 : 150);
+      t = window.setTimeout(step, i === NAME.length ? 140 : i < NAME.length ? 42 : 65);
     };
-    t = window.setTimeout(step, 650);
+    t = window.setTimeout(step, 300);
     return () => window.clearTimeout(t);
   }, [reduced, total]);
   return { name: Math.min(n, NAME.length), mark: Math.max(0, n - NAME.length), caret };

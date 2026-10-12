@@ -183,9 +183,9 @@
 /* Name and tagline share one column: one gutter, one vertical rhythm. */
 .hero__intro {
   position: absolute;
-  top: calc(var(--nav-h) + 22px);
-  left: var(--hero-gutter);
-  right: var(--hero-gutter);
+  top: calc(var(--nav-h) + 10px);
+  left: 16px;
+  right: 16px;
   pointer-events: none;
 }
 
@@ -196,7 +196,7 @@
   border: 1px solid var(--rule-2);
   background: var(--hero-tint);
 }
-.hero__win-body { padding: 10px 14px 12px; }
+.hero__win-body { padding: 8px 12px 10px; }
 .hero__win--mark { pointer-events: none; }
 
 .hero__name {
@@ -208,7 +208,7 @@
   margin: 0;
   font-family: var(--f-body);
   font-weight: 400;
-  font-size: clamp(34px, 6vw, 104px);
+  font-size: clamp(28px, 4.2vw, 72px);
   line-height: 0.82;
 
   letter-spacing: -0.015em;
@@ -237,11 +237,12 @@
 @media (prefers-reduced-motion: reduce) { .hero__caret { display: none; } }
 
 .hero__tagline {
-  margin: clamp(8px, 1.1vw, 14px) 0 0;
-  max-width: 38ch;
-  width: clamp(200px, 20vw, 290px);
+  margin: clamp(6px, 0.7vw, 10px) 0 0;
+  /* zero intrinsic width: the panel is exactly as wide as the name */
+  width: 0;
+  min-width: 100%;
   font-family: var(--f-body);
-  font-size: clamp(13px, 1.1vw, 17px);
+  font-size: clamp(11px, 0.85vw, 14px);
   line-height: 1.45;
   color: var(--ink);
   text-wrap: pretty;
@@ -252,8 +253,8 @@
 
 .hero__mark {
   position: absolute;
-  right: var(--hero-gutter);
-  bottom: calc(var(--strip-h, 60px) + 18px);
+  right: 16px;
+  bottom: calc(var(--strip-h, 60px) + 14px);
   transform-origin: center center;
   pointer-events: none;
   will-change: transform, opacity;
@@ -262,7 +263,7 @@
 .hero__mark-text {
   font-family: var(--f-body);
   font-style: italic;
-  font-size: clamp(34px, 5.5vw, 96px);
+  font-size: clamp(28px, 3.8vw, 64px);
   line-height: 0.78;
   padding: 0.04em 0.18em 0.1em;
   color: var(--accent);
