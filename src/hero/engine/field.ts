@@ -32,7 +32,7 @@ export function buildField(k: PsxKit): SceneDef {
   for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
     const r = Math.hypot(-half + x * cs, -half + y * cs) / half;
     const e = Math.min(1, Math.max(0, (r - 0.7) / 0.3));
-    dmp[y * W + x] = 1.3 + 4 * e * e * (3 - 2 * e);
+    dmp[y * W + x] = 0.9 + 4 * e * e * (3 - 2 * e);
   }
 
   const ambient = (x: number, z: number, t: number) => {
@@ -93,7 +93,7 @@ export function buildField(k: PsxKit): SceneDef {
 
   /* ---- pointer state ---- */
   const pulses: Pulse[] = [];
-  const LIFE = 2.8, SPEED = 9, MAXP = 6;
+  const LIFE = 3.4, SPEED = 9, MAXP = 6;
   let seedN = 1;
   let aimed = false, px = 0, pz = 0, lx = 0, lz = 0, mvx = 0, mvz = 0;
   let pressed = false, hx = 0, hz = 0, lift = 0;
@@ -133,7 +133,7 @@ export function buildField(k: PsxKit): SceneDef {
   const spawn = (x: number, z: number) => {
     if (pulses.length >= MAXP) pulses.shift();
     pulses.push({ x, z, age: 0, seed: seedN++ * 17.31 });
-    bump(wh, x, z, 10, 2.4, 2.2);
+    bump(wh, x, z, 9, 1.8, 4.5);
   };
 
   /* ---- simulation ---- */
@@ -220,7 +220,7 @@ export function buildField(k: PsxKit): SceneDef {
       }
       const y0 = hAt(p.x, p.z);
       put(p.x, y0, p.z);
-      put(p.x, y0 + 0.3 + 1.6 * keep, p.z);
+      put(p.x, y0 + 0.4 + 3.2 * keep, p.z);
     }
     gRing.setDrawRange(0, n / 3);
     gRing.attributes.position.needsUpdate = true;
