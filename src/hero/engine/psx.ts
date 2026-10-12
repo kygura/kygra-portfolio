@@ -35,6 +35,14 @@ export interface LabelDef {
   sub2?: () => string;
 }
 
+/** Pointer in NDC (-1..1, y up) over the hero stage, for scenes that play back. */
+export interface ScenePointer {
+  kind: "move" | "down" | "up" | "cancel" | "leave";
+  x: number;
+  y: number;
+  touch?: boolean;
+}
+
 export interface SceneDef {
   scene: THREE.Scene;
   cam: THREE.PerspectiveCamera;
@@ -42,7 +50,11 @@ export interface SceneDef {
   fov: [number, number];
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
-  update: (t: number) => void;
+  update: (t: number, dt?: number) => void;
+  /** Interactive scenes only: receives pointer input. */
+  pointer?: (e: ScenePointer) => void;
+  /** Interactive scenes only: true while something is still settling, so the loop keeps running. */
+  busy?: () => boolean;
   readout: () => [string, string][];
 }
 

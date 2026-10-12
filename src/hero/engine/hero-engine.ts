@@ -16,6 +16,7 @@ import { buildTopo } from "./topo";
 import { buildAstral } from "./astral";
 import { buildRuins } from "./ruins";
 import { buildRail } from "./rail";
+import { buildField } from "./field";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
@@ -69,7 +70,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildOcean(kit), buildTopo(kit), buildAstral(kit), buildRuins(kit), buildRail(kit)];
+  const SC: SceneDef[] = [buildOcean(kit), buildTopo(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -196,7 +197,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
-  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1);
+  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || Boolean(SC[cur].busy?.()));
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -206,8 +207,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     kit.view.px += (tpx - kit.view.px) * 0.05;
     kit.view.py += (tpy - kit.view.py) * 0.05;
     U.uTime.value = t;
-    SC[cur].update(t);
-    if (mixT < 1) SC[prev].update(t);
+    SC[cur].update(t, dt);
+    if (mixT < 1) SC[prev].update(t, dt);
     render();
     placeLabels(SC[cur]);
     if (frameN++ % 6 === 0 || dirty) readouts(SC[cur]);
@@ -221,7 +222,35 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   }
 
   /* ---- observers ---- */
+  const ndc = (e: PointerEvent) => {
+    const r = host.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: -(((e.clientY - r.top) / r.height) * 2 - 1) };
+  };
+  let activePtr = -1;
+  const send = (kind: "move" | "down" | "up" | "cancel" | "leave", e: PointerEvent) => {
+    SC[cur].pointer?.({ kind, ...ndc(e), touch: e.pointerType !== "mouse" });
+    dirty = true;
+    kick();
+  };
+  const onDown = (e: PointerEvent) => {
+    if (!SC[cur].pointer || activePtr !== -1) return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    // Tabs and links on the stage keep their own clicks.
+    if ((e.target as Element | null)?.closest?.("button, a")) return;
+    activePtr = e.pointerId;
+    try { host.setPointerCapture(e.pointerId); } catch { /* capture is best-effort */ }
+    send("down", e);
+  };
+  const onUp = (e: PointerEvent) => {
+    if (e.pointerId !== activePtr) return;
+    activePtr = -1;
+    send(e.type === "pointercancel" ? "cancel" : "up", e);
+  };
+  const onLeave = (e: PointerEvent) => {
+    if (e.pointerType === "mouse" && activePtr === -1) send("leave", e);
+  };
   const onPointer = (e: PointerEvent) => {
+    if (SC[cur].pointer && (e.pointerType === "mouse" || e.pointerId === activePtr)) send("move", e);
     if (!motion) return;
     const r = host.getBoundingClientRect();
     tpx = (e.clientX - r.left) / r.width - 0.5;
@@ -238,6 +267,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     o.onContextLost();
   };
   host.addEventListener("pointermove", onPointer);
+  host.addEventListener("pointerdown", onDown);
+  host.addEventListener("pointerup", onUp);
+  host.addEventListener("pointercancel", onUp);
+  host.addEventListener("pointerleave", onLeave);
   document.addEventListener("visibilitychange", onVisibility);
   canvas.addEventListener("webglcontextlost", onLost);
   const io = new IntersectionObserver((es) => {
@@ -248,6 +281,13 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
+  // Interactive sheets own taps and horizontal drags; vertical pans still scroll the page.
+  const setTouch = () => {
+    const on = Boolean(SC[cur].pointer);
+    host.style.touchAction = on ? "pan-y" : "";
+    host.style.userSelect = on ? "none" : "";
+  };
+  setTouch();
   buildLabels(SC[cur]);
   resize();
 
@@ -267,6 +307,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       prev = cur;
       cur = i;
       mixT = psxOn && !o.reducedMotion ? 0 : 1;
+      activePtr = -1;
+      setTouch();
       buildLabels(SC[cur]);
       dirty = true;
       kick();
@@ -288,6 +330,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
+      host.removeEventListener("pointerdown", onDown);
+      host.removeEventListener("pointerup", onUp);
+      host.removeEventListener("pointercancel", onUp);
+      host.removeEventListener("pointerleave", onLeave);
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();
