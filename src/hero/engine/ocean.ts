@@ -1,6 +1,6 @@
 /** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, a moored wing-sail ship, twin suns. */
 import * as THREE from "three";
-import type { PsxKit, SceneDef, V3 } from "./psx";
+import { burst, pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 
 type Kind = "box" | "cyl" | "taper";
 
@@ -296,6 +296,8 @@ export function buildOcean(k: PsxKit): SceneDef {
     return { l, r: 7 + rnd() * 10, y: 16 + rnd() * 9, sp: (0.12 + rnd() * 0.1) * (i % 3 ? 1 : -1), ph: rnd() * 6.28 };
   });
 
+  // easter eggs: start times, negative = never fired
+  let tRotor = -99, tSun = -99, tGull = -99;
   const tmpV = new THREE.Vector3();
   return {
     scene, cam, fog: [25, 120], fov: [64, 74], limits: { pitch: [-0.05, 0.7], zoom: [0.55, 1.5] },
@@ -303,6 +305,23 @@ export function buildOcean(k: PsxKit): SceneDef {
       { name: "Drowned spire", sub: "canopy reclaimed", at: (v) => { v.set(0, spireTop, 0); } },
       { name: "Wing-ship", sub: "moored · 2 sails", at: (v) => { v.set(-2, 9.6, 0); ship.localToWorld(v); } },
       { name: "Twin suns", sub: "binary, setting", at: (v) => { v.copy(sunA.position).y += 16; } },
+    ],
+    eggs: [
+      {
+        id: "ocean-turbine", r: 34,
+        at: (v) => { rotor.getWorldPosition(v); },
+        fire: (t) => { tRotor = t; return "WING-SHIP \u00b7 the turbine spins up. Nobody aboard to notice."; },
+      },
+      {
+        id: "ocean-suns", r: 40,
+        at: (v) => { v.copy(sunA.position); },
+        fire: (t) => { tSun = t; return "TWIN SUNS \u00b7 still two. Checked."; },
+      },
+      {
+        id: "ocean-gull", r: 32,
+        at: (v) => { v.copy(gulls[0].l.position); },
+        fire: (t) => { tGull = t; return "GULL \u00b7 barrel roll. Unprompted, it claims."; },
+      },
     ],
     update(t) {
       for (let i = 0; i < wpos.count; i++) wpos.setY(i, wave(wx[i], wz[i], t));
@@ -313,7 +332,9 @@ export function buildOcean(k: PsxKit): SceneDef {
       ship.position.y = wave(SX, SZ, t) * 0.7 - 0.3;
       ship.rotation.x = Math.sin(t * 0.8) * 0.025;
       ship.rotation.z = (wave(SX - 3, SZ, t) - wave(SX + 3, SZ, t)) * 0.05;
-      rotor.rotation.y = t * 2.6;
+      const er = t - tRotor;
+      rotor.rotation.y = t * 2.6 + burst(er, 38, 5);
+      ship.position.y += 0.1 * pulse(er, 1.2);
       ship.updateMatrixWorld();
       const lp = lineGeo.attributes.position;
       cleats.forEach((c, i) => { tmpV.copy(c); ship.localToWorld(tmpV); lp.setXYZ(i, tmpV.x, tmpV.y, tmpV.z); });
@@ -327,12 +348,18 @@ export function buildOcean(k: PsxKit): SceneDef {
       }
       glintGeo.attributes.position.needsUpdate = true;
 
+      const es = t - tSun;
+      sunA.scale.setScalar(1 + 0.4 * pulse(es, 1.4));
+      sunB.scale.setScalar(1 + 0.5 * pulse(es - 0.5, 1.4));
+
       for (const g of gulls) {
         const a = g.ph + t * g.sp;
         g.l.position.set(Math.cos(a) * g.r, g.y + Math.sin(t * 0.5 + g.ph) * 0.8, 6 + Math.sin(a) * g.r);
         g.l.rotation.y = -a + (g.sp > 0 ? 0 : Math.PI);
         g.l.scale.y = Math.sin(t * 6 + g.ph * 3);
       }
+      const eg = Math.min(1, (t - tGull) / 1.3);
+      gulls[0].l.rotation.z = eg > 0 && eg < 1 ? eg * eg * (3 - 2 * eg) * Math.PI * 2 : 0;
 
       const a = -1.09 + Math.sin(t * 0.035) * 0.18 + view.px * 0.12 + view.yaw, r = 34 + Math.sin(t * 0.05) * 2;
       const x = Math.cos(a) * r, z = Math.sin(a) * r;

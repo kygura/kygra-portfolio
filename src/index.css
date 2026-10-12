@@ -1618,6 +1618,35 @@ kbd {
   .hero__sheet small { display: none; }
 }
 
+/* Easter-egg readout: a hairline caption that rides just above the strip. */
+.hero__egg {
+  position: absolute;
+  left: var(--hero-gutter);
+  bottom: calc(var(--strip-h, 88px) + 12px);
+  max-width: calc(100% - 2 * var(--hero-gutter));
+  pointer-events: none;
+}
+.hero__egg p {
+  margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 4px 10px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  background: var(--code);
+  border: 1px solid var(--rule-2);
+  animation: eggIn 0.25s steps(4) both, eggOut 0.4s steps(4) 4.6s forwards;
+}
+.hero__egg p.is-new { border-color: var(--accent); }
+.hero__egg small { font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.06em; color: var(--ink-3); }
+.hero__egg p.is-new small { color: var(--accent); }
+@keyframes eggIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes eggOut { to { opacity: 0; } }
+
 .hero__strip, .hero__marker { font-family: var(--f-pixel); letter-spacing: 0.08em; }
 .manifesto__eyebrow { font-family: var(--f-pixel); letter-spacing: 0.08em; }
 

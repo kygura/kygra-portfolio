@@ -35,6 +35,16 @@ export interface LabelDef {
   sub2?: () => string;
 }
 
+/** A hidden tap target. The engine projects `at` to the screen and fires the
+ *  nearest egg within `r` CSS px of a tap; the scene animates its own reaction. */
+export interface EggDef {
+  id: string;
+  at: (v: V3) => void;
+  r?: number;
+  /** Start the reaction at scene time `t`; returns the line shown to the visitor. */
+  fire: (t: number) => string;
+}
+
 export interface SceneDef {
   scene: THREE.Scene;
   cam: THREE.PerspectiveCamera;
@@ -43,6 +53,7 @@ export interface SceneDef {
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
   limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
   labels: LabelDef[];
+  eggs?: EggDef[];
   moteMat?: THREE.PointsMaterial;
   /** Optional pointer bridge. A scene with one owns plain drags (orbit moves to Shift+drag). */
   pointer?: {
@@ -381,6 +392,21 @@ export function createKit(accent: Accent) {
     return g;
   };
 
+  // Additive glow disc for one-shot flashes; the caller faces it to the camera and drives `mat.opacity`.
+  const flare = (parent: THREE.Object3D, x: number, y: number, z: number, r: number) => {
+    const mat = new THREE.MeshBasicMaterial({ color: U.uAccent.value, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+    const g = new THREE.Group();
+    g.position.set(x, y, z);
+    g.visible = false;
+    parent.add(g);
+    [r, r * 2.4].forEach((rr, i) => {
+      const m = new THREE.Mesh(new THREE.CircleGeometry(rr, 12), mat);
+      m.position.z = -i * 0.1;
+      g.add(m);
+    });
+    return { g, mat };
+  };
+
   /* ---- shared materials ---- */
   const M = {
     stone: psx({ map: tStone, tint: "#bdbaa8", moss: 0.8 }),
@@ -450,11 +476,16 @@ export function createKit(accent: Accent) {
   return {
     U, rnd,
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
-    psx, lineMat, facet, wallUV, mesh, batcher, segs, circle, skyDome, sunDisc, M,
+    psx, lineMat, facet, wallUV, mesh, batcher, segs, circle, skyDome, sunDisc, flare, M,
     view,
     orbit, look,
     pad, dms, bearing, gridRef,
   };
 }
+
+/** Spin-up that eases to rest: extra angle after `e` seconds of a burst starting at speed `v0` and stopping at `T`. */
+export const burst = (e: number, v0: number, T: number) => (e <= 0 ? 0 : e < T ? v0 * (e - (e * e) / (2 * T)) : (v0 * T) / 2);
+/** One-shot bump: 0 before the start and after `T`, a half sine between. */
+export const pulse = (e: number, T: number) => (e > 0 && e < T ? Math.sin((Math.PI * e) / T) : 0);
 
 export type PsxKit = ReturnType<typeof createKit>;

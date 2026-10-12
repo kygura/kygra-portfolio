@@ -1,6 +1,6 @@
 /** Sheet 04 · Ruins: a misty ring of mixed ruins around a colonnaded shrine in old forest, a floating ward crystal, runes, wisps and light shafts. */
 import * as THREE from "three";
-import type { PsxKit, SceneDef } from "./psx";
+import { burst, pulse, type PsxKit, type SceneDef } from "./psx";
 
 export function buildRuins(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view, U } = k;
@@ -264,12 +264,48 @@ export function buildRuins(k: PsxKit): SceneDef {
   const wispG = facet(new THREE.IcosahedronGeometry(0.1, 0));
   const wisps = Array.from({ length: 6 }, (_, i) => ({ m: mesh(wispG, M.glyph, scene), r: 1.7 + i * 0.4, ph: i * 1.7, sp: 0.25 + rnd() * 0.25 }));
 
+  // old growth lets go of a few leaves
+  const NL = 40, lp = new Float32Array(NL * 3), lBase = new Float32Array(NL * 3);
+  for (let i = 0; i < NL; i++) {
+    const a = rnd() * 6.28, r = rnd() * 3.6;
+    lBase[i * 3] = OX + Math.cos(a) * r;
+    lBase[i * 3 + 1] = OY + 8 + rnd() * 3;
+    lBase[i * 3 + 2] = OZ + Math.sin(a) * r;
+  }
+  const leafGeo = new THREE.BufferGeometry();
+  leafGeo.setAttribute("position", new THREE.BufferAttribute(lp, 3));
+  const leaves = new THREE.Points(leafGeo, new THREE.PointsMaterial({ color: "#a3b07a", size: 3, sizeAttenuation: false }));
+  leaves.frustumCulled = false;
+  leaves.visible = false;
+  scene.add(leaves);
+
+  // easter eggs: start times
+  let tWard = -99, tWisp = -99, tLeaf = -99;
+  const LEAF_T = 7;
+
   return {
     scene, cam, fog: [5, 34], fov: [64, 74], limits: { pitch: [-0.02, 0.8], zoom: [0.8, 1.45] }, moteMat,
     labels: [
       { name: "Ward stone", sub: "still lit", at: (v) => { v.copy(crystal.position).y += 1.4; } },
       { name: "Stone circle", sub: `${standing} of 12 standing`, at: (v) => { v.copy(circleTop[0]).y += 0.6; } },
       { name: "Old growth", sub: "roots over the colonnade", at: (v) => { v.set(OX, OY + 12, OZ); } },
+    ],
+    eggs: [
+      {
+        id: "ruins-ward", r: 40,
+        at: (v) => { v.copy(crystal.position); },
+        fire: (t) => { tWard = t; return "WARD STONE \u00b7 hums a half step flat."; },
+      },
+      {
+        id: "ruins-wisps", r: 30,
+        at: (v) => { v.copy(wisps[0].m.position); },
+        fire: (t) => { tWisp = t; return "WISPS \u00b7 they were never following you."; },
+      },
+      {
+        id: "ruins-tree", r: 56,
+        at: (v) => { v.set(OX, OY + 6, OZ); },
+        fire: (t) => { tLeaf = t; return "OLD GROWTH \u00b7 lets go of a few things."; },
+      },
     ],
     update(t) {
       const a = 2.1 + t * 0.018 + view.px * 0.12 + view.yaw, r = 7.6 + Math.sin(t * 0.07) * 0.5, x = Math.cos(a) * r, z = Math.sin(a) * r;
@@ -278,20 +314,34 @@ export function buildRuins(k: PsxKit): SceneDef {
       k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);
 
-      crystal.position.y = CY + Math.sin(t * 0.9) * 0.15;
-      crystal.rotation.y = t * 0.6;
-      runeRing.rotation.y = -t * 0.25;
+      const ew = t - tWard;
+      crystal.position.y = CY + Math.sin(t * 0.9) * 0.15 + 0.3 * pulse(ew, 1.6);
+      crystal.rotation.y = t * 0.6 + burst(ew, 9, 3.5);
+      crystal.scale.set(0.8, 1.5, 0.8).multiplyScalar(1 + 0.35 * pulse(ew, 1.2));
+      runeRing.rotation.y = -t * 0.25 - burst(ew, 6, 4);
       runeRing.rotation.x = Math.sin(t * 0.3) * 0.12;
       glow.lookAt(cam.position);
       glowMat.color.copy(U.uAccent.value);
-      glowMat.opacity = 0.13 + Math.sin(t * 1.3) * 0.04;
+      glowMat.opacity = 0.13 + Math.sin(t * 1.3) * 0.04 + 0.3 * pulse(ew, 1.6);
       for (const m of mists) {
         m.t.offset.set((t * m.sp * m.dir) % 1, (t * m.sp * 0.6) % 1);
       }
+      const ewi = pulse(t - tWisp, 3.2);
       wisps.forEach((w, i) => {
-        const wa = w.ph + t * w.sp;
-        w.m.position.set(Math.cos(wa) * w.r, 1.2 + i * 0.35 + Math.sin(t * 0.8 + w.ph) * 0.5, Math.sin(wa) * w.r);
+        const wa = w.ph + t * w.sp, wr = w.r * (1 + 2.2 * ewi);
+        w.m.position.set(Math.cos(wa) * wr, 1.2 + i * 0.35 + Math.sin(t * 0.8 + w.ph) * 0.5 + 2.5 * ewi, Math.sin(wa) * wr);
       });
+      const el = t - tLeaf;
+      leaves.visible = el > 0 && el < LEAF_T;
+      if (leaves.visible) {
+        for (let i = 0; i < NL; i++) {
+          const fall = Math.max(0, el - (i % 8) * 0.18), gy = ground(lBase[i * 3], lBase[i * 3 + 2]) + 0.05;
+          lp[i * 3] = lBase[i * 3] + Math.sin(fall * 1.7 + i) * 0.9 - fall * 0.35;
+          lp[i * 3 + 1] = Math.max(gy, lBase[i * 3 + 1] - fall * 1.5);
+          lp[i * 3 + 2] = lBase[i * 3 + 2] + Math.cos(fall * 1.3 + i * 2) * 0.9;
+        }
+        leafGeo.attributes.position.needsUpdate = true;
+      }
       for (let i = 0; i < NM; i++) {
         mp[i * 3 + 1] = moteBase[i * 3 + 1] + ((t * 0.1 + i * 0.37) % 2.5);
         mp[i * 3] = moteBase[i * 3] + Math.sin(t * 0.3 + i) * 0.35;

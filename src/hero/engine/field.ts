@@ -241,13 +241,27 @@ export function buildField(k: PsxKit): SceneDef {
     gRet.attributes.position.needsUpdate = true;
   };
 
+  // easter egg: the benchmark answers with a cascade of pulses
+  const cascade: { due: number; x: number; z: number }[] = [];
   const busy = () =>
-    pressed || pulses.length > 0 || waveE > 0.004 || warpE > 0.01 || Math.abs(lift) > 0.01 ||
+    cascade.length > 0 || pressed || pulses.length > 0 || waveE > 0.004 || warpE > 0.01 || Math.abs(lift) > 0.01 ||
     (aimed && Math.hypot(px - hx, pz - hz) > 0.05);
 
   return {
     scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [-0.85, 0.4], zoom: [0.6, 1.8] },
     labels: [],
+    eggs: [
+      {
+        id: "field-benchmark", r: 40,
+        at: (v) => { v.copy(trig); },
+        fire: () => {
+          const now = performance.now();
+          [[0, 0, 0], [220, 9, 0], [440, 0, 9], [660, -9, 0], [880, 0, -9]].forEach(([d, dx, dz]) =>
+            cascade.push({ due: now + d, x: trig.x + dx, z: trig.z + dz }));
+          return "BENCHMARK \u00b7 triangulated. Thoroughly.";
+        },
+      },
+    ],
     pointer: {
       aim(ray, moved) {
         const ok = ray ? pick(ray) : false;
@@ -295,6 +309,12 @@ export function buildField(k: PsxKit): SceneDef {
         if (pressed) drag(px, pz, mvx, mvz);
       }
       mvx = mvz = 0;
+
+      for (let i = cascade.length - 1; i >= 0; i--) {
+        if (cascade[i].due > now) continue;
+        spawn(cascade[i].x, cascade[i].z);
+        cascade.splice(i, 1);
+      }
 
       // Warp relaxes back; pulses age out.
       const f = Math.exp(-dt / 2.4);

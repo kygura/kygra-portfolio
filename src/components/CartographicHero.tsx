@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, SHEET_KEY, storedIndex, useAccent, writeStored } from "@/theme/accent";
+import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
@@ -17,6 +17,15 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
 
 const NAME = "NICOLAS";
 
+const readFound = (): string[] => {
+  try {
+    const v = JSON.parse(readStored(EGGS_KEY) ?? "[]");
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+};
+
 const reduceQuery = () =>
   typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 
@@ -24,6 +33,9 @@ const CartographicHero = () => {
   const accent = useAccent();
   const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
   const [noGl, setNoGl] = useState(false);
+  const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
+  const found = useRef<Set<string> | null>(null);
+  const eggTimer = useRef(0);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,6 +65,17 @@ const CartographicHero = () => {
           psx: true,
           reducedMotion: reduced,
           onContextLost: () => setNoGl(true),
+          onEgg: ({ id, text, total }) => {
+            found.current ??= new Set(readFound());
+            const fresh = !found.current.has(id);
+            if (fresh) {
+              found.current.add(id);
+              writeStored(EGGS_KEY, JSON.stringify([...found.current]));
+            }
+            setEgg({ n: found.current.size, text, total, fresh, key: Date.now() });
+            window.clearTimeout(eggTimer.current);
+            eggTimer.current = window.setTimeout(() => setEgg(null), 5000);
+          },
         });
         engineRef.current = engine;
       })
@@ -61,6 +84,7 @@ const CartographicHero = () => {
       });
     return () => {
       dead = true;
+      window.clearTimeout(eggTimer.current);
       engine?.dispose();
       engineRef.current = null;
     };
@@ -116,6 +140,17 @@ const CartographicHero = () => {
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" role="img" aria-label={SHEETS[sheet].aria} />
         <div className="hero__vignette" />
+
+        <div className="hero__egg" role="status" aria-live="polite">
+          {egg && (
+            <p key={egg.key} className={egg.fresh ? "is-new" : undefined}>
+              <small>
+                {egg.fresh ? "FOUND" : "AGAIN"} {String(egg.n).padStart(2, "0")}/{String(egg.total).padStart(2, "0")}
+              </small>
+              {egg.text}
+            </p>
+          )}
+        </div>
 
         {/* Display name + tagline share one column so their left edge and
             vertical gap hold at every width. */}
