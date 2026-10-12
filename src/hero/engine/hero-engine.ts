@@ -113,6 +113,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let yawT = 0, pitchT = 0, zoomT = 1;
   let yawV = 0, pitchV = 0;
   let drag: { id: number; x: number; y: number } | null = null;
+  let down: { x: number; y: number; at: number } | null = null;
   const clampView = () => {
     const lim = SC[cur].limits;
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
@@ -124,6 +125,25 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     Math.abs(yawT - view.yaw) < 5e-4 && Math.abs(pitchT - view.pitch) < 5e-4 && Math.abs(zoomT - view.zoom) < 5e-4;
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
+  // Pointer → world, for scenes with a probe: ray from the camera onto the y=0 plane.
+  const ray = new THREE.Raycaster();
+  const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const ndc = new THREE.Vector2();
+  const hitV = new THREE.Vector3();
+  const ptr = { x: 0, y: 0, in: false };
+  const pick = (sc: SceneDef): { x: number; z: number } | null => {
+    ndc.set(ptr.x, ptr.y);
+    sc.cam.updateMatrixWorld();
+    ray.setFromCamera(ndc, sc.cam);
+    const h = ray.ray.intersectPlane(ground, hitV);
+    return h && Math.abs(h.x) < 85 && Math.abs(h.z) < 85 ? { x: h.x, z: h.z } : null;
+  };
+  const setPtr = (e: PointerEvent) => {
+    const r = host.getBoundingClientRect();
+    ptr.x = ((e.clientX - r.left) / r.width) * 2 - 1;
+    ptr.y = -(((e.clientY - r.top) / r.height) * 2 - 1);
+    ptr.in = true;
+  };
 
   /* ---- pinned labels ---- */
   let activeLabels: { l: SceneDef["labels"][number]; el: HTMLDivElement; em: HTMLElement }[] = [];
@@ -214,7 +234,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
-  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled());
+  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled() || Boolean(SC[cur].probe?.busy()));
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -237,6 +257,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     view.pitch += (pitchT - view.pitch) * ease;
     view.zoom += (zoomT - view.zoom) * ease;
     U.uTime.value = t;
+    SC[cur].probe?.aim(ptr.in ? pick(SC[cur]) : null);
     SC[cur].update(t);
     if (mixT < 1) SC[prev].update(t);
     render();
@@ -253,6 +274,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- observers ---- */
   const onPointer = (e: PointerEvent) => {
+    if (!interactive(e.target)) { setPtr(e); if (SC[cur].probe) { dirty = true; kick(); } }
+    else ptr.in = false;
     if (!motion || drag) return;
     const r = host.getBoundingClientRect();
     tpx = (e.clientX - r.left) / r.width - 0.5;
@@ -265,6 +288,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0 || !e.isPrimary || interactive(e.target)) return;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    down = { x: e.clientX, y: e.clientY, at: performance.now() };
+    setPtr(e);
     yawV = pitchV = 0;
     tpx = tpy = 0;
     host.setPointerCapture(e.pointerId);
@@ -288,6 +313,14 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const onUp = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.id) return;
+    // A short, nearly stationary press is a tap: let the scene react.
+    if (down && e.type === "pointerup" && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6 && performance.now() - down.at < 500) {
+      setPtr(e);
+      const sc = SC[cur], hit = sc.probe ? pick(sc) : null;
+      if (hit) { sc.probe!.tap(hit.x, hit.z); dirty = true; }
+    }
+    down = null;
+    if (e.pointerType === "touch") ptr.in = false;
     drag = null;
     host.classList.remove("is-dragging");
     if (host.hasPointerCapture(e.pointerId)) host.releasePointerCapture(e.pointerId);
@@ -317,6 +350,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     o.onContextLost();
   };
   host.addEventListener("pointermove", onPointer);
+  const onLeave = () => { ptr.in = false; dirty = true; kick(); };
+  host.addEventListener("pointerleave", onLeave);
   host.addEventListener("pointerdown", onDown);
   host.addEventListener("pointermove", onDragMove);
   host.addEventListener("pointerup", onUp);
@@ -389,6 +424,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
+      host.removeEventListener("pointerleave", onLeave);
       host.removeEventListener("pointerdown", onDown);
       host.removeEventListener("pointermove", onDragMove);
       host.removeEventListener("pointerup", onUp);
