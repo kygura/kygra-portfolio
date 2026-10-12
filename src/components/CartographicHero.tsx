@@ -30,7 +30,7 @@ function useTyping(reduced: boolean) {
       i++;
       setN(i);
       if (i >= total) {
-        t = window.setTimeout(() => setCaret(false), 3000);
+        t = window.setTimeout(() => setCaret(false), 1000);
         return;
       }
       t = window.setTimeout(step, i === NAME.length ? 420 : i < NAME.length ? 95 : 150);
