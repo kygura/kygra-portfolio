@@ -42,14 +42,6 @@ export interface SceneDef {
   fov: [number, number];
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
   limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
-  /** Optional pointer interaction, in world XZ on the y=0 plane. */
-  probe?: {
-    /** Pointer position over the scene, or null when it leaves. Called every frame while present. */
-    aim: (p: { x: number; z: number } | null) => void;
-    tap: (x: number, z: number) => void;
-    /** True while the scene is animating a response, so the loop keeps running. */
-    busy: () => boolean;
-  };
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
   update: (t: number) => void;

@@ -70,10 +70,8 @@ export function buildTopo(k: PsxKit): SceneDef {
 
   const rebuild = (t: number) => {
     lo = 1e9; hi = -1e9;
-    const live = ripples.length > 0 || cur.amp > 0.003;
     for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
-      const wx = -half + x * cs, wz = -half + y * cs;
-      const h = field(wx, wz, t) + (live ? touch(wx, wz, nowS) : 0);
+      const h = field(-half + x * cs, -half + y * cs, t);
       hg[y * W + x] = h;
       if (h < lo) lo = h;
       if (h > hi) hi = h;
@@ -105,37 +103,7 @@ export function buildTopo(k: PsxKit): SceneDef {
       gridPos[n++] = -half + (sg + 1) * cs; gridPos[n++] = hg[gl * W + sg + 1] + 0.14; gridPos[n++] = -half + gl * cs;
     }
     gGrid.setDrawRange(0, n / 3); gGrid.attributes.position.needsUpdate = true;
-    trig.forEach((p, j) => { p.y = field(p.x, p.z, t) + touch(p.x, p.z, nowS) + 0.55; trigM[j].position.y = p.y; });
-  };
-
-  /* ---- pointer: a soft rise under the cursor, ripples from taps ---- */
-  const ripples: { x: number; z: number; t0: number }[] = [];
-  const cur = { x: 0, z: 0, wx: 0, wz: 0, amp: 0, want: 0, has: false };
-  let nowS = performance.now() / 1000, lastRebuildS = 0;
-  const touch = (x: number, z: number, now: number) => {
-    let h = 0;
-    if (cur.amp > 0.003) h += cur.amp * 1.7 * Math.exp(-((x - cur.x) ** 2 + (z - cur.z) ** 2) * 0.13);
-    for (const r of ripples) {
-      const age = now - r.t0, d = Math.hypot(x - r.x, z - r.z), w = d - age * 7.5;
-      h += (2.2 * Math.exp(-age * 0.55) * Math.exp(-w * w * 0.1) * Math.cos(w * 1.5)) / (1 + d * 0.07);
-    }
-    return h;
-  };
-  const probe: NonNullable<SceneDef["probe"]> = {
-    aim(p) {
-      if (p) {
-        // Slide toward the pointer rather than snapping, so fast swipes stay smooth.
-        if (!cur.has) { cur.x = p.x; cur.z = p.z; }
-        cur.has = true;
-        cur.wx = p.x; cur.wz = p.z;
-        cur.want = 1;
-      } else cur.want = 0;
-    },
-    tap(x, z) {
-      ripples.push({ x, z, t0: performance.now() / 1000 });
-      if (ripples.length > 6) ripples.shift();
-    },
-    busy: () => ripples.length > 0 || cur.want > 0 || cur.amp > 0.003,
+    trig.forEach((p, j) => { p.y = field(p.x, p.z, t) + 0.55; trigM[j].position.y = p.y; });
   };
 
   const elev = (p: THREE.Vector3) => `${Math.round(400 + p.y * 10)} m`;
@@ -147,22 +115,13 @@ export function buildTopo(k: PsxKit): SceneDef {
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[1]); v.y += 1.2; }, sub2: () => elev(trig[1]) },
       { name: "Hollow", sub: "closed depression", at: (v) => { v.set(-8, field(-8, 7, U.uTime.value) + 0.6, 7); } },
     ],
-    probe,
     update(t) {
-      const now = performance.now() / 1000, dt = Math.min(0.1, now - nowS);
-      nowS = now;
-      for (let i = ripples.length - 1; i >= 0; i--) if (now - ripples[i].t0 > 5) ripples.splice(i, 1);
-      const ease = 1 - Math.pow(0.0004, dt);
-      cur.amp += (cur.want - cur.amp) * (1 - Math.pow(0.02, dt));
-      if (cur.has) { cur.x += (cur.wx - cur.x) * ease; cur.z += (cur.wz - cur.z) * ease; }
-      if (cur.want === 0 && cur.amp <= 0.003) { cur.amp = 0; cur.has = false; }
       const a = 0.9 + t * 0.03 + view.px * 0.15 + view.yaw, r = 22;
       cam.position.set(Math.cos(a) * r, 34 - view.py * 4, Math.sin(a) * r);
       cam.lookAt(0, -1.5, 0);
       k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);
-      const stale = Math.abs(t - lastT) > 0.06 || lastT < 0;
-      if (stale || (probe.busy() && now - lastRebuildS > 0.033)) { rebuild(t); lastT = t; lastRebuildS = now; }
+      if (Math.abs(t - lastT) > 0.06 || lastT < 0) { rebuild(t); lastT = t; }
     },
     readout() {
       return [
