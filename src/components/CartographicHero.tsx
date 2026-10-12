@@ -5,21 +5,17 @@ import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
 
 /**
- * Cartographic hero — the sticky stage, name, tagline, accent initials,
- * hairline strip and scroll parallax are unchanged; the field behind them is
+ * Cartographic hero — stage, name, tagline, accent initials and hairline
+ * strip sit in normal flow and scroll away with the page; the field behind them is
  * the PS1 three-scene renderer (ocean / topo / astral / ruins / rail). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
- * The parallax loop only writes compositor-friendly transforms/opacity; the
- * engine runs its own render loop and stops it when offscreen, hidden, or
+ * The engine runs its own render loop and stops it when offscreen, hidden, or
  * paused under reduced motion.
  */
 
 const NAME = "NICOLAS";
-// Peak extra tracking, in em, at full scroll — applied as per-letter
-// translation so nothing re-lays-out mid-scroll.
-const TRACK_OPEN = 0.13;
 
 const reduceQuery = () =>
   typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -32,11 +28,6 @@ const CartographicHero = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<HTMLDivElement>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const caRef = useRef<HTMLDivElement>(null);
-  const cueRef = useRef<HTMLDivElement>(null);
-  const taglineRef = useRef<HTMLParagraphElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const engineRef = useRef<HeroEngine | null>(null);
   const live = useRef({ accent, sheet });
@@ -81,158 +72,43 @@ const CartographicHero = () => {
     writeStored(SHEET_KEY, String(sheet));
   }, [sheet]);
 
+  // The strip wraps to two rows on phones; keep the monogram clear of its hairline.
+  useEffect(() => {
+    const stage = stageRef.current, strip = footerRef.current;
+    if (!stage || !strip) return;
+    const sync = () => stage.style.setProperty("--strip-h", `${strip.offsetHeight}px`);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(strip);
+    return () => ro.disconnect();
+  }, []);
+
   const goSheet = (i: number) => setSheet(((i % SHEETS.length) + SHEETS.length) % SHEETS.length);
 
-  // [ ] cycle scenes while the hero is mounted.
+  // [ ] cycle scenes; Shift+arrows orbit, + / - dolly, 0 resets the camera
+  // (while the stage is on screen).
   useEffect(() => {
+    const STEP = 0.18;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || isTyping(e.target)) return;
-      if (e.key === "[") setSheet((s) => (s + SHEETS.length - 1) % SHEETS.length);
-      else if (e.key === "]") setSheet((s) => (s + 1) % SHEETS.length);
+      if (e.key === "[") return setSheet((s) => (s + SHEETS.length - 1) % SHEETS.length);
+      if (e.key === "]") return setSheet((s) => (s + 1) % SHEETS.length);
+      const eng = engineRef.current;
+      const r = stageRef.current?.getBoundingClientRect();
+      if (!eng || !r || r.bottom < window.innerHeight * 0.4 || r.top > window.innerHeight * 0.6) return;
+      let used = true;
+      if (e.shiftKey && e.key === "ArrowLeft") eng.nudge(-STEP, 0);
+      else if (e.shiftKey && e.key === "ArrowRight") eng.nudge(STEP, 0);
+      else if (e.shiftKey && e.key === "ArrowUp") eng.nudge(0, -STEP * 0.6);
+      else if (e.shiftKey && e.key === "ArrowDown") eng.nudge(0, STEP * 0.6);
+      else if (e.key === "+" || e.key === "=") eng.nudge(0, 0, 1.2);
+      else if (e.key === "-" || e.key === "_") eng.nudge(0, 0, 1 / 1.2);
+      else if (e.key === "0") eng.resetView();
+      else used = false;
+      if (used) e.preventDefault();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
-  // ── scroll parallax (DOM transforms/opacity only) ────────────────────
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root) return;
-
-    const mq = reduceQuery();
-    let reduced = mq ? mq.matches : false;
-    const onReduced = () => {
-      reduced = mq ? mq.matches : false;
-    };
-    mq?.addEventListener?.("change", onReduced);
-
-    let rafId = 0;
-    let running = false;
-    let onScreen = true;
-    let sp = 0;
-
-    // ── cached geometry (never read layout inside the loop) ────────────
-    let scrollY = window.scrollY;
-    let travelStart = 0;
-    let runway = 1;
-    let emSize = 0;
-    const letters: HTMLSpanElement[] = [];
-
-    const measure = () => {
-      // The hero is pulled up under the transparent nav, so its document
-      // offset can be negative; progress starts where the page does.
-      const heroTop = root.getBoundingClientRect().top + window.scrollY;
-      const stageH = stageRef.current?.offsetHeight ?? window.innerHeight;
-      travelStart = Math.max(0, heroTop);
-      runway = Math.max(1, heroTop + root.offsetHeight - stageH - travelStart);
-      if (headingRef.current) {
-        emSize = parseFloat(getComputedStyle(headingRef.current).fontSize) || 0;
-      }
-    };
-
-    const parallax = () => {
-      const scroll = Math.min(1, Math.max(0, (scrollY - travelStart) / runway));
-      sp += (scroll - sp) * 0.09;
-      if (reduced) return;
-
-      const s = sp;
-      // Anchored "tectonic recede": the type never slides vertically. It
-      // stays pinned and pulls apart horizontally (tracking opens like
-      // drifting plates), settles back in scale, and dissolves as the
-      // scene surfaces beneath it.
-      if (nameRef.current) {
-        nameRef.current.style.transform = `scale(${(1 - s * 0.07).toFixed(4)})`;
-        nameRef.current.style.opacity = Math.max(0, 1 - s * 1.15).toFixed(3);
-      }
-      // Tracking as per-letter translation — setting letter-spacing here
-      // would relayout a 300px headline on every single frame.
-      if (letters.length && emSize) {
-        const gap = s * TRACK_OPEN * emSize;
-        for (let i = 0; i < letters.length; i++) {
-          letters[i].style.transform = `translate3d(${(i * gap).toFixed(2)}px,0,0)`;
-        }
-      }
-      if (caRef.current) {
-        caRef.current.style.transform =
-          `rotate(${(s * -3).toFixed(2)}deg) scale(${(1 - s * 0.05).toFixed(4)})`;
-        caRef.current.style.opacity = Math.max(0, 1 - s * 1.25).toFixed(3);
-      }
-      if (taglineRef.current) {
-        taglineRef.current.style.opacity = Math.max(0, 1 - s * 2.4).toFixed(3);
-      }
-      if (footerRef.current) footerRef.current.style.opacity = Math.max(0, 1 - s * 1.7).toFixed(3);
-      if (cueRef.current) cueRef.current.style.opacity = Math.max(0, 1 - s * 5).toFixed(3);
-    };
-
-    const frame = () => {
-      rafId = requestAnimationFrame(frame);
-      parallax();
-    };
-
-    const start = () => {
-      if (running) return;
-      running = true;
-      rafId = requestAnimationFrame(frame);
-    };
-    const stop = () => {
-      if (!running) return;
-      running = false;
-      cancelAnimationFrame(rafId);
-    };
-
-    // Pause while off-screen or backgrounded.
-    const sync = () => {
-      if (onScreen && !document.hidden) start();
-      else stop();
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        onScreen = entry.isIntersecting;
-        sync();
-      },
-      { threshold: 0 }
-    );
-    observer.observe(root);
-
-    const onScroll = () => {
-      // Read only — no layout is forced here; geometry is cached.
-      scrollY = window.scrollY;
-    };
-
-    let resizeRaf = 0;
-    const onResize = () => {
-      cancelAnimationFrame(resizeRaf);
-      resizeRaf = requestAnimationFrame(measure);
-    };
-
-    // Catches font-load reflow and hero height changes as well as resizes.
-    const ro = new ResizeObserver(onResize);
-    ro.observe(root);
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onResize, { passive: true });
-    document.addEventListener("visibilitychange", sync);
-
-    if (headingRef.current) {
-      letters.push(
-        ...Array.from(headingRef.current.querySelectorAll<HTMLSpanElement>("[data-letter]"))
-      );
-    }
-    measure();
-    onScroll();
-    sync();
-
-    return () => {
-      stop();
-      cancelAnimationFrame(resizeRaf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onResize);
-      document.removeEventListener("visibilitychange", sync);
-      mq?.removeEventListener?.("change", onReduced);
-      observer.disconnect();
-      ro.disconnect();
-    };
   }, []);
 
   return (
@@ -244,8 +120,8 @@ const CartographicHero = () => {
         {/* Display name + tagline share one column so their left edge and
             vertical gap hold at every width. */}
         <div className="hero__intro">
-          <div ref={nameRef} className="hero__name">
-            <h1 ref={headingRef} className="hero__name-text">
+          <div className="hero__name">
+            <h1 className="hero__name-text">
               {NAME.split("").map((ch, i) => (
                 <span key={i} data-letter className="hero__letter">
                   {ch}
@@ -254,13 +130,13 @@ const CartographicHero = () => {
             </h1>
           </div>
 
-          <p ref={taglineRef} className="hero__tagline">
+          <p className="hero__tagline">
             Software ventures &amp; craft &mdash; agentic systems, markets and the open web.
           </p>
         </div>
 
         {/* Italic accent initials */}
-        <div ref={caRef} className="hero__mark">
+        <div className="hero__mark">
           <div className="hero__mark-text">C.A</div>
         </div>
 
@@ -283,17 +159,18 @@ const CartographicHero = () => {
               <kbd>[</kbd>
               <kbd>]</kbd>
             </span>
+            <span className="hero__orbit-hint" aria-hidden="true">
+              DRAG TO ORBIT &middot; CTRL+WHEEL TO ZOOM &middot; DOUBLE-CLICK TO RESET
+            </span>
           </div>
-          <div ref={cueRef} className="hero__cue">
+          <div className="hero__cue">
             <span>SCROLL</span>
             <span className="hero__cue-arrow">&darr;</span>
           </div>
         </footer>
       </div>
 
-      {/* Scroll runway for the sticky stage, and the marker leading into
-          the Manifesto. The shell height is the sum of this and the stage,
-          so the two can never drift out of sync. */}
+      {/* Marker leading into the Manifesto. */}
       <div className="hero__marker">( 02 &mdash; ON SOFTWARE CRAFT &middot; NEXT )</div>
     </div>
   );

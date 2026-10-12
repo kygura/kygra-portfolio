@@ -4,6 +4,7 @@ import type { PsxKit, SceneDef, V3 } from "./psx";
 
 export function buildAstral(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view, segs, circle } = k;
+  const PIVOT = new THREE.Vector3(0, 2, 0);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 400);
   const sky = k.skyDome(1, 1, 0.6, 0.75);
@@ -92,7 +93,7 @@ export function buildAstral(k: PsxKit): SceneDef {
   const dir = new THREE.Vector3();
 
   return {
-    scene, cam, fog: [60, 170], fov: [60, 72],
+    scene, cam, fog: [60, 170], fov: [60, 72], limits: { pitch: [-0.7, 0.9], zoom: [0.5, 1.6] },
     labels: [
       { name: "Halo", sub: "r 11.5 · 360°", at: (v) => { v.set(HR + 1.6, 0, 0); halo.localToWorld(v); } },
       { name: "Watcher", sub: "fixed, faces observer", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },
@@ -100,9 +101,10 @@ export function buildAstral(k: PsxKit): SceneDef {
       { name: "Icosahedron", sub: "20 faces", at: (v) => { polys[0].g.getWorldPosition(v); v.y += 3.2; } },
     ],
     update(t) {
-      const a = 1.4 + t * 0.02 + view.px * 0.2, r = 36;
+      const a = 1.4 + t * 0.02 + view.px * 0.2 + view.yaw, r = 36;
       cam.position.set(Math.cos(a) * r, 3 + Math.sin(t * 0.09) * 2 - view.py * 4, Math.sin(a) * r);
       cam.lookAt(0, 2 - view.py * 2, 0);
+      k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);
       spin.rotation.z = t * 0.02;
       glyphs.forEach((g) => {

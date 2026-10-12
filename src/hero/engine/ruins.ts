@@ -4,6 +4,7 @@ import type { PsxKit, SceneDef } from "./psx";
 
 export function buildRuins(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view, U } = k;
+  const PIVOT = new THREE.Vector3(0, 3.1, 0);
   const { add, flush } = k.batcher();
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(64, 16 / 9, 0.1, 260);
@@ -264,16 +265,17 @@ export function buildRuins(k: PsxKit): SceneDef {
   const wisps = Array.from({ length: 6 }, (_, i) => ({ m: mesh(wispG, M.glyph, scene), r: 1.7 + i * 0.4, ph: i * 1.7, sp: 0.25 + rnd() * 0.25 }));
 
   return {
-    scene, cam, fog: [5, 34], fov: [64, 74], moteMat,
+    scene, cam, fog: [5, 34], fov: [64, 74], limits: { pitch: [-0.02, 0.8], zoom: [0.8, 1.45] }, moteMat,
     labels: [
       { name: "Ward stone", sub: "still lit", at: (v) => { v.copy(crystal.position).y += 1.4; } },
       { name: "Stone circle", sub: `${standing} of 12 standing`, at: (v) => { v.copy(circleTop[0]).y += 0.6; } },
       { name: "Old growth", sub: "roots over the colonnade", at: (v) => { v.set(OX, OY + 12, OZ); } },
     ],
     update(t) {
-      const a = 2.1 + t * 0.018 + view.px * 0.12, r = 7.6 + Math.sin(t * 0.07) * 0.5, x = Math.cos(a) * r, z = Math.sin(a) * r;
+      const a = 2.1 + t * 0.018 + view.px * 0.12 + view.yaw, r = 7.6 + Math.sin(t * 0.07) * 0.5, x = Math.cos(a) * r, z = Math.sin(a) * r;
       cam.position.set(x, ground(x, z) + 2.1 + Math.sin(t * 0.11) * 0.2 - view.py * 0.4, z);
       cam.lookAt(0, 3.1 - view.py * 1.0, 0);
+      k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);
 
       crystal.position.y = CY + Math.sin(t * 0.9) * 0.15;

@@ -40,6 +40,8 @@ export interface SceneDef {
   cam: THREE.PerspectiveCamera;
   fog: [number, number];
   fov: [number, number];
+  /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
+  limits: { pitch: [number, number]; zoom: [number, number]; yaw?: number };
   labels: LabelDef[];
   moteMat?: THREE.PointsMaterial;
   update: (t: number) => void;
@@ -403,6 +405,33 @@ export function createKit(accent: Accent) {
     cam.getWorldDirection(tmp);
     return ((Math.atan2(tmp.x, -tmp.z) * 180) / Math.PI + 360) % 360;
   };
+  /* Manual camera. Orbit scenes add view.yaw to their own camera angle (so
+     terrain height stays correct), then call orbit() after lookAt(): it
+     tilts the camera about the pivot and dollies along the same ray. */
+  const view = { px: 0, py: 0, yaw: 0, pitch: 0, zoom: 1 };
+  const off = new THREE.Vector3(), axis = new THREE.Vector3(), qp = new THREE.Quaternion();
+  const orbit = (cam: THREE.Camera, pivot: THREE.Vector3) => {
+    off.copy(cam.position).sub(pivot);
+    axis.set(off.z, 0, -off.x);
+    if (axis.lengthSq() > 1e-8) {
+      axis.normalize();
+      qp.setFromAxisAngle(axis, -view.pitch);
+      off.applyQuaternion(qp);
+      cam.quaternion.premultiply(qp);
+    }
+    cam.position.copy(pivot).addScaledVector(off, 1 / view.zoom);
+  };
+  /* Standing camera: yaw about world up, pitch about its own right axis, zoom via lens. */
+  const look = (cam: THREE.PerspectiveCamera) => {
+    qp.setFromAxisAngle(axis.set(1, 0, 0), view.pitch);
+    cam.quaternion.multiply(qp);
+    qp.setFromAxisAngle(axis.set(0, 1, 0), view.yaw);
+    cam.quaternion.premultiply(qp);
+    if (cam.zoom !== view.zoom) {
+      cam.zoom = view.zoom;
+      cam.updateProjectionMatrix();
+    }
+  };
   const gridRef = (x: number, z: number, span: number) =>
     "ABCDEFGH".charAt(Math.max(0, Math.min(7, Math.floor((x + span) / (span / 4))))) +
     "-" +
@@ -412,7 +441,8 @@ export function createKit(accent: Accent) {
     U, rnd,
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
     psx, lineMat, facet, wallUV, mesh, batcher, segs, circle, skyDome, sunDisc, M,
-    view: { px: 0, py: 0 },
+    view,
+    orbit, look,
     pad, dms, bearing, gridRef,
   };
 }

@@ -11,6 +11,7 @@ const MS: Record<number, [number, number][]> = {
 
 export function buildTopo(k: PsxKit): SceneDef {
   const { mesh, psx, M, tex, view, U } = k;
+  const PIVOT = new THREE.Vector3(0, -1.5, 0);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 400);
   const sky = k.skyDome(0, 0.35, 0.6);
@@ -108,16 +109,17 @@ export function buildTopo(k: PsxKit): SceneDef {
   const elev = (p: THREE.Vector3) => `${Math.round(400 + p.y * 10)} m`;
 
   return {
-    scene, cam, fog: [55, 150], fov: [50, 64],
+    scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [-0.85, 0.4], zoom: [0.6, 1.8] },
     labels: [
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[0]); v.y += 1.2; }, sub2: () => elev(trig[0]) },
       { name: "Trig point", sub: "", at: (v) => { v.copy(trig[1]); v.y += 1.2; }, sub2: () => elev(trig[1]) },
       { name: "Hollow", sub: "closed depression", at: (v) => { v.set(-8, field(-8, 7, U.uTime.value) + 0.6, 7); } },
     ],
     update(t) {
-      const a = 0.9 + t * 0.03 + view.px * 0.15, r = 22;
+      const a = 0.9 + t * 0.03 + view.px * 0.15 + view.yaw, r = 22;
       cam.position.set(Math.cos(a) * r, 34 - view.py * 4, Math.sin(a) * r);
       cam.lookAt(0, -1.5, 0);
+      k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);
       if (Math.abs(t - lastT) > 0.06 || lastT < 0) { rebuild(t); lastT = t; }
     },
