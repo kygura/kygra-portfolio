@@ -317,8 +317,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const RAD_PER_PX = 0.0065;
   const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
   const onDown = (e: PointerEvent) => {
-    if (e.button !== 0 || !e.isPrimary || interactive(e.target)) return;
-    const sc = SC[cur], own = Boolean(sc.pointer) && !e.shiftKey;
+    // A scene that owns plain drags also orbits on right-drag (and Shift+drag).
+    const rc = e.button === 2 && Boolean(SC[cur].pointer);
+    if ((e.button !== 0 && !rc) || !e.isPrimary || interactive(e.target)) return;
+    const sc = SC[cur], own = Boolean(sc.pointer) && !e.shiftKey && !rc;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own };
     yawV = pitchV = 0;
     tpx = tpy = 0;
@@ -348,7 +350,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const onUp = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.id) return;
-    const tap = e.type === "pointerup" && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
+    const tap = e.type === "pointerup" && e.button === 0 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
     const egg = tap && tryEgg(e);
     if (drag.own) {
       const sc = SC[cur], up = e.type === "pointerup";
@@ -392,6 +394,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     kick();
   };
   host.addEventListener("pointerleave", onLeave);
+  const onContext = (e: MouseEvent) => {
+    if (SC[cur].pointer && !interactive(e.target)) e.preventDefault();
+  };
+  host.addEventListener("contextmenu", onContext);
   host.addEventListener("pointerdown", onDown);
   host.addEventListener("pointermove", onDragMove);
   host.addEventListener("pointerup", onUp);
@@ -467,6 +473,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
       host.removeEventListener("pointerleave", onLeave);
+      host.removeEventListener("contextmenu", onContext);
       host.removeEventListener("pointerdown", onDown);
       host.removeEventListener("pointermove", onDragMove);
       host.removeEventListener("pointerup", onUp);
