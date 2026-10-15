@@ -1407,7 +1407,8 @@ kbd {
 
 
 /* Scene tabs sit at the left end of the hero's existing hairline strip. */
-.hero__sheets { display: flex; align-items: center; gap: 0; margin-right: auto; pointer-events: auto; }
+/* Wraps onto a second row when the tabs outgrow a narrow strip. */
+.hero__sheets { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; max-width: 100%; margin-right: auto; pointer-events: auto; }
 .hero__sheet {
   font: inherit; font-family: var(--f-mono); font-size: 10.5px; line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--ink-2); background: transparent; border: 1px solid var(--rule-2);

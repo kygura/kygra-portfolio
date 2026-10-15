@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "astral" | "ruins" | "rail" | "field";
+  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "voyage" | "aloft";
   no: string;
   name: string;
   aria: string;
@@ -40,5 +40,17 @@ export const SHEETS: SheetMeta[] = [
     name: "Field",
     aria: "Interactive low-poly relief map that behaves like a living field: tap or click to send a pulse rippling out through the contours, drag to pull the contour fabric and survey grid along, and move the cursor to lift a swell and leave a wake.",
     hint: "CLICK TO PULSE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+DRAG TO WARP",
+  },
+  {
+    id: "voyage",
+    no: "06",
+    name: "Voyage",
+    aria: "Animated low-poly scene: a three-masted fantasy galleon under full sail crossing a moonlit sea, sea stacks and a great stone arch drifting past, a sea serpent pacing the ship, under two moons.",
+  },
+  {
+    id: "aloft",
+    no: "07",
+    name: "Aloft",
+    aria: "Animated low-poly scene: a winged sky-galleon held up by a glowing keel crystal, sailing above a sea of clouds past floating islands with waterfalls and ruins, birds flying alongside, a low sun.",
   },
 ];

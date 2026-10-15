@@ -16,6 +16,8 @@ import { buildAstral } from "./astral";
 import { buildRuins } from "./ruins";
 import { buildRail } from "./rail";
 import { buildField } from "./field";
+import { buildVoyage } from "./voyage";
+import { buildAloft } from "./aloft";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
@@ -75,7 +77,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
+  const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit), buildVoyage(kit), buildAloft(kit)];
   const eggTotal = SC.reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
