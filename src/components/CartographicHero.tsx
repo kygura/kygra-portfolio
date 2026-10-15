@@ -7,7 +7,7 @@ import type { HeroEngine } from "@/hero/engine/hero-engine";
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 five-scene renderer (ocean / astral / ruins / rail / field). three.js is fetched
+ * the PS1 six-scene renderer (ocean / astral / ruins / rail / field / sail). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
