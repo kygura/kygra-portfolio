@@ -135,57 +135,45 @@
 .hero {
   position: relative;
   font-family: var(--f-mono);
-  background: var(--bg);
   color: var(--ink);
   /* Slide under the transparent nav so the stage owns a full viewport. */
   margin-top: calc(var(--nav-h) * -1);
 }
 
-/* svh, not vh: the scroll cue sits on the bottom edge and must not start
-   life hidden behind mobile browser chrome. The shell around the stage
-   carries the same flat background, so the band revealed when the chrome
-   retracts reads as a continuation of the field. */
+/* The stage is a desktop on the survey sheet: the name runs across the top,
+   tagline and initials hold a left column, the scene window takes the rest
+   and the hairline strip closes the bottom. svh, not vh: the scroll cue sits
+   on the bottom edge and must not start life behind mobile browser chrome. */
 .hero__stage {
+  --win-gap: clamp(16px, 2.4vw, 40px);
   position: relative;
   height: 100vh;
   height: 100svh;
+  min-height: 560px;
   overflow: hidden;
-  cursor: grab;
-  /* Sideways drags orbit the scene; vertical pans still scroll the page. */
-  touch-action: pan-y;
+  display: grid;
+  grid-template-columns: minmax(200px, 24%) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "intro intro"
+    "side  win"
+    "strip strip";
+  column-gap: var(--win-gap);
+  padding: calc(var(--nav-h) + 3vh) var(--hero-gutter) 0;
+  padding: calc(var(--nav-h) + 3svh) var(--hero-gutter) 0;
   user-select: none;
   -webkit-user-select: none;
-}
-.hero__stage.is-dragging { cursor: grabbing; }
-
-.hero__canvas {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.hero__vignette {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /* The mock's map-sheet scrims: darken the top under the nav and the
-     lower half under the type, so it reads over any of the three scenes. */
   background:
-    linear-gradient(var(--scrim), rgba(12, 17, 18, 0) 120px),
-    linear-gradient(rgba(12, 17, 18, 0) 38%, var(--scrim) 92%);
-  /* Own layer, so canvas repaints never re-rasterise the scrim. */
-  transform: translateZ(0);
+    repeating-radial-gradient(circle at 18% 112%, transparent 0 46px, var(--grid) 46px 47px),
+    var(--bg);
 }
 
-/* Name and tagline share one column: one gutter, one vertical rhythm. */
+/* Name across the top of the desktop. */
 .hero__intro {
-  position: absolute;
-  top: calc(var(--nav-h) + 3vh);
-  top: calc(var(--nav-h) + 3svh);
-  left: var(--hero-gutter);
-  right: var(--hero-gutter);
+  grid-area: intro;
+  position: relative;
+  z-index: 1;
+  padding-bottom: clamp(14px, 2.2vw, 28px);
   pointer-events: none;
 }
 
@@ -198,7 +186,7 @@
   margin: 0;
   font-family: var(--f-body);
   font-weight: 400;
-  font-size: clamp(42px, 12.5vw, 216px);
+  font-size: clamp(42px, 10.5vw, 184px);
   line-height: 0.82;
   letter-spacing: -0.015em;
   animation:
@@ -213,12 +201,25 @@
   will-change: transform;
 }
 
+/* Left column: tagline at the top, accent initials at the foot. */
+.hero__side {
+  grid-area: side;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: var(--win-gap);
+  min-height: 0;
+  pointer-events: none;
+}
+
 .hero__tagline {
-  margin: clamp(14px, 2.2vw, 26px) 0 0;
-  max-width: 38ch;
-  width: clamp(220px, 22vw, 320px);
+  margin: 0;
+  max-width: 30ch;
   font-family: var(--f-body);
-  font-size: clamp(14px, 1.25vw, 20px);
+  font-size: clamp(14px, 1.2vw, 19px);
   line-height: 1.45;
   color: var(--ink);
   text-wrap: pretty;
@@ -228,33 +229,173 @@
 }
 
 .hero__mark {
-  position: absolute;
-  right: var(--hero-gutter);
-  bottom: calc(var(--strip-h, 60px) + 24px);
-  transform-origin: center center;
-  pointer-events: none;
+  transform-origin: left bottom;
   will-change: transform, opacity;
 }
 
 .hero__mark-text {
   font-family: var(--f-body);
   font-style: italic;
-  font-size: clamp(56px, 14vw, 260px);
+  font-size: clamp(56px, 10vw, 184px);
   line-height: 0.78;
   color: var(--accent);
   transition: color 0.6s ease;
   animation: cartoFadeUp 1.1s ease 0.5s backwards;
 }
 
-.hero__strip {
+/* ── Scene window ── */
+.hero__win {
+  grid-area: win;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  margin-bottom: var(--win-gap);
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+  /* Flat offset block, no blur: a window lifted off the sheet. */
+  box-shadow: 6px 6px 0 var(--code);
+  animation: cartoFadeUp 0.9s ease 0.6s backwards;
+}
+.hero__win.is-moving { border-color: var(--accent); }
+.hero__win--shade { align-self: start; }
+
+/* Maximized: the window takes the whole stage under the nav, the old
+   full-bleed look with the chrome kept. */
+.hero__win--max {
+  /* Out of the grid: an absolute grid item would otherwise be boxed by its area. */
+  grid-area: auto;
   position: absolute;
-  inset: auto 0 0 0;
+  inset: var(--nav-h) 0 0 0;
+  z-index: 5;
+  margin: 0;
+  border-width: 1px 0 0;
+  box-shadow: none;
+  animation: none;
+}
+
+.hero__bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  flex: none;
+  padding: 0 4px 0 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--rule-2);
+  touch-action: pan-y;
+}
+@media (min-width: 768px) {
+  .hero__win:not(.hero__win--max) .hero__bar { cursor: grab; touch-action: none; }
+  .hero__win.is-moving .hero__bar { cursor: grabbing; }
+}
+.hero__win--shade .hero__bar { border-bottom: 0; }
+
+/* Ruled grips either side of the title, as on an old window manager. */
+.hero__bar-grip {
+  flex: 1;
+  min-width: 12px;
+  height: 7px;
+  background: repeating-linear-gradient(var(--rule-2) 0 1px, transparent 1px 3px);
+  transition: background 0.2s ease;
+}
+.hero__win.is-moving .hero__bar-grip,
+.hero__bar:hover .hero__bar-grip {
+  background: repeating-linear-gradient(var(--accent-deep) 0 1px, transparent 1px 3px);
+}
+
+.hero__bar-title {
+  margin: 0;
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  font-family: var(--f-pixel);
+  font-weight: 400;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.hero__bar-title small { font-size: 8px; color: var(--accent); }
+
+.hero__bar-ctl { display: flex; gap: 3px; padding-left: 2px; }
+.hero__bar-ctl button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 18px;
+  padding: 0;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--rule-2);
+}
+.hero__bar-ctl button:hover { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+.hero__bar-ctl svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1; shape-rendering: crispEdges; }
+
+.hero__tabs {
+  display: flex;
+  align-items: center;
+  flex: none;
+  padding: 6px 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--rule-2);
+}
+.hero__tabs::-webkit-scrollbar { display: none; }
+.hero__win--shade .hero__tabs,
+.hero__win--shade .hero__status { display: none; }
+
+.hero__view {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--code);
+  cursor: grab;
+  /* Sideways drags orbit the scene; vertical pans still scroll the page. */
+  touch-action: pan-y;
+}
+.hero__view[hidden] { display: none; }
+.hero__view.is-dragging { cursor: grabbing; }
+
+.hero__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+  padding: 5px 10px;
+  font-family: var(--f-pixel);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  background: var(--bg);
+  border-top: 1px solid var(--rule-2);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.hero__status-meta { color: var(--ink-2); }
+
+.hero__strip {
+  grid-area: strip;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem 1.25rem;
-  padding: 22px var(--hero-gutter);
+  margin: 0 calc(var(--hero-gutter) * -1);
+  padding: 18px var(--hero-gutter);
   font-size: 10.5px;
   letter-spacing: 0.16em;
   border-top: 1px solid var(--rule-2);
@@ -262,6 +403,8 @@
   animation: cartoFadeUp 0.8s ease 0.8s backwards;
   will-change: opacity;
 }
+.hero__strip-keys { margin-right: auto; font-size: 8px; color: var(--ink-3); }
+.hero__strip-keys kbd { font-size: 9px; margin-right: 4px; }
 
 .hero__cue {
   display: flex;
@@ -275,18 +418,28 @@
   animation: cartoCueBob 1.6s ease-in-out infinite;
 }
 
+/* Phones and narrow tablets: one column. Tagline and initials share a row
+   under the name, and the window docks full width in the flow. */
 @media (max-width: 767px) {
-  .hero__strip { padding-top: 32px; }
+  .hero__stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "intro" "side" "win" "strip";
+  }
+  .hero__side { flex-direction: row; align-items: flex-end; padding-bottom: 16px; }
+  .hero__tagline { max-width: 26ch; }
+  .hero__mark-text { font-size: clamp(40px, 14vw, 72px); }
+  .hero__win { margin-bottom: 16px; box-shadow: 4px 4px 0 var(--code); }
+  .hero__win--shade { align-self: start; }
+  .hero__strip-keys { display: none; }
 }
 
 /* Landscape phones and other short viewports: the display type has to
-   give way or it collides with the accent mark and the footer strip. */
+   give way or it squeezes the window. */
 @media (max-height: 620px) and (min-width: 640px) {
   .hero__name-text { font-size: clamp(36px, 7vw, 90px); }
-  .hero__tagline { font-size: 14px; width: clamp(220px, 34vw, 320px); }
-  /* A fixed offset, not a percentage: 5svh of a 390px-tall landscape
-     phone lands the monogram on top of the footer strip. */
-  .hero__mark-text { font-size: clamp(48px, 8vw, 104px); }
+  .hero__tagline { font-size: 14px; }
+  .hero__mark-text { font-size: clamp(48px, 7vw, 96px); }
 }
 
 /* ─────────────────────────────────────────────
@@ -1399,38 +1552,37 @@ kbd {
 .hero__canvas { image-rendering: pixelated; }
 .hero--no-gl .hero__canvas { display: none; }
 /* Without WebGL: a contour sheet in CSS stands in for the scene. */
-.hero--no-gl .hero__stage {
+.hero--no-gl .hero__view {
   background:
     repeating-radial-gradient(circle at 62% 78%, transparent 0 22px, var(--rule) 22px 23px),
-    var(--bg);
+    var(--code);
 }
 
-
-/* Scene tabs sit at the left end of the hero's existing hairline strip. */
-.hero__sheets { display: flex; align-items: center; gap: 0; margin-right: auto; pointer-events: auto; }
+/* Scene tabs run along the top of the scene window. */
 .hero__sheet {
   font: inherit; font-family: var(--f-mono); font-size: 10.5px; line-height: 1.2; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--ink-2); background: transparent; border: 1px solid var(--rule-2);
-  margin-right: -1px; padding: 1px 8px; display: inline-flex; gap: 6px; align-items: baseline;
+  margin-right: -1px; padding: 1px 8px; display: inline-flex; gap: 6px; align-items: baseline; white-space: nowrap;
 }
 .hero__sheet small { font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.04em; color: var(--ink-3); }
 .hero__sheet:hover { color: var(--ink); }
 .hero__sheet[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); position: relative; }
 .hero__sheet[aria-pressed="true"] small { color: var(--on-accent); }
-.hero__sheet-keys { display: inline-flex; gap: 3px; padding-left: 10px; font-size: 10px; }
-.hero__orbit-hint { padding-left: 18px; font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.08em; color: var(--ink-3); white-space: nowrap; }
-@media (max-width: 1100px) { .hero__orbit-hint { display: none; } }
+.hero__sheet-keys { display: inline-flex; gap: 3px; padding-left: 10px; margin-left: auto; font-size: 10px; }
+@media (max-width: 900px) { .hero__orbit-hint { overflow: hidden; text-overflow: ellipsis; } }
 @media (max-width: 480px) {
+  .hero__orbit-hint { display: none; }
+  .hero__status { justify-content: flex-end; }
   .hero__sheet-keys { display: none; }
   .hero__sheet small { display: none; }
 }
 
-/* Easter-egg readout: a hairline caption that rides just above the strip. */
+/* Easter-egg readout: a hairline caption in the foot of the viewport. */
 .hero__egg {
   position: absolute;
-  left: var(--hero-gutter);
-  bottom: calc(var(--strip-h, 88px) + 12px);
-  max-width: calc(100% - 2 * var(--hero-gutter));
+  left: 10px;
+  bottom: 10px;
+  max-width: calc(100% - 20px);
   pointer-events: none;
 }
 .hero__egg p {
