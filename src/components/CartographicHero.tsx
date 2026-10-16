@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
@@ -32,6 +32,31 @@ type WinMode = "normal" | "max" | "shade";
 
 /** Keep at least this much of the title bar on the stage while dragging. */
 const GRIP = 96;
+/** Smallest window a resize can leave: room for the chrome and a usable frame. */
+const MIN_W = 320, MIN_H = 220;
+
+/** Resize handles: which edges each one moves (x: -1 left, 1 right; y: -1 top, 1 bottom). */
+const EDGES = [
+  { id: "n", x: 0, y: -1 }, { id: "s", x: 0, y: 1 }, { id: "e", x: 1, y: 0 }, { id: "w", x: -1, y: 0 },
+  { id: "ne", x: 1, y: -1 }, { id: "nw", x: -1, y: -1 }, { id: "se", x: 1, y: 1 }, { id: "sw", x: -1, y: 1 },
+] as const;
+
+/** Follow one pointer on `el` until it lifts. */
+const track = (el: HTMLElement, e: React.PointerEvent, move: (ev: PointerEvent) => void, end: () => void) => {
+  el.setPointerCapture(e.pointerId);
+  const up = (ev: PointerEvent) => {
+    el.removeEventListener("pointermove", move);
+    el.removeEventListener("pointerup", up);
+    el.removeEventListener("pointercancel", up);
+    if (el.hasPointerCapture(ev.pointerId)) el.releasePointerCapture(ev.pointerId);
+    end();
+  };
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", up);
+  el.addEventListener("pointercancel", up);
+};
+
+const desktop = () => window.matchMedia("(min-width: 768px)").matches;
 
 const reduceQuery = () =>
   typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
@@ -42,6 +67,9 @@ const CartographicHero = () => {
   const [noGl, setNoGl] = useState(false);
   const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
   const [mode, setMode] = useState<WinMode>("normal");
+  const [sized, setSized] = useState(false);
+  /** The window is being moved or resized (lifts the accent onto its frame). */
+  const [handling, setHandling] = useState<"" | "is-moving" | "is-resizing">("");
   const found = useRef<Set<string> | null>(null);
   const eggTimer = useRef(0);
 
@@ -52,6 +80,8 @@ const CartographicHero = () => {
   const viewRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const offset = useRef({ x: 0, y: 0 });
+  /** Explicit window size once the user has resized it; null fills the grid slot. */
+  const size = useRef<{ w: number; h: number } | null>(null);
   const engineRef = useRef<HeroEngine | null>(null);
   const live = useRef({ accent, sheet });
   live.current = { accent, sheet };
@@ -108,18 +138,50 @@ const CartographicHero = () => {
   }, [sheet]);
 
   // ── Window: drag offset, clamped so the title bar never leaves the stage ──
-  const placeWin = (x: number, y: number) => {
+  const stageBox = useCallback(() => {
+    const stage = stageRef.current!;
+    return { w: stage.clientWidth, h: stage.clientHeight, top: parseFloat(getComputedStyle(stage).paddingTop) || 0 };
+  }, []);
+
+  const placeWin = useCallback((x: number, y: number) => {
     const win = winRef.current, stage = stageRef.current;
     if (!win || !stage) return;
-    const s = stage.getBoundingClientRect();
+    const s = stageBox();
     // Measure from the untranslated slot, so clamping holds after resizes.
+    // Phones dock the window in the flow, where an offset would push it off screen.
+    if (!desktop()) x = y = 0;
     const left = win.offsetLeft, top = win.offsetTop, w = win.offsetWidth;
-    const navH = parseFloat(getComputedStyle(stage).paddingTop) || 0;
-    x = Math.max(GRIP - left - w, Math.min(s.width - GRIP - left, x));
-    y = Math.max(navH - top, Math.min(s.height - top - 40, y));
+    x = Math.max(GRIP - left - w, Math.min(s.w - GRIP - left, x));
+    y = Math.max(s.top - top, Math.min(s.h - top - 40, y));
     offset.current = { x, y };
     win.style.transform = x || y ? `translate(${Math.round(x)}px, ${Math.round(y)}px)` : "";
-  };
+  }, [stageBox]);
+
+  const applySize = useCallback((next: { w: number; h: number } | null) => {
+    const win = winRef.current;
+    if (!win) return;
+    size.current = next;
+    setSized(Boolean(next));
+    if (next) {
+      win.style.setProperty("--win-w", `${Math.round(next.w)}px`);
+      win.style.setProperty("--win-h", `${Math.round(next.h)}px`);
+    } else {
+      win.style.removeProperty("--win-w");
+      win.style.removeProperty("--win-h");
+    }
+  }, []);
+
+  /** Keep a resized window no larger than the stage it sits on. */
+  const fitWin = useCallback(() => {
+    if (size.current && stageRef.current) {
+      const s = stageBox();
+      applySize({
+        w: Math.max(MIN_W, Math.min(s.w, size.current.w)),
+        h: Math.max(MIN_H, Math.min(s.h - s.top, size.current.h)),
+      });
+    }
+    placeWin(offset.current.x, offset.current.y);
+  }, [stageBox, applySize, placeWin]);
 
   useEffect(() => {
     const win = winRef.current;
@@ -128,35 +190,64 @@ const CartographicHero = () => {
     else placeWin(offset.current.x, offset.current.y);
     // A shaded window has nothing to draw; the restored one picks motion back up.
     engineRef.current?.setMotion(mode !== "shade" && !reduceQuery()?.matches);
-  }, [mode]);
+  }, [mode, placeWin]);
 
   useEffect(() => {
     const onResize = () => {
-      if (mode !== "max") placeWin(offset.current.x, offset.current.y);
+      if (mode !== "max") fitWin();
     };
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [mode]);
+  }, [mode, fitWin]);
 
   const onBarDown = (e: React.PointerEvent<HTMLElement>) => {
     if (e.button !== 0 || mode === "max" || (e.target as Element).closest("button")) return;
     // Phones dock the window in the flow; there is nowhere to drag it to.
-    if (!window.matchMedia("(min-width: 768px)").matches) return;
-    const bar = e.currentTarget;
+    if (!desktop()) return;
     const start = { x: e.clientX, y: e.clientY, ox: offset.current.x, oy: offset.current.y };
-    bar.setPointerCapture(e.pointerId);
-    winRef.current?.classList.add("is-moving");
-    const move = (ev: PointerEvent) => placeWin(start.ox + ev.clientX - start.x, start.oy + ev.clientY - start.y);
-    const up = (ev: PointerEvent) => {
-      bar.removeEventListener("pointermove", move);
-      bar.removeEventListener("pointerup", up);
-      bar.removeEventListener("pointercancel", up);
-      if (bar.hasPointerCapture(ev.pointerId)) bar.releasePointerCapture(ev.pointerId);
-      winRef.current?.classList.remove("is-moving");
-    };
-    bar.addEventListener("pointermove", move);
-    bar.addEventListener("pointerup", up);
-    bar.addEventListener("pointercancel", up);
+    setHandling("is-moving");
+    track(
+      e.currentTarget,
+      e,
+      (ev) => placeWin(start.ox + ev.clientX - start.x, start.oy + ev.clientY - start.y),
+      () => setHandling(""),
+    );
+  };
+
+  // ── Window: resize from any edge or corner ──
+  // Works on the window's edges in stage coordinates, so a left or top drag
+  // moves that edge and leaves the opposite one where it was.
+  const onEdgeDown = (dir: (typeof EDGES)[number]) => (e: React.PointerEvent<HTMLElement>) => {
+    const win = winRef.current;
+    if (e.button !== 0 || mode !== "normal" || !win || !desktop()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const s = stageBox();
+    const L0 = win.offsetLeft + offset.current.x, T0 = win.offsetTop + offset.current.y;
+    const R0 = L0 + win.offsetWidth, B0 = T0 + win.offsetHeight;
+    const start = { x: e.clientX, y: e.clientY };
+    setHandling("is-resizing");
+    track(
+      e.currentTarget,
+      e,
+      (ev) => {
+        const dx = ev.clientX - start.x, dy = ev.clientY - start.y;
+        let L = L0, T = T0, R = R0, B = B0;
+        if (dir.x < 0) L = Math.max(0, Math.min(R0 - MIN_W, L0 + dx));
+        if (dir.x > 0) R = Math.min(s.w, Math.max(L0 + MIN_W, R0 + dx));
+        if (dir.y < 0) T = Math.max(s.top, Math.min(B0 - MIN_H, T0 + dy));
+        if (dir.y > 0) B = Math.min(s.h, Math.max(T0 + MIN_H, B0 + dy));
+        applySize({ w: R - L, h: B - T });
+        placeWin(L - win.offsetLeft, T - win.offsetTop);
+      },
+      () => setHandling(""),
+    );
+  };
+
+  /** Double-clicking a handle gives the window back its slot. */
+  const resetSize = () => {
+    applySize(null);
+    placeWin(0, 0);
   };
 
   const toggleMax = () => setMode((m) => (m === "max" ? "normal" : "max"));
@@ -230,7 +321,7 @@ const CartographicHero = () => {
         </div>
 
         {/* The scene window: title bar, scene tabs, viewport, status line. */}
-        <section ref={winRef} className={`hero__win hero__win--${mode}`} aria-label="Scene viewer">
+        <section ref={winRef} className={["hero__win", `hero__win--${mode}`, sized && "is-sized", handling].filter(Boolean).join(" ")} aria-label="Scene viewer">
           <header className="hero__bar" onPointerDown={onBarDown} onDoubleClick={toggleMax}>
             <span className="hero__bar-grip" aria-hidden="true" />
             <h2 className="hero__bar-title">
@@ -297,6 +388,17 @@ const CartographicHero = () => {
             </div>
           </div>
 
+          {EDGES.map((d) => (
+            <span
+              key={d.id}
+              className={`hero__edge hero__edge--${d.id}`}
+              aria-hidden="true"
+              data-no-orbit
+              onPointerDown={onEdgeDown(d)}
+              onDoubleClick={resetSize}
+            />
+          ))}
+
           <footer className="hero__status" aria-hidden="true">
             <span className="hero__orbit-hint">
               {cur.hint ?? "DRAG TO ORBIT \u00b7 CTRL+WHEEL TO ZOOM \u00b7 DOUBLE-CLICK TO RESET"}
@@ -310,7 +412,7 @@ const CartographicHero = () => {
         {/* Hairline footer strip: scroll cue on the right. */}
         <footer ref={footerRef} className="hero__strip">
           <span className="hero__strip-keys" aria-hidden="true">
-            <kbd>F</kbd> MAXIMIZE &middot; DRAG TITLE TO MOVE
+            <kbd>F</kbd> MAXIMIZE &middot; DRAG TITLE TO MOVE &middot; DRAG EDGES TO RESIZE
           </span>
           <div className="hero__cue">
             <span>SCROLL</span>

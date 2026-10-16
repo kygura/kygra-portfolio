@@ -259,7 +259,56 @@
   box-shadow: 6px 6px 0 var(--code);
   animation: cartoFadeUp 0.9s ease 0.6s backwards;
 }
-.hero__win.is-moving { border-color: var(--accent); }
+.hero__win.is-moving,
+.hero__win.is-resizing { border-color: var(--accent); }
+
+/* Resize handles: thin zones over each edge and corner, desktop only. */
+.hero__edge { position: absolute; z-index: 3; display: none; touch-action: none; }
+@media (min-width: 768px) {
+  .hero__win--normal .hero__edge { display: block; }
+  /* A resized window keeps its own size instead of filling its grid slot. */
+  .hero__win--normal.is-sized,
+  .hero__win--shade.is-sized {
+    justify-self: start;
+    align-self: start;
+    width: var(--win-w);
+    margin-bottom: 0;
+  }
+  .hero__win--normal.is-sized { height: var(--win-h); }
+}
+.hero__edge--n, .hero__edge--s { left: 8px; right: 8px; height: 6px; cursor: ns-resize; }
+.hero__edge--e, .hero__edge--w { top: 8px; bottom: 8px; width: 6px; cursor: ew-resize; }
+.hero__edge--n { top: -3px; }
+.hero__edge--s { bottom: -3px; }
+.hero__edge--e { right: -3px; }
+.hero__edge--w { left: -3px; }
+.hero__edge--ne, .hero__edge--nw, .hero__edge--se, .hero__edge--sw { width: 12px; height: 12px; }
+.hero__edge--ne { top: -3px; right: -3px; cursor: nesw-resize; }
+.hero__edge--sw { bottom: -3px; left: -3px; cursor: nesw-resize; }
+.hero__edge--nw { top: -3px; left: -3px; cursor: nwse-resize; }
+.hero__edge--se { bottom: -3px; right: -3px; cursor: nwse-resize; }
+/* The bottom-right corner shows a ruled grip, the one handle that is drawn. */
+.hero__edge--se {
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(
+    135deg,
+    transparent 0 52%, var(--rule-2) 52% 58%, transparent 58% 68%,
+    var(--rule-2) 68% 74%, transparent 74% 84%, var(--rule-2) 84% 90%, transparent 90%
+  );
+}
+.hero__win.is-resizing .hero__edge--se,
+.hero__edge--se:hover {
+  background: linear-gradient(
+    135deg,
+    transparent 0 52%, var(--accent) 52% 58%, transparent 58% 68%,
+    var(--accent) 68% 74%, transparent 74% 84%, var(--accent) 84% 90%, transparent 90%
+  );
+}
+/* Room for the grip at the end of the status line. */
+.hero__status { padding-right: 22px; }
 .hero__win--shade { align-self: start; }
 
 /* Maximized: the window takes the whole stage under the nav, the old
@@ -273,7 +322,6 @@
   margin: 0;
   border-width: 1px 0 0;
   box-shadow: none;
-  animation: none;
 }
 
 .hero__bar {
