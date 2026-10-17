@@ -3,16 +3,18 @@ import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, write
 import { isTyping } from "@/theme/keymap";
 import { SHEETS, sheetNo } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
+import { createCipherField, type CipherField } from "@/hero/cipher";
 
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 five-scene renderer (ocean / astral / ruins / rail / field). three.js is fetched
+ * the PS1 renderer (ocean / astral / ruins / rail / field / cipher). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
  * The engine runs its own render loop and stops it when offscreen, hidden, or
- * paused under reduced motion.
+ * paused under reduced motion. The cipher sheet is a black stage in the
+ * engine with a 2D glyph canvas over it; the engine's clock stops while it is up.
  */
 
 const NAME = "NICOLAS";
@@ -42,6 +44,9 @@ const CartographicHero = () => {
   const stageRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const engineRef = useRef<HeroEngine | null>(null);
+  const cipherCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cipherRef = useRef<CipherField | null>(null);
+  const cipherOn = SHEETS[sheet].id === "cipher";
   const live = useRef({ accent, sheet });
   live.current = { accent, sheet };
 
@@ -61,7 +66,7 @@ const CartographicHero = () => {
           compass: null,
           accent: ACCENTS[live.current.accent],
           sheet: live.current.sheet,
-          motion: !reduced,
+          motion: !reduced && SHEETS[live.current.sheet].id !== "cipher",
           psx: true,
           reducedMotion: reduced,
           onContextLost: () => setNoGl(true),
@@ -90,11 +95,32 @@ const CartographicHero = () => {
     };
   }, []);
 
-  useEffect(() => engineRef.current?.setAccent(ACCENTS[accent]), [accent]);
+  // Glyph field: plain 2D canvas, built eagerly so switching to it is instant.
+  useEffect(() => {
+    if (!cipherCanvasRef.current) return;
+    const field = createCipherField(cipherCanvasRef.current, {
+      accent: ACCENTS[live.current.accent].hex,
+      reducedMotion: Boolean(reduceQuery()?.matches),
+    });
+    cipherRef.current = field;
+    return () => {
+      field.dispose();
+      cipherRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    engineRef.current?.setAccent(ACCENTS[accent]);
+    cipherRef.current?.setAccent(ACCENTS[accent].hex);
+  }, [accent]);
   useEffect(() => {
     engineRef.current?.setSheet(sheet);
     writeStored(SHEET_KEY, String(sheet));
   }, [sheet]);
+  useEffect(() => {
+    cipherRef.current?.setActive(cipherOn);
+    engineRef.current?.setMotion(!cipherOn && !reduceQuery()?.matches);
+  }, [cipherOn]);
 
   // The strip wraps to two rows on phones; keep the monogram clear of its hairline.
   useEffect(() => {
@@ -139,6 +165,12 @@ const CartographicHero = () => {
     <div ref={rootRef} className={`hero${noGl ? " hero--no-gl" : ""}`}>
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" role="img" aria-label={SHEETS[sheet].aria} />
+        <canvas
+          ref={cipherCanvasRef}
+          className={`hero__cipher${cipherOn ? " is-on" : ""}`}
+          data-no-orbit
+          aria-hidden="true"
+        />
         <div className="hero__vignette" />
 
         <div className="hero__egg" role="status" aria-live="polite">
