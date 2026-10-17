@@ -7,11 +7,12 @@
  * - Hover: glyphs near the cursor light up and lean away from it; the run under
  *   the cursor rolls like slot reels and stops letter by letter on a word,
  *   which holds while the cursor stays near and rolls back to noise once it leaves.
- * - Click / tap: a small rainbow pulse rings out from the click.
+ * - Click / tap: a small pulse rings out from the click in the site's accent swatches.
  *
  * The loop only runs while the sheet is active, on screen, the tab is visible
  * and something is actually moving.
  */
+import { ACCENTS } from "@/theme/accent";
 
 export interface CipherField {
   setActive: (on: boolean) => void;
@@ -38,7 +39,8 @@ const SPEED = 260, BAND = 36, REACH = 240;
 /** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
 const REEL_MS = 520, REEL_STAGGER = 70;
 
-const HUES = Array.from({ length: 36 }, (_, q) => `hsl(${q * 10},100%,66%)`);
+/** The pulse is painted in wedges of the accent swatches, turning as it spreads. */
+const PALETTE = ACCENTS.map((a) => a.hex);
 const INK = "#d8d2c2";
 const HOT = "#ffffff";
 
@@ -305,7 +307,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
         } else if (heat[i] > 0.35) col = HOT;
 
         if (best > 0.06) {
-          col = HUES[((((hue % 360) + 360) % 360) / 10) | 0];
+          col = PALETTE[Math.floor(((((hue % 360) + 360) % 360) / 360) * PALETTE.length) % PALETTE.length];
           a = Math.max(a, 0.3 + best * 0.6);
         }
 
