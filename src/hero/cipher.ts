@@ -7,12 +7,12 @@
  * - Hover: glyphs near the cursor light up and lean away from it; the run under
  *   the cursor rolls like slot reels and stops letter by letter on a word,
  *   which holds while the cursor stays near and rolls back to noise once it leaves.
- * - Click / tap: a small pulse rings out from the click in the site's accent swatches.
+ * - Click / tap: a small pulse in the current accent rings out from the click and
+ *   leaves a glow behind it that fades out slowly.
  *
  * The loop only runs while the sheet is active, on screen, the tab is visible
  * and something is actually moving.
  */
-import { ACCENTS } from "@/theme/accent";
 
 export interface CipherField {
   setActive: (on: boolean) => void;
@@ -34,14 +34,14 @@ const HEX = "0123456789ABCDEF";
 const SYM = "#$%&*+=~^<>/\\|{}[]():;!?_-.";
 const ANY = UPPER + DIGIT + SYM;
 
-/** Pulse front speed (px/s), the width of its lit band and how far it travels (px). */
-const SPEED = 260, BAND = 36, REACH = 240;
+/** Pulse: front speed (px/s), lit band ahead of the front, glow trailing behind it,
+ *  how far it travels (px) and how long it takes to fade out (s). */
+const SPEED = 260, BAND = 36, TAIL = 70, REACH = 240, LIFE = 3.2;
 /** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
 const REEL_MS = 520, REEL_STAGGER = 70;
 
-/** The pulse is painted in wedges of the accent swatches, turning as it spreads. */
-const PALETTE = ACCENTS.map((a) => a.hex);
-const INK = "#d8d2c2";
+// Neutral grey, so the accent (in the pulse and in words) is the only colour on the sheet.
+const INK = "#b4b4b4";
 const HOT = "#ffffff";
 
 const pick = (s: string) => s[(Math.random() * s.length) | 0];
@@ -182,9 +182,14 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   const pulseAt = (p: Pulse, now: number, cx: number, cy: number) => {
     const age = (now - p.t0) / 1000;
     const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
-    const k = 1 - Math.abs(d - age * SPEED) / BAND;
-    if (k <= 0) return null;
-    return { amp: k * Math.max(0, 1 - (age * SPEED) / REACH), ddx, ddy, d, age };
+    // The front stops at REACH; inside it the glow falls off behind the front.
+    const front = Math.min(age * SPEED, REACH);
+    const k = d > front ? 1 - (d - front) / BAND : Math.exp(-(front - d) / TAIL);
+    if (k <= 0.01) return null;
+    const life = Math.max(0, 1 - age / LIFE);
+    // Only the moving front pushes; the trailing glow just lights.
+    const push = age * SPEED < REACH ? Math.max(0, 1 - Math.abs(d - front) / BAND) * life : 0;
+    return { amp: k * life, push, ddx, ddy, d };
   };
 
   const step = (now: number, dt: number) => {
@@ -227,7 +232,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
 
     const decay = Math.exp(-dt * 2.6);
     const spring = 1 - Math.exp(-dt * 14);
-    for (let p = pulses.length - 1; p >= 0; p--) if (((now - pulses[p].t0) / 1000) * SPEED > REACH + BAND) pulses.splice(p, 1);
+    for (let p = pulses.length - 1; p >= 0; p--) if ((now - pulses[p].t0) / 1000 > LIFE) pulses.splice(p, 1);
 
     for (let r = 0; r < rows; r++) {
       const cy = oy + r * ch;
@@ -252,8 +257,8 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
         for (const p of pulses) {
           const h = pulseAt(p, now, cx, cy);
           if (!h) continue;
-          tx += (h.ddx / h.d) * h.amp * 5;
-          ty += (h.ddy / h.d) * h.amp * 5;
+          tx += (h.ddx / h.d) * h.push * 5;
+          ty += (h.ddy / h.d) * h.push * 5;
         }
         dx[i] += (tx - dx[i]) * spring;
         dy[i] += (ty - dy[i]) * spring;
@@ -282,13 +287,10 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
         const x = cx + dx[i], y = cy + dy[i];
         let col = INK, a = base[i] + heat[i] * 0.75;
 
-        let best = 0, hue = 0;
+        let best = 0;
         for (const p of pulses) {
           const h = pulseAt(p, now, cx, cy);
-          if (h && h.amp > best) {
-            best = h.amp;
-            hue = (Math.atan2(h.ddy, h.ddx) * 180) / Math.PI + h.age * 120;
-          }
+          if (h && h.amp > best) best = h.amp;
         }
 
         const reel = reels[i];
@@ -306,9 +308,9 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
           a = 1;
         } else if (heat[i] > 0.35) col = HOT;
 
-        if (best > 0.06) {
-          col = PALETTE[Math.floor(((((hue % 360) + 360) % 360) / 360) * PALETTE.length) % PALETTE.length];
-          a = Math.max(a, 0.3 + best * 0.6);
+        if (best > 0.04) {
+          col = accent;
+          a = Math.max(a, 0.45 + best * 0.55);
         }
 
         if (rolling) {
@@ -332,7 +334,13 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
         if (g === " " || a < 0.03) continue;
         ctx.globalAlpha = Math.min(1, a);
         if (fill !== col) ctx.fillStyle = fill = col;
-        ctx.fillText(g, x, y);
+        if (col === accent) {
+          // Accent glyphs carry a halo of their own colour.
+          ctx.shadowColor = accent;
+          ctx.shadowBlur = 10 * Math.max(best, w && !w.fading ? 0.7 : 0);
+          ctx.fillText(g, x, y);
+          ctx.shadowBlur = 0;
+        } else ctx.fillText(g, x, y);
       }
     }
     ctx.globalAlpha = 1;

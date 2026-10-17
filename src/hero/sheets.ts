@@ -38,7 +38,7 @@ export const SHEETS: SheetMeta[] = [
   {
     id: "cipher",
     name: "Cipher",
-    aria: "Interactive black field of random characters: the cursor lights and pushes the glyphs aside and rolls them like slot reels until they stop on words, and a click sends a pulse in the site's accent colours rippling out from where it landed.",
+    aria: "Interactive black field of random characters: the cursor lights and pushes the glyphs aside and rolls them like slot reels until they stop on words, and a click sends a pulse in the accent colour rippling out from where it landed.",
     hint: "HOVER TO DECODE \u00b7 CLICK TO PULSE",
   },
 ];
