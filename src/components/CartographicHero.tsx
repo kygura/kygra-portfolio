@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
-import { SHEETS } from "@/hero/sheets";
+import { SHEETS, sheetNo } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
 
 /**
@@ -184,10 +184,10 @@ const CartographicHero = () => {
                 type="button"
                 className="hero__sheet"
                 aria-pressed={i === sheet}
+                aria-label={`Scene ${sheetNo(i)}: ${s.name}`}
                 onClick={() => goSheet(i)}
               >
-                <small>{s.no}</small>
-                {s.name}
+                {sheetNo(i)}
               </button>
             ))}
             <span className="hero__sheet-keys" aria-hidden="true">
