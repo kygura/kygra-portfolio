@@ -1413,16 +1413,13 @@ kbd {
   color: var(--ink-2); background: transparent; border: 1px solid var(--rule-2);
   margin-right: -1px; padding: 1px 8px; display: inline-flex; gap: 6px; align-items: baseline;
 }
-.hero__sheet small { font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.04em; color: var(--ink-3); }
 .hero__sheet:hover { color: var(--ink); }
 .hero__sheet[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); position: relative; }
-.hero__sheet[aria-pressed="true"] small { color: var(--on-accent); }
 .hero__sheet-keys { display: inline-flex; gap: 3px; padding-left: 10px; font-size: 10px; }
 .hero__orbit-hint { padding-left: 18px; font-family: var(--f-pixel); font-size: 8px; letter-spacing: 0.08em; color: var(--ink-3); white-space: nowrap; }
 @media (max-width: 1100px) { .hero__orbit-hint { display: none; } }
 @media (max-width: 480px) {
   .hero__sheet-keys { display: none; }
-  .hero__sheet small { display: none; }
 }
 
 /* Easter-egg readout: a hairline caption that rides just above the strip. */
