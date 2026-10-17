@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix";
+  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -39,6 +39,12 @@ export const SHEETS: SheetMeta[] = [
     id: "matrix",
     name: "Matrix",
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
+  },
+  {
+    id: "cipher",
+    name: "Cipher",
+    aria: "Interactive black field of random characters: the cursor lights and pushes the glyphs aside and rolls them like slot reels until they stop on words, and a click sends a pulse in the accent colour rippling out from where it landed.",
+    hint: "HOVER TO DECODE \u00b7 CLICK TO PULSE",
   },
 ];
 
