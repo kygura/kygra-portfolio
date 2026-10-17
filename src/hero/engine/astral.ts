@@ -153,139 +153,6 @@ export function buildAstral(k: PsxKit): SceneDef {
   }
   belt.add(segs(bd, M.lDeep));
 
-  // Constellation: a far figure of glyph stars joined by bone lines, always facing the centre.
-  const constel = new THREE.Group();
-  constel.position.set(-38, 34, 52);
-  constel.lookAt(0, 0, 0);
-  scene.add(constel);
-  const stars: [number, number][] = [[-11, 4], [-6, 7], [-1, 5], [3, 8], [8, 6], [5, 0], [9, -5], [-2, -3], [-7, -6]];
-  const starLinks: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [4, 5], [5, 6], [5, 7], [7, 8], [7, 2]];
-  const cl: V3[] = [];
-  starLinks.forEach(([a, b]) => cl.push(new THREE.Vector3(stars[a][0], stars[a][1], 0), new THREE.Vector3(stars[b][0], stars[b][1], 0)));
-  constel.add(segs(cl, M.lBoneDim));
-  const starMeshes = stars.map(([x, y], i) => mesh(new THREE.OctahedronGeometry(i % 3 ? 0.35 : 0.55, 0), M.glyph, constel, x, y, 0));
-
-  // ---- outer field: everything beyond the camera's orbit, so the space reads as populated in every direction ----
-  const shell = (r0: number, r1: number, y0: number, y1: number, v = new THREE.Vector3()) => {
-    const a = rnd() * Math.PI * 2, r = r0 + rnd() * (r1 - r0);
-    return v.set(Math.cos(a) * r, y0 + rnd() * (y1 - y0), Math.sin(a) * r);
-  };
-  const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3();
-
-  // Drifting polyhedra: cored solids with edge wire, merged per material and turning slowly as one field.
-  const drift = new THREE.Group();
-  scene.add(drift);
-  const driftShapes = [
-    new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1, 0), new THREE.DodecahedronGeometry(1, 0),
-    new THREE.TetrahedronGeometry(1, 0), new THREE.BoxGeometry(1.3, 1.3, 1.3),
-  ];
-  const driftLineMats = [M.lAccent, M.lBone, M.lDeep, M.lBoneDim];
-  const driftSolids: THREE.BufferGeometry[] = [];
-  const driftEdges = driftLineMats.map((): THREE.BufferGeometry[] => []);
-  const dp = new THREE.Vector3();
-  for (let di = 0; di < 54; di++) {
-    const sh = driftShapes[di % driftShapes.length];
-    m4.compose(shell(44, 125, -28, 48, dp), q4.setFromEuler(e4.set(rnd() * 6, rnd() * 6, rnd() * 6)), s4.setScalar(0.8 + rnd() * 2.2));
-    driftSolids.push(facet(sh.clone(), 0).scale(0.93, 0.93, 0.93).applyMatrix4(m4));
-    driftEdges[di % driftLineMats.length].push(new THREE.EdgesGeometry(sh).applyMatrix4(m4));
-  }
-  const driftSolid = mergeGeometries(driftSolids);
-  if (driftSolid) drift.add(new THREE.Mesh(driftSolid, M.solid));
-  driftEdges.forEach((list, i) => {
-    const g = mergeGeometries(list);
-    if (g) drift.add(new THREE.LineSegments(g, driftLineMats[i]));
-  });
-
-  // Asteroid clumps and star clusters, batched into one mesh per material.
-  const field = batcher();
-  const cp = new THREE.Vector3();
-  for (let ci = 0; ci < 5; ci++) {
-    shell(48, 90, -18, 26, cp);
-    for (let ai = 0; ai < 14; ai++) {
-      field.add(facet(shardGeos[ai % 3].clone(), 0.2), ai % 7 ? M.solid : M.glyph,
-        cp.x + (rnd() - 0.5) * 9, cp.y + (rnd() - 0.5) * 5, cp.z + (rnd() - 0.5) * 9, rnd() * 6, rnd() * 6, rnd() * 6, 0.8 + rnd() * 2);
-    }
-  }
-  const starG = new THREE.OctahedronGeometry(0.3, 0);
-  for (let ci = 0; ci < 6; ci++) {
-    shell(95, 140, 5, 70, cp);
-    for (let si = 0; si < 22; si++) {
-      const g = () => (rnd() + rnd() + rnd() - 1.5) * 7;
-      field.add(starG, M.glyph, cp.x + g(), cp.y + g(), cp.z + g(), rnd() * 3, rnd() * 3, 0, 0.5 + rnd() * 1.4);
-    }
-  }
-  for (let si = 0; si < 160; si++) {
-    shell(70, 150, -30, 90, cp);
-    field.add(starG, M.glyph, cp.x, cp.y, cp.z, rnd() * 3, rnd() * 3, 0, 0.4 + rnd() * 0.9);
-  }
-  field.flush(drift);
-
-  // Ringed planet: a faceted world inside graduated rings and a dashed outer band.
-  const ringed = new THREE.Group();
-  ringed.position.set(62, 16, -58);
-  scene.add(ringed);
-  const ringedBody = mesh(facet(new THREE.IcosahedronGeometry(8, 2), 0.35), psx({ map: tex.tPlain, tint: "#a7ae98", fogAmt: 0.12, amb: "#5f6a6e" }), ringed);
-  const rings = new THREE.Group();
-  rings.rotation.set(Math.PI / 2 - 0.35, 0.25, 0);
-  ringed.add(rings);
-  [[11.5, M.lBone], [12.6, M.lAccent], [14, M.lBoneDim]].forEach(([r, m]) =>
-    rings.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(r as number, 120)), m as THREE.Material)));
-  const rd: V3[] = [];
-  for (let di = 0; di < 140; di += 2) {
-    const d1 = (di / 140) * Math.PI * 2, d2 = ((di + 1) / 140) * Math.PI * 2;
-    rd.push(new THREE.Vector3(Math.cos(d1) * 15.6, Math.sin(d1) * 15.6, 0), new THREE.Vector3(Math.cos(d2) * 15.6, Math.sin(d2) * 15.6, 0));
-  }
-  rings.add(segs(rd, M.lDeep));
-
-  // Gas giant: a large dim sphere banded by latitude lines, far out on the other flank.
-  const giant = new THREE.Group();
-  giant.position.set(-96, 30, -40);
-  giant.rotation.z = 0.3;
-  scene.add(giant);
-  const GR = 15;
-  const giantBody = mesh(facet(new THREE.IcosahedronGeometry(GR, 2), 0.4), psx({ map: tex.tPlain, tint: "#6f7c76", fogAmt: 0.1, amb: "#4a5560" }), giant);
-  const bands: V3[] = [];
-  [-0.55, -0.3, -0.1, 0.12, 0.38, 0.6].forEach((lat) => {
-    const y = Math.sin(lat) * GR * 1.03, br = Math.cos(lat) * GR * 1.03;
-    for (let bi = 0; bi < 64; bi++) {
-      const u = (bi / 64) * Math.PI * 2, v = ((bi + 1) / 64) * Math.PI * 2;
-      bands.push(new THREE.Vector3(Math.cos(u) * br, y, Math.sin(u) * br), new THREE.Vector3(Math.cos(v) * br, y, Math.sin(v) * br));
-    }
-  });
-  giant.add(segs(bands, M.lAccent));
-
-  // Twin world: a small planet with two moons on crossed orbits.
-  const twin = new THREE.Group();
-  twin.position.set(-52, -14, 70);
-  scene.add(twin);
-  mesh(facet(new THREE.IcosahedronGeometry(4.2, 1), 0.4), psx({ map: tex.tPlain, tint: "#b9b29c", fogAmt: 0.12, amb: "#6c747c" }), twin);
-  const twinMoons = [[7.5, 0.4, 0.2, 0.32], [10.5, -0.9, 0.6, -0.2]].map(([r, rx, rz, sp], i) => {
-    const o = new THREE.Group();
-    o.rotation.set(Math.PI / 2 + rx, 0, rz);
-    twin.add(o);
-    o.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(r, 80)), M.lDeep));
-    const mm = i ? mesh(new THREE.OctahedronGeometry(0.6, 0), M.glyph, o) : mesh(facet(new THREE.IcosahedronGeometry(1.1, 0), 0.2), M.solid, o);
-    return { mm, r, sp };
-  });
-
-  // Comets: glyph heads on long tilted ellipses, each dragging a line trail of where it has just been.
-  const TRAIL = 18;
-  const comets = Array.from({ length: 4 }, (_, i) => {
-    const tilt = new THREE.Group();
-    tilt.rotation.set(0.3 + i * 0.5, i * 1.6, 0.2 - i * 0.25);
-    scene.add(tilt);
-    const head = mesh(new THREE.OctahedronGeometry(0.55, 0), M.glyph, tilt);
-    const pos = new Float32Array(TRAIL * 3);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    const trail = new THREE.Line(geo, i % 2 ? M.lBone : M.lAccent);
-    trail.frustumCulled = false;
-    tilt.add(trail);
-    return { head, pos, geo, a: 70 + i * 14, b: 38 + i * 8, c: 25 + i * 6, sp: 0.035 + i * 0.008, off: i * 1.9 };
-  });
-  const cometAt = (c: (typeof comets)[number], u: number, v: V3) => v.set(Math.cos(u) * c.a - c.c, 0, Math.sin(u) * c.b);
-  const cv = new THREE.Vector3();
-
   const watcher = new THREE.Group();
   watcher.position.set(4, 8, -42);
   watcher.scale.setScalar(1.7);
@@ -316,6 +183,166 @@ export function buildAstral(k: PsxKit): SceneDef {
   moonRig.add(orbit);
   orbit.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(8.5, 96)), M.lDeep));
   const sat = mesh(new THREE.OctahedronGeometry(0.5, 0), M.glyph, orbit);
+
+  // ---- outer field: everything sits beyond the camera's furthest dolly (≈72 from the pivot), so nothing ever
+  // passes through the lens, and every piece is placed by best-candidate sampling against what is already there,
+  // so the field spreads evenly with clear gaps instead of clumping. All figures are low poly. ----
+  const taken: { p: V3; r: number }[] = [];
+  const claim = (p: V3, r: number) => { taken.push({ p: p.clone(), r }); return p; };
+  const cand = new THREE.Vector3(), best = new THREE.Vector3();
+  /** Pick, out of `tries` random spots in a band of the shell, the one with the most clearance from everything claimed. */
+  const place = (r0: number, r1: number, el0: number, el1: number, size: number, tries = 24) => {
+    let bestGap = -Infinity;
+    for (let i = 0; i < tries; i++) {
+      const az = rnd() * Math.PI * 2, el = el0 + rnd() * (el1 - el0), r = r0 + rnd() * (r1 - r0);
+      cand.set(Math.cos(az) * Math.cos(el) * r, PIVOT.y + Math.sin(el) * r, Math.sin(az) * Math.cos(el) * r);
+      let gap = Infinity;
+      for (const o of taken) gap = Math.min(gap, cand.distanceTo(o.p) - o.r - size);
+      if (gap > bestGap) { bestGap = gap; best.copy(cand); }
+    }
+    return claim(best, size);
+  };
+  // Fixed landmarks go in first so the sampled pieces keep clear of them.
+  claim(moonRig.position, 13);
+  claim(watcher.position, 26);
+  const RINGED = claim(new THREE.Vector3(80, 20, -74), 22);
+  const GIANT = claim(new THREE.Vector3(-118, 34, -50), 22);
+  const TWIN = claim(new THREE.Vector3(-66, -16, 86), 16);
+  const CONSTEL = claim(new THREE.Vector3(-64, 62, 92), 26);
+  const deg = Math.PI / 180;
+
+  const m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler(), s4 = new THREE.Vector3();
+
+  // Drifting polyhedra: cored solids with edge wire, merged per material and turning slowly as one field.
+  const drift = new THREE.Group();
+  drift.position.copy(PIVOT);
+  scene.add(drift);
+  const driftShapes = [
+    new THREE.IcosahedronGeometry(1, 0), new THREE.OctahedronGeometry(1, 0), new THREE.DodecahedronGeometry(1, 0),
+    new THREE.TetrahedronGeometry(1, 0), new THREE.BoxGeometry(1.3, 1.3, 1.3),
+  ];
+  const driftLineMats = [M.lAccent, M.lBone, M.lDeep, M.lBoneDim];
+  const driftSolids: THREE.BufferGeometry[] = [];
+  const driftEdges = driftLineMats.map((): THREE.BufferGeometry[] => []);
+  const local = new THREE.Vector3();
+  for (let di = 0; di < 40; di++) {
+    const sh = driftShapes[di % driftShapes.length], sc = 2 + rnd() * 3;
+    local.copy(place(82, 135, -22 * deg, 48 * deg, sc * 1.6 + 5)).sub(PIVOT);
+    m4.compose(local, q4.setFromEuler(e4.set(rnd() * 6, rnd() * 6, rnd() * 6)), s4.setScalar(sc));
+    driftSolids.push(facet(sh.clone(), 0).scale(0.93, 0.93, 0.93).applyMatrix4(m4));
+    driftEdges[di % driftLineMats.length].push(new THREE.EdgesGeometry(sh).applyMatrix4(m4));
+  }
+  const driftSolid = mergeGeometries(driftSolids);
+  if (driftSolid) drift.add(new THREE.Mesh(driftSolid, M.solid));
+  driftEdges.forEach((list, i) => {
+    const g = mergeGeometries(list);
+    if (g) drift.add(new THREE.LineSegments(g, driftLineMats[i]));
+  });
+
+  // Asteroid clumps and star clusters, batched into one mesh per material.
+  const field = batcher();
+  const cp = new THREE.Vector3();
+  for (let ci = 0; ci < 5; ci++) {
+    cp.copy(place(85, 120, -18 * deg, 20 * deg, 12)).sub(PIVOT);
+    for (let ai = 0; ai < 12; ai++) {
+      field.add(facet(shardGeos[ai % 3].clone(), 0.2), ai % 6 ? M.solid : M.glyph,
+        cp.x + (rnd() - 0.5) * 14, cp.y + (rnd() - 0.5) * 6, cp.z + (rnd() - 0.5) * 14, rnd() * 6, rnd() * 6, rnd() * 6, 1.6 + rnd() * 2.6);
+    }
+  }
+  const starG = new THREE.OctahedronGeometry(0.4, 0);
+  for (let ci = 0; ci < 6; ci++) {
+    cp.copy(place(120, 150, 12 * deg, 55 * deg, 14)).sub(PIVOT);
+    for (let si = 0; si < 18; si++) {
+      const g = () => (rnd() + rnd() + rnd() - 1.5) * 8;
+      field.add(starG, M.glyph, cp.x + g(), cp.y + g(), cp.z + g(), rnd() * 3, rnd() * 3, 0, 0.8 + rnd() * 1.6);
+    }
+  }
+  for (let si = 0; si < 120; si++) {
+    cp.copy(place(110, 160, -15 * deg, 70 * deg, 2, 12)).sub(PIVOT);
+    field.add(starG, M.glyph, cp.x, cp.y, cp.z, rnd() * 3, rnd() * 3, 0, 0.7 + rnd() * 1.1);
+  }
+  field.flush(drift);
+
+  // Ringed planet: a low-poly world inside graduated polygon rings and a dashed outer band.
+  const ringed = new THREE.Group();
+  ringed.position.copy(RINGED);
+  scene.add(ringed);
+  const ringedBody = mesh(facet(new THREE.IcosahedronGeometry(9, 1), 0.4), psx({ map: tex.tPlain, tint: "#a7ae98", fogAmt: 0.12, amb: "#5f6a6e" }), ringed);
+  const rings = new THREE.Group();
+  rings.rotation.set(Math.PI / 2 - 0.35, 0.25, 0);
+  ringed.add(rings);
+  [[13, M.lBone], [14.4, M.lAccent], [16, M.lBoneDim]].forEach(([r, m]) =>
+    rings.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(r as number, 32)), m as THREE.Material)));
+  const rd: V3[] = [];
+  for (let di = 0; di < 48; di += 2) {
+    const d1 = (di / 48) * Math.PI * 2, d2 = ((di + 1) / 48) * Math.PI * 2;
+    rd.push(new THREE.Vector3(Math.cos(d1) * 18, Math.sin(d1) * 18, 0), new THREE.Vector3(Math.cos(d2) * 18, Math.sin(d2) * 18, 0));
+  }
+  rings.add(segs(rd, M.lDeep));
+
+  // Gas giant: a large low-poly sphere banded by polygon latitude lines, far out on the other flank.
+  const giant = new THREE.Group();
+  giant.position.copy(GIANT);
+  giant.rotation.z = 0.3;
+  scene.add(giant);
+  const GR = 16;
+  const giantBody = mesh(facet(new THREE.IcosahedronGeometry(GR, 1), 0.5), psx({ map: tex.tPlain, tint: "#6f7c76", fogAmt: 0.1, amb: "#4a5560" }), giant);
+  const bands: V3[] = [];
+  [-0.5, -0.2, 0.15, 0.45].forEach((lat) => {
+    const y = Math.sin(lat) * GR * 1.08, br = Math.cos(lat) * GR * 1.08;
+    for (let bi = 0; bi < 20; bi++) {
+      const u = (bi / 20) * Math.PI * 2, v = ((bi + 1) / 20) * Math.PI * 2;
+      bands.push(new THREE.Vector3(Math.cos(u) * br, y, Math.sin(u) * br), new THREE.Vector3(Math.cos(v) * br, y, Math.sin(v) * br));
+    }
+  });
+  giant.add(segs(bands, M.lAccent));
+
+  // Twin world: a small low-poly planet with two moons on crossed polygon orbits.
+  const twin = new THREE.Group();
+  twin.position.copy(TWIN);
+  scene.add(twin);
+  mesh(facet(new THREE.IcosahedronGeometry(5, 0), 0.3), psx({ map: tex.tPlain, tint: "#b9b29c", fogAmt: 0.12, amb: "#6c747c" }), twin);
+  const twinMoons = [[8.5, 0.4, 0.2, 0.32], [12, -0.9, 0.6, -0.2]].map(([r, rx, rz, sp], i) => {
+    const o = new THREE.Group();
+    o.rotation.set(Math.PI / 2 + rx, 0, rz);
+    twin.add(o);
+    o.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(r, 24)), M.lDeep));
+    const mm = i ? mesh(new THREE.OctahedronGeometry(0.8, 0), M.glyph, o) : mesh(facet(new THREE.IcosahedronGeometry(1.3, 0), 0.2), M.solid, o);
+    return { mm, r, sp };
+  });
+
+  // Comets: glyph heads on wide tilted ellipses that never come inside the camera's reach, each dragging a line trail.
+  const TRAIL = 18;
+  const comets = Array.from({ length: 4 }, (_, i) => {
+    const tilt = new THREE.Group();
+    tilt.position.copy(PIVOT);
+    tilt.rotation.set(0.25 + i * 0.35, i * 1.6, 0.15 - i * 0.2);
+    scene.add(tilt);
+    const head = mesh(new THREE.OctahedronGeometry(0.9, 0), M.glyph, tilt);
+    const pos = new Float32Array(TRAIL * 3);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const trail = new THREE.Line(geo, i % 2 ? M.lBone : M.lAccent);
+    trail.frustumCulled = false;
+    tilt.add(trail);
+    return { head, pos, geo, a: 112 + i * 10, b: 90 + i * 8, c: 12 + i * 4, sp: 0.03 + i * 0.006, off: i * 1.9 };
+  });
+  const cometAt = (c: (typeof comets)[number], u: number, v: V3) => v.set(Math.cos(u) * c.a - c.c, 0, Math.sin(u) * c.b);
+  const cv = new THREE.Vector3();
+
+  // Constellation: a far figure of glyph stars joined by bone lines, always facing the centre.
+  const constel = new THREE.Group();
+  constel.position.copy(CONSTEL);
+  constel.scale.setScalar(1.6);
+  constel.lookAt(0, 0, 0);
+  scene.add(constel);
+  const stars: [number, number][] = [[-11, 4], [-6, 7], [-1, 5], [3, 8], [8, 6], [5, 0], [9, -5], [-2, -3], [-7, -6]];
+  const starLinks: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [4, 5], [5, 6], [5, 7], [7, 8], [7, 2]];
+  const cl: V3[] = [];
+  starLinks.forEach(([a, b]) => cl.push(new THREE.Vector3(stars[a][0], stars[a][1], 0), new THREE.Vector3(stars[b][0], stars[b][1], 0)));
+  constel.add(segs(cl, M.lBoneDim));
+  const starMeshes = stars.map(([x, y], i) => mesh(new THREE.OctahedronGeometry(i % 3 ? 0.35 : 0.55, 0), M.glyph, constel, x, y, 0));
+
   const dir = new THREE.Vector3();
 
   // easter eggs: start times
