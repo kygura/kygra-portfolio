@@ -3,11 +3,13 @@ import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, write
 import { isTyping } from "@/theme/keymap";
 import { SHEETS } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
+import { createGlyphField, type GlyphField } from "@/hero/glyphs";
 
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 five-scene renderer (ocean / astral / ruins / rail / field). three.js is fetched
+ * the PS1 renderer (ocean / astral / ruins / rail / field), plus the 2D
+ * glyph field drawn over it for the cipher sheet. three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
@@ -42,6 +44,9 @@ const CartographicHero = () => {
   const stageRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLElement>(null);
   const engineRef = useRef<HeroEngine | null>(null);
+  const glyphCanvasRef = useRef<HTMLCanvasElement>(null);
+  const glyphRef = useRef<GlyphField | null>(null);
+  const cipher = SHEETS[sheet].id === "cipher";
   const live = useRef({ accent, sheet });
   live.current = { accent, sheet };
 
@@ -90,7 +95,32 @@ const CartographicHero = () => {
     };
   }, []);
 
-  useEffect(() => engineRef.current?.setAccent(ACCENTS[accent]), [accent]);
+  // ── Cipher sheet: plain 2D canvas, so it needs no WebGL ─────────────
+  useEffect(() => {
+    if (!glyphCanvasRef.current || !stageRef.current) return;
+    const reduce = reduceQuery();
+    const field = createGlyphField({
+      canvas: glyphCanvasRef.current,
+      host: stageRef.current,
+      accent: ACCENTS[live.current.accent].hex,
+      motion: !reduce?.matches,
+      active: SHEETS[live.current.sheet].id === "cipher",
+    });
+    glyphRef.current = field;
+    const onReduce = () => field.setMotion(!reduce?.matches);
+    reduce?.addEventListener?.("change", onReduce);
+    return () => {
+      reduce?.removeEventListener?.("change", onReduce);
+      field.dispose();
+      glyphRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    engineRef.current?.setAccent(ACCENTS[accent]);
+    glyphRef.current?.setAccent(ACCENTS[accent].hex);
+  }, [accent]);
+  useEffect(() => glyphRef.current?.setActive(cipher), [cipher]);
   useEffect(() => {
     engineRef.current?.setSheet(sheet);
     writeStored(SHEET_KEY, String(sheet));
@@ -136,9 +166,10 @@ const CartographicHero = () => {
   }, []);
 
   return (
-    <div ref={rootRef} className={`hero${noGl ? " hero--no-gl" : ""}`}>
+    <div ref={rootRef} className={`hero${noGl ? " hero--no-gl" : ""}${cipher ? " hero--cipher" : ""}`}>
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" role="img" aria-label={SHEETS[sheet].aria} />
+        <canvas ref={glyphCanvasRef} className="hero__glyphs" aria-hidden="true" />
         <div className="hero__vignette" />
 
         <div className="hero__egg" role="status" aria-live="polite">

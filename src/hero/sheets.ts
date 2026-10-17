@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "astral" | "ruins" | "rail" | "field";
+  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "cipher";
   no: string;
   name: string;
   aria: string;
@@ -40,5 +40,12 @@ export const SHEETS: SheetMeta[] = [
     name: "Field",
     aria: "Interactive low-poly relief map that behaves like a living field: tap or click to send a pulse rippling out through the contours, drag to pull the contour fabric and survey grid along, and move the cursor to lift a swell and leave a wake.",
     hint: "CLICK TO PULSE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+DRAG TO WARP",
+  },
+  {
+    id: "cipher",
+    no: "06",
+    name: "Cipher",
+    aria: "Interactive black field of random strings and characters: the glyphs under the cursor light up, shift aside and scramble until they settle into a word, and a click sends a rainbow pulse out from the centre.",
+    hint: "HOVER TO DECODE \u00b7 CLICK TO PULSE",
   },
 ];

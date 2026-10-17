@@ -1398,6 +1398,19 @@ kbd {
 /* PS1 renderer: quarter-res target, nearest upscale. */
 .hero__canvas { image-rendering: pixelated; }
 .hero--no-gl .hero__canvas { display: none; }
+/* Cipher sheet: the 2D glyph field covers the WebGL canvas. */
+.hero__glyphs {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease, visibility 0s linear 0.6s;
+}
+.hero--cipher .hero__glyphs { opacity: 1; visibility: visible; transition: opacity 0.6s ease; }
+.hero--cipher .hero__stage, .hero--cipher .hero__stage.is-dragging { cursor: crosshair; }
 /* Without WebGL: a contour sheet in CSS stands in for the scene. */
 .hero--no-gl .hero__stage {
   background:

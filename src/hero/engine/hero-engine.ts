@@ -17,6 +17,18 @@ import { buildRuins } from "./ruins";
 import { buildRail } from "./rail";
 import { buildField } from "./field";
 
+/** Sheet 06 · Cipher is drawn by the 2D glyph field over the stage; the engine only holds black under it. */
+function buildVoid(): SceneDef {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+  const cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 10);
+  return {
+    scene, cam, fog: [1, 2], fov: [60, 60], limits: { pitch: [0, 0], zoom: [1, 1], yaw: 0 }, labels: [],
+    update() {},
+    readout: () => Array.from({ length: 5 }, (): [string, string] => ["", ""]),
+  };
+}
+
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
 uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform vec2 uLow; uniform float uLevels; varying vec2 vUv;
@@ -75,7 +87,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit)];
+  const SC: SceneDef[] = [buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit), buildVoid()];
   const eggTotal = SC.reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
