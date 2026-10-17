@@ -36,7 +36,7 @@ const ANY = UPPER + DIGIT + SYM;
 
 /** Pulse: front speed (px/s), lit band ahead of the front, glow trailing behind it,
  *  how far it travels (px) and how long it takes to fade out (s). */
-const SPEED = 260, BAND = 36, TAIL = 70, REACH = 240, LIFE = 3.2;
+const SPEED = 260, BAND = 36, TAIL = 55, REACH = 240, LIFE = 2.4;
 /** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
 const REEL_MS = 520, REEL_STAGGER = 70;
 
@@ -97,13 +97,21 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   let accent = opts.accent;
 
   let cssW = 1, cssH = 1, dpr = 1;
-  let cols = 0, rows = 0, cw = 8, ch = 18, fontSize = 14, ox = 0, oy = 0;
+  let cols = 0, rows = 0, cw = 8, ch = 18, fontSize = 14, ox = 0, oy = 0, fontStr = "14px monospace";
   let glyph: string[] = [];
   let base = new Float32Array(0);
   let heat = new Float32Array(0);
+  let glow = new Float32Array(0);
   let dx = new Float32Array(0), dy = new Float32Array(0);
   let owner = new Int32Array(0);
   let reels: (Reel | null)[] = [];
+  // Only cells with something going on are stepped and redrawn each frame;
+  // everything else is a blit of the pre-drawn quiet field.
+  let live: number[] = [];
+  let seenAt = new Uint32Array(0);
+  let frame = 0;
+  const quiet = document.createElement("canvas");
+  const qctx = quiet.getContext("2d", { alpha: false })!;
 
   const words = new Map<number, Word>();
   let nextWord = 1;
@@ -113,16 +121,34 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   const ptr = { x: 0, y: 0, sx: 0, sy: 0, in: false, moved: false };
   let active = false, visible = true, raf = 0, last = performance.now();
 
-  const font = () => `${fontSize}px ${getComputedStyle(canvas).fontFamily || "monospace"}`;
+  const textSetup = (c: CanvasRenderingContext2D) => {
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.font = fontStr;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+  };
+
+  /** Redraw one cell of the quiet field (its resting glyph at its resting strength). */
+  const paintQuiet = (i: number) => {
+    const cx = ox + (i % cols) * cw, cy = oy + ((i / cols) | 0) * ch;
+    qctx.globalAlpha = 1;
+    qctx.fillStyle = "#000";
+    qctx.fillRect(cx - cw / 2, cy - ch / 2, cw, ch);
+    if (glyph[i] === " ") return;
+    qctx.globalAlpha = base[i];
+    qctx.fillStyle = INK;
+    qctx.fillText(glyph[i], cx, cy);
+  };
 
   const layout = () => {
     cssW = Math.max(1, canvas.clientWidth);
     cssH = Math.max(1, canvas.clientHeight);
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
+    canvas.width = quiet.width = Math.round(cssW * dpr);
+    canvas.height = quiet.height = Math.round(cssH * dpr);
     fontSize = cssW < 640 ? 12 : 14;
-    ctx.font = font();
+    fontStr = `${fontSize}px ${getComputedStyle(canvas).fontFamily || "monospace"}`;
+    ctx.font = fontStr;
     cw = Math.ceil(ctx.measureText("M").width) + 1;
     ch = Math.round(fontSize * 1.5);
     cols = Math.ceil(cssW / cw) + 1;
@@ -139,11 +165,23 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       for (let c = 0; c < cols; c++) base[r * cols + c] = rowA * (0.6 + Math.random() * 0.6);
     }
     heat = new Float32Array(n);
+    glow = new Float32Array(n);
     dx = new Float32Array(n);
     dy = new Float32Array(n);
     owner = new Int32Array(n);
+    seenAt = new Uint32Array(n);
     reels = new Array(n).fill(null);
+    live = [];
     words.clear();
+    textSetup(qctx);
+    qctx.fillStyle = "#000";
+    qctx.fillRect(0, 0, cssW, cssH);
+    qctx.fillStyle = INK;
+    for (let i = 0; i < n; i++) {
+      if (glyph[i] === " ") continue;
+      qctx.globalAlpha = base[i];
+      qctx.fillText(glyph[i], ox + (i % cols) * cw, oy + ((i / cols) | 0) * ch);
+    }
     draw(performance.now(), 0);
   };
 
@@ -153,6 +191,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     for (let s = 0; s < stops; s++) strip.push(pick(UPPER + DIGIT));
     strip.push(to);
     reels[i] = { strip, t0, t1: reduced ? t0 : t0 + REEL_MS + stops * 28 };
+    live.push(i);
   };
 
   /** Drop a word into the free run of the row under the cursor. */
@@ -177,19 +216,6 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       spin(i, text[k], now + k * REEL_STAGGER, 6 + k * 2);
     }
     lastSpawn = now;
-  };
-
-  const pulseAt = (p: Pulse, now: number, cx: number, cy: number) => {
-    const age = (now - p.t0) / 1000;
-    const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
-    // The front stops at REACH; inside it the glow falls off behind the front.
-    const front = Math.min(age * SPEED, REACH);
-    const k = d > front ? 1 - (d - front) / BAND : Math.exp(-(front - d) / TAIL);
-    if (k <= 0.01) return null;
-    const life = Math.max(0, 1 - age / LIFE);
-    // Only the moving front pushes; the trailing glow just lights.
-    const push = age * SPEED < REACH ? Math.max(0, 1 - Math.abs(d - front) / BAND) * life : 0;
-    return { amp: k * life, push, ddx, ddy, d };
   };
 
   const step = (now: number, dt: number) => {
@@ -230,127 +256,141 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       }
     }
 
-    const decay = Math.exp(-dt * 2.6);
-    const spring = 1 - Math.exp(-dt * 14);
     for (let p = pulses.length - 1; p >= 0; p--) if ((now - pulses[p].t0) / 1000 > LIFE) pulses.splice(p, 1);
 
-    for (let r = 0; r < rows; r++) {
-      const cy = oy + r * ch;
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c, cx = ox + c * cw;
-        heat[i] *= decay;
-        let tx = 0, ty = 0;
-        if (hovering) {
-          const ddx = cx - ptr.sx, ddy = cy - ptr.sy;
-          const d2 = ddx * ddx + ddy * ddy;
-          if (d2 < R * R) {
-            const d = Math.sqrt(d2) || 1, f = 1 - d / R;
-            if (f > heat[i]) heat[i] = f;
-            // Words hold their line so they stay readable under the cursor.
-            if (!reduced && !owner[i]) {
-              const push = f * f * 16;
-              tx += (ddx / d) * push;
-              ty += (ddy / d) * push;
-            }
+    // Gather this frame's cells: last frame's live ones plus everything under the
+    // cursor and inside each pulse's reach.
+    frame++;
+    const cand: number[] = [];
+    const add = (i: number) => {
+      if (seenAt[i] !== frame) { seenAt[i] = frame; cand.push(i); }
+    };
+    const box = (x: number, y: number, rad: number) => {
+      const c0 = Math.max(0, Math.floor((x - rad - ox) / cw)), c1 = Math.min(cols - 1, Math.ceil((x + rad - ox) / cw));
+      const r0 = Math.max(0, Math.floor((y - rad - oy) / ch)), r1 = Math.min(rows - 1, Math.ceil((y + rad - oy) / ch));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) add(r * cols + c);
+    };
+    for (const i of live) add(i);
+    if (hovering) box(ptr.sx, ptr.sy, R);
+    for (const p of pulses) box(p.x, p.y, Math.min(((now - p.t0) / 1000) * SPEED, REACH) + BAND);
+
+    const decay = Math.exp(-dt * 2.6);
+    const spring = 1 - Math.exp(-dt * 14);
+    const next: number[] = [];
+    for (const i of cand) {
+      const cx = ox + (i % cols) * cw, cy = oy + ((i / cols) | 0) * ch;
+      heat[i] *= decay;
+      let tx = 0, ty = 0, g = 0;
+      if (hovering) {
+        const ddx = cx - ptr.sx, ddy = cy - ptr.sy;
+        const d2 = ddx * ddx + ddy * ddy;
+        if (d2 < R * R) {
+          const d = Math.sqrt(d2) || 1, f = 1 - d / R;
+          if (f > heat[i]) heat[i] = f;
+          // Words hold their line so they stay readable under the cursor.
+          if (!reduced && !owner[i]) {
+            const push = f * f * 16;
+            tx += (ddx / d) * push;
+            ty += (ddy / d) * push;
           }
         }
-        for (const p of pulses) {
-          const h = pulseAt(p, now, cx, cy);
-          if (!h) continue;
-          tx += (h.ddx / h.d) * h.push * 5;
-          ty += (h.ddy / h.d) * h.push * 5;
+      }
+      for (const p of pulses) {
+        const age = (now - p.t0) / 1000;
+        const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
+        // The front stops at REACH; inside it the glow falls off behind the front.
+        const front = Math.min(age * SPEED, REACH);
+        const k = d > front ? 1 - (d - front) / BAND : Math.exp(-(front - d) / TAIL);
+        if (k <= 0.01) continue;
+        const life = Math.max(0, 1 - age / LIFE);
+        if (k * life > g) g = k * life;
+        // Only the moving front pushes; the trailing glow just lights.
+        if (age * SPEED < REACH) {
+          const push = Math.max(0, 1 - Math.abs(d - front) / BAND) * life * 5;
+          tx += (ddx / d) * push;
+          ty += (ddy / d) * push;
         }
-        dx[i] += (tx - dx[i]) * spring;
-        dy[i] += (ty - dy[i]) * spring;
-        if (Math.abs(dx[i]) < 0.02) dx[i] = 0;
-        if (Math.abs(dy[i]) < 0.02) dy[i] = 0;
+      }
+      glow[i] = g;
+      dx[i] += (tx - dx[i]) * spring;
+      dy[i] += (ty - dy[i]) * spring;
+      if (Math.abs(dx[i]) < 0.05) dx[i] = 0;
+      if (Math.abs(dy[i]) < 0.05) dy[i] = 0;
+      if (heat[i] < 0.02) heat[i] = 0;
+      if (heat[i] || glow[i] > 0.04 || dx[i] || dy[i] || reels[i] || owner[i]) next.push(i);
+      else {
+        glow[i] = 0;
+        paintQuiet(i);
       }
     }
+    live = next;
   };
 
   const draw = (now: number, dt: number) => {
     if (dt > 0) step(now, dt);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
+    ctx.drawImage(quiet, 0, 0);
+    textSetup(ctx);
+
+    // Blank the live cells' resting glyphs, then draw them in their current state.
     ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, cssW, cssH);
-    ctx.font = font();
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    for (const i of live) ctx.fillRect(ox + (i % cols) * cw - cw / 2, oy + ((i / cols) | 0) * ch - ch / 2, cw, ch);
 
     let fill = "";
-    for (let r = 0; r < rows; r++) {
-      const cy = oy + r * ch;
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c;
-        const cx = ox + c * cw;
-        const x = cx + dx[i], y = cy + dy[i];
-        let col = INK, a = base[i] + heat[i] * 0.75;
+    for (const i of live) {
+      const x = ox + (i % cols) * cw + dx[i], y = oy + ((i / cols) | 0) * ch + dy[i];
+      let col = INK, a = base[i] + heat[i] * 0.75;
 
-        let best = 0;
-        for (const p of pulses) {
-          const h = pulseAt(p, now, cx, cy);
-          if (h && h.amp > best) best = h.amp;
-        }
-
-        const reel = reels[i];
-        const rolling = reel !== null && now < reel.t1;
-        if (reel && !rolling) {
-          glyph[i] = reel.strip[reel.strip.length - 1];
-          reels[i] = null;
-        }
-        const w = owner[i] ? words.get(owner[i]) : undefined;
-        if (rolling) {
-          col = HOT;
-          a = 0.9;
-        } else if (w && !w.fading) {
-          col = accent;
-          a = 1;
-        } else if (heat[i] > 0.35) col = HOT;
-
-        if (best > 0.04) {
-          col = accent;
-          a = Math.max(a, 0.45 + best * 0.55);
-        }
-
-        if (rolling) {
-          // The strip slides up through a one-cell window and eases onto its last stop.
-          const n = reel.strip.length - 1;
-          const pos = n * easeOut(Math.max(0, Math.min(1, (now - reel.t0) / (reel.t1 - reel.t0))));
-          const k = Math.floor(pos), frac = pos - k;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(x - cw / 2, y - ch / 2, cw, ch);
-          ctx.clip();
-          ctx.globalAlpha = a;
-          if (fill !== col) ctx.fillStyle = fill = col;
-          ctx.fillText(reel.strip[k], x, y - frac * ch);
-          if (k < n) ctx.fillText(reel.strip[k + 1], x, y + (1 - frac) * ch);
-          ctx.restore();
-          continue;
-        }
-
-        const g = glyph[i];
-        if (g === " " || a < 0.03) continue;
-        ctx.globalAlpha = Math.min(1, a);
-        if (fill !== col) ctx.fillStyle = fill = col;
-        if (col === accent) {
-          // Accent glyphs carry a halo of their own colour.
-          ctx.shadowColor = accent;
-          ctx.shadowBlur = 10 * Math.max(best, w && !w.fading ? 0.7 : 0);
-          ctx.fillText(g, x, y);
-          ctx.shadowBlur = 0;
-        } else ctx.fillText(g, x, y);
+      const reel = reels[i];
+      const rolling = reel !== null && now < reel.t1;
+      if (reel && !rolling) {
+        glyph[i] = reel.strip[reel.strip.length - 1];
+        reels[i] = null;
+        paintQuiet(i);
       }
+      const w = owner[i] ? words.get(owner[i]) : undefined;
+      if (rolling) {
+        col = HOT;
+        a = 0.9;
+      } else if (w && !w.fading) {
+        col = accent;
+        a = 1;
+      } else if (heat[i] > 0.35) col = HOT;
+
+      if (glow[i] > 0.04) {
+        col = accent;
+        a = Math.max(a, 0.45 + glow[i] * 0.55);
+      }
+
+      if (rolling) {
+        // The strip slides up through a one-cell window and eases onto its last stop.
+        const n = reel.strip.length - 1;
+        const pos = n * easeOut(Math.max(0, Math.min(1, (now - reel.t0) / (reel.t1 - reel.t0))));
+        const k = Math.floor(pos), frac = pos - k;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x - cw / 2, y - ch / 2, cw, ch);
+        ctx.clip();
+        ctx.globalAlpha = a;
+        ctx.fillStyle = fill = col;
+        ctx.fillText(reel.strip[k], x, y - frac * ch);
+        if (k < n) ctx.fillText(reel.strip[k + 1], x, y + (1 - frac) * ch);
+        ctx.restore();
+        fill = "";
+        continue;
+      }
+
+      const g = glyph[i];
+      if (g === " " || a < 0.03) continue;
+      ctx.globalAlpha = Math.min(1, a);
+      if (fill !== col) ctx.fillStyle = fill = col;
+      ctx.fillText(g, x, y);
     }
     ctx.globalAlpha = 1;
   };
 
-  const busy = () => {
-    if (pulses.length || words.size || ptr.in) return true;
-    for (let i = 0; i < heat.length; i++) if (heat[i] > 0.02 || dx[i] || dy[i] || reels[i]) return true;
-    return false;
-  };
+  const busy = () => live.length > 0 || pulses.length > 0 || words.size > 0 || ptr.in;
   const wants = () => active && visible && !document.hidden && busy();
   function loop(now: number) {
     raf = 0;
