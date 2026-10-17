@@ -120,6 +120,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let yawT = 0, pitchT = 0, zoomT = 1;
   let yawV = 0, pitchV = 0;
   let drag: { id: number; x: number; y: number; sx: number; sy: number; own: boolean } | null = null;
+  // Fingers down on the stage; two of them make a pinch (spread zooms, the midpoint orbits).
+  const touches = new Map<number, { x: number; y: number }>();
+  let pinch: { d: number; mx: number; my: number } | null = null;
+  // After a pinch, the finger left behind does nothing until it lifts, so the view doesn't jump.
+  let pinchHold = false;
   const clampView = () => {
     const lim = SC[cur].limits;
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
@@ -127,7 +132,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
   };
   const viewSettled = () =>
-    !drag && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&
+    !drag && !pinch && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&
     Math.abs(yawT - view.yaw) < 5e-4 && Math.abs(pitchT - view.pitch) < 5e-4 && Math.abs(zoomT - view.zoom) < 5e-4;
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
@@ -273,7 +278,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (mixT < 1) mixT = Math.min(1, mixT + dt / 0.7);
     kit.view.px += (tpx - kit.view.px) * 0.05;
     kit.view.py += (tpy - kit.view.py) * 0.05;
-    if (!drag && (yawV || pitchV)) {
+    if (!drag && !pinch && (yawV || pitchV)) {
       // Release inertia, frame-rate independent.
       yawT += yawV;
       pitchT += pitchV;
@@ -311,7 +316,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       dirty = true;
       kick();
     }
-    if (!motion || drag) return;
+    if (!motion || drag || pinch) return;
     const r = host.getBoundingClientRect();
     tpx = (e.clientX - r.left) / r.width - 0.5;
     tpy = (e.clientY - r.top) / r.height - 0.5;
@@ -320,7 +325,32 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
      pan-y), so a sideways swipe turns the scene and an up/down swipe scrolls. */
   const RAD_PER_PX = 0.0065;
   const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
+  const pinchSpan = () => {
+    const [a, b] = [...touches.values()];
+    return { d: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  };
+  const startPinch = () => {
+    // A second finger turns whatever the first was doing into a pinch.
+    if (drag?.own) SC[cur].pointer?.release(false);
+    if (drag?.own) ptr.in = false;
+    drag = null;
+    yawV = pitchV = 0;
+    pinch = pinchSpan();
+    host.classList.add("is-dragging");
+    dirty = true;
+    kick();
+  };
   const onDown = (e: PointerEvent) => {
+    if (e.pointerType === "touch") {
+      if (interactive(e.target)) return;
+      touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (touches.size > 1) {
+        host.setPointerCapture(e.pointerId);
+        if (touches.size === 2) startPinch();
+        return;
+      }
+      if (pinchHold) return;
+    }
     // Plain drags orbit in every scene. A scene with a pointer bridge gets Shift+drag
     // (the drag is its own) and taps; right-drag orbits there too.
     const rc = e.button === 2 && Boolean(SC[cur].pointer);
@@ -339,6 +369,22 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     kick();
   };
   const onDragMove = (e: PointerEvent) => {
+    const tp = e.pointerType === "touch" ? touches.get(e.pointerId) : undefined;
+    if (tp) { tp.x = e.clientX; tp.y = e.clientY; }
+    if (pinch) {
+      if (!tp) return;
+      const n = pinchSpan();
+      zoomT *= n.d / pinch.d;
+      // Two fingers moving together orbit, so a touch screen can tilt as well as turn.
+      const k = RAD_PER_PX / Math.sqrt(zoomT);
+      yawT += (n.mx - pinch.mx) * k;
+      pitchT += (n.my - pinch.my) * k;
+      pinch = n;
+      clampView();
+      dirty = true;
+      kick();
+      return;
+    }
     if (!drag || e.pointerId !== drag.id || drag.own) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.x = e.clientX;
@@ -354,6 +400,17 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     kick();
   };
   const onUp = (e: PointerEvent) => {
+    if (e.pointerType === "touch" && touches.delete(e.pointerId)) {
+      if (pinch || pinchHold) {
+        if (touches.size < 2) pinch = null;
+        if (touches.size === 2) pinch = pinchSpan();
+        pinchHold = touches.size > 0;
+        if (!pinch) host.classList.remove("is-dragging");
+        if (host.hasPointerCapture(e.pointerId)) host.releasePointerCapture(e.pointerId);
+        kick();
+        return;
+      }
+    }
     if (!drag || e.pointerId !== drag.id) return;
     const tap = e.type === "pointerup" && e.button === 0 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
     const egg = tap && tryEgg(e);
@@ -379,6 +436,13 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (host.hasPointerCapture(e.pointerId)) host.releasePointerCapture(e.pointerId);
     kick();
   };
+  /* touch-action: pan-y hands vertical swipes to the page, and Safari can still start a
+     page zoom or scroll on a two-finger gesture. Cancelling touches while two or more
+     fingers are down keeps the pinch on the stage; one finger still scrolls. */
+  const onTouch = (e: TouchEvent) => {
+    if (e.touches.length > 1 && e.cancelable && !interactive(e.target)) e.preventDefault();
+  };
+  const onGesture = (e: Event) => e.preventDefault();
   // Ctrl/⌘ + wheel (also what a trackpad pinch sends) zooms; a plain wheel scrolls the page.
   const onWheel = (e: WheelEvent) => {
     if (!(e.ctrlKey || e.metaKey) || interactive(e.target)) return;
@@ -418,6 +482,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   host.addEventListener("pointerup", onUp);
   host.addEventListener("pointercancel", onUp);
   host.addEventListener("wheel", onWheel, { passive: false });
+  host.addEventListener("touchstart", onTouch, { passive: false });
+  host.addEventListener("touchmove", onTouch, { passive: false });
+  host.addEventListener("gesturestart", onGesture);
   host.addEventListener("dblclick", onDouble);
   document.addEventListener("visibilitychange", onVisibility);
   canvas.addEventListener("webglcontextlost", onLost);
@@ -494,6 +561,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       host.removeEventListener("pointerup", onUp);
       host.removeEventListener("pointercancel", onUp);
       host.removeEventListener("wheel", onWheel);
+      host.removeEventListener("touchstart", onTouch);
+      host.removeEventListener("touchmove", onTouch);
+      host.removeEventListener("gesturestart", onGesture);
       host.removeEventListener("dblclick", onDouble);
       host.classList.remove("is-dragging");
       document.removeEventListener("visibilitychange", onVisibility);

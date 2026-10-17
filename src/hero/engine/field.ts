@@ -29,10 +29,14 @@ export function buildField(k: PsxKit): SceneDef {
   const wx = new Float32Array(W * W); // drag warp (m)
   const wz = new Float32Array(W * W);
   const dmp = new Float32Array(W * W); // damping: heavier near the rim so waves don't bounce back
+  const rim = new Float32Array(W * W); // relief scale: 1 inside, easing to 0 at the square edge so it meets the plain
   for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
-    const r = Math.hypot(-half + x * cs, -half + y * cs) / half;
+    const X = -half + x * cs, Z = -half + y * cs;
+    const r = Math.hypot(X, Z) / half;
     const e = Math.min(1, Math.max(0, (r - 0.7) / 0.3));
     dmp[y * W + x] = 0.9 + 4 * e * e * (3 - 2 * e);
+    const f = Math.min(1, Math.max(0, (half - Math.max(Math.abs(X), Math.abs(Z))) / (half * 0.22)));
+    rim[y * W + x] = f * f * (3 - 2 * f);
   }
 
   const ambient = (x: number, z: number, t: number) => {
@@ -59,6 +63,17 @@ export function buildField(k: PsxKit): SceneDef {
   }
   const terrain = mesh(tgeo, psx({ map: tex.tPlain, tint: "#56696a", uv: 1, hypso: 1, amb: "#3e4a52", sun: "#c9c2ae" }), scene);
   terrain.frustumCulled = false;
+  // The plain: the relief settles to zero at its edge and carries on as flat ground into
+  // the fog, so the camera can pull back and tilt low without finding the end of the map.
+  const plainShape = new THREE.Shape([
+    new THREE.Vector2(-480, -480), new THREE.Vector2(480, -480), new THREE.Vector2(480, 480), new THREE.Vector2(-480, 480),
+  ]);
+  plainShape.holes.push(new THREE.Path([
+    new THREE.Vector2(-half, -half), new THREE.Vector2(-half, half), new THREE.Vector2(half, half), new THREE.Vector2(half, -half),
+  ]));
+  const plainGeo = new THREE.ShapeGeometry(plainShape);
+  plainGeo.rotateX(-Math.PI / 2);
+  mesh(plainGeo, terrain.material as THREE.Material, scene);
 
   const LV0 = -10, LSTEP = 0.75, NLV = 32;
   const minPos = new Float32Array(N * N * 4 * 8 * 3);
@@ -162,6 +177,7 @@ export function buildField(k: PsxKit): SceneDef {
         const dx = X - hx, dz = Z - hz, r2 = dx * dx + dz * dz;
         if (r2 < hr2) h += lift * Math.exp(-r2 * hk);
       }
+      h *= rim[i];
       hg[i] = h;
       if (h < lo) lo = h;
       if (h > hi) hi = h;
@@ -248,47 +264,11 @@ export function buildField(k: PsxKit): SceneDef {
     (aimed && Math.hypot(px - hx, pz - hz) > 0.05);
 
   /* ---- camera range ----
-     Same controls as every scene (drag orbits, Ctrl+wheel zooms), with limits that keep
-     the frame on the relief: tilting never goes below the default elevation, and the
-     zoom-out limit is the widest dolly at which that default tilt still shows no edge.
-     A scratch camera replays the engine's orbit and checks the frame's edge rays land
-     on the ground inside a circle that fits the square map, so it holds at any yaw. */
-  const PZ1 = 1.8, EDGE = half - 4, GY = -6;
-  const tcam = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 400);
-  const cdir = new THREE.Vector3(), cpos = new THREE.Vector3();
-  const PROBES: [number, number][] = [[-1, 1], [1, 1], [0, 1], [-1, 0], [1, 0], [-1, -1], [1, -1]];
-  const contained = (z: number) => {
-    tcam.fov = cam.fov;
-    tcam.aspect = cam.aspect;
-    tcam.updateProjectionMatrix();
-    tcam.position.set(22, 34, 0);
-    tcam.lookAt(PIVOT);
-    tcam.position.copy(PIVOT).addScaledVector(cpos.set(22, 35.5, 0), 1 / z);
-    tcam.updateMatrixWorld(true);
-    cpos.copy(tcam.position);
-    for (const [x, y] of PROBES) {
-      cdir.set(x, y, 0.5).unproject(tcam).sub(cpos).normalize();
-      if (cdir.y > -0.02) return false;
-      const t = (GY - cpos.y) / cdir.y;
-      if (Math.hypot(cpos.x + cdir.x * t, cpos.z + cdir.z * t) > EDGE) return false;
-    }
-    return true;
-  };
-  let zKey = "", zMin = 1;
-  const zoomMin = () => {
-    const key = `${cam.fov}|${cam.aspect.toFixed(3)}`;
-    if (key !== zKey) {
-      zKey = key;
-      let lo = 0.3, hi = PZ1;
-      if (contained(lo)) hi = lo;
-      else for (let i = 0; i < 14; i++) { const mid = (lo + hi) / 2; if (contained(mid)) hi = mid; else lo = mid; }
-      zMin = hi;
-    }
-    return zMin;
-  };
-
+     Same controls as every scene (drag or two fingers orbit, pinch or Ctrl+wheel zooms).
+     The plain around the relief fills the frame at any of these settings, so the range
+     only has to stop short of skimming the ground or pulling the relief into a speck. */
   return {
-    scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [0, 0.5], get zoom(): [number, number] { return [zoomMin(), PZ1]; } },
+    scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [-0.4, 0.5], zoom: [0.55, 1.8] },
     labels: [],
     eggs: [
       {
