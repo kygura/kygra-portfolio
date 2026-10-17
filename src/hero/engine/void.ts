@@ -1,4 +1,4 @@
-/** Sheet 06 · Cipher: an empty black stage. The glyph field is a 2D canvas
+/** Sheet 07 · Cipher: an empty black stage. The glyph field is a 2D canvas
  *  layered over it (src/hero/cipher.ts); this only gives the dissolve
  *  something black to fade to and keeps the camera still. */
 import * as THREE from "three";

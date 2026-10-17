@@ -1,5 +1,5 @@
 /**
- * Sheet 06 · Cipher: a black field of random strings drawn on a plain 2D
+ * Sheet 07 · Cipher: a black field of random strings drawn on a plain 2D
  * canvas layered over the (black) WebGL stage. Kept out of the PS1 pipeline
  * on purpose: the quarter-res dither would smear the type into mush.
  *
