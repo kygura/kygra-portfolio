@@ -1,9 +1,10 @@
-/** Sheet 03 · Astral: halo with orbiting glyphs, cored polyhedra, the watcher, a moon with a satellite. */
+/** Sheet 03 · Astral: halo with orbiting glyphs, an armillary around the core, cored polyhedra, a star tetrahedron,
+ *  a turning tesseract, a debris belt, a constellation, the watcher, a moon with a satellite. */
 import * as THREE from "three";
 import { burst, pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 
 export function buildAstral(k: PsxKit): SceneDef {
-  const { rnd, facet, mesh, psx, M, tex, view, segs, circle } = k;
+  const { rnd, facet, mesh, psx, M, tex, view, segs, circle, batcher } = k;
   const PIVOT = new THREE.Vector3(0, 2, 0);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(60, 16 / 9, 0.1, 400);
@@ -39,6 +40,28 @@ export function buildAstral(k: PsxKit): SceneDef {
   const coreW = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.66, 0)), M.lBone);
   scene.add(coreW);
 
+  // Armillary: three graduated rings gimballed around the core, each turning on its own axis.
+  const armillary = [
+    { r: 3.1, mat: M.lBone, tick: 12 },
+    { r: 3.7, mat: M.lAccent, tick: 24 },
+    { r: 4.3, mat: M.lDeep, tick: 36 },
+  ].map((d, i) => {
+    const g = new THREE.Group();
+    g.rotation.set(i * 1.05, i * 0.7, 0);
+    scene.add(g);
+    const ring = new THREE.Group();
+    g.add(ring);
+    ring.add(new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(circle(d.r, 72)), d.mat));
+    const tk: V3[] = [];
+    for (let ti = 0; ti < d.tick; ti++) {
+      const ta = (ti / d.tick) * Math.PI * 2, tl = ti % 3 ? 0.18 : 0.4;
+      tk.push(new THREE.Vector3(Math.cos(ta) * d.r, Math.sin(ta) * d.r, 0), new THREE.Vector3(Math.cos(ta) * (d.r - tl), Math.sin(ta) * (d.r - tl), 0));
+    }
+    ring.add(segs(tk, d.mat));
+    mesh(new THREE.OctahedronGeometry(0.16, 0), M.glyph, ring, d.r, 0, 0);
+    return { ring, sp: (i % 2 ? -1 : 1) * (0.07 + i * 0.03) };
+  });
+
   const polyRig = new THREE.Group();
   scene.add(polyRig);
   const polyDefs: [THREE.BufferGeometry, number, number, number, THREE.Material][] = [
@@ -59,6 +82,86 @@ export function buildAstral(k: PsxKit): SceneDef {
     if (idx === 0) g.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.OctahedronGeometry(1.2, 0)), M.lAccent));
     return { g, sx: 0.05 + rnd() * 0.12, sy: 0.08 + rnd() * 0.15, bob: rnd() * 6, y: p[2] };
   });
+
+  // Stella octangula: two interlocked tetrahedra, cored like the rest; tapped, they counter-turn.
+  const stella = new THREE.Group();
+  stella.position.set(8, -3, -15);
+  scene.add(stella);
+  const tetra = new THREE.TetrahedronGeometry(2.4, 0);
+  const stellaHalves = [M.lAccent, M.lBone].map((lm, i) => {
+    const g = new THREE.Group();
+    if (i) g.rotation.set(0, Math.PI / 2, 0);
+    stella.add(g);
+    const c = new THREE.Mesh(facet(tetra.clone(), 0), M.solid);
+    c.scale.setScalar(0.93);
+    g.add(c);
+    g.add(new THREE.LineSegments(new THREE.EdgesGeometry(tetra), lm));
+    return g;
+  });
+
+  // Tesseract: the 16 corners of a 4-cube, turned in the XW and ZW planes and projected down to 3D each frame.
+  const tess = new THREE.Group();
+  tess.position.set(-3, -6, -13);
+  scene.add(tess);
+  const tv = Array.from({ length: 16 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
+  const te: [number, number][] = [];
+  for (let i = 0; i < 16; i++) for (let b = 1; b < 16; b <<= 1) if (!(i & b)) te.push([i, i | b]);
+  const tPos = new Float32Array(te.length * 6);
+  const tGeo = new THREE.BufferGeometry();
+  tGeo.setAttribute("position", new THREE.BufferAttribute(tPos, 3));
+  const tLines = new THREE.LineSegments(tGeo, M.lAccent);
+  tLines.frustumCulled = false;
+  tess.add(tLines);
+  const tNodes = tv.map(() => mesh(new THREE.OctahedronGeometry(0.13, 0), M.glyph, tess));
+  const tp = tv.map(() => new THREE.Vector3());
+  const turnTess = (a: number, b: number) => {
+    const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b);
+    tv.forEach(([x, y, z, w], i) => {
+      const x1 = x * ca - w * sa, w1 = x * sa + w * ca;
+      const z1 = z * cb - w1 * sb, w2 = z * sb + w1 * cb;
+      const s = 1.7 / (3 - w2);
+      tp[i].set(x1 * s * 2.4, y * s * 2.4, z1 * s * 2.4);
+      tNodes[i].position.copy(tp[i]);
+    });
+    te.forEach(([i, j], n) => {
+      tp[i].toArray(tPos, n * 6);
+      tp[j].toArray(tPos, n * 6 + 3);
+    });
+    tGeo.attributes.position.needsUpdate = true;
+  };
+
+  // Debris belt: a tilted ring of rough faceted shards with a dashed guide orbit, turning as one body.
+  const beltTilt = new THREE.Group();
+  beltTilt.rotation.set(0.32, 0, -0.18);
+  scene.add(beltTilt);
+  const belt = new THREE.Group();
+  beltTilt.add(belt);
+  const shardGeos = [new THREE.TetrahedronGeometry(0.5, 0), new THREE.OctahedronGeometry(0.4, 0), new THREE.IcosahedronGeometry(0.35, 0)];
+  const bb = batcher();
+  for (let bi = 0; bi < 72; bi++) {
+    const ba = (bi / 72) * Math.PI * 2 + rnd() * 0.05, br = 20 + rnd() * 3.5;
+    const sg = facet(shardGeos[bi % 3].clone(), 0.18);
+    bb.add(sg, bi % 11 ? M.solid : M.glyph, Math.cos(ba) * br, (rnd() - 0.5) * 1.2, Math.sin(ba) * br, rnd() * 6, rnd() * 6, rnd() * 6, 0.5 + rnd() * 0.8);
+  }
+  bb.flush(belt);
+  const bd: V3[] = [];
+  for (let di = 0; di < 120; di += 2) {
+    const d1 = (di / 120) * Math.PI * 2, d2 = ((di + 1) / 120) * Math.PI * 2;
+    bd.push(new THREE.Vector3(Math.cos(d1) * 21.7, 0, Math.sin(d1) * 21.7), new THREE.Vector3(Math.cos(d2) * 21.7, 0, Math.sin(d2) * 21.7));
+  }
+  belt.add(segs(bd, M.lDeep));
+
+  // Constellation: a far figure of glyph stars joined by bone lines, always facing the centre.
+  const constel = new THREE.Group();
+  constel.position.set(-38, 34, 52);
+  constel.lookAt(0, 0, 0);
+  scene.add(constel);
+  const stars: [number, number][] = [[-11, 4], [-6, 7], [-1, 5], [3, 8], [8, 6], [5, 0], [9, -5], [-2, -3], [-7, -6]];
+  const starLinks: [number, number][] = [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [4, 5], [5, 6], [5, 7], [7, 8], [7, 2]];
+  const cl: V3[] = [];
+  starLinks.forEach(([a, b]) => cl.push(new THREE.Vector3(stars[a][0], stars[a][1], 0), new THREE.Vector3(stars[b][0], stars[b][1], 0)));
+  constel.add(segs(cl, M.lBoneDim));
+  const starMeshes = stars.map(([x, y], i) => mesh(new THREE.OctahedronGeometry(i % 3 ? 0.35 : 0.55, 0), M.glyph, constel, x, y, 0));
 
   const watcher = new THREE.Group();
   watcher.position.set(4, 8, -42);
@@ -93,7 +196,7 @@ export function buildAstral(k: PsxKit): SceneDef {
   const dir = new THREE.Vector3();
 
   // easter eggs: start times
-  let tCore = -99, tWatch = -99, tSat = -99, tMoon = -99;
+  let tCore = -99, tWatch = -99, tSat = -99, tMoon = -99, tTess = -99, tStella = -99;
 
   return {
     scene, cam, fog: [60, 170], fov: [60, 72], limits: { pitch: [-0.7, 0.9], zoom: [0.5, 1.6] },
@@ -102,6 +205,7 @@ export function buildAstral(k: PsxKit): SceneDef {
       { name: "Watcher", sub: "fixed, faces observer", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },
       { name: "Moon", sub: "1 satellite", at: (v) => { v.set(0, 6, 0); moonRig.localToWorld(v); } },
       { name: "Icosahedron", sub: "20 faces", at: (v) => { polys[0].g.getWorldPosition(v); v.y += 3.2; } },
+      { name: "Tesseract", sub: "4D · 8 cells", at: (v) => { tess.getWorldPosition(v); v.y += 4.6; } },
     ],
     eggs: [
       {
@@ -118,6 +222,16 @@ export function buildAstral(k: PsxKit): SceneDef {
         id: "astral-satellite", r: 30,
         at: (v) => { sat.getWorldPosition(v); },
         fire: (t) => { tSat = t; return "SATELLITE \u00b7 ping. No reply, as usual."; },
+      },
+      {
+        id: "astral-tesseract", r: 34,
+        at: (v) => { tess.getWorldPosition(v); },
+        fire: (t) => { tTess = t; return "TESSERACT \u00b7 inside out, then back. Mostly."; },
+      },
+      {
+        id: "astral-stella", r: 32,
+        at: (v) => { stella.getWorldPosition(v); },
+        fire: (t) => { tStella = t; return "STELLA \u00b7 two tetrahedra, one argument."; },
       },
       {
         id: "astral-moon", r: 46,
@@ -140,12 +254,22 @@ export function buildAstral(k: PsxKit): SceneDef {
       const ec = burst(t - tCore, 7, 3.5);
       core.rotation.set(t * 0.1 + ec, t * 0.13 + ec * 0.7, 0);
       coreW.rotation.copy(core.rotation);
+      armillary.forEach((a) => { a.ring.rotation.z = t * a.sp + ec * 0.4; });
       polyRig.rotation.y = t * 0.012;
       polys.forEach((p) => {
         p.g.rotation.x = t * p.sx;
         p.g.rotation.y = t * p.sy;
         p.g.position.y = p.y + Math.sin(t * 0.3 + p.bob) * 0.5;
       });
+      const es = burst(t - tStella, 6, 3);
+      stella.rotation.set(t * 0.05, t * 0.09, 0);
+      stellaHalves[0].rotation.y = es;
+      stellaHalves[1].rotation.y = Math.PI / 2 - es;
+      stella.position.y = -3 + Math.sin(t * 0.25 + 1.3) * 0.5;
+      turnTess(t * 0.23 + burst(t - tTess, 6, 3.5), t * 0.17);
+      tess.rotation.set(t * 0.03, t * 0.05, 0);
+      belt.rotation.y = t * 0.008;
+      starMeshes.forEach((m, i) => m.scale.setScalar(0.8 + 0.2 * Math.sin(t * 1.3 + i * 1.7)));
       watcher.lookAt(cam.position);
       watcher.rotateZ(t * 0.01);
       const ew = t - tWatch;
