@@ -3,15 +3,14 @@
  * canvas layered over the (black) WebGL stage. Kept out of the PS1 pipeline
  * on purpose: the quarter-res dither would smear the type into mush.
  *
- * - Ambient: glyphs flicker and mutate in place.
+ * - The field is still until touched.
  * - Hover: glyphs near the cursor light up and lean away from it; the run under
- *   the cursor scrambles until it locks into a word, which holds while the
- *   cursor stays near and dissolves back into noise once it leaves.
- * - Click / tap: a rainbow pulse rings out from the click, scrambling and
- *   pushing the glyphs it passes.
+ *   the cursor rolls like slot reels and stops letter by letter on a word,
+ *   which holds while the cursor stays near and rolls back to noise once it leaves.
+ * - Click / tap: a small rainbow pulse rings out from the click.
  *
- * The loop only runs while the sheet is active, on screen and the tab is
- * visible; under reduced motion it also stops whenever nothing is animating.
+ * The loop only runs while the sheet is active, on screen, the tab is visible
+ * and something is actually moving.
  */
 
 export interface CipherField {
@@ -34,8 +33,10 @@ const HEX = "0123456789ABCDEF";
 const SYM = "#$%&*+=~^<>/\\|{}[]():;!?_-.";
 const ANY = UPPER + DIGIT + SYM;
 
-/** Pulse front speed (px/s) and the width of its lit band (px). */
-const SPEED = 820, BAND = 90;
+/** Pulse front speed (px/s), the width of its lit band and how far it travels (px). */
+const SPEED = 260, BAND = 36, REACH = 240;
+/** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
+const REEL_MS = 520, REEL_STAGGER = 70;
 
 const HUES = Array.from({ length: 36 }, (_, q) => `hsl(${q * 10},100%,66%)`);
 const INK = "#d8d2c2";
@@ -46,6 +47,7 @@ const pickWord = (max: number) => {
   const fit = WORDS.filter((w) => w.length <= max);
   return fit.length ? fit[(Math.random() * fit.length) | 0] : null;
 };
+const easeOut = (x: number) => 1 - Math.pow(1 - x, 3);
 
 /** One row of noise: runs of hex, caps, digits, binary and punctuation with gaps. */
 function noiseRow(cols: number): string {
@@ -79,6 +81,13 @@ interface Pulse {
   t0: number;
 }
 
+/** A reel strip: rolls from strip[0] to the last stop between t0 and t1. */
+interface Reel {
+  strip: string[];
+  t0: number;
+  t1: number;
+}
+
 export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: string; reducedMotion: boolean }): CipherField {
   const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx) return { setActive: () => {}, setAccent: () => {}, dispose: () => {} };
@@ -92,9 +101,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   let heat = new Float32Array(0);
   let dx = new Float32Array(0), dy = new Float32Array(0);
   let owner = new Int32Array(0);
-  let lockAt = new Float64Array(0);
-  let releaseAt = new Float64Array(0);
-  let flipAt = new Float64Array(0);
+  let reels: (Reel | null)[] = [];
 
   const words = new Map<number, Word>();
   let nextWord = 1;
@@ -104,6 +111,8 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   const ptr = { x: 0, y: 0, sx: 0, sy: 0, in: false, moved: false };
   let active = false, visible = true, raf = 0, last = performance.now();
 
+  const font = () => `${fontSize}px ${getComputedStyle(canvas).fontFamily || "monospace"}`;
+
   const layout = () => {
     cssW = Math.max(1, canvas.clientWidth);
     cssH = Math.max(1, canvas.clientHeight);
@@ -111,7 +120,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     canvas.width = Math.round(cssW * dpr);
     canvas.height = Math.round(cssH * dpr);
     fontSize = cssW < 640 ? 12 : 14;
-    ctx.font = `${fontSize}px ${getComputedStyle(canvas).fontFamily || "monospace"}`;
+    ctx.font = font();
     cw = Math.ceil(ctx.measureText("M").width) + 1;
     ch = Math.round(fontSize * 1.5);
     cols = Math.ceil(cssW / cw) + 1;
@@ -122,7 +131,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     glyph = [];
     for (let r = 0; r < rows; r++) glyph.push(...noiseRow(cols));
     base = new Float32Array(n);
-    // Rows breathe at slightly different strengths so the sheet reads as strata.
+    // Rows sit at slightly different strengths so the sheet reads as strata.
     for (let r = 0; r < rows; r++) {
       const rowA = 0.16 + Math.random() * 0.16;
       for (let c = 0; c < cols; c++) base[r * cols + c] = rowA * (0.6 + Math.random() * 0.6);
@@ -131,17 +140,17 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     dx = new Float32Array(n);
     dy = new Float32Array(n);
     owner = new Int32Array(n);
-    lockAt = new Float64Array(n);
-    releaseAt = new Float64Array(n);
-    flipAt = new Float64Array(n);
+    reels = new Array(n).fill(null);
     words.clear();
     draw(performance.now(), 0);
   };
 
-  const flip = (i: number) => {
-    const g = glyph[i];
-    if (g === " ") return;
-    glyph[i] = DIGIT.includes(g) ? pick(DIGIT) : UPPER.includes(g) ? pick(UPPER) : pick(ANY);
+  /** Spin cell i from what it shows now to `to`, passing `stops` random glyphs. */
+  const spin = (i: number, to: string, t0: number, stops: number) => {
+    const strip = [glyph[i] === " " ? pick(ANY) : glyph[i]];
+    for (let s = 0; s < stops; s++) strip.push(pick(UPPER + DIGIT));
+    strip.push(to);
+    reels[i] = { strip, t0, t1: reduced ? t0 : t0 + REEL_MS + stops * 28 };
   };
 
   /** Drop a word into the free run of the row under the cursor. */
@@ -159,15 +168,21 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     const start = Math.max(lo, Math.min(hi - text.length + 1, c - (text.length >> 1)));
     const id = nextWord++;
     words.set(id, { row: r, start, text, seen: now, fading: false });
+    // Reels stop left to right, each one spinning a little longer than the last.
     for (let k = 0; k < text.length; k++) {
       const i = r * cols + start + k;
       owner[i] = id;
-      // Letters lock in a ragged left-to-right sweep.
-      lockAt[i] = now + (reduced ? 0 : 160 + k * 55 + Math.random() * 160);
-      releaseAt[i] = 0;
-      if (glyph[i] === " ") glyph[i] = pick(ANY);
+      spin(i, text[k], now + k * REEL_STAGGER, 6 + k * 2);
     }
     lastSpawn = now;
+  };
+
+  const pulseAt = (p: Pulse, now: number, cx: number, cy: number) => {
+    const age = (now - p.t0) / 1000;
+    const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
+    const k = 1 - Math.abs(d - age * SPEED) / BAND;
+    if (k <= 0) return null;
+    return { amp: k * Math.max(0, 1 - (age * SPEED) / REACH), ddx, ddy, d, age };
   };
 
   const step = (now: number, dt: number) => {
@@ -180,46 +195,37 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       ptr.sx = ptr.x;
       ptr.sy = ptr.y;
     }
-    if (hovering && ptr.moved && now - lastSpawn > 70) spawnWord(now);
+    if (hovering && ptr.moved && now - lastSpawn > 90) spawnWord(now);
     ptr.moved = false;
 
-    // Words: refresh while the cursor is near, then dissolve.
+    // Words: refresh while the cursor is near, then roll back to noise.
     for (const [id, w] of words) {
       const wy = oy + w.row * ch, wx0 = ox + w.start * cw, wx1 = wx0 + (w.text.length - 1) * cw;
       const near = hovering && Math.abs(ptr.y - wy) < ch * 2.2 && ptr.x > wx0 - R * 0.5 && ptr.x < wx1 + R * 0.5;
       if (near && !w.fading) w.seen = now;
       if (!w.fading && now - w.seen > 2400) {
         w.fading = true;
-        for (let k = 0; k < w.text.length; k++) releaseAt[w.row * cols + w.start + k] = now + k * 35 + Math.random() * 140;
+        for (let k = 0; k < w.text.length; k++) {
+          const i = w.row * cols + w.start + k;
+          glyph[i] = w.text[k];
+          spin(i, pick(ANY), now + k * REEL_STAGGER * 0.6, 4);
+        }
       }
       if (w.fading) {
         let left = 0;
         for (let k = 0; k < w.text.length; k++) {
           const i = w.row * cols + w.start + k;
           if (owner[i] !== id) continue;
-          if (now >= releaseAt[i]) {
-            owner[i] = 0;
-            glyph[i] = Math.random() < 0.2 ? " " : pick(ANY);
-            heat[i] = Math.max(heat[i], 0.5);
-          } else left++;
+          if (reels[i] && now < reels[i]!.t1) left++;
+          else owner[i] = 0;
         }
         if (!left) words.delete(id);
       }
     }
 
-    // Ambient mutation.
-    if (!reduced) {
-      const flips = Math.ceil(cols * rows * 0.6 * dt);
-      for (let f = 0; f < flips; f++) {
-        const i = (Math.random() * glyph.length) | 0;
-        if (!owner[i]) flip(i);
-      }
-    }
-
     const decay = Math.exp(-dt * 2.6);
     const spring = 1 - Math.exp(-dt * 14);
-    const maxD = Math.hypot(cssW, cssH);
-    for (let p = pulses.length - 1; p >= 0; p--) if ((now - pulses[p].t0) / 1000 > maxD / SPEED + 0.4) pulses.splice(p, 1);
+    for (let p = pulses.length - 1; p >= 0; p--) if (((now - pulses[p].t0) / 1000) * SPEED > REACH + BAND) pulses.splice(p, 1);
 
     for (let r = 0; r < rows; r++) {
       const cy = oy + r * ch;
@@ -233,30 +239,24 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
           if (d2 < R * R) {
             const d = Math.sqrt(d2) || 1, f = 1 - d / R;
             if (f > heat[i]) heat[i] = f;
-            if (!reduced) {
+            // Words hold their line so they stay readable under the cursor.
+            if (!reduced && !owner[i]) {
               const push = f * f * 16;
               tx += (ddx / d) * push;
               ty += (ddy / d) * push;
             }
-            // The cursor's wake keeps the loose glyphs churning.
-            if (!owner[i] && f > 0.25 && now >= flipAt[i]) {
-              flip(i);
-              flipAt[i] = now + 40 + Math.random() * 90;
-            }
           }
         }
         for (const p of pulses) {
-          const age = (now - p.t0) / 1000;
-          const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
-          const k = 1 - Math.abs(d - age * SPEED) / BAND;
-          if (k <= 0) continue;
-          const amp = k * Math.max(0, 1 - age / (maxD / SPEED + 0.4));
-          tx += (ddx / d) * amp * 12;
-          ty += (ddy / d) * amp * 12;
-          if (!owner[i] && Math.random() < amp * 0.35) flip(i);
+          const h = pulseAt(p, now, cx, cy);
+          if (!h) continue;
+          tx += (h.ddx / h.d) * h.amp * 5;
+          ty += (h.ddy / h.d) * h.amp * 5;
         }
         dx[i] += (tx - dx[i]) * spring;
         dy[i] += (ty - dy[i]) * spring;
+        if (Math.abs(dx[i]) < 0.02) dx[i] = 0;
+        if (Math.abs(dy[i]) < 0.02) dy[i] = 0;
       }
     }
   };
@@ -267,83 +267,70 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     ctx.globalAlpha = 1;
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, cssW, cssH);
-    ctx.font = `${fontSize}px ${getComputedStyle(canvas).fontFamily || "monospace"}`;
+    ctx.font = font();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-
-    const maxD = Math.hypot(cssW, cssH);
-
-    // Soft rings under the type.
-    for (const p of pulses) {
-      const age = (now - p.t0) / 1000, rad = age * SPEED;
-      const amp = Math.max(0, 1 - age / (maxD / SPEED + 0.4));
-      if (rad < 1) continue;
-      ctx.globalAlpha = 0.35 * amp;
-      ctx.lineWidth = 2;
-      if (typeof ctx.createConicGradient === "function") {
-        const g = ctx.createConicGradient(age * 3, p.x, p.y);
-        for (let s = 0; s <= 6; s++) g.addColorStop(s / 6, `hsl(${s * 60},100%,60%)`);
-        ctx.strokeStyle = g;
-      } else ctx.strokeStyle = HUES[((age * 36) | 0) % 36];
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, rad, 0, Math.PI * 2);
-      ctx.stroke();
-    }
 
     let fill = "";
     for (let r = 0; r < rows; r++) {
       const cy = oy + r * ch;
       for (let c = 0; c < cols; c++) {
         const i = r * cols + c;
-        const id = owner[i];
-        let g = glyph[i];
         const cx = ox + c * cw;
+        const x = cx + dx[i], y = cy + dy[i];
         let col = INK, a = base[i] + heat[i] * 0.75;
 
-        // Rainbow from any pulse front crossing this cell.
         let best = 0, hue = 0;
         for (const p of pulses) {
-          const age = (now - p.t0) / 1000;
-          const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy);
-          const k = 1 - Math.abs(d - age * SPEED) / BAND;
-          if (k <= 0) continue;
-          const amp = k * Math.max(0, 1 - age / (maxD / SPEED + 0.4));
-          if (amp > best) {
-            best = amp;
-            hue = d * 0.5 + (Math.atan2(ddy, ddx) * 180) / Math.PI + age * 220;
+          const h = pulseAt(p, now, cx, cy);
+          if (h && h.amp > best) {
+            best = h.amp;
+            hue = (Math.atan2(h.ddy, h.ddx) * 180) / Math.PI + h.age * 120;
           }
         }
 
-        if (id) {
-          const w = words.get(id);
-          const locked = now >= lockAt[i];
-          if (!locked) {
-            if (now >= flipAt[i]) {
-              glyph[i] = pick(ANY);
-              flipAt[i] = now + 45 + Math.random() * 40;
-            }
-            g = glyph[i];
-            col = HOT;
-            a = 0.85;
-          } else if (w) {
-            g = w.text[c - w.start];
-            glyph[i] = g;
-            col = accent;
-            a = 1;
-            ctx.globalAlpha = 0.14;
-            if (fill !== accent) ctx.fillStyle = fill = accent;
-            ctx.fillRect(cx - cw / 2, cy - ch / 2 + 1, cw, ch - 2);
-          }
+        const reel = reels[i];
+        const rolling = reel !== null && now < reel.t1;
+        if (reel && !rolling) {
+          glyph[i] = reel.strip[reel.strip.length - 1];
+          reels[i] = null;
+        }
+        const w = owner[i] ? words.get(owner[i]) : undefined;
+        if (rolling) {
+          col = HOT;
+          a = 0.9;
+        } else if (w && !w.fading) {
+          col = accent;
+          a = 1;
         } else if (heat[i] > 0.35) col = HOT;
 
         if (best > 0.06) {
-          col = HUES[(((hue % 360) + 360) % 360 / 10) | 0];
-          a = Math.max(a, 0.35 + best * 0.65);
+          col = HUES[((((hue % 360) + 360) % 360) / 10) | 0];
+          a = Math.max(a, 0.3 + best * 0.6);
         }
+
+        if (rolling) {
+          // The strip slides up through a one-cell window and eases onto its last stop.
+          const n = reel.strip.length - 1;
+          const pos = n * easeOut(Math.max(0, Math.min(1, (now - reel.t0) / (reel.t1 - reel.t0))));
+          const k = Math.floor(pos), frac = pos - k;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(x - cw / 2, y - ch / 2, cw, ch);
+          ctx.clip();
+          ctx.globalAlpha = a;
+          if (fill !== col) ctx.fillStyle = fill = col;
+          ctx.fillText(reel.strip[k], x, y - frac * ch);
+          if (k < n) ctx.fillText(reel.strip[k + 1], x, y + (1 - frac) * ch);
+          ctx.restore();
+          continue;
+        }
+
+        const g = glyph[i];
         if (g === " " || a < 0.03) continue;
         ctx.globalAlpha = Math.min(1, a);
         if (fill !== col) ctx.fillStyle = fill = col;
-        ctx.fillText(g, cx + dx[i], cy + dy[i]);
+        ctx.fillText(g, x, y);
       }
     }
     ctx.globalAlpha = 1;
@@ -351,10 +338,10 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
 
   const busy = () => {
     if (pulses.length || words.size || ptr.in) return true;
-    for (let i = 0; i < heat.length; i++) if (heat[i] > 0.02) return true;
+    for (let i = 0; i < heat.length; i++) if (heat[i] > 0.02 || dx[i] || dy[i] || reels[i]) return true;
     return false;
   };
-  const wants = () => active && visible && !document.hidden && (!reduced || busy());
+  const wants = () => active && visible && !document.hidden && busy();
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -434,7 +421,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     },
     setAccent(hex) {
       accent = hex;
-      if (active) kick();
+      if (active) draw(performance.now(), 0);
     },
     dispose() {
       if (raf) cancelAnimationFrame(raf);
