@@ -290,7 +290,6 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
               <span className={themes[theme].success}>writings</span>
               <span className={themes[theme].success}>projects</span>
               <span className={themes[theme].success}>artifacts</span>
-              <span className={themes[theme].success}>guestbook</span>
             </div>
           ),
         });
@@ -315,7 +314,6 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
             projects: "/projects",
             artifacts: "/artifacts",
             gallery: "/artifacts",
-            guestbook: "/guestbook",
           };
 
           if (routes[target]) {

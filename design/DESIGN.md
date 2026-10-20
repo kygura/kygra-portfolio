@@ -65,7 +65,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 
 | Keys | Action |
 | --- | --- |
-| `g h` / `g w` / `g s` / `g b` / `g c` | Home / Writings / Software / Guestbook / CV |
+| `g h` / `g w` / `g s` / `g c` | Home / Writings / Software / CV |
 | `g g` | Top of page (a hint strip lists the second keys while `g` is pending) |
 | `1`–`5` / `t` | Accent / cycle accent |
 | `n` / `p` | Next / previous page (nav order, wraps) |

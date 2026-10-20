@@ -14,7 +14,6 @@ const NAV_ITEMS = [
   { path: "/", label: "Home" },
   { path: "/writings", label: "Writings" },
   { path: "/projects", label: "Software" },
-  { path: "/guestbook", label: "Guestbook" },
   { path: "/cv", label: "CV" },
 ];
 
