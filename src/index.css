@@ -1094,12 +1094,21 @@
     font-family: var(--f-body);
   }
   .prose-minimal h2 {
-    @apply text-3xl md:text-4xl mb-4 mt-12 uppercase tracking-wide;
+    @apply text-2xl md:text-3xl mb-4 mt-12 uppercase tracking-wide;
     font-family: var(--f-body);
+    overflow-wrap: break-word;
+    scroll-margin-top: 6rem;
+  }
+  /* A markdown h1 renders as <h2> (the title owns the <h1>) but keeps a step
+     of hierarchy over a real ## section. */
+  .prose-minimal h2.md-h1 {
+    @apply text-[1.75rem] md:text-[2.125rem] mt-16;
   }
   .prose-minimal h3 {
-    @apply text-2xl md:text-3xl mb-4 mt-8 uppercase;
+    @apply text-xl md:text-2xl mb-4 mt-8 uppercase;
     font-family: var(--f-body);
+    overflow-wrap: break-word;
+    scroll-margin-top: 6rem;
   }
   /* Reading column: Literata 19px / 1.68 on a ~66ch measure. */
   .prose-minimal p {
@@ -1234,6 +1243,76 @@
 .page-shell--wide { max-width: 1000px; }
 .page-shell--mid { max-width: 56rem; }
 .page-shell--narrow { max-width: 48rem; }
+
+/* ─────────────────────────────────────────────
+   POST TOC — Notion-style rail on the right edge: one dash per heading,
+   expanding into the outline on hover or keyboard focus.
+   ───────────────────────────────────────────── */
+.post-toc {
+  position: fixed;
+  top: 50%;
+  right: 1.25rem;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: none;
+}
+@media (min-width: 1280px) { .post-toc { display: block; } }
+
+.post-toc__rail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.6rem;
+  padding: 0.75rem 0;
+}
+.post-toc__dash {
+  display: block;
+  height: 2px;
+  width: 1rem;
+  background: var(--rule-2);
+  transition: background-color 0.2s;
+}
+.post-toc__dash[data-depth="3"] { width: 0.6rem; }
+.post-toc__dash[data-active="true"] { background: var(--accent); }
+
+.post-toc__panel {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translate(0.5rem, -50%);
+  width: 15rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.75rem 0.5rem;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+}
+.post-toc:hover .post-toc__panel,
+.post-toc:focus-within .post-toc__panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+}
+.post-toc__link {
+  display: block;
+  padding: 0.3rem 0.6rem;
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+.post-toc__link[data-depth="3"] { padding-left: 1.4rem; }
+.post-toc__link:hover { color: var(--ink); background: var(--rule); }
+.post-toc__link[data-active="true"] { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .post-toc__panel { transition: none; }
+}
 
 /* ─────────────────────────────────────────────
    NAV LINKS — terminal brackets, a ">" cursor that fades in
