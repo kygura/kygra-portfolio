@@ -3,14 +3,18 @@ import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import path from "path";
 import { buildShowcase, type Showcase } from "./api/github/repos";
+import { createScripter, createSessionStore, handleTerminal } from "./api/github/terminal";
 
 /**
- * Serves /api/github/repos under `vite dev` with the same code the Vercel
- * function runs, cached for ten minutes so reloads stay inside GitHub's
- * unauthenticated rate limit.
+ * Serves /api/github/repos and /api/github/terminal under `vite dev` with the
+ * same code the Vercel functions run. The index is cached for ten minutes so
+ * reloads stay inside GitHub's unauthenticated rate limit; terminal sessions
+ * need ANTHROPIC_API_KEY, as in production, and live in memory.
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const sessions = apiKey ? createSessionStore({ script: createScripter({ apiKey }) }) : null;
   return {
     name: "dev-github-api",
     apply: "serve",
@@ -22,6 +26,7 @@ function devGithubApi(): Plugin {
             const body = await buildShowcase({
               user: process.env.GITHUB_USER || "kygura",
               token: process.env.GITHUB_TOKEN,
+              terminal: sessions !== null,
             });
             cached = { at: Date.now(), body };
           }
@@ -30,6 +35,15 @@ function devGithubApi(): Plugin {
           res.statusCode = 502;
           res.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));
         }
+      });
+      server.middlewares.use("/api/github/terminal", async (req, res) => {
+        const response = await handleTerminal(new Request(`http://localhost${req.originalUrl ?? req.url}`), sessions, {
+          user: process.env.GITHUB_USER || "kygura",
+          token: process.env.GITHUB_TOKEN || null,
+        });
+        res.statusCode = response.status;
+        res.setHeader("content-type", "application/json");
+        res.end(await response.text());
       });
     },
   };

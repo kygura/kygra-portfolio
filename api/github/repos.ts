@@ -3,10 +3,10 @@ import { get as getBlob, put as putBlob } from "@vercel/blob";
 
 /**
  * GET /api/github/repos — the software index, built from the GitHub API: the
- * owner's repositories that have a working live site (private ones too,
- * given a token that can read them), ranked by stars and recent pushes, each with
- * the best preview its live site allows (an embedded frame, its og:image, or
- * GitHub's generated social card).
+ * owner's repositories ranked by stars and recent pushes. Repos with a working
+ * live site (private ones too, given a token that can read them) get the best
+ * preview it allows (an embedded frame, its og:image, or GitHub's generated
+ * social card); public repos without one get a map of their source tree.
  */
 
 const GITHUB_API = "https://api.github.com";
@@ -35,11 +35,38 @@ export interface GithubRepo {
   archived: boolean;
   private: boolean;
   has_pages: boolean;
+  default_branch?: string;
+  /** In KB; 0 for an empty repository. */
+  size?: number;
+}
+
+/** One plot on a code map: a directory (with children) or a single file. */
+export interface CodeMapNode {
+  name: string;
+  bytes: number;
+  files: number;
+  /** The file's language, or the one holding most bytes under a directory. */
+  lang: string | null;
+  children?: CodeMapNode[];
+}
+
+/** A repo's source tree, folded to two levels for a treemap. */
+export interface CodeMap {
+  /** Directories every file sat under, stripped so the map shows structure ("src/"). */
+  base: string;
+  files: number;
+  bytes: number;
+  /** GitHub cut the tree listing short (over 100k entries). */
+  truncated: boolean;
+  /** Most bytes first. */
+  languages: { name: string; bytes: number }[];
+  nodes: CodeMapNode[];
 }
 
 export type RepoPreview =
   | { kind: "frame"; src: string }
   | { kind: "image"; src: string }
+  | { kind: "map"; map: CodeMap }
   | { kind: "none" };
 
 export interface ShowcaseRepo {
@@ -48,8 +75,8 @@ export interface ShowcaseRepo {
   /** Haiku's short take on the README, else its opening prose, else the "About" line. */
   description: string | null;
   url: string;
-  /** Always set: repos without a working deployment never reach the page. */
-  liveUrl: string;
+  /** Null for a code-only repo: no deployment, or one that is gone. */
+  liveUrl: string | null;
   stars: number;
   forks: number;
   language: string | null;
@@ -66,6 +93,8 @@ export interface ShowcaseRepo {
 export interface Showcase {
   user: string;
   generatedAt: string;
+  /** Code-only cards can replay a generated session from /api/github/terminal. */
+  terminal: boolean;
   repos: ShowcaseRepo[];
 }
 
@@ -90,6 +119,8 @@ interface ShowcaseOptions {
   limit?: number;
   now?: Date;
   fetchImpl?: Fetch;
+  /** Whether the terminal endpoint can generate sessions (it needs a model key). */
+  terminal?: boolean;
 }
 
 const DAY_MS = 86_400_000;
@@ -186,6 +217,182 @@ export function findSocialImage(html: string, pageUrl: string): string | null {
 /** GitHub's generated social card; any path segment busts its cache. */
 export function githubCard(fullName: string, pushedAt: string): string {
   return `https://opengraph.githubassets.com/${Date.parse(pushedAt) || 0}/${fullName}`;
+}
+
+// ---- Code maps -----------------------------------------------------------------
+
+/** Extensions worth mapping; anything else (images, binaries, data) is left off. */
+const LANGUAGES: Record<string, string> = {
+  ts: "TypeScript", tsx: "TypeScript", mts: "TypeScript", cts: "TypeScript",
+  js: "JavaScript", jsx: "JavaScript", mjs: "JavaScript", cjs: "JavaScript",
+  py: "Python", pyi: "Python",
+  rs: "Rust", go: "Go", java: "Java", kt: "Kotlin", kts: "Kotlin", scala: "Scala",
+  swift: "Swift", m: "Objective-C", c: "C", h: "C", cc: "C++", cpp: "C++", hpp: "C++", cxx: "C++",
+  cs: "C#", fs: "F#", rb: "Ruby", php: "PHP", lua: "Lua", zig: "Zig", nim: "Nim",
+  ex: "Elixir", exs: "Elixir", erl: "Erlang", hs: "Haskell", ml: "OCaml", clj: "Clojure",
+  dart: "Dart", jl: "Julia", r: "R", sol: "Solidity", move: "Move", cairo: "Cairo",
+  sh: "Shell", bash: "Shell", zsh: "Shell", fish: "Shell", ps1: "PowerShell",
+  html: "HTML", css: "CSS", scss: "CSS", sass: "CSS", less: "CSS",
+  vue: "Vue", svelte: "Svelte", astro: "Astro",
+  glsl: "Shader", wgsl: "Shader", hlsl: "Shader", frag: "Shader", vert: "Shader",
+  sql: "SQL", graphql: "GraphQL", gql: "GraphQL", proto: "Protobuf",
+  md: "Markdown", mdx: "Markdown", rst: "Markdown", tex: "TeX",
+  json: "Config", yaml: "Config", yml: "Config", toml: "Config", ini: "Config", xml: "Config",
+};
+
+/** Build output, dependencies and tooling state: never the author's work. */
+const IGNORED_DIRS = new Set([
+  "node_modules", "vendor", "dist", "build", "out", "target", "coverage",
+  "__pycache__", "venv", "env", "site-packages", "bower_components", "Pods",
+]);
+
+const LOCKFILES = new Set([
+  "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb", "Cargo.lock",
+  "poetry.lock", "uv.lock", "Pipfile.lock", "composer.lock", "Gemfile.lock", "go.sum", "flake.lock",
+]);
+
+/** A tree entry as GitHub's recursive tree listing returns it. */
+export interface TreeEntry {
+  path: string;
+  type: string;
+  size?: number;
+}
+
+/** The language a mapped file counts toward, or null to leave it off the map. */
+export function languageOf(path: string): string | null {
+  const segments = path.split("/");
+  const name = segments[segments.length - 1];
+  // Dot-directories (.github, .vscode) and build/dependency trees say little about the project.
+  if (segments.slice(0, -1).some((dir) => dir.startsWith(".") || IGNORED_DIRS.has(dir))) return null;
+  if (LOCKFILES.has(name) || /\.min\.(js|css)$/.test(name) || /\.(map|snap)$/.test(name)) return null;
+  const ext = name.includes(".") ? name.slice(name.lastIndexOf(".") + 1).toLowerCase() : "";
+  return LANGUAGES[ext] ?? null;
+}
+
+const MAP_GROUPS = 10;
+const MAP_CHILDREN = 8;
+
+interface Folder {
+  bytes: number;
+  files: number;
+  langs: Map<string, number>;
+  dirs: Map<string, Folder>;
+  leaves: CodeMapNode[];
+}
+
+const folder = (): Folder => ({ bytes: 0, files: 0, langs: new Map(), dirs: new Map(), leaves: [] });
+
+const dominant = (langs: Map<string, number>) =>
+  [...langs].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+const bySize = (a: CodeMapNode, b: CodeMapNode) => b.bytes - a.bytes || a.name.localeCompare(b.name);
+
+/** Keeps the largest nodes and folds the rest into one "+N" plot. */
+function capNodes(nodes: CodeMapNode[], max: number): CodeMapNode[] {
+  const sorted = [...nodes].sort(bySize);
+  if (sorted.length <= max) return sorted;
+  const rest = sorted.slice(max - 1);
+  const langs = new Map<string, number>();
+  for (const node of rest) if (node.lang) langs.set(node.lang, (langs.get(node.lang) ?? 0) + node.bytes);
+  return [
+    ...sorted.slice(0, max - 1),
+    {
+      name: `+${rest.length}`,
+      bytes: rest.reduce((sum, node) => sum + node.bytes, 0),
+      files: rest.reduce((sum, node) => sum + node.files, 0),
+      lang: dominant(langs),
+    },
+  ];
+}
+
+const toNode = (name: string, dir: Folder): CodeMapNode => ({
+  name: `${name}/`,
+  bytes: dir.bytes,
+  files: dir.files,
+  lang: dominant(dir.langs),
+});
+
+/**
+ * Folds a recursive tree listing into a two-level map: the top directories
+ * (and loose files) of the project, each with its largest children. When
+ * every file sits under one directory, that directory becomes the base, so
+ * a repo whose code all lives in src/ maps src/'s structure instead.
+ */
+export function buildCodeMap(entries: TreeEntry[], truncated = false): CodeMap | null {
+  let files = entries.flatMap((entry) => {
+    if (entry.type !== "blob" || !entry.size) return [];
+    const lang = languageOf(entry.path);
+    return lang ? [{ parts: entry.path.split("/"), size: entry.size, lang }] : [];
+  });
+  if (!files.length) return null;
+
+  let base = "";
+  for (let depth = 0; depth < 3; depth++) {
+    const first = files[0].parts[0];
+    if (!files.every((file) => file.parts.length > 1 && file.parts[0] === first)) break;
+    base += `${first}/`;
+    files = files.map((file) => ({ ...file, parts: file.parts.slice(1) }));
+  }
+
+  const root = folder();
+  for (const { parts, size, lang } of files) {
+    const add = (dir: Folder) => {
+      dir.bytes += size;
+      dir.files += 1;
+      dir.langs.set(lang, (dir.langs.get(lang) ?? 0) + size);
+    };
+    add(root);
+    if (parts.length === 1) {
+      root.leaves.push({ name: parts[0], bytes: size, files: 1, lang });
+      continue;
+    }
+    let top = root.dirs.get(parts[0]);
+    if (!top) root.dirs.set(parts[0], (top = folder()));
+    add(top);
+    if (parts.length === 2) {
+      top.leaves.push({ name: parts[1], bytes: size, files: 1, lang });
+      continue;
+    }
+    let child = top.dirs.get(parts[1]);
+    if (!child) top.dirs.set(parts[1], (child = folder()));
+    add(child);
+  }
+
+  const nodes = [
+    ...[...root.dirs].map(([name, dir]) => ({
+      ...toNode(name, dir),
+      children: capNodes([...[...dir.dirs].map(([n, d]) => toNode(n, d)), ...dir.leaves], MAP_CHILDREN),
+    })),
+    ...root.leaves,
+  ];
+
+  return {
+    base,
+    files: root.files,
+    bytes: root.bytes,
+    truncated,
+    languages: [...root.langs].map(([name, bytes]) => ({ name, bytes })).sort((a, b) => b.bytes - a.bytes),
+    nodes: capNodes(nodes, MAP_GROUPS),
+  };
+}
+
+async function codeMapFor(
+  repo: GithubRepo,
+  headers: Record<string, string>,
+  fetchImpl: Fetch,
+): Promise<CodeMap | null> {
+  if (!repo.default_branch || repo.size === 0) return null;
+  try {
+    const response = await fetchImpl(
+      `${GITHUB_API}/repos/${repo.full_name}/git/trees/${encodeURIComponent(repo.default_branch)}?recursive=1`,
+      { headers, signal: AbortSignal.timeout(8000) },
+    );
+    if (!response.ok) return null;
+    const body = (await response.json()) as { tree?: TreeEntry[]; truncated?: boolean };
+    return Array.isArray(body.tree) ? buildCodeMap(body.tree, Boolean(body.truncated)) : null;
+  } catch {
+    return null;
+  }
 }
 
 const SUMMARY_TARGET = 280;
@@ -419,6 +626,7 @@ export async function buildShowcase({
   limit = 9,
   now = new Date(),
   fetchImpl = fetch,
+  terminal = false,
 }: ShowcaseOptions): Promise<Showcase> {
   const headers: Record<string, string> = {
     accept: "application/vnd.github+json",
@@ -436,28 +644,48 @@ export async function buildShowcase({
     throw new Error(`GitHub responded ${response.status} for ${user}'s repositories`);
   }
 
-  // Only deployed projects make the page, so rank everything, keep repos with
-  // a live URL that still answers, then cap.
-  const deployed = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo).flatMap((repo) => {
-    const liveUrl = liveUrlFor(repo, user);
-    return liveUrl ? [{ repo, liveUrl }] : [];
-  });
-  const live = (
+  // Every deployment is checked first. A repo whose site answers keeps that
+  // preview; a public one with no site, or a site that is gone, becomes a
+  // code-only card whose map is fetched below. Private repos need a site:
+  // visitors could open nothing else.
+  type Candidate = { repo: GithubRepo; liveUrl: string | null; card: string | null; preview: RepoPreview | null };
+  const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo);
+  const candidates = (
     await Promise.all(
-      deployed.map(async ({ repo, liveUrl }) => {
+      ranked.map(async (repo): Promise<Candidate | null> => {
         const card = repo.private ? null : githubCard(repo.full_name, repo.pushed_at);
-        const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
-        const preview = await previewFor(liveUrl, fallback, fetchImpl);
-        return preview ? [{ repo, liveUrl, card, preview }] : [];
+        const liveUrl = liveUrlFor(repo, user);
+        if (liveUrl) {
+          const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
+          const preview = await previewFor(liveUrl, fallback, fetchImpl);
+          if (preview) return { repo, liveUrl, card, preview };
+        }
+        return repo.private ? null : { repo, liveUrl: null, card, preview: null };
       }),
     )
-  )
-    .flat()
-    .slice(0, limit);
+  ).filter((candidate): candidate is Candidate => candidate !== null);
+
+  // Maps only for the repos that can still make the page: fill the cap in
+  // rank order, and when a repo has nothing to map (empty, binary-only),
+  // the next one takes its place.
+  const kept: (Candidate & { preview: RepoPreview })[] = [];
+  let queue = candidates;
+  while (kept.length < limit && queue.length) {
+    const batch = queue.slice(0, limit - kept.length);
+    queue = queue.slice(batch.length);
+    const resolved = await Promise.all(
+      batch.map(async (candidate) => {
+        if (candidate.preview) return { ...candidate, preview: candidate.preview };
+        const map = await codeMapFor(candidate.repo, headers, fetchImpl);
+        return map ? { ...candidate, preview: { kind: "map", map } as RepoPreview } : null;
+      }),
+    );
+    kept.push(...resolved.filter((entry) => entry !== null));
+  }
 
   // READMEs (and any model calls) only for the repos that make the page.
   const repos = await Promise.all(
-    live.map(async ({ repo, liveUrl, card, preview }): Promise<ShowcaseRepo> => {
+    kept.map(async ({ repo, liveUrl, card, preview }): Promise<ShowcaseRepo> => {
       const readme = await readmeFor(repo, headers, fetchImpl);
       const described = readme && describe ? await describe(repo, readme) : null;
       return {
@@ -479,7 +707,7 @@ export async function buildShowcase({
     }),
   );
 
-  return { user, generatedAt: now.toISOString(), repos };
+  return { user, generatedAt: now.toISOString(), terminal, repos };
 }
 
 /** GitHub account whose repositories make up the software index. */
@@ -524,6 +752,7 @@ export async function GET(): Promise<Response> {
       user: GITHUB_USER,
       token: GITHUB_TOKEN,
       describe,
+      terminal: ANTHROPIC_API_KEY !== null,
       // Vercel's system env names the repo each deployment builds from.
       selfRepo: process.env.VERCEL_GIT_REPO_SLUG,
     });
