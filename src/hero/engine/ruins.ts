@@ -294,17 +294,17 @@ export function buildRuins(k: PsxKit): SceneDef {
       {
         id: "ruins-ward", r: 40,
         at: (v) => { v.copy(crystal.position); },
-        fire: (t) => { tWard = t; return "WARD STONE \u00b7 hums a half step flat."; },
+        fire: (t) => { tWard = t; },
       },
       {
         id: "ruins-wisps", r: 30,
         at: (v) => { v.copy(wisps[0].m.position); },
-        fire: (t) => { tWisp = t; return "WISPS \u00b7 they were never following you."; },
+        fire: (t) => { tWisp = t; },
       },
       {
         id: "ruins-tree", r: 56,
         at: (v) => { v.set(OX, OY + 6, OZ); },
-        fire: (t) => { tLeaf = t; return "OLD GROWTH \u00b7 lets go of a few things."; },
+        fire: (t) => { tLeaf = t; },
       },
     ],
     update(t) {

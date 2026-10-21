@@ -278,7 +278,6 @@ export function buildField(k: PsxKit): SceneDef {
           const now = performance.now();
           [[0, 0, 0], [220, 9, 0], [440, 0, 9], [660, -9, 0], [880, 0, -9]].forEach(([d, dx, dz]) =>
             cascade.push({ due: now + d, x: trig.x + dx, z: trig.z + dz }));
-          return "BENCHMARK \u00b7 triangulated. Thoroughly.";
         },
       },
     ],

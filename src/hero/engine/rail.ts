@@ -248,22 +248,22 @@ export function buildRail(k: PsxKit): SceneDef {
       {
         id: "rail-horn", r: 44,
         at: (v) => { v.set(0, FLOOR + CH / 2, train.position.z - 12); },
-        fire: (t) => { tHorn = t; return "INBOUND \u00b7 two short, one long."; },
+        fire: (t) => { tHorn = t; },
       },
       {
         id: "rail-lamp", r: 30,
         at: (v) => { v.set(PX + 0.3, PT + 3.25, -15.3); },
-        fire: (t) => { tLamp = t; return "PLATFORM LAMP \u00b7 blinks twice. Someone is home."; },
+        fire: (t) => { tLamp = t; },
       },
       {
         id: "rail-skyline", r: 40,
         at: (v) => { v.copy(peak).y += 1; },
-        fire: (t) => { tCity = t; return "SKYLINE \u00b7 every light blinked once."; },
+        fire: (t) => { tCity = t; },
       },
       {
         id: "rail-suns", r: 44,
         at: (v) => { v.copy(sunA.position); },
-        fire: (t) => { tSun = t; return "SUN \u00b7 don't look. You did."; },
+        fire: (t) => { tSun = t; },
       },
     ],
     update(t) {

@@ -310,17 +310,17 @@ export function buildOcean(k: PsxKit): SceneDef {
       {
         id: "ocean-turbine", r: 34,
         at: (v) => { rotor.getWorldPosition(v); },
-        fire: (t) => { tRotor = t; return "WING-SHIP \u00b7 the turbine spins up. Nobody aboard to notice."; },
+        fire: (t) => { tRotor = t; },
       },
       {
         id: "ocean-suns", r: 40,
         at: (v) => { v.copy(sunA.position); },
-        fire: (t) => { tSun = t; return "TWIN SUNS \u00b7 still two. Checked."; },
+        fire: (t) => { tSun = t; },
       },
       {
         id: "ocean-gull", r: 32,
         at: (v) => { v.copy(gulls[0].l.position); },
-        fire: (t) => { tGull = t; return "GULL \u00b7 barrel roll. Unprompted, it claims."; },
+        fire: (t) => { tGull = t; },
       },
     ],
     update(t) {
