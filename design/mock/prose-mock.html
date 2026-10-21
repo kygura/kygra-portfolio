@@ -1,0 +1,744 @@
+<title>NCA Manuscript</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&display=swap">
+<style>
+/* Layout: a manuscript. One reading column (~64ch) with a marginalia gutter to its left for
+   dates, folios and glosses; every view is a chapter of the same book. Below 860px the
+   margin folds into a typed line above its paragraph. */
+:root {
+  color-scheme: light;
+  /* paper (light) */
+  --paper: #f6f4ee;
+  --paper-2: #edeae1;
+  --ink: #1f1e1b;
+  --ink-2: #57534b;
+  --ink-3: #8c877c;
+  --ghost: #c9c3b6;
+  --rule: #dcd6ca;
+  --clay: #b5532c;
+  --clay-soft: #edcdb9;
+  --on-ink: #f6f4ee;
+
+  /* type: a book face for everything read, a typewriter for everything typed */
+  --f-serif: "Newsreader", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --f-type: "Courier Prime", "Courier New", ui-monospace, Menlo, monospace;
+  --t-label: 0.75rem;
+  --t-small: 0.9375rem;
+  --t-body: 1.1875rem;
+  --t-lead: 1.625rem;
+  --t-h2: 2.125rem;
+  --t-title: clamp(2.75rem, 7.2vw, 4.75rem);
+
+  /* the page */
+  --measure: 36rem;
+  --margin: 9.5rem;
+  --gap: 2.75rem;
+  --leaf: calc(var(--margin) + var(--gap) + var(--measure));
+  --beat: 1.75rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #1b1a17; --paper-2: #24221e; --ink: #ebe6db; --ink-2: #b4aea2; --ink-3: #807a6f;
+    --ghost: #4a463f; --rule: #35322c; --clay: #e08a62; --clay-soft: #4d2f21; --on-ink: #1b1a17;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1b1a17; --paper-2: #24221e; --ink: #ebe6db; --ink-2: #b4aea2; --ink-3: #807a6f;
+  --ghost: #4a463f; --rule: #35322c; --clay: #e08a62; --clay-soft: #4d2f21; --on-ink: #1b1a17;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--paper); }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-serif);
+  font-size: var(--t-body);
+  line-height: 1.62;
+  font-optical-sizing: auto;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+.wrap {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+::selection { background: var(--clay-soft); color: var(--ink); }
+:focus-visible { outline: 2px solid var(--clay); outline-offset: 3px; }
+a { color: inherit; text-decoration-line: underline; text-decoration-color: var(--rule); text-decoration-thickness: 1px; text-underline-offset: 0.22em; transition: text-decoration-color 160ms, color 160ms; }
+a:hover { text-decoration-color: var(--clay); }
+h1, h2, h3 { font-weight: 400; text-wrap: balance; margin: 0; }
+p { margin: 0; text-wrap: pretty; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* typed text: labels, meta, UI */
+.typed, .label {
+  font-family: var(--f-type);
+  font-size: var(--t-label);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.label { text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-3); }
+
+kbd {
+  font-family: var(--f-type);
+  font-size: 0.72rem;
+  line-height: 1;
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0.2em 0.4em 0.16em;
+  text-align: center;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+}
+
+/* ---------- masthead ---------- */
+.mast { border-bottom: 1px solid var(--rule); }
+.mast__in {
+  max-width: var(--leaf);
+  margin-inline: auto;
+  padding-block: 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 2rem;
+}
+.mark { font-family: var(--f-type); font-size: 0.9375rem; text-decoration: none; letter-spacing: 0.01em; }
+.mark b { font-weight: 400; color: var(--clay); }
+.nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.4rem; margin: 0; padding: 0; list-style: none; margin-right: auto; }
+.nav a {
+  font-family: var(--f-type);
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  padding-block: 0.2rem;
+  border-bottom: 1px solid transparent;
+}
+.nav a:hover { color: var(--ink); }
+.nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--clay); }
+.nav a .k { color: var(--ink-3); }
+.lamp { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; }
+.lamp button {
+  font: inherit; font-family: var(--f-type); font-size: var(--t-label);
+  color: var(--ink-3); background: none; border: 0; padding: 0.3rem 0.6rem; cursor: pointer;
+}
+.lamp button[aria-pressed="true"] { color: var(--ink); background: var(--paper-2); }
+
+/* ---------- the leaf: margin + measure ---------- */
+main { padding-block: clamp(3rem, 8vw, 6rem) clamp(4rem, 9vw, 7rem); }
+.leaf { max-width: var(--leaf); margin-inline: auto; display: grid; gap: var(--beat); }
+.ln {
+  display: grid;
+  grid-template-columns: var(--margin) minmax(0, var(--measure));
+  column-gap: var(--gap);
+  align-items: baseline;
+}
+.ln > .m { grid-column: 1; text-align: right; color: var(--ink-3); }
+.ln > .t { grid-column: 2; min-width: 0; }
+.ln > .t:only-child { grid-column: 2; }
+.rule { border: 0; border-top: 1px solid var(--rule); margin: calc(var(--beat) * 0.75) 0; }
+.break { text-align: center; color: var(--ink-3); letter-spacing: 0.6em; padding-left: 0.6em; font-size: 1.1rem; margin-block: 0.75rem; }
+
+@media (max-width: 860px) {
+  .ln { grid-template-columns: minmax(0, 1fr); row-gap: 0.35rem; }
+  .ln > .m, .ln > .t { grid-column: 1; text-align: left; }
+  .leaf { max-width: var(--measure); }
+}
+
+/* ---------- views ---------- */
+.view { display: grid; gap: var(--beat); }
+.view.enter { animation: enter 260ms ease-out; }
+@keyframes enter { from { opacity: 0.25; transform: translateY(6px); } }
+
+/* title page */
+.title { font-size: var(--t-title); font-weight: 300; line-height: 0.98; letter-spacing: -0.02em; font-variation-settings: "opsz" 72; }
+.title em { font-style: italic; font-weight: 300; }
+.subtitle { font-size: 1.3125rem; font-style: italic; color: var(--ink-2); line-height: 1.45; }
+.opening {
+  font-size: var(--t-lead);
+  line-height: 1.42;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+  font-variation-settings: "opsz" 36;
+}
+.opening .ch { color: var(--ink); transition: color 90ms linear; }
+.opening.armed .ch { color: var(--ghost); }
+.opening.armed .ch.on { color: var(--ink); }
+.opening del { text-decoration: none; position: relative; color: inherit; }
+.opening del::after {
+  content: ""; position: absolute; left: -0.04em; right: -0.04em; top: 0.56em; height: 0.075em;
+  background: var(--clay); transform-origin: left center; transition: transform 380ms cubic-bezier(.6,.1,.3,1);
+}
+.opening.armed del::after { transform: scaleX(0); }
+.opening.armed del.struck::after { transform: scaleX(1); }
+.opening del .ch.on { color: var(--ink-3) !important; }
+
+.caret {
+  display: inline-block; width: 0.09em; min-width: 2px; height: 1.02em; margin-left: 0.04em;
+  background: var(--clay); vertical-align: -0.16em; animation: blink 1.06s steps(1) infinite;
+}
+.caret.busy { animation: none; }
+@keyframes blink { 50% { opacity: 0; } }
+.retype { font: inherit; color: var(--ink-3); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 0.22em; }
+.retype:hover { color: var(--ink); text-decoration-color: var(--clay); }
+
+/* theses */
+.thesis .m { font-family: var(--f-serif); font-size: 1rem; font-style: italic; color: var(--clay); font-variant-numeric: normal; }
+.thesis .t { color: var(--ink); }
+.closer { font-style: italic; font-size: 1.3125rem; color: var(--ink-2); }
+.onward { display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; }
+
+/* contents */
+.h2 { font-size: var(--t-h2); line-height: 1.12; letter-spacing: -0.012em; font-variation-settings: "opsz" 60; }
+.part { padding-top: 0.75rem; }
+.toc { display: grid; gap: 1.15rem; margin: 0; padding: 0; list-style: none; }
+.toc__row { display: grid; gap: 0.15rem; text-decoration: none; }
+.toc__line { display: flex; align-items: baseline; gap: 0.6rem; }
+.toc__n { font-style: italic; color: var(--clay); min-width: 2.4rem; font-size: 1rem; }
+.toc__title { font-size: 1.3125rem; line-height: 1.3; }
+.toc__dots { flex: 1; min-width: 1.5rem; border-bottom: 1px dotted var(--ink-3); transform: translateY(-0.3em); opacity: 0.6; }
+.toc__min { font-family: var(--f-type); font-size: var(--t-label); color: var(--ink-3); white-space: nowrap; }
+.toc__ex { padding-left: 3rem; font-size: var(--t-small); font-style: italic; color: var(--ink-2); line-height: 1.5; }
+a.toc__row:hover .toc__title { text-decoration: underline; text-decoration-color: var(--clay); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a.toc__row:hover .toc__dots { border-bottom-color: var(--clay); opacity: 1; }
+div.toc__row { cursor: default; }
+
+/* reading view */
+.folio { font-size: 2.75rem; font-style: italic; font-weight: 300; color: var(--clay); line-height: 1; font-variant-numeric: normal; }
+.prose { display: grid; gap: 1.1em; }
+.prose p { hyphens: auto; }
+.lead-in { font-variant-caps: all-small-caps; letter-spacing: 0.06em; font-size: 1.08em; }
+.endmark { display: inline-block; width: 0.42em; height: 0.42em; background: var(--clay); margin-left: 0.35em; vertical-align: 0.06em; }
+.gloss { font-style: italic; }
+.gloss .typed { font-style: normal; display: block; color: var(--ink-3); }
+.pager { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; }
+.pager a { display: grid; gap: 0.1rem; text-decoration: none; max-width: 16rem; }
+.pager a:last-child { text-align: right; margin-left: auto; }
+.pager a span:last-child { font-size: 1.0625rem; }
+.pager a:hover span:last-child { text-decoration: underline; text-decoration-color: var(--clay); text-underline-offset: 0.2em; }
+
+/* works */
+.work { display: grid; gap: 0.5rem; }
+.work h3 { font-size: 1.5rem; line-height: 1.25; font-variation-settings: "opsz" 40; }
+.work p { color: var(--ink-2); }
+.stack { color: var(--ink-3); }
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--f-type); font-size: 0.875rem; line-height: 1;
+  padding: 0.7rem 1rem 0.62rem; border-radius: 3px; cursor: pointer; text-decoration: none;
+  color: var(--on-ink); background: var(--ink); border: 1px solid var(--ink);
+  transition: background 160ms, border-color 160ms, color 160ms;
+}
+.btn:hover { background: var(--clay); border-color: var(--clay); color: var(--on-ink); }
+.btn--quiet { background: none; color: var(--ink); border-color: var(--rule); }
+.btn--quiet:hover { background: none; color: var(--ink); border-color: var(--clay); }
+
+/* cv */
+.dl { display: grid; gap: 0.6rem; margin: 0; }
+.dl div { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr); gap: 1rem; align-items: baseline; }
+.dl dt { font-family: var(--f-type); font-size: var(--t-label); color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.12em; }
+.dl dd { margin: 0; }
+.dl dd.typed { font-size: 0.875rem; color: var(--ink-2); }
+@media (max-width: 480px) { .dl div { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; } }
+
+/* system sheet */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: 1rem; }
+.sw { display: grid; gap: 0.4rem; }
+.sw i { display: block; height: 3.25rem; border: 1px solid var(--rule); border-radius: 3px; }
+.sw .typed { color: var(--ink-2); }
+.sw .typed b { font-weight: 400; color: var(--ink); }
+.spec { display: grid; gap: 1.4rem; }
+.spec__row { display: grid; gap: 0.3rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--rule); }
+.spec__row:last-child { border-bottom: 0; padding-bottom: 0; }
+.spec__row .typed { color: var(--ink-3); }
+.kit { display: grid; gap: 1.25rem; }
+.kit__item { display: grid; gap: 0.6rem; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+.tag { font-family: var(--f-type); font-size: var(--t-label); color: var(--ink-2); padding: 0.15rem 0.45rem; border: 1px solid var(--rule); border-radius: 3px; }
+pre.code {
+  margin: 0; padding: 1rem 1.15rem; overflow-x: auto; background: var(--paper-2); border-radius: 3px;
+  font-family: var(--f-type); font-size: 0.875rem; line-height: 1.6; color: var(--ink);
+}
+pre.code .c { color: var(--ink-3); font-style: italic; }
+pre.code .k { color: var(--clay); }
+pre.code .s { color: var(--ink-2); }
+blockquote.epi { margin: 0; padding-left: 1.25rem; border-left: 1px solid var(--clay); font-style: italic; color: var(--ink-2); }
+.rules { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.5rem; }
+.rules li::marker { color: var(--clay); font-style: italic; }
+
+/* ---------- footer ---------- */
+.foot { border-top: 1px solid var(--rule); }
+.foot__in { max-width: var(--leaf); margin-inline: auto; padding-block: 2.5rem 2.25rem; display: grid; gap: 1.75rem; }
+.epigraph { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; align-items: center; }
+.epigraph p { font-style: italic; font-size: 1.1875rem; line-height: 1.5; color: var(--ink-2); min-height: 3em; display: flex; align-items: center; transition: opacity 200ms; }
+.epigraph p.fading { opacity: 0; }
+.epigraph button {
+  font-family: var(--f-type); font-size: 0.875rem; color: var(--ink-3); background: none;
+  border: 1px solid var(--rule); border-radius: 3px; width: 2rem; height: 2rem; cursor: pointer;
+}
+.epigraph button:hover { color: var(--ink); border-color: var(--clay); }
+.colophon { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.75rem 2rem; color: var(--ink-3); }
+.keys { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+.keys span { display: inline-flex; gap: 0.3rem; align-items: center; }
+
+.chord {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  background: var(--ink); color: var(--on-ink); border-radius: 3px; padding: 0.5rem 0.8rem; z-index: 20;
+}
+.chord kbd { background: transparent; color: var(--on-ink); border-color: var(--ink-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<header class="mast wrap">
+  <div class="mast__in">
+    <a class="mark" href="#home" data-go="home">nca<b>.</b>ink</a>
+    <ul class="nav" aria-label="Sections">
+      <li><a href="#home" data-go="home" aria-keyshortcuts="g h" title="g h">Home</a></li>
+      <li><a href="#writings" data-go="writings" aria-keyshortcuts="g w" title="g w">Writings</a></li>
+      <li><a href="#software" data-go="software" aria-keyshortcuts="g s" title="g s">Software</a></li>
+      <li><a href="#cv" data-go="cv" aria-keyshortcuts="g c" title="g c">CV</a></li>
+      <li><a href="#system" data-go="system" aria-keyshortcuts="g y" title="g y"><span class="k">§</span> System</a></li>
+    </ul>
+    <div class="lamp" role="group" aria-label="Theme">
+      <button type="button" id="th-paper" data-theme-set="light" aria-pressed="false">Paper</button>
+      <button type="button" id="th-lamp" data-theme-set="dark" aria-pressed="false">Lamp</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="leaf">
+
+    <!-- ============ HOME ============ -->
+    <section class="view" data-view="home" aria-labelledby="h-home">
+      <div class="ln">
+        <p class="m label">Frontispiece</p>
+        <div class="t" style="display:grid;gap:1.1rem">
+          <h1 id="h-home" class="title">Nicolas Cerrato <em>Anton</em></h1>
+          <p class="subtitle">Software ventures &amp; craft: agentic systems, markets and the open web.</p>
+        </div>
+      </div>
+
+      <hr class="rule">
+
+      <div class="ln">
+        <p class="m typed">Málaga<br>October 2026<br><button type="button" class="retype typed" id="retype">retype ↺</button></p>
+        <div class="t">
+          <p class="opening" id="opening">
+            <span class="sr">Everything built to set people free ends up as something they need freeing from. I build anyway.</span>
+            <span aria-hidden="true" class="draft"><span class="seg">Everything built to set people free ends up as something they need freeing from. I </span><del class="seg">quit</del><span class="seg"> build anyway.</span></span>
+          </p>
+        </div>
+      </div>
+
+      <div class="ln"><p class="m label">The premise</p><p class="t" style="color:var(--ink-2)">Five theses, in the order they were arrived at.</p></div>
+
+      <div class="ln thesis"><p class="m">i.</p><p class="t">Every system that frees people from the last one becomes the next one to escape. Software is no exception. I try to make things that expect to be outgrown, and leave the door open when they are.</p></div>
+      <div class="ln thesis"><p class="m">ii.</p><p class="t">When an institution stops serving the people inside it, I would rather build the road around it than petition for repairs. Exit is a form of speech. Code is a cheap way to say it.</p></div>
+      <div class="ln thesis"><p class="m">iii.</p><p class="t">A good tool hands your attention back. The ones I trust do one thing, show their workings, and never ask to be believed in. The thinking that makes you who you are should stay yours.</p></div>
+      <div class="ln thesis"><p class="m">iv.</p><p class="t">Markets, agents, the open web, a running track before any of them. The fields were surfaces. What stayed the same was the one crossing them.</p></div>
+      <div class="ln thesis"><p class="m">v.</p><p class="t">Winning is exhaust. Aim at it directly and you spoil whatever was producing it. So I aim at the work.</p></div>
+
+      <div class="ln">
+        <p class="m"></p>
+        <div class="t" style="display:grid;gap:1.25rem">
+          <p class="break" aria-hidden="true">⁂</p>
+          <p class="closer">No final shape. Only the process, and the wonder that started it.</p>
+          <p class="onward typed" style="font-size:.875rem"><a href="#writings" data-go="writings">Read the writings →</a><a href="#software" data-go="software">See the work →</a></p>
+        </div>
+      </div>
+
+      <hr class="rule">
+
+      <div class="ln"><p class="m label">Latest</p><h2 class="t h2" style="font-size:1.5rem">From the writings</h2></div>
+      <div class="ln">
+        <p class="m"></p>
+        <ol class="t toc">
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">ix</span><span class="toc__title">A Philosophy of Pragmatic Sovereignity</span><span class="toc__dots"></span><span class="toc__min">9 min</span></span></div></li>
+          <li><a class="toc__row" href="#post" data-go="post"><span class="toc__line"><span class="toc__n">viii</span><span class="toc__title">Thaumazein</span><span class="toc__dots"></span><span class="toc__min">1 min</span></span></a></li>
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">vii</span><span class="toc__title">100M</span><span class="toc__dots"></span><span class="toc__min">7 min</span></span></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ WRITINGS ============ -->
+    <section class="view" data-view="writings" aria-labelledby="h-writings" hidden>
+      <div class="ln"><p class="m label">Contents</p><h1 id="h-writings" class="t h2">Writings</h1></div>
+      <div class="ln"><p class="m typed">9 pieces<br>6,895 words</p><p class="t" style="color:var(--ink-2)">Essays on freedom, institutions and the one doing the escaping. Numbered in the order they were written; minutes are reading time.</p></div>
+
+      <div class="ln part"><p class="m label">Part one</p><p class="t label" style="color:var(--ink-2)">February</p></div>
+      <div class="ln">
+        <p class="m"></p>
+        <ol class="t toc">
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">i</span><span class="toc__title">Always Against</span><span class="toc__dots"></span><span class="toc__min">5 min</span></span><span class="toc__ex">Every system built to free people from the previous system becomes the next system people need freeing from.</span></div></li>
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">ii</span><span class="toc__title">The Price of Progress</span><span class="toc__dots"></span><span class="toc__min">4 min</span></span><span class="toc__ex">Freedom is not a right passively possessed. It is a currency.</span></div></li>
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">iii</span><span class="toc__title">The Game of Democracy</span><span class="toc__dots"></span><span class="toc__min">5 min</span></span><span class="toc__ex">Every system built to liberate becomes the next cage. History has no destination.</span></div></li>
+        </ol>
+      </div>
+
+      <div class="ln part"><p class="m label">Part two</p><p class="t label" style="color:var(--ink-2)">March</p></div>
+      <div class="ln">
+        <p class="m"></p>
+        <ol class="t toc" start="4">
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">iv</span><span class="toc__title">Outsourced Spirituality</span><span class="toc__dots"></span><span class="toc__min">4 min</span></span><span class="toc__ex">Humanity has handed its most personal responsibility, the confrontation with existence, to institutions.</span></div></li>
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">v</span><span class="toc__title">Conditioned by Freedom</span><span class="toc__dots"></span><span class="toc__min">3 min</span></span><span class="toc__ex">Freedom is always relational, never absolute.</span></div></li>
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">vi</span><span class="toc__title">The Perpetual I</span><span class="toc__dots"></span><span class="toc__min">3 min</span></span><span class="toc__ex">A free man can escape many things, but he cannot escape who he is.</span></div></li>
+        </ol>
+      </div>
+
+      <div class="ln part"><p class="m label">Part three</p><p class="t label" style="color:var(--ink-2)">April</p></div>
+      <div class="ln">
+        <p class="m typed">Mock: only viii opens the reading view.</p>
+        <ol class="t toc" start="7">
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">vii</span><span class="toc__title">100M</span><span class="toc__dots"></span><span class="toc__min">7 min</span></span><span class="toc__ex">Ten seconds for the performance of a lifetime.</span></div></li>
+          <li><a class="toc__row" href="#post" data-go="post"><span class="toc__line"><span class="toc__n">viii</span><span class="toc__title">Thaumazein</span><span class="toc__dots"></span><span class="toc__min">1 min</span></span><span class="toc__ex">For a long while, I had been in pursuit of freedom.</span></a></li>
+          <li><div class="toc__row"><span class="toc__line"><span class="toc__n">ix</span><span class="toc__title">A Philosophy of Pragmatic Sovereignity</span><span class="toc__dots"></span><span class="toc__min">9 min</span></span><span class="toc__ex">The state is not a moral good, but it operates as a gravitational inevitability.</span></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ POST ============ -->
+    <section class="view" data-view="post" aria-labelledby="h-post" hidden>
+      <div class="ln">
+        <p class="m folio" aria-hidden="true">viii</p>
+        <div class="t" style="display:grid;gap:.6rem">
+          <p class="typed" style="color:var(--ink-3)"><a href="#writings" data-go="writings">Writings</a> / 15 April 2026 · 1 min · 256 words</p>
+          <h1 id="h-post" class="title" style="font-size:clamp(2.4rem,6vw,3.75rem)">Thaumazein</h1>
+        </div>
+      </div>
+
+      <div class="ln"><p class="m gloss">Gk. θαυμάζειν, to wonder. For Plato, where philosophy begins.<span class="typed">gloss</span></p>
+        <div class="t prose">
+          <p><span class="lead-in">For a long while,</span> I had been in pursuit of freedom, of the greatest life I could imagine for myself, redefining at every turn the very terms of victory so that the chase might never end.</p>
+          <p>I sought the liberation promised by the invisible hand, by that divine and hidden order of the cosmos; I had long resolved never to become a slave to causality, never to be driven into a life hemmed in by restriction and limit, and so I gave myself over instead to the pursuit of arbitrary goals, of endless wealth and success.</p>
+          <p>I was running after a spectre that promised deliverance.</p>
+          <p>The hidden motions of the world have led me here, to this moment.</p>
+          <p>I have seen much and done much, and still it was never enough.</p>
+          <p>I had forgotten the beauty that permeates everything.</p>
+          <p>It is time to lay down arms.</p>
+          <p>It is time to live now.</p>
+        </div>
+      </div>
+
+      <div class="ln"><p class="m"></p><p class="t break" aria-hidden="true">⁂</p></div>
+
+      <div class="ln"><p class="m"></p>
+        <div class="t prose">
+          <p>There is beauty in the truth: that the ideals of discovery, freedom, and knowledge carry both the individual and the whole of history toward a culminating freedom.</p>
+          <p>The spirit of man is the spirit of history.</p>
+          <p>Now I no longer run from the past.</p>
+          <p>I run toward the future.<span class="endmark" aria-hidden="true"></span></p>
+        </div>
+      </div>
+
+      <hr class="rule">
+      <div class="ln"><p class="m label">Continue</p>
+        <nav class="t pager typed" aria-label="Adjacent writings">
+          <a href="#writings" data-go="writings"><span>← vii</span><span>100M</span></a>
+          <a href="#writings" data-go="writings"><span>ix →</span><span>A Philosophy of Pragmatic Sovereignity</span></a>
+        </nav>
+      </div>
+    </section>
+
+    <!-- ============ SOFTWARE ============ -->
+    <section class="view" data-view="software" aria-labelledby="h-software" hidden>
+      <div class="ln"><p class="m label">Works</p><h1 id="h-software" class="t h2">Software</h1></div>
+      <div class="ln"><p class="m typed">Repositories load live from GitHub on the site.</p><p class="t" style="color:var(--ink-2)">Four practices, one habit: separate what a system decides from what it is allowed to do.</p></div>
+      <hr class="rule">
+      <div class="ln"><p class="m typed stack">TypeScript<br>Bun · WebSocket<br>SQLite</p>
+        <div class="t work"><h3>Agentic systems</h3><p>Multi-agent architectures with DAG scheduling, cancellation that propagates, and event-sourced audit trails. Deterministic execution layers that constrain what an LLM is allowed to do with what it decides.</p></div></div>
+      <div class="ln"><p class="m typed stack">Anthropic API<br>OpenAI API<br>FastAPI · Python</p>
+        <div class="t work"><h3>AI integration &amp; LLM tooling</h3><p>Streaming responses with structured output parsing, embedding pipelines for semantic search, and editorial rewriting flows with inline diffs you accept line by line.</p></div></div>
+      <div class="ln"><p class="m typed stack">React · Hono<br>Next.js<br>Tailwind CSS</p>
+        <div class="t work"><h3>Full-stack web applications</h3><p>Single-page and full-stack apps with real-time data and typed REST and WebSocket contracts shared across monorepo packages.</p></div></div>
+      <div class="ln"><p class="m typed stack">Solidity<br>Smart contracts</p>
+        <div class="t work"><h3>Blockchain &amp; protocol design</h3><p>On-chain monetary mechanisms with supply-sensitive stability and tranche-based risk, treated as a systems problem: incentives, edge cases, adversarial conditions.</p></div></div>
+    </section>
+
+    <!-- ============ CV ============ -->
+    <section class="view" data-view="cv" aria-labelledby="h-cv" hidden>
+      <div class="ln"><p class="m label">Credentials</p><h1 id="h-cv" class="t h2">Curriculum Vitae</h1></div>
+      <div class="ln"><p class="m"></p>
+        <div class="t" style="display:grid;gap:1.25rem">
+          <p class="typed" style="font-size:.875rem;color:var(--ink-2)">Málaga, Spain · nca.ink · github.com/kygura</p>
+          <p>Software engineer with a computer science grounding in Spain and Germany. Works on agentic systems, full-stack web, algorithmic trading and blockchain protocols, across TypeScript, Python and Solidity. Trilingual: English, German, Spanish.</p>
+          <p><a class="btn" href="https://www.nca.ink/CV_NCA.pdf" target="_blank" rel="noopener">Download PDF ↗</a></p>
+        </div>
+      </div>
+      <hr class="rule">
+      <div class="ln"><p class="m label">Education</p><p class="t"></p></div>
+      <div class="ln"><p class="m typed">2022 – 2024</p><div class="t"><p>BSc Computer Engineering</p><p class="typed" style="color:var(--ink-3);font-size:.8125rem">Universidad de Málaga</p></div></div>
+      <div class="ln"><p class="m typed">2020 – 2022</p><div class="t"><p>BSc Computer Engineering, first cycle</p><p class="typed" style="color:var(--ink-3);font-size:.8125rem">Albert-Ludwigs-Universität Freiburg · machine learning, smart contracts, systems programming</p></div></div>
+      <div class="ln"><p class="m typed">2006 – 2018</p><div class="t"><p>Abitur equivalent, bilingual</p><p class="typed" style="color:var(--ink-3);font-size:.8125rem">Deutsche Schule Las Palmas</p></div></div>
+      <hr class="rule">
+      <div class="ln"><p class="m label">Instruments</p>
+        <dl class="t dl">
+          <div><dt>Languages</dt><dd class="typed">TypeScript, Python, Go, C, JavaScript, Solidity</dd></div>
+          <div><dt>Backend</dt><dd class="typed">Hono, FastAPI, Node.js, Express, SQLite, WebSocket</dd></div>
+          <div><dt>Frontend</dt><dd class="typed">React, Next.js, Tailwind CSS, React Flow, MapLibre GL JS</dd></div>
+          <div><dt>Agents</dt><dd class="typed">Anthropic API, OpenAI API, ReAct, embeddings</dd></div>
+          <div><dt>Tools</dt><dd class="typed">Bun, Git, Docker, Linux, Bash, Vercel</dd></div>
+          <div><dt>Spoken</dt><dd>Spanish and German, native · English, C2</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <!-- ============ SYSTEM ============ -->
+    <section class="view" data-view="system" aria-labelledby="h-system" hidden>
+      <div class="ln"><p class="m label">§ Appendix</p><h1 id="h-system" class="t h2">The design system</h1></div>
+      <div class="ln"><p class="m typed">Manuscript<br>v0.1 · mock</p>
+        <ol class="t rules">
+          <li>Everything read is set in the book face. Everything typed (dates, labels, keys, code) is set in the typewriter.</li>
+          <li>One column of about 64 characters. Notes live in the margin, never in boxes.</li>
+          <li>Clay is ink for marks only: numerals, the caret, a strike, a hover. Never a fill behind text.</li>
+          <li>Structure comes from the subject: parts by month, chapters by order written, minutes as folios.</li>
+          <li>One moving thing per page. The opening types itself; everything else holds still.</li>
+        </ol>
+      </div>
+      <hr class="rule">
+
+      <div class="ln"><p class="m label">Colour</p>
+        <div class="t swatches">
+          <div class="sw"><i style="background:var(--paper)"></i><span class="typed"><b>--paper</b><br>#f6f4ee · #1b1a17</span></div>
+          <div class="sw"><i style="background:var(--paper-2)"></i><span class="typed"><b>--paper-2</b><br>#edeae1 · #24221e</span></div>
+          <div class="sw"><i style="background:var(--ink)"></i><span class="typed"><b>--ink</b><br>#1f1e1b · #ebe6db</span></div>
+          <div class="sw"><i style="background:var(--ink-2)"></i><span class="typed"><b>--ink-2</b><br>#57534b · #b4aea2</span></div>
+          <div class="sw"><i style="background:var(--ink-3)"></i><span class="typed"><b>--ink-3</b><br>#8c877c · #807a6f</span></div>
+          <div class="sw"><i style="background:var(--rule)"></i><span class="typed"><b>--rule</b><br>#dcd6ca · #35322c</span></div>
+          <div class="sw"><i style="background:var(--ghost)"></i><span class="typed"><b>--ghost</b><br>untyped text</span></div>
+          <div class="sw"><i style="background:var(--clay)"></i><span class="typed"><b>--clay</b><br>#b5532c · #e08a62</span></div>
+        </div>
+      </div>
+      <hr class="rule">
+
+      <div class="ln"><p class="m label">Type</p>
+        <div class="t spec">
+          <div class="spec__row"><span class="typed">Title · Newsreader 300 · 76/0.98 · opsz 72</span><span class="title" style="font-size:clamp(2.4rem,6vw,3.5rem)">Thaumazein</span></div>
+          <div class="spec__row"><span class="typed">Heading · Newsreader 400 · 34/1.12</span><span class="h2">The Price of Progress</span></div>
+          <div class="spec__row"><span class="typed">Lead · Newsreader 400 · 26/1.42</span><span class="opening">Exit is a form of speech.</span></div>
+          <div class="spec__row"><span class="typed">Body · Newsreader 400 · 19/1.62 · old-style figures</span><p>Ten seconds for the performance of a lifetime, run in 2018 and remembered in 2026.</p></div>
+          <div class="spec__row"><span class="typed">Lead-in · all small caps · +6%</span><p><span class="lead-in">For a long while,</span> I had been in pursuit of freedom.</p></div>
+          <div class="spec__row"><span class="typed">Typed · Courier Prime 400 · 12–14 · tabular</span><p class="typed" style="font-size:.875rem">15 April 2026 · 1 min · 256 words</p></div>
+          <div class="spec__row"><span class="typed">Label · Courier Prime · caps · +14%</span><p class="label">Part three</p></div>
+        </div>
+      </div>
+      <hr class="rule">
+
+      <div class="ln"><p class="m label">Parts</p>
+        <div class="t kit">
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Buttons, links, tags</span>
+            <div class="row"><a class="btn" href="#system">Download PDF ↗</a><a class="btn btn--quiet" href="#system">Source</a><a href="#system">An inline link</a><span class="tag">TypeScript</span><span class="tag">archived</span></div></div>
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Keys</span>
+            <div class="row typed" style="font-size:.875rem;color:var(--ink-2)"><span><kbd>g</kbd> <kbd>w</kbd> writings</span><span><kbd>t</kbd> paper / lamp</span><span><kbd>a</kbd> <kbd>d</kbd> epigraphs</span><span><kbd>`</kbd> terminal</span></div></div>
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Contents row</span>
+            <div class="toc"><div class="toc__row"><span class="toc__line"><span class="toc__n">v</span><span class="toc__title">Conditioned by Freedom</span><span class="toc__dots"></span><span class="toc__min">3 min</span></span><span class="toc__ex">Freedom is always relational, never absolute.</span></div></div></div>
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Repository entry (example)</span>
+            <div class="work"><h3>example-repo</h3><p>One sentence from the repository description, set in secondary ink.</p>
+              <p class="typed" style="color:var(--ink-3)">TypeScript · ★ 12 · pushed 3 days ago · <a href="#system">Visit site ↗</a> · <a href="#system">Source</a></p></div></div>
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Epigraph</span>
+            <blockquote class="epi">One must imagine Sisyphus happy.</blockquote></div>
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Code</span>
+<pre class="code"><span class="c">// separate what the agent decides from what the system allows</span>
+<span class="k">const</span> plan = <span class="k">await</span> agent.propose(task);
+<span class="k">const</span> allowed = policy.filter(plan.steps);
+<span class="k">return</span> runner.execute(allowed, { audit: <span class="s">"event-log"</span> });</pre></div>
+          <div class="kit__item"><span class="typed" style="color:var(--ink-3)">Marks</span>
+            <div class="row" style="font-size:1.25rem"><span class="break" style="margin:0">⁂</span><span>end<span class="endmark"></span></span><span>caret<span class="caret"></span></span><span class="folio" style="font-size:1.75rem">viii</span></div></div>
+        </div>
+      </div>
+      <hr class="rule">
+      <div class="ln"><p class="m label">Motion</p>
+        <p class="t" style="color:var(--ink-2)">The opening sentence is laid out in ghost ink and typed over at a human cadence, with pauses at punctuation and one visible revision. View changes fade in over 260ms. Under reduced motion the sentence arrives finished and the caret holds still.</p></div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="foot wrap">
+  <div class="foot__in">
+    <div class="epigraph">
+      <button type="button" id="ep-prev" aria-label="Previous epigraph" aria-keyshortcuts="a">‹</button>
+      <p id="ep" aria-live="polite">One must imagine Sisyphus happy.</p>
+      <button type="button" id="ep-next" aria-label="Next epigraph" aria-keyshortcuts="d">›</button>
+    </div>
+    <div class="colophon typed">
+      <span>Set in Newsreader and Courier Prime. Written in Málaga.</span>
+      <span class="keys"><span><kbd>g</kbd><kbd>w</kbd> writings</span><span><kbd>t</kbd> lamp</span><span><kbd>a</kbd><kbd>d</kbd> epigraph</span></span>
+    </div>
+  </div>
+</footer>
+
+<div class="chord typed" id="chord" hidden>g … <kbd>h</kbd> home · <kbd>w</kbd> writings · <kbd>s</kbd> software · <kbd>c</kbd> cv · <kbd>y</kbd> system</div>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var root = document.documentElement;
+
+  /* ---- views ---- */
+  var views = Array.prototype.slice.call(document.querySelectorAll("[data-view]"));
+  var names = views.map(function (v) { return v.getAttribute("data-view"); });
+  var current = null;
+  function show(name, push) {
+    if (names.indexOf(name) < 0) name = "home";
+    if (name === current) return;
+    current = name;
+    views.forEach(function (v) {
+      var on = v.getAttribute("data-view") === name;
+      v.hidden = !on;
+      if (on && !reduce) { v.classList.remove("enter"); void v.offsetWidth; v.classList.add("enter"); }
+    });
+    document.querySelectorAll(".nav a").forEach(function (a) {
+      var target = a.getAttribute("data-go");
+      if (target === name || (name === "post" && target === "writings")) a.setAttribute("aria-current", "page");
+      else a.removeAttribute("aria-current");
+    });
+    if (push) { try { history.replaceState(null, "", "#" + name); } catch (e) {} window.scrollTo(0, 0); }
+    if (name === "home") type();
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("[data-go]");
+    if (!a) return;
+    e.preventDefault();
+    show(a.getAttribute("data-go"), true);
+  });
+
+  /* ---- theme ---- */
+  var paperBtn = document.getElementById("th-paper"), lampBtn = document.getElementById("th-lamp");
+  var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function isDark() {
+    var t = root.getAttribute("data-theme");
+    return t ? t === "dark" : !!(mq && mq.matches);
+  }
+  function syncTheme() {
+    var d = isDark();
+    lampBtn.setAttribute("aria-pressed", String(d));
+    paperBtn.setAttribute("aria-pressed", String(!d));
+  }
+  function setTheme(t) { root.setAttribute("data-theme", t); syncTheme(); }
+  [paperBtn, lampBtn].forEach(function (b) {
+    b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-set")); });
+  });
+  if (mq && mq.addEventListener) mq.addEventListener("change", syncTheme);
+  syncTheme();
+
+  /* ---- the opening types itself ---- */
+  var opening = document.getElementById("opening");
+  var draft = opening.querySelector(".draft");
+  var chars = [];
+  draft.querySelectorAll(".seg").forEach(function (seg) {
+    var text = seg.textContent;
+    seg.textContent = "";
+    for (var i = 0; i < text.length; i++) {
+      var s = document.createElement("span");
+      s.className = "ch";
+      s.textContent = text[i];
+      seg.appendChild(s);
+      chars.push(s);
+    }
+  });
+  var del = draft.querySelector("del");
+  var caret = document.createElement("span");
+  caret.className = "caret";
+  var timers = [];
+  function clear() { timers.forEach(clearTimeout); timers = []; }
+  function after(ms, fn) { timers.push(setTimeout(fn, ms)); }
+  var typedOnce = false;
+
+  function type(force) {
+    if (typedOnce && !force) return;
+    typedOnce = true;
+    clear();
+    if (reduce) {
+      opening.classList.remove("armed");
+      chars[chars.length - 1].after(caret);
+      return;
+    }
+    opening.classList.add("armed");
+    del.classList.remove("struck");
+    chars.forEach(function (c) { c.classList.remove("on"); });
+    draft.prepend(caret);
+    caret.classList.add("busy");
+    var t = 500, delInside = false;
+    chars.forEach(function (c, i) {
+      var inDel = del.contains(c);
+      if (inDel && !delInside) { t += 520; delInside = true; }
+      if (!inDel && delInside) {
+        t += 640;
+        after(t, function () { del.classList.add("struck"); });
+        t += 520;
+        delInside = false;
+      }
+      var ch = c.textContent;
+      t += 18 + Math.random() * 38;
+      if (ch === " ") t += 14;
+      after(t, function () { c.classList.add("on"); c.after(caret); });
+      if (ch === "." || ch === ",") t += 260 + Math.random() * 180;
+    });
+    after(t + 120, function () { caret.classList.remove("busy"); });
+  }
+  document.getElementById("retype").addEventListener("click", function () { type(true); });
+
+  /* ---- epigraphs ---- */
+  var QUOTES = [
+    "One must imagine Sisyphus happy.",
+    "Life can only be understood backwards; but it must be lived forwards.",
+    "Freedom is what you do with what’s been done to you.",
+    "He who has a why to live can bear almost any how.",
+    "Anxiety is the dizziness of freedom.",
+    "Do not seek to follow in the footsteps of the wise; seek what they sought.",
+    "Without music, life would be a mistake.",
+    "Do what you can, with what you have, where you are."
+  ];
+  var qi = 0, ep = document.getElementById("ep");
+  function quote(step) {
+    qi = (qi + step + QUOTES.length) % QUOTES.length;
+    if (reduce) { ep.textContent = QUOTES[qi]; return; }
+    ep.classList.add("fading");
+    setTimeout(function () { ep.textContent = QUOTES[qi]; ep.classList.remove("fading"); }, 200);
+  }
+  document.getElementById("ep-prev").addEventListener("click", function () { quote(-1); });
+  document.getElementById("ep-next").addEventListener("click", function () { quote(1); });
+
+  /* ---- keys ---- */
+  var chord = document.getElementById("chord"), pending = null;
+  var GO = { h: "home", w: "writings", s: "software", c: "cv", y: "system" };
+  function endChord() { clearTimeout(pending); pending = null; chord.hidden = true; }
+  document.addEventListener("keydown", function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || e.target.isContentEditable) return;
+    var k = e.key;
+    if (pending) {
+      endChord();
+      if (GO[k]) { e.preventDefault(); show(GO[k], true); }
+      return;
+    }
+    if (k === "g") { chord.hidden = false; pending = setTimeout(endChord, 1500); return; }
+    if (k === "t") { setTheme(isDark() ? "light" : "dark"); return; }
+    if (k === "a") { quote(-1); return; }
+    if (k === "d") { quote(1); return; }
+    if (k === "Escape") endChord();
+  });
+
+  var start = (location.hash || "").slice(1);
+  show(names.indexOf(start) >= 0 ? start : "home", false);
+})();
+</script>
