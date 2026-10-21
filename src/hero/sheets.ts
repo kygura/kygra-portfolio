@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix" | "cipher";
+  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix" | "abyss" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -45,6 +45,11 @@ export const SHEETS: SheetMeta[] = [
     id: "matrix",
     name: "Matrix",
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
+  },
+  {
+    id: "abyss",
+    name: "Abyss",
+    aria: "Animated low-poly underground chamber after Hyper Light Drifter: a magenta diamond crystal hangs over a flooded rhombus dais, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, a sunken titan head and arm, ribs, broken columns and stasis tubes, and a small red-cloaked drifter.",
   },
 ];
 
