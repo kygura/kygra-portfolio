@@ -4,7 +4,7 @@
     {
       "source": "/(.*)",
       "has": [{ "type": "host", "value": "(www\\.)?kygra\\.xyz" }],
-      "destination": "https://nca.ink/$1",
+      "destination": "https://www.nca.ink/$1",
       "permanent": true
     },
     {
