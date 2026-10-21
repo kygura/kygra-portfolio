@@ -17,13 +17,14 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Keys `1`–`5`, or `t` to cycle, or the row of five squares at the right of the nav bar. Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
+Keys `1`–`6`, or `t` to cycle, or the row of six squares at the right of the nav bar. Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
 
 1. Lichen `#bcc77c` (default)
 2. Torch Amber `#eaa24c`
 3. Astral Cyan `#86d3dc`
 4. Ritual Madder `#e5787f`
 5. Graphite `#d4d4d4`: the monochrome option. Also swaps the ground, ink, rules, danger and shadcn kit tokens for pure grays (`:root[data-accent="mono"]` in `src/index.css`), so the sheet carries no hue. Errors read as the brightest ink rather than red.
+6. Manuscript `#e08a62`: the brown lamp-lit sheet from the Manuscript mock (`design/mock/prose-mock.html` on the `theme/manuscript` branch). Like Graphite it swaps the ground, ink, rules and kit tokens (`:root[data-accent="manuscript"]`): warm brown ground, paper-coloured ink, clay accent. Fonts stay as they are.
 
 ## Type
 
@@ -67,13 +68,18 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | --- | --- |
 | `g h` / `g w` / `g s` / `g c` | Home / Writings / Software / CV |
 | `g g` | Top of page (a hint strip lists the second keys while `g` is pending) |
-| `1`–`5` / `t` | Accent / cycle accent |
+| `1`–`6` / `t` | Theme / cycle theme |
+| `:` / `⌘K` | Command palette (Ctrl+K stays with the terminal) |
 | `n` / `p` | Next / previous page (nav order, wraps) |
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
+
+## Command palette
+
+`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key.
 
 ## Also fixed
 

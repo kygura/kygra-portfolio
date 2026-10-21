@@ -109,6 +109,47 @@
   --sidebar-accent-foreground: 0 0% 89%;
 }
 
+/* Manuscript: like Graphite it swaps the whole sheet. A warm lamp-lit brown
+   ground, paper-coloured ink and a clay accent (design/mock/prose-mock.html
+   on the theme/manuscript branch). */
+:root[data-accent="manuscript"] {
+  --bg: #1b1a17;
+  --bg-2: #211f1b;
+  --sheet: #2a2722;
+  --code: #151411;
+  --ink: #ebe6db;
+  --ink-2: #b4aea2;
+  --ink-3: #807a6f;
+  --rule: #35322c;
+  --rule-2: #4a463e;
+  --grid: rgba(235, 230, 219, 0.03);
+  --scrim: rgba(21, 20, 17, 0.86);
+  --accent: #e08a62;
+  --accent-deep: #9a4524;
+  --on-accent: #1d0f08;
+  --accent-h: 19 67% 63%;
+  --on-accent-h: 20 57% 7%;
+
+  --background: 45 8% 10%;
+  --foreground: 41 29% 89%;
+  --card: 40 10% 12%;
+  --card-foreground: 41 29% 89%;
+  --popover: 40 10% 12%;
+  --popover-foreground: 41 29% 89%;
+  --secondary: 38 11% 15%;
+  --secondary-foreground: 41 29% 89%;
+  --destructive-foreground: 45 8% 10%;
+  --muted: 38 11% 15%;
+  --muted-foreground: 40 11% 67%;
+  --border: 40 9% 19%;
+  --input: 40 9% 27%;
+  --sidebar-background: 40 10% 12%;
+  --sidebar-foreground: 41 29% 89%;
+  --sidebar-border: 40 9% 19%;
+  --sidebar-accent: 38 11% 15%;
+  --sidebar-accent-foreground: 41 29% 89%;
+}
+
 @media (min-width: 640px) {
   :root { --nav-h: 68px; }
 }
@@ -1420,6 +1461,44 @@ kbd {
 .help dl > div { display: contents; }
 .help dt { white-space: nowrap; }
 .help dd { margin: 0; color: var(--ink); }
+
+/* Command palette (`:` or ⌘K): the help sheet's panel with a vim-style prompt. */
+.cmd-back { position: fixed; inset: 0; z-index: 100000; background: var(--scrim); animation: themeFade 0.12s ease; }
+.cmd {
+  position: fixed; z-index: 100000; left: 50%; top: clamp(16px, 14vh, 140px); transform: translateX(-50%);
+  width: min(calc(100% - 32px), 600px); max-height: calc(100% - 32px); display: flex; flex-direction: column;
+  background: var(--bg-2); border: 1px solid var(--accent); font-family: var(--f-mono); color: var(--ink-2);
+  animation: themeFade 0.12s ease; outline: none;
+}
+.cmd > [cmdk-root] { display: flex; flex-direction: column; min-height: 0; }
+.cmd-top { display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--rule-2); }
+.cmd-prompt { color: var(--accent); font-size: 15px; }
+.cmd-input {
+  flex: 1; min-width: 0; height: 48px; background: transparent; border: 0; outline: none;
+  font: 14px var(--f-mono); color: var(--ink); caret-color: var(--accent);
+}
+.cmd-input::placeholder { color: var(--ink-3); }
+.cmd-list { max-height: min(56vh, 440px); overflow-y: auto; overscroll-behavior: contain; padding: 4px 0 8px; }
+.cmd-list [cmdk-group-heading] {
+  padding: 12px 14px 6px; font-family: var(--f-pixel); font-size: 10px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent);
+}
+.cmd-item {
+  display: flex; align-items: center; gap: 12px; padding: 8px 14px 8px 12px; cursor: pointer;
+  font-size: 13px; color: var(--ink); border-left: 2px solid transparent;
+}
+.cmd-item[data-selected="true"] { background: var(--sheet); border-left-color: var(--accent); }
+.cmd-label { flex: 1; min-width: 0; }
+.cmd-meta { color: var(--ink-3); font-size: 11px; letter-spacing: 0.06em; white-space: nowrap; }
+.cmd-item[data-selected="true"] .cmd-meta { color: var(--ink-2); }
+.cmd-keys { display: inline-flex; gap: 4px; }
+.cmd-swatch { width: 10px; height: 10px; flex: none; outline: 1px solid var(--rule-2); outline-offset: 1px; }
+.cmd-empty { padding: 16px 14px; color: var(--ink-3); font-size: 13px; }
+.cmd-foot {
+  display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 14px; border-top: 1px solid var(--rule-2);
+  font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
+}
+.cmd-foot span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* PS1 renderer: quarter-res target, nearest upscale. */
 .hero__canvas { image-rendering: pixelated; }
