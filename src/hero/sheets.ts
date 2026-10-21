@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix" | "abyss" | "cliff" | "cipher";
+  id: "ocean" | "sea" | "astral" | "ruins" | "rail" | "field" | "matrix" | "abyss" | "cliff" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -22,6 +22,11 @@ const ALL_SHEETS: SheetMeta[] = [
     enabled: false,
     name: "Ocean",
     aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and a wing-sail ship moored at a pier, under two setting suns.",
+  },
+  {
+    id: "sea",
+    name: "Sea",
+    aria: "Animated low-poly scene: a lone stone causeway running out over an endless still sea toward a city skyline on the horizon, under two suns.",
   },
   {
     id: "astral",
