@@ -3,7 +3,6 @@ import { QUOTES_ARRAY } from "../lib/consts";
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { isTyping } from "@/theme/keymap";
-import Webring from "./Webring";
 
 function initQuote(list: string[]) {
   const r = Math.floor(Math.random() * list.length);
@@ -181,8 +180,6 @@ const Footer = () => {
           </span>
         </div>
       </div>
-
-      <Webring />
 
       <div className="px-4 pb-4 sm:pb-3 text-center font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
         Today is {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
