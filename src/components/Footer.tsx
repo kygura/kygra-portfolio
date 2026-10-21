@@ -182,7 +182,7 @@ const Footer = () => {
       </div>
 
       <div className="px-4 pb-4 sm:pb-3 text-center font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
-        Today is {new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
+        Today is {new Date().toLocaleDateString("en-US",{ year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
       </div>
     </footer>
   );
