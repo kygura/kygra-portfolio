@@ -109,7 +109,7 @@ const Navigation = () => {
           <span className="wordmark text-foreground">
             <b>NCA</b> <em>Ventures</em>
           </span>
-          <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
+          <span className="nav-year text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
         <ul onKeyDown={arrowNav} className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-4 md:gap-7 items-center">

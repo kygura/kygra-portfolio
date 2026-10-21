@@ -1387,6 +1387,24 @@ kbd {
   .wordmark em { display: none; }
 }
 
+/* Tablet: the bracketed links need ~530px at full spacing, which the row
+   only has from ~960px. Until then tighten tracking, padding and gaps,
+   and drop the ©2026 and then "Ventures" so all four links stay in view. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .nav-bar > div { column-gap: 1rem; }
+  .nav-bar .nav-items {
+    column-gap: clamp(0.25rem, 5vw - 28px, 1.75rem);
+    /* Whole pixels, or scrollWidth rounds up past clientWidth by 1px. */
+    column-gap: round(down, clamp(0.25rem, 5vw - 28px, 1.75rem), 1px);
+  }
+  .nav-bar .nav-link { padding-inline: 0.2rem; }
+  .nav-bar .nav-year { display: none; }
+}
+@media (min-width: 640px) and (max-width: 767px) {
+  .nav-bar .nav-link { font-size: 12px; letter-spacing: 0.1em; }
+  .wordmark em { display: none; }
+}
+
 .skip-link {
   position: fixed; top: 8px; left: 8px; z-index: 100001; padding: 6px 10px;
   font: 11px var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase;
