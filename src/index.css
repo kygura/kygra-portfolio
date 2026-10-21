@@ -487,7 +487,7 @@
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .repo-card__preview:hover,
-.repo-card__preview:focus-visible { transform: translateY(-4px); }
+.repo-card__preview:focus-within { transform: translateY(-4px); }
 
 .repo-window {
   border: 1px solid var(--rule-2);
@@ -496,7 +496,7 @@
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 .repo-card__preview:hover .repo-window,
-.repo-card__preview:focus-visible .repo-window {
+.repo-card__preview:focus-within .repo-window {
   border-color: color-mix(in srgb, var(--accent) 55%, transparent);
   box-shadow: 0 18px 40px -24px color-mix(in srgb, var(--accent) 45%, transparent);
 }
@@ -542,6 +542,72 @@
   background: currentColor;
 }
 .repo-window__live[data-on="true"] { color: var(--accent); }
+.repo-window[data-exploring="true"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), 0 18px 40px -24px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.repo-window__open {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin-right: -0.35rem;
+  color: var(--ink-3);
+  transition: color 0.2s, background-color 0.2s;
+}
+.repo-window__open:hover,
+.repo-window__open:focus-visible { color: var(--accent); background: var(--rule); }
+
+.repo-window__link { position: absolute; inset: 0; display: block; }
+
+/* Covers the inert frame; hover reveals the prompt, a click hands the site
+   the pointer. */
+.repo-window__explore {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  transition: background-color 0.25s ease;
+}
+.repo-window__explore span {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  font-family: var(--f-pixel);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.25s ease;
+}
+.repo-window__explore:hover,
+.repo-window__explore:focus-visible { background: color-mix(in srgb, var(--bg) 35%, transparent); }
+.repo-window__explore:hover span,
+.repo-window__explore:focus-visible span { opacity: 1; transform: none; }
+@media (pointer: coarse) {
+  .repo-window__explore span { opacity: 0.85; transform: none; }
+}
+
+.repo-window__exit {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  font-family: var(--f-pixel);
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.repo-window__exit:hover { background: var(--accent); color: var(--on-accent); }
 
 .repo-window__viewport {
   position: relative;
@@ -588,6 +654,7 @@
   opacity: 0;
   background: #fff;
 }
+.repo-window[data-exploring="true"] .repo-window__frame { pointer-events: auto; }
 .repo-window__frame[data-loaded="true"] { opacity: 1; }
 
 .repo-card__body { min-width: 0; }
@@ -696,7 +763,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .repo-card, .repo-skeleton { animation: none; }
-  .repo-card__preview, .repo-window__frame, .repo-window__image { transition: none; }
+  .repo-card__preview, .repo-window__frame, .repo-window__image,
+  .repo-window__explore, .repo-window__explore span { transition: none; }
 }
 
 /* ─────────────────────────────────────────────

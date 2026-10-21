@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   blocksFraming,
   buildShowcase,
+  createDescriber,
   findSocialImage,
   liveUrlFor,
   rankRepos,
@@ -11,6 +12,11 @@ import {
 } from "./repos.ts";
 
 const NOW = new Date("2026-10-21T00:00:00Z");
+
+/** GitHub's JSON README response: base64 content plus the blob SHA. */
+function readmeResponse(text: string, sha = "sha-1"): Response {
+  return Response.json({ sha, encoding: "base64", content: Buffer.from(text).toString("base64") });
+}
 
 function repo(name: string, overrides: Partial<GithubRepo> = {}): GithubRepo {
   return {
@@ -114,7 +120,7 @@ test("keeps only live deployments: frame when allowed, og:image when blocked, ca
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
     if (url === "https://api.github.com/repos/kygura/framed/readme") {
-      return new Response("# framed\n\nA framed site that renders straight into the software index preview.");
+      return readmeResponse("# framed\n\nA framed site that renders straight into the software index preview.");
     }
     if (url.endsWith("/readme")) return new Response("Not Found", { status: 404 });
     if (url.startsWith("https://api.github.com/users/")) {
@@ -198,6 +204,84 @@ test("README summary returns null when there is no prose, and clips long text", 
   assert.equal(readmeSummary("# repo\n\n- a list\n- only", "repo"), null);
   const long = readmeSummary(`${"Word ".repeat(200)}`, "repo");
   assert.ok(long && long.length <= 601 && long.endsWith("…"));
+});
+
+test("model descriptions win over the README excerpt, and only kept repos are described", async () => {
+  const described: string[] = [];
+  const fetchImpl = (async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.startsWith("https://api.github.com/users/")) {
+      return Response.json([
+        repo("lexis", { stargazers_count: 3, homepage: "https://lexis.dev" }),
+        repo("quiet", { stargazers_count: 2, homepage: "https://quiet.dev" }),
+        repo("over-cap", { stargazers_count: 1, homepage: "https://over.dev" }),
+      ]);
+    }
+    if (url.endsWith("/readme")) {
+      return readmeResponse("# x\n\nA long enough opening paragraph that serves as the fallback excerpt.");
+    }
+    return new Response("<html></html>");
+  }) as typeof fetch;
+
+  const showcase = await buildShowcase({
+    user: "kygura",
+    now: NOW,
+    limit: 2,
+    fetchImpl,
+    describe: async (r) => {
+      described.push(r.name);
+      return r.name === "lexis" ? "An editorial companion for long-form writers." : null;
+    },
+  });
+  assert.deepEqual(described.sort(), ["lexis", "quiet"]);
+  assert.equal(showcase.repos[0].description, "An editorial companion for long-form writers.");
+  assert.equal(showcase.repos[1].description, "A long enough opening paragraph that serves as the fallback excerpt.");
+});
+
+function fakeClient(reply: { text: string; stop_reason?: string }, calls: unknown[]) {
+  return {
+    messages: {
+      create: async (params: unknown) => {
+        calls.push(params);
+        return { stop_reason: reply.stop_reason ?? "end_turn", content: [{ type: "text", text: reply.text }] };
+      },
+    },
+  } as never;
+}
+
+test("describer calls Haiku once per README version and rejects SKIP or refusals", async () => {
+  const calls: unknown[] = [];
+  const describe = createDescriber({ apiKey: "k", client: fakeClient({ text: " A terse tool. " }, calls) });
+  const readme = { sha: "abc", text: "# lexis\n\nSomething." };
+  assert.equal(await describe(repo("lexis"), readme), "A terse tool.");
+  assert.equal(await describe(repo("lexis"), readme), "A terse tool.");
+  assert.equal(calls.length, 1); // memoised by README SHA
+  assert.equal((calls[0] as { model: string }).model, "claude-haiku-5-5");
+  await describe(repo("lexis"), { ...readme, sha: "def" });
+  assert.equal(calls.length, 2); // a changed README is described afresh
+
+  const skip = createDescriber({ apiKey: "k", client: fakeClient({ text: "SKIP" }, []) });
+  assert.equal(await skip(repo("thin"), readme), null);
+  const refused = createDescriber({ apiKey: "k", client: fakeClient({ text: "x", stop_reason: "refusal" }, []) });
+  assert.equal(await refused(repo("r"), readme), null);
+});
+
+test("a failed description is retried on the next request", async () => {
+  let attempts = 0;
+  const client = {
+    messages: {
+      create: async () => {
+        attempts += 1;
+        if (attempts === 1) throw new Error("overloaded");
+        return { stop_reason: "end_turn", content: [{ type: "text", text: "Back up." }] };
+      },
+    },
+  } as never;
+  const describe = createDescriber({ apiKey: "k", client });
+  const readme = { sha: "s", text: "t" };
+  assert.equal(await describe(repo("a"), readme), null);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(await describe(repo("a"), readme), "Back up.");
 });
 
 test("a token switches to the owner's own listing, which includes private repos", async () => {

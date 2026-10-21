@@ -37,15 +37,9 @@ const RepoCard = ({ repo, index, featured }: { repo: ShowcaseRepo; index: number
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
-    <a
-      href={repo.liveUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="repo-card__preview"
-      aria-label={`Open ${repo.name} live`}
-    >
+    <div className="repo-card__preview">
       <RepoPreview repo={repo} />
-    </a>
+    </div>
 
     <div className="repo-card__body">
       <p className="repo-card__index">{String(index + 1).padStart(2, "0")}</p>
