@@ -2,6 +2,12 @@
   "buildCommand": "bun run build",
   "redirects": [
     {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "(www\\.)?kygra\\.xyz" }],
+      "destination": "https://www.nca.ink/$1",
+      "permanent": true
+    },
+    {
       "source": "/writings/the-movement-of-the-world",
       "destination": "/writings/on-the-movements-of-the-world",
       "permanent": true
