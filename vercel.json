@@ -8,6 +8,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/api/notion", "destination": "/api/notion/webhook" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],

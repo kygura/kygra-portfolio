@@ -44,7 +44,7 @@ function sign(body: string): string {
 }
 
 function makeRequest(body: string, headers: Record<string, string> = {}): Request {
-  return new Request("https://example.com/api/notion", {
+  return new Request("https://example.com/api/notion/webhook", {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
     body,

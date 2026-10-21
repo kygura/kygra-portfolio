@@ -1,11 +1,66 @@
 import crypto from "node:crypto";
 import { z } from "zod";
-import {
-  getOptionalWebhookVerificationToken,
-  getWatchedNotionParentIds,
-  isWebhookSignatureRequired,
-} from "../_lib/env.ts";
-import { triggerRebuild } from "../_lib/rebuild.ts";
+
+// Self-contained on purpose: Vercel compiles each function but keeps import
+// specifiers as written, so a relative `../_lib/*.ts` import fails at runtime.
+
+function firstConfigured(names: string[]): string | null {
+  for (const name of names) {
+    const value = process.env[name];
+    if (value && value.trim()) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
+/**
+ * HMAC key used to verify the `X-Notion-Signature` header, if one is configured
+ * under any accepted name.
+ */
+function getOptionalWebhookVerificationToken(): string | null {
+  return firstConfigured(["NOTION_WEBHOOK_VERIFICATION_TOKEN", "WEBHOOK_SECRET"]);
+}
+
+/**
+ * When `true`, the webhook rejects events whose signature is missing or invalid.
+ * Defaults to `false` so an already-registered subscription keeps delivering
+ * without re-running the Notion-side setup.
+ */
+function isWebhookSignatureRequired(): boolean {
+  return process.env.NOTION_WEBHOOK_REQUIRE_SIGNATURE === "true";
+}
+
+/** Notion database / data-source IDs whose page events should trigger a rebuild. */
+function getWatchedNotionParentIds(): string[] {
+  return ["NOTION_DATA_SOURCE_ID", "NOTION_DATABASE_ID"]
+    .map((name) => firstConfigured([name]))
+    .filter((value): value is string => Boolean(value));
+}
+
+type RebuildResult =
+  | { triggered: true; job: unknown }
+  | { triggered: false; reason: string };
+
+/**
+ * Ask Vercel to rebuild the site. The build re-reads every published post
+ * from Notion, so one trigger reconciles any number of edits, and a missed
+ * trigger is repaired by the next one.
+ */
+async function triggerRebuild(): Promise<RebuildResult> {
+  const hookUrl = firstConfigured(["VERCEL_DEPLOY_HOOK_URL"]);
+  if (!hookUrl) {
+    return { triggered: false, reason: "VERCEL_DEPLOY_HOOK_URL is not configured" };
+  }
+
+  const response = await fetch(hookUrl, { method: "POST" });
+  if (!response.ok) {
+    throw new Error(`Deploy hook responded with ${response.status}`);
+  }
+
+  const body = await response.json().catch(() => null);
+  return { triggered: true, job: (body as { job?: unknown } | null)?.job ?? null };
+}
 
 const verificationSchema = z.object({
   verification_token: z.string().trim().min(1),
