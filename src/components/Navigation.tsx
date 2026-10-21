@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import * as Popover from "@radix-ui/react-popover";
 import { NavLink } from "@/components/NavLink";
 import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
-import { CHORD_FOR } from "@/theme/keymap";
+import { CHORD_FOR, openCommands } from "@/theme/keymap";
 
 const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
@@ -57,6 +58,47 @@ function AccentPick() {
   );
 }
 
+/**
+ * Below 1024px the row of squares folds into one swatch that opens the
+ * themes as a vertical list, so the nav links keep their room.
+ */
+function AccentMenu() {
+  const accent = useAccent();
+  const [open, setOpen] = useState(false);
+  const current = ACCENTS[accent];
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger
+        className="accent-menu"
+        aria-label={`Theme: ${current.name}`}
+        title={`Theme: ${current.name}`}
+        style={{ "--sw": current.hex } as React.CSSProperties}
+      />
+      <Popover.Portal>
+        <Popover.Content className="accent-list" align="end" sideOffset={8} aria-label="Theme">
+          {ACCENTS.map((a, i) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => {
+                setAccent(i);
+                setOpen(false);
+              }}
+              aria-pressed={i === accent}
+              aria-keyshortcuts={String(i + 1)}
+              style={{ "--sw": a.hex } as React.CSSProperties}
+            >
+              <i aria-hidden="true" />
+              <span>{a.name}</span>
+              <kbd aria-hidden="true">{i + 1}</kbd>
+            </button>
+          ))}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+}
+
 /** Left/Right/Home/End move focus along the links, like a toolbar. */
 function arrowNav(e: React.KeyboardEvent<HTMLUListElement>) {
   const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
@@ -109,7 +151,7 @@ const Navigation = () => {
           <span className="wordmark text-foreground">
             <b>NCA</b> <em>Ventures</em>
           </span>
-          <span className="text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
+          <span className="nav-year text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
         <ul onKeyDown={arrowNav} className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-4 md:gap-7 items-center">
@@ -128,6 +170,19 @@ const Navigation = () => {
             {clock}
           </span>
           <AccentPick />
+          <AccentMenu />
+          {/* Touch screens have no `:` or ⌘K; this is their way in (shown under 1024px). */}
+          <button
+            type="button"
+            className="cmd-open"
+            onClick={openCommands}
+            aria-label="Commands"
+            aria-haspopup="dialog"
+            aria-keyshortcuts=": Meta+K"
+            title="Commands (: or ⌘K)"
+          >
+            :
+          </button>
         </div>
       </div>
     </nav>

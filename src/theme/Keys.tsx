@@ -1,6 +1,6 @@
 /**
  * Additive keyboard layer: g-chords for the nav routes, `g g` to the top,
- * `n`/`p` for next/previous page, `1`–`5` and `t` for the accent, `j`/`k`/`G` to
+ * `n`/`p` for next/previous page, `1`–`6` and `t` for the theme, `j`/`k`/`G` to
  * scroll, `?` for the help sheet. Pages add their own keys
  * (the hero listens for `[` `]`). Nothing fires while typing in a field or
  * with a modifier held, so the terminal's Ctrl+K and the backtick stay put.
@@ -65,14 +65,15 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
             <h3>View</h3>
             <dl>
               <div><dt><K k="n" /> <K k="p" /></dt><dd>Next / previous page</dd></div>
-              <div><dt><K k="1" />–<K k="5" /></dt><dd>Accent</dd></div>
-              <div><dt><K k="t" /></dt><dd>Cycle accent</dd></div>
+              <div><dt><K k="1" />–<K k="6" /></dt><dd>Theme</dd></div>
+              <div><dt><K k="t" /></dt><dd>Cycle theme</dd></div>
               <div><dt><K k="j" /> <K k="k" /></dt><dd>Scroll down / up</dd></div>
               <div><dt><K k="G" /></dt><dd>Bottom of page</dd></div>
               <div><dt><K k="←" /> <K k="→" /></dt><dd>Move along the nav (when focused)</dd></div>
               <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next hero scene (home)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
+              <div><dt><K k=":" /> <K k="⌘K" /></dt><dd>Commands</dd></div>
               <div><dt><K k="?" /></dt><dd>This sheet</dd></div>
               <div><dt><K k="Esc" /></dt><dd>Close, leave a field</dd></div>
             </dl>
@@ -154,6 +155,7 @@ export default function Keys() {
         case "3":
         case "4":
         case "5":
+        case "6":
           setAccent(Number(e.key) - 1);
           return;
       }
