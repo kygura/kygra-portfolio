@@ -1,8 +1,8 @@
 /**
  * GET /api/github/repos — the software index, built from the GitHub API: the
- * owner's repositories (private ones too, given a token that can read them),
- * curated by topic, ranked by stars and recent pushes, each with a live URL
- * and the best preview that URL allows (an embedded frame, its og:image, or
+ * owner's deployed repositories (private ones too, given a token that can
+ * read them), curated by topic, ranked by stars and recent pushes, each with
+ * the best preview its live site allows (an embedded frame, its og:image, or
  * GitHub's generated social card).
  */
 
@@ -49,7 +49,8 @@ export interface ShowcaseRepo {
   /** Opening prose of the README, else the GitHub "About" line. */
   description: string | null;
   url: string;
-  liveUrl: string | null;
+  /** Always set: repos without a working deployment never reach the page. */
+  liveUrl: string;
   stars: number;
   forks: number;
   language: string | null;
@@ -229,19 +230,25 @@ async function readmeFor(
   }
 }
 
-async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fetch): Promise<RepoPreview> {
+/**
+ * The best preview the live site allows, or null when the deployment is gone:
+ * the host does not resolve or refuses, or the page answers 404/410. A slow
+ * site, or a 403/5xx (often bot protection), keeps its card with the fallback.
+ */
+async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fetch): Promise<RepoPreview | null> {
   try {
     const response = await fetchImpl(liveUrl, {
       redirect: "follow",
       headers: { accept: "text/html", "user-agent": "kygra-portfolio-showcase" },
       signal: AbortSignal.timeout(5000),
     });
+    if (response.status === 404 || response.status === 410) return null;
     if (!response.ok) return fallback;
     if (!blocksFraming(response.headers)) return { kind: "frame", src: response.url || liveUrl };
     const image = findSocialImage(await response.text(), response.url || liveUrl);
     return image ? { kind: "image", src: image } : fallback;
-  } catch {
-    return fallback;
+  } catch (error) {
+    return error instanceof Error && error.name === "TimeoutError" ? fallback : null;
   }
 }
 
@@ -268,16 +275,21 @@ export async function buildShowcase({
     throw new Error(`GitHub responded ${response.status} for ${user}'s repositories`);
   }
 
-  const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, limit);
-  const repos = await Promise.all(
-    ranked.map(async (repo): Promise<ShowcaseRepo> => {
-      const liveUrl = liveUrlFor(repo, user);
+  // Only deployed projects make the page, so rank everything, keep repos with
+  // a live URL that still answers, then cap.
+  const deployed = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity).flatMap((repo) => {
+    const liveUrl = liveUrlFor(repo, user);
+    return liveUrl ? [{ repo, liveUrl }] : [];
+  });
+  const built = await Promise.all(
+    deployed.map(async ({ repo, liveUrl }): Promise<ShowcaseRepo | null> => {
       const card = repo.private ? null : githubCard(repo.full_name, repo.pushed_at);
       const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
       const [readme, preview] = await Promise.all([
         readmeFor(repo, headers, fetchImpl),
-        liveUrl ? previewFor(liveUrl, fallback, fetchImpl) : Promise.resolve(fallback),
+        previewFor(liveUrl, fallback, fetchImpl),
       ]);
+      if (!preview) return null;
       return {
         name: repo.name,
         fullName: repo.full_name,
@@ -296,6 +308,7 @@ export async function buildShowcase({
       };
     }),
   );
+  const repos = built.filter((repo): repo is ShowcaseRepo => repo !== null).slice(0, limit);
 
   return { user, generatedAt: now.toISOString(), repos };
 }

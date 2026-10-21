@@ -110,7 +110,7 @@ test("finds og:image in either attribute order and resolves relative URLs", () =
   assert.equal(findSocialImage("<title>none</title>", "https://site.dev"), null);
 });
 
-test("builds previews: frame when allowed, og:image when blocked, card otherwise", async () => {
+test("keeps only live deployments: frame when allowed, og:image when blocked, card when no image", async () => {
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
     if (url === "https://api.github.com/repos/kygura/framed/readme") {
@@ -119,11 +119,14 @@ test("builds previews: frame when allowed, og:image when blocked, card otherwise
     if (url.endsWith("/readme")) return new Response("Not Found", { status: 404 });
     if (url.startsWith("https://api.github.com/users/")) {
       return Response.json([
-        repo("framed", { stargazers_count: 3, homepage: "https://framed.dev", topics: ["flagship", "web"] }),
-        repo("blocked", { stargazers_count: 2, homepage: "https://blocked.dev", topics: ["flagship"] }),
-        repo("offline", { stargazers_count: 1, homepage: "https://offline.dev", topics: ["flagship"] }),
-        repo("code-only", { topics: ["flagship"] }),
-        repo("private-app", { private: true, topics: ["flagship"] }),
+        repo("framed", { stargazers_count: 5, homepage: "https://framed.dev", topics: ["flagship", "web"] }),
+        repo("blocked", { stargazers_count: 4, homepage: "https://blocked.dev", topics: ["flagship"] }),
+        repo("plain", { stargazers_count: 3, homepage: "https://plain.dev", topics: ["flagship"] }),
+        repo("slow", { stargazers_count: 2, homepage: "https://slow.dev", topics: ["flagship"] }),
+        repo("gone", { stargazers_count: 2, homepage: "https://gone.dev", topics: ["flagship"] }),
+        repo("parked", { stargazers_count: 2, homepage: "https://parked.dev", topics: ["flagship"] }),
+        repo("private-app", { private: true, homepage: "https://private.dev", topics: ["flagship"] }),
+        repo("code-only", { stargazers_count: 9, topics: ["flagship"] }),
       ]);
     }
     if (url.startsWith("https://framed.dev")) return new Response("<html></html>");
@@ -132,22 +135,44 @@ test("builds previews: frame when allowed, og:image when blocked, card otherwise
         headers: { "x-frame-options": "DENY" },
       });
     }
-    throw new Error("network down");
+    if (url.startsWith("https://plain.dev") || url.startsWith("https://private.dev")) {
+      return new Response("<title>no og</title>", { headers: { "x-frame-options": "DENY" } });
+    }
+    if (url.startsWith("https://slow.dev")) throw new DOMException("timed out", "TimeoutError");
+    if (url.startsWith("https://parked.dev")) return new Response("gone", { status: 404 });
+    throw new TypeError("fetch failed"); // gone.dev: DNS failure
   }) as typeof fetch;
 
   const showcase = await buildShowcase({ user: "kygura", now: NOW, fetchImpl });
-  const descriptions = Object.fromEntries(showcase.repos.map((r) => [r.name, r.description]));
-  assert.equal(descriptions.framed, "A framed site that renders straight into the software index preview.");
-  assert.equal(descriptions.blocked, null); // no README, no About line
-  assert.deepEqual(showcase.repos[0].topics, ["web"]); // internal topics stay off the page
+  const byName = Object.fromEntries(showcase.repos.map((r) => [r.name, r]));
   const previews = Object.fromEntries(showcase.repos.map((r) => [r.name, r.preview])) as Record<string, { kind: string; src?: string }>;
 
+  assert.deepEqual(Object.keys(byName).sort(), ["blocked", "framed", "plain", "private-app", "slow"]);
+  assert.equal(byName.framed.description, "A framed site that renders straight into the software index preview.");
+  assert.deepEqual(byName.framed.topics, ["web"]); // internal topics stay off the page
   assert.deepEqual(previews.framed, { kind: "frame", src: "https://framed.dev/" });
   assert.deepEqual(previews.blocked, { kind: "image", src: "https://blocked.dev/card.png" });
-  assert.equal(previews.offline.kind, "image");
-  assert.match(previews.offline.src ?? "", /^https:\/\/opengraph\.githubassets\.com\/\d+\/kygura\/offline$/);
-  assert.match(previews["code-only"].src ?? "", /opengraph\.githubassets\.com/);
+  assert.match(previews.plain.src ?? "", /^https:\/\/opengraph\.githubassets\.com\/\d+\/kygura\/plain$/);
+  assert.match(previews.slow.src ?? "", /opengraph\.githubassets\.com/);
   assert.deepEqual(previews["private-app"], { kind: "none" }); // GitHub has no public card for it
+});
+
+test("the cap applies after dropping repos without a deployment", async () => {
+  const fetchImpl = (async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.startsWith("https://api.github.com/users/")) {
+      return Response.json([
+        repo("no-site-a", { stargazers_count: 9 }),
+        repo("no-site-b", { stargazers_count: 8 }),
+        repo("site-a", { stargazers_count: 1, homepage: "https://a.dev" }),
+        repo("site-b", { homepage: "https://b.dev" }),
+      ]);
+    }
+    if (url.endsWith("/readme")) return new Response("", { status: 404 });
+    return new Response("<html></html>");
+  }) as typeof fetch;
+  const showcase = await buildShowcase({ user: "kygura", now: NOW, limit: 2, fetchImpl });
+  assert.deepEqual(showcase.repos.map((r) => r.name), ["site-a", "site-b"]);
 });
 
 test("README summary skips banners, badges and code to the opening prose", () => {

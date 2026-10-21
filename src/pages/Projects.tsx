@@ -17,12 +17,10 @@ const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
 
 const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   <div className="repo-card__links">
-    {repo.liveUrl && (
-      <a href={repo.liveUrl} target="_blank" rel="noopener noreferrer" className="repo-card__link repo-card__link--live">
-        Visit site
-        <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-      </a>
-    )}
+    <a href={repo.liveUrl} target="_blank" rel="noopener noreferrer" className="repo-card__link repo-card__link--live">
+      Visit site
+      <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+    </a>
     {repo.private ? (
       <span className="repo-card__link repo-card__link--muted">Private source</span>
     ) : (
@@ -39,21 +37,15 @@ const RepoCard = ({ repo, index, featured }: { repo: ShowcaseRepo; index: number
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
-    {repo.liveUrl || !repo.private ? (
-      <a
-        href={repo.liveUrl ?? repo.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="repo-card__preview"
-        aria-label={repo.liveUrl ? `Open ${repo.name} live` : `Open ${repo.name} on GitHub`}
-      >
-        <RepoPreview repo={repo} />
-      </a>
-    ) : (
-      <div className="repo-card__preview">
-        <RepoPreview repo={repo} />
-      </div>
-    )}
+    <a
+      href={repo.liveUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="repo-card__preview"
+      aria-label={`Open ${repo.name} live`}
+    >
+      <RepoPreview repo={repo} />
+    </a>
 
     <div className="repo-card__body">
       <p className="repo-card__index">{String(index + 1).padStart(2, "0")}</p>
@@ -86,8 +78,7 @@ const Projects = () => {
           Software
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          Straight from GitHub: the projects I'm building now, with a window onto anything that's
-          deployed.
+          Live projects, straight from GitHub. Each window is the deployment itself.
         </p>
         {data && (
           <p className="repo-index__stamp">

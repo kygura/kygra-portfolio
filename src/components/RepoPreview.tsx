@@ -60,7 +60,7 @@ const RepoPreview = ({ repo }: RepoPreviewProps) => {
           <i />
         </span>
         <span className="repo-window__address">
-          {repo.liveUrl ? displayHost(repo.liveUrl) : repo.private ? repo.name : `github.com/${repo.fullName}`}
+          {displayHost(repo.liveUrl)}
         </span>
         {frame && <span className="repo-window__live" data-on={loaded}>live</span>}
       </div>
