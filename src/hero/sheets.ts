@@ -26,7 +26,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "sea",
     name: "Sea",
-    aria: "Animated low-poly scene: a lone stone causeway running out over an endless still sea toward a city skyline on the horizon, under two suns.",
+    aria: "Animated low-poly scene: an endless still sea with a city skyline of towers standing in it on the horizon, under two suns.",
   },
   {
     id: "astral",
@@ -57,7 +57,6 @@ const ALL_SHEETS: SheetMeta[] = [
   },
   {
     id: "abyss",
-    enabled: false,
     name: "Abyss",
     aria: "Animated low-poly underground chamber after Hyper Light Drifter: a magenta diamond crystal hangs over a flooded rhombus dais, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, a sunken titan head and arm, ribs, broken columns and stasis tubes, and a small red-cloaked drifter.",
   },

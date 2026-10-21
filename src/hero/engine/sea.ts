@@ -1,4 +1,4 @@
-/** Rail without the rail: the causeway slab, the shallow sea, the skyline and the two suns. The train, its track and catenary, and the halt are removed. */
+/** Rail without the rail: the shallow sea, the skyline and the two suns. The train, its track and catenary, the halt and the causeway are removed; the camera faces the city. */
 import * as THREE from "three";
 import { pulse, type PsxKit, type SceneDef } from "./psx";
 
@@ -18,7 +18,6 @@ export function buildSea(k: PsxKit): SceneDef {
 
   const mat = {
     water: psx({ map: tex.tWater, tint: "#b9d6d8", amb: "#5a7682", sun: "#d6ccb0" }),
-    deck: psx({ map: tex.tStone, tint: "#9a9c92", amb: "#56646a" }),
     dark: psx({ map: tex.tPlain, tint: "#2b3439", amb: "#3c464c" }),
     city: [
       psx({ map: tex.tGlass, tint: "#b7c4ca", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.62 }),
@@ -44,15 +43,10 @@ export function buildSea(k: PsxKit): SceneDef {
   }
   mesh(water, mat.water, scene).frustumCulled = false;
 
-  /* ---- causeway: a low slab just clear of the water, running to the horizon ---- */
-  const Z0 = -390, Z1 = 70, DECK = 0.42;
-  add(wallUV(facet(new THREE.BoxGeometry(2.6, 0.5, Z1 - Z0, 1, 1, 60)), 0.5), mat.deck, 0, DECK - 0.25, (Z0 + Z1) / 2);
-
   /* ---- skyline: a city of towers standing in the sea, tallest where the line runs in ---- */
   let peak = new THREE.Vector3(0, 0, -200);
   for (let i = 0; i < 70; i++) {
     const x = (rnd() - 0.5) * 460, z = -290 - rnd() * 80;
-    if (Math.abs(x) < 5) continue;
     const h = 16 + rnd() * 20 + 92 * Math.exp(-(((x - 10) / 80) ** 2)) * (0.45 + rnd() * 0.55);
     const w = 6 + rnd() * 8, d = w * (0.7 + rnd() * 0.4), ry = (rnd() - 0.5) * 0.5;
     const clad = mat.city[Math.floor(rnd() * 3)], kind = rnd();
@@ -151,7 +145,7 @@ export function buildSea(k: PsxKit): SceneDef {
 
       const x = CX + Math.sin(t * 0.05) * 0.25 + view.px * 0.6, z = CZ + Math.sin(t * 0.031) * 0.4;
       cam.position.set(x, CAMY + Math.sin(t * 0.6) * 0.015 - view.py * 0.3, z);
-      cam.lookAt(1.5 + view.px * 6 + Math.sin(t * 0.04) * 3, 6 - view.py * 4, -80);
+      cam.lookAt(10 + view.px * 6 + Math.sin(t * 0.04) * 3, 28 - view.py * 4, -330);
       k.look(cam);
       sky.position.copy(cam.position);
       sunA.lookAt(cam.position);
