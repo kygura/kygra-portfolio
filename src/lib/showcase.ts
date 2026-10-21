@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Showcase } from "../../api/_lib/github";
+import type { Showcase } from "../../api/github/repos";
 
-export type { Showcase, ShowcaseRepo, RepoPreview } from "../../api/_lib/github";
+export type { Showcase, ShowcaseRepo, RepoPreview } from "../../api/github/repos";
 
 async function fetchShowcase(): Promise<Showcase> {
   const response = await fetch("/api/github/repos");

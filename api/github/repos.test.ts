@@ -8,7 +8,7 @@ import {
   rankRepos,
   readmeSummary,
   type GithubRepo,
-} from "./github.ts";
+} from "./repos.ts";
 
 const NOW = new Date("2026-10-21T00:00:00Z");
 

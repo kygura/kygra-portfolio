@@ -50,15 +50,3 @@ export function getWatchedNotionParentIds(): string[] {
     .filter((value): value is string => Boolean(value));
 }
 
-/** GitHub account whose public repositories make up the software index. */
-export function getGithubUser(): string {
-  return firstConfigured(["GITHUB_USER"]) ?? "kygura";
-}
-
-/**
- * Optional token for the GitHub API. Unauthenticated requests share a 60/hour
- * limit per IP; the CDN cache keeps the index well under it either way.
- */
-export function getGithubToken(): string | null {
-  return firstConfigured(["GITHUB_TOKEN"]);
-}

@@ -1,17 +1,302 @@
-import { getGithubToken, getGithubUser } from "../_lib/env.ts";
-import { buildShowcase } from "../_lib/github.ts";
+/**
+ * GET /api/github/repos — the software index, built from the public GitHub API: the owner's own
+ * repositories, ranked by stars and recent pushes, each with a live URL and
+ * the best preview that URL allows (an embedded frame, its og:image, or
+ * GitHub's generated social card).
+ */
+
+const GITHUB_API = "https://api.github.com";
+
+/** Repos tagged with this topic never appear in the index. */
+export const HIDE_TOPIC = "portfolio-hide";
+
+export interface GithubRepo {
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  homepage: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  language: string | null;
+  topics?: string[];
+  pushed_at: string;
+  fork: boolean;
+  archived: boolean;
+  has_pages: boolean;
+}
+
+export type RepoPreview =
+  | { kind: "frame"; src: string }
+  | { kind: "image"; src: string };
+
+export interface ShowcaseRepo {
+  name: string;
+  fullName: string;
+  /** Opening prose of the README, else the GitHub "About" line. */
+  description: string | null;
+  url: string;
+  liveUrl: string | null;
+  stars: number;
+  forks: number;
+  language: string | null;
+  topics: string[];
+  pushedAt: string;
+  /** GitHub's social card: the placeholder while a frame loads. */
+  card: string;
+  preview: RepoPreview;
+}
+
+export interface Showcase {
+  user: string;
+  generatedAt: string;
+  repos: ShowcaseRepo[];
+}
+
+type Fetch = typeof fetch;
+
+interface ShowcaseOptions {
+  user: string;
+  token?: string | null;
+  limit?: number;
+  now?: Date;
+  fetchImpl?: Fetch;
+}
+
+const DAY_MS = 86_400_000;
 
 /**
- * The software index: the owner's public repositories ranked by stars and
- * recent activity, each with a live preview where one exists. The CDN holds
- * a response for an hour and serves the stale copy for a day while it
- * refreshes, so GitHub sees a handful of requests no matter the traffic.
+ * Stars count in full; a push in the last few weeks is worth a handful of
+ * stars and fades over about two months, so a busy new repo can sit beside
+ * an older starred one.
  */
+export function scoreRepo(repo: GithubRepo, now: Date): number {
+  const days = Math.max(0, (now.getTime() - Date.parse(repo.pushed_at)) / DAY_MS);
+  return repo.stargazers_count + 6 * Math.exp(-days / 60);
+}
+
+export function rankRepos(repos: GithubRepo[], user: string, now: Date, limit: number): GithubRepo[] {
+  return repos
+    .filter((repo) => !repo.fork && !repo.archived)
+    .filter((repo) => !(repo.topics ?? []).includes(HIDE_TOPIC))
+    .filter((repo) => repo.name.toLowerCase() !== user.toLowerCase()) // profile README repo
+    .sort((a, b) => scoreRepo(b, now) - scoreRepo(a, now) || b.pushed_at.localeCompare(a.pushed_at))
+    .slice(0, limit);
+}
+
+/** The repo's homepage if it is a web URL, else its GitHub Pages site. */
+export function liveUrlFor(repo: GithubRepo, user: string): string | null {
+  const homepage = repo.homepage?.trim();
+  if (homepage) {
+    const withScheme = /^https?:\/\//i.test(homepage) ? homepage : `https://${homepage}`;
+    try {
+      const url = new URL(withScheme);
+      if (url.protocol === "https:" || url.protocol === "http:") return url.toString();
+    } catch {
+      // not a URL; fall through
+    }
+  }
+  if (repo.has_pages) {
+    const owner = user.toLowerCase();
+    return repo.name.toLowerCase() === `${owner}.github.io`
+      ? `https://${owner}.github.io/`
+      : `https://${owner}.github.io/${repo.name}/`;
+  }
+  return null;
+}
+
+/** True when the response headers forbid embedding the page in our frame. */
+export function blocksFraming(headers: Headers): boolean {
+  const xfo = headers.get("x-frame-options");
+  if (xfo && /deny|sameorigin/i.test(xfo)) return true;
+
+  const csp = headers.get("content-security-policy");
+  const ancestors = csp?.match(/frame-ancestors([^;]*)/i)?.[1].trim();
+  if (ancestors !== undefined) {
+    // Anything short of a wildcard would need our exact origin listed.
+    return !ancestors.split(/\s+/).some((source) => source === "*" || source === "https:");
+  }
+  return false;
+}
+
+/** Pulls og:image / twitter:image out of the page head, resolved against the page URL. */
+export function findSocialImage(html: string, pageUrl: string): string | null {
+  const head = html.slice(0, 64_000);
+  for (const tag of head.match(/<meta\b[^>]*>/gi) ?? []) {
+    const key = tag.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i)?.[1].toLowerCase();
+    if (key !== "og:image" && key !== "twitter:image") continue;
+    const content = tag.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1];
+    if (!content) continue;
+    try {
+      return new URL(content, pageUrl).toString();
+    } catch {
+      // ignore a malformed URL
+    }
+  }
+  return null;
+}
+
+/** GitHub's generated social card; any path segment busts its cache. */
+export function githubCard(fullName: string, pushedAt: string): string {
+  return `https://opengraph.githubassets.com/${Date.parse(pushedAt) || 0}/${fullName}`;
+}
+
+const SUMMARY_TARGET = 280;
+const SUMMARY_MAX = 600;
+
+/** Inline markdown down to plain text: images gone, links to their label. */
+function plainInline(text: string): string {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/(\*\*|__)(.+?)\1/g, "$2")
+    .replace(/(^|[\s(])[*_]([^*_\n]+)[*_](?=[\s).,;:!?]|$)/g, "$1$2")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Cuts at the last sentence end inside the limit, else the last word. */
+function clip(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const sentence = cut.search(/[.!?](?=[^.!?]*$)/);
+  if (sentence > max * 0.5) return cut.slice(0, sentence + 1);
+  return `${cut.slice(0, cut.lastIndexOf(" "))}…`;
+}
+
+/**
+ * The README's opening prose: paragraphs after the title, skipping badges,
+ * images, HTML banners, code, tables, quotes and lists, until there is
+ * enough to read as a description.
+ */
+export function readmeSummary(markdown: string, repoName: string): string | null {
+  const blocks = markdown
+    .replace(/\r\n?/g, "\n")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/^(```|~~~)[\s\S]*?^\1.*$/gm, "")
+    .split(/\n\s*\n/);
+
+  const paragraphs: string[] = [];
+  for (const raw of blocks) {
+    const block = raw.trim();
+    if (!block || /^(#|>|\||[-*+] |\d+[.)] |---|===|\[!\[|!\[|<)/.test(block)) continue;
+    const text = plainInline(block);
+    if (text.length < 40) continue; // badge rows, taglines that only repeat the name
+    if (text.toLowerCase() === repoName.toLowerCase()) continue;
+    paragraphs.push(text);
+    if (paragraphs.join(" ").length >= SUMMARY_TARGET || paragraphs.length === 2) break;
+  }
+  return paragraphs.length ? clip(paragraphs.join(" "), SUMMARY_MAX) : null;
+}
+
+async function readmeFor(
+  repo: GithubRepo,
+  headers: Record<string, string>,
+  fetchImpl: Fetch,
+): Promise<string | null> {
+  try {
+    const response = await fetchImpl(`${GITHUB_API}/repos/${repo.full_name}/readme`, {
+      headers: { ...headers, accept: "application/vnd.github.raw+json" },
+      signal: AbortSignal.timeout(5000),
+    });
+    return response.ok ? readmeSummary(await response.text(), repo.name) : null;
+  } catch {
+    return null;
+  }
+}
+
+async function previewFor(liveUrl: string, fallback: string, fetchImpl: Fetch): Promise<RepoPreview> {
+  try {
+    const response = await fetchImpl(liveUrl, {
+      redirect: "follow",
+      headers: { accept: "text/html", "user-agent": "kygra-portfolio-showcase" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) return { kind: "image", src: fallback };
+    if (!blocksFraming(response.headers)) return { kind: "frame", src: response.url || liveUrl };
+    const image = findSocialImage(await response.text(), response.url || liveUrl);
+    return { kind: "image", src: image ?? fallback };
+  } catch {
+    return { kind: "image", src: fallback };
+  }
+}
+
+export async function buildShowcase({
+  user,
+  token,
+  limit = 9,
+  now = new Date(),
+  fetchImpl = fetch,
+}: ShowcaseOptions): Promise<Showcase> {
+  const headers: Record<string, string> = {
+    accept: "application/vnd.github+json",
+    "x-github-api-version": "2022-11-28",
+    "user-agent": "kygra-portfolio-showcase",
+    ...(token ? { authorization: `Bearer ${token}` } : {}),
+  };
+  const response = await fetchImpl(
+    `${GITHUB_API}/users/${encodeURIComponent(user)}/repos?type=owner&sort=pushed&per_page=100`,
+    { headers },
+  );
+  if (!response.ok) {
+    throw new Error(`GitHub responded ${response.status} for ${user}'s repositories`);
+  }
+
+  const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, limit);
+  const repos = await Promise.all(
+    ranked.map(async (repo): Promise<ShowcaseRepo> => {
+      const liveUrl = liveUrlFor(repo, user);
+      const card = githubCard(repo.full_name, repo.pushed_at);
+      const [readme, preview] = await Promise.all([
+        readmeFor(repo, headers, fetchImpl),
+        liveUrl ? previewFor(liveUrl, card, fetchImpl) : Promise.resolve<RepoPreview>({ kind: "image", src: card }),
+      ]);
+      return {
+        name: repo.name,
+        fullName: repo.full_name,
+        description: readme ?? repo.description,
+        url: repo.html_url,
+        liveUrl,
+        stars: repo.stargazers_count,
+        forks: repo.forks_count,
+        language: repo.language,
+        topics: (repo.topics ?? []).filter((topic) => topic !== HIDE_TOPIC),
+        pushedAt: repo.pushed_at,
+        card,
+        preview,
+      };
+    }),
+  );
+
+  return { user, generatedAt: now.toISOString(), repos };
+}
+
+/** GitHub account whose public repositories make up the software index. */
+const GITHUB_USER = process.env.GITHUB_USER?.trim() || "kygura";
+
+/**
+ * Optional token for the GitHub API. Unauthenticated requests share a 60/hour
+ * limit per IP; the CDN cache keeps the index well under it either way.
+ */
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
+
+// ---- Handler -------------------------------------------------------------------
+// This file imports nothing relative: Vercel compiles each function to .js
+// but keeps `.ts` import specifiers, so a sibling import fails at runtime.
+
 export const runtime = "nodejs";
 
+/**
+ * The CDN holds a response for an hour and serves the stale copy for a day
+ * while it refreshes, so GitHub sees a handful of requests whatever the
+ * traffic.
+ */
 export async function GET(): Promise<Response> {
   try {
-    const showcase = await buildShowcase({ user: getGithubUser(), token: getGithubToken() });
+    const showcase = await buildShowcase({ user: GITHUB_USER, token: GITHUB_TOKEN });
     return Response.json(showcase, {
       headers: { "cache-control": "public, s-maxage=3600, stale-while-revalidate=86400" },
     });

@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import path from "path";
-import { buildShowcase, type Showcase } from "./api/_lib/github";
+import { buildShowcase, type Showcase } from "./api/github/repos";
 
 /**
  * Serves /api/github/repos under `vite dev` with the same code the Vercel
