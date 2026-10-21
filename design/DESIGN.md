@@ -79,7 +79,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 
 ## Command palette
 
-`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key.
+`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 640px a small `:` button after the accent squares opens it (`openCommands` in `src/theme/keymap.ts`); wider bars don't show it because the nav links already run out of room there.
 
 ## Also fixed
 

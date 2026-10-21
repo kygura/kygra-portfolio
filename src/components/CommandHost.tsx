@@ -1,11 +1,12 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { isTyping } from "@/theme/keymap";
+import { COMMANDS_EVENT, isTyping } from "@/theme/keymap";
 
 const CommandPalette = lazy(() => import("./CommandPalette"));
 
 /**
  * Keeps the command palette out of the initial bundle, like TerminalHost.
  * `:` (vim's command line) or ⌘K opens it; Ctrl+K stays with the terminal.
+ * Phones get a button in the nav, which calls `openCommands`.
  */
 export default function CommandHost() {
   const [open, setOpen] = useState(false);
@@ -21,8 +22,16 @@ export default function CommandHost() {
       setArmed(true);
       setOpen((o) => (cmdK ? !o : true));
     };
+    const onOpen = () => {
+      setArmed(true);
+      setOpen(true);
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener(COMMANDS_EVENT, onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener(COMMANDS_EVENT, onOpen);
+    };
   }, []);
 
   if (!armed) return null;

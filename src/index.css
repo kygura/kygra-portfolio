@@ -1428,6 +1428,19 @@ kbd {
   .wordmark em { display: none; }
 }
 
+/* Palette button for phones, which have no keyboard to press `:` with.
+   Kept off wider bars: from 640px the nav links already run out of room. */
+.cmd-open {
+  display: none; align-items: center; justify-content: center; width: 22px; height: 18px; padding: 0;
+  font: 12px var(--f-mono); line-height: 1; color: var(--accent); background: transparent;
+  border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
+}
+.cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); }
+.cmd-open:active { opacity: 0.7; }
+@media (max-width: 639px) {
+  .cmd-open { display: inline-flex; }
+}
+
 .skip-link {
   position: fixed; top: 8px; left: 8px; z-index: 100001; padding: 6px 10px;
   font: 11px var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase;

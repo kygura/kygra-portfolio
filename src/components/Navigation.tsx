@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
-import { CHORD_FOR } from "@/theme/keymap";
+import { CHORD_FOR, openCommands } from "@/theme/keymap";
 
 const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
@@ -128,6 +128,18 @@ const Navigation = () => {
             {clock}
           </span>
           <AccentPick />
+          {/* Phones have no `:` or ⌘K; this is their way in (shown under 640px). */}
+          <button
+            type="button"
+            className="cmd-open"
+            onClick={openCommands}
+            aria-label="Commands"
+            aria-haspopup="dialog"
+            aria-keyshortcuts=": Meta+K"
+            title="Commands (: or ⌘K)"
+          >
+            :
+          </button>
         </div>
       </div>
     </nav>
