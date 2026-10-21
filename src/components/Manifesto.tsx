@@ -10,40 +10,40 @@ import { motion, useInView, useReducedMotion, useScroll, useSpring } from "frame
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const OPENING = "Life is a game none of us designed. I play it with my eyes open.";
+const OPENING = "I don't have this figured out. These are a few things I keep coming back to.";
 
 const THESES: { n: string; text: string }[] = [
   {
     n: "I",
-    text: "Every system built to free people hardens into the next one they need freeing from. Resistance comes first; the cage follows the liberation. So I build things that plan for their own obsolescence, and leave the exit unlocked.",
+    text: "Everything I've seen built to set people free ended up as something to get free from. I don't think that's anyone's fault. It seems to be how it goes, and I've stopped expecting otherwise.",
   },
   {
     n: "II",
-    text: "Freedom was never handed out. It is earned through leverage: skill, capital, literacy, the ability to walk away. When an institution stops holding up its end, I build around it rather than petition it. Exit is speech.",
+    text: "Nobody handed me my freedom. What I have of it came slowly: a little money, a few skills, the knowledge that I could leave. Mostly it comes down to that. Being able to leave.",
   },
   {
     n: "III",
-    text: "Meaning doesn't come by subscription. No church, party or feed gets to carry the existential weight for me. You face the void alone, and whatever you build on it is yours.",
+    text: "No church or party ever answered the big questions for me, and at some point I stopped asking them to. Some nights it's just me and the quiet. I've made a kind of peace with that.",
   },
   {
     n: "IV",
-    text: "Machines converge on the median. Whatever signal there is lives in the tails. A real voice can't be prompted into existence; it gets lived into, through years of attention paid to particular things. Good tools give that attention back.",
+    text: "A machine can write the average sentence now, faster than I ever could. It hasn't been where I've been. That's most of the reason I still write.",
   },
   {
     n: "V",
-    text: "A free man can escape almost anything except himself. A lamp cannot light itself. The edge sits in the disposition, before any decision gets made, so that is where the work goes.",
+    text: "I've left jobs, cities, whole versions of myself. The one thing I never managed to leave was me. A lamp can't light itself.",
   },
   {
     n: "VI",
-    text: "A running track, then markets, music, code. The fields were surfaces. The will crossing them stayed constant. Sprint, build something that remembers what the sprint produced, sprint again.",
+    text: "I was a sprinter once. Then markets, music, code. For a long time I thought I'd failed at all of them. Now they look more like different roads, with the same person walking each one.",
   },
   {
     n: "VII",
-    text: "Money buys time and room to move. Hoarded, it is a monument to nothing. Winning is exhaust: aim at it directly and you spoil what made it. Aim at the work.",
+    text: "Money is good for time and room to breathe. Past that I'm not sure what it's for. Whenever I chased winning, it slipped away. When I forgot about it and did the work, things tended to turn out fine.",
   },
 ];
 
-const CLOSER = "The seeking never arrives. That is the design.";
+const CLOSER = "I haven't arrived anywhere. I'm not sure there's anywhere to arrive.";
 
 const Thesis = ({ n, text, still }: { n: string; text: string; still: boolean }) => {
   const ref = useRef<HTMLLIElement>(null);
@@ -87,7 +87,7 @@ const Manifesto = () => {
           animate={show ? { opacity: 1 } : undefined}
           transition={{ duration: 0.8 }}
         >
-          ( 00 &mdash; PREMISE )
+          ( 00 &mdash; NOTES )
         </motion.p>
 
         <h2 id="manifesto-title" className="manifesto__opening">
