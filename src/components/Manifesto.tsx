@@ -10,40 +10,40 @@ import { motion, useInView, useReducedMotion, useScroll, useSpring } from "frame
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const OPENING = "I don't have this figured out. These are a few things I keep coming back to.";
+const OPENING = "How I build, and why.";
 
 const THESES: { n: string; text: string }[] = [
   {
     n: "I",
-    text: "Everything I've seen built to set people free ended up as something to get free from. I don't think that's anyone's fault. It seems to be how it goes, and I've stopped expecting otherwise.",
+    text: "Anything I make will eventually get in someone's way, mine included. So I keep things small, easy to leave and easy to take apart.",
   },
   {
     n: "II",
-    text: "Nobody handed me my freedom. What I have of it came slowly: a little money, a few skills, the knowledge that I could leave. Mostly it comes down to that. Being able to leave.",
+    text: "When something I rely on stops working for me, I build my own version instead of waiting for it to get fixed. Most of what I've made started that way.",
   },
   {
     n: "III",
-    text: "No church or party ever answered the big questions for me, and at some point I stopped asking them to. Some nights it's just me and the quiet. I've made a kind of peace with that.",
+    text: "I build to own my time and my tools. Money matters because it buys room to work on what I care about. Past that, it isn't the point.",
   },
   {
     n: "IV",
-    text: "A machine can write the average sentence now, faster than I ever could. It hasn't been where I've been. That's most of the reason I still write.",
+    text: "I don't want software that thinks for me. A tool should do one job, show how it works, and leave the judgement to whoever is using it.",
   },
   {
     n: "V",
-    text: "I've left jobs, cities, whole versions of myself. The one thing I never managed to leave was me. A lamp can't light itself.",
+    text: "The averaged answer is usually the useless one. I'd take something odd that's clearly mine over something polished anyone could have made.",
   },
   {
     n: "VI",
-    text: "I was a sprinter once. Then markets, music, code. For a long time I thought I'd failed at all of them. Now they look more like different roads, with the same person walking each one.",
+    text: "I work in bursts. Between them I build whatever keeps the results, so the next one starts from there and not from zero.",
   },
   {
     n: "VII",
-    text: "Money is good for time and room to breathe. Past that I'm not sure what it's for. Whenever I chased winning, it slipped away. When I forgot about it and did the work, things tended to turn out fine.",
+    text: "I don't build to win. I build because I want to see the thing exist. The rest follows or it doesn't.",
   },
 ];
 
-const CLOSER = "I haven't arrived anywhere. I'm not sure there's anywhere to arrive.";
+const CLOSER = "None of it is finished. That's fine.";
 
 const Thesis = ({ n, text, still }: { n: string; text: string; still: boolean }) => {
   const ref = useRef<HTMLLIElement>(null);
