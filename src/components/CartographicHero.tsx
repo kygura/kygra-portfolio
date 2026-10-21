@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
+import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedSheet, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS, sheetNo } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
@@ -33,7 +33,7 @@ const reduceQuery = () =>
 
 const CartographicHero = () => {
   const accent = useAccent();
-  const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
+  const [sheet, setSheet] = useState(() => storedSheet(SHEETS.length));
   const [noGl, setNoGl] = useState(false);
   const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
   const found = useRef<Set<string> | null>(null);
