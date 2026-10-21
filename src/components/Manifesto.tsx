@@ -10,32 +10,40 @@ import { motion, useInView, useReducedMotion, useScroll, useSpring } from "frame
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const OPENING = "Everything built to set people free ends up as something they need freeing from. I build anyway.";
+const OPENING = "Life is a game none of us designed. I play it with my eyes open.";
 
 const THESES: { n: string; text: string }[] = [
   {
     n: "I",
-    text: "Every system that frees people from the last one becomes the next one to escape. Software is no exception. I try to make things that expect to be outgrown, and leave the door open when they are.",
+    text: "Every system built to free people hardens into the next one they need freeing from. Resistance comes first; the cage follows the liberation. So I build things that plan for their own obsolescence, and leave the exit unlocked.",
   },
   {
     n: "II",
-    text: "When an institution stops serving the people inside it, I would rather build the road around it than petition for repairs. Exit is a form of speech. Code is a cheap way to say it.",
+    text: "Freedom was never handed out. It is earned through leverage: skill, capital, literacy, the ability to walk away. When an institution stops holding up its end, I build around it rather than petition it. Exit is speech.",
   },
   {
     n: "III",
-    text: "A good tool hands your attention back. The ones I trust do one thing, show their workings, and never ask to be believed in. The thinking that makes you who you are should stay yours.",
+    text: "Meaning doesn't come by subscription. No church, party or feed gets to carry the existential weight for me. You face the void alone, and whatever you build on it is yours.",
   },
   {
     n: "IV",
-    text: "Markets, agents, the open web, a running track before any of them. The fields were surfaces. What stayed the same was the one crossing them.",
+    text: "Machines converge on the median. Whatever signal there is lives in the tails. A real voice can't be prompted into existence; it gets lived into, through years of attention paid to particular things. Good tools give that attention back.",
   },
   {
     n: "V",
-    text: "Winning is exhaust. Aim at it directly and you spoil whatever was producing it. So I aim at the work.",
+    text: "A free man can escape almost anything except himself. A lamp cannot light itself. The edge sits in the disposition, before any decision gets made, so that is where the work goes.",
+  },
+  {
+    n: "VI",
+    text: "A running track, then markets, music, code. The fields were surfaces. The will crossing them stayed constant. Sprint, build something that remembers what the sprint produced, sprint again.",
+  },
+  {
+    n: "VII",
+    text: "Money buys time and room to move. Hoarded, it is a monument to nothing. Winning is exhaust: aim at it directly and you spoil what made it. Aim at the work.",
   },
 ];
 
-const CLOSER = "No final shape. Only the process, and the wonder that started it.";
+const CLOSER = "The seeking never arrives. That is the design.";
 
 const Thesis = ({ n, text, still }: { n: string; text: string; still: boolean }) => {
   const ref = useRef<HTMLLIElement>(null);
