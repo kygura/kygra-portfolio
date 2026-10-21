@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix" | "abyss" | "cipher";
+  id: "ocean" | "astral" | "ruins" | "rail" | "field" | "matrix" | "abyss" | "cliff" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -50,6 +50,11 @@ export const SHEETS: SheetMeta[] = [
     id: "abyss",
     name: "Abyss",
     aria: "Animated low-poly underground chamber after Hyper Light Drifter: a magenta diamond crystal hangs over a flooded rhombus dais, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, a sunken titan head and arm, ribs, broken columns and stasis tubes, and a small red-cloaked drifter.",
+  },
+  {
+    id: "cliff",
+    name: "Cliffs",
+    aria: "Animated low-poly coast: a ruined stone city overgrown with trees on top of a sea cliff, a waterfall falling from the cliff face, a lighthouse and a broken bridge to a temple on a sea stack, above an open swell reaching to a low sun, with a drowned colossus head, a raised stone hand, a leaning tower and a line of arches standing in the water out to the horizon, and gulls circling.",
   },
 ];
 
