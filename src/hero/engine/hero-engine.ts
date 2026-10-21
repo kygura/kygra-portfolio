@@ -78,7 +78,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const kit = createKit(o.accent);
   const { U } = kit;
   const SC: SceneDef[] = [
-    buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit), buildMatrix(kit), buildVoid(),
+    buildVoid(), buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit), buildMatrix(kit),
   ];
   const eggTotal = SC.reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
 
