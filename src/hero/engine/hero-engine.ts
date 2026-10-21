@@ -10,11 +10,13 @@
  */
 import * as THREE from "three";
 import type { Accent } from "@/theme/accent";
-import { createKit, type SceneDef } from "./psx";
+import { createKit, type SceneDef, type PsxKit } from "./psx";
+import { SHEETS, type SheetMeta } from "../sheets";
 import { buildOcean } from "./ocean";
 import { buildAstral } from "./astral";
 import { buildRuins } from "./ruins";
 import { buildRail } from "./rail";
+import { buildSea } from "./sea";
 import { buildField } from "./field";
 import { buildMatrix } from "./matrix";
 import { buildVoid } from "./void";
@@ -79,9 +81,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  const SC: SceneDef[] = [
-    buildVoid(), buildOcean(kit), buildAstral(kit), buildRuins(kit), buildRail(kit), buildField(kit), buildMatrix(kit), buildAbyss(kit), buildCliff(kit),
-  ];
+  /* Only scenes enabled in sheets.ts are built, in tab order. */
+  const BUILD: Record<SheetMeta["id"], (k: PsxKit) => SceneDef> = {
+    cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, rail: buildRail,
+    field: buildField, matrix: buildMatrix, abyss: buildAbyss, cliff: buildCliff,
+  };
+  const SC: SceneDef[] = SHEETS.map((s) => BUILD[s.id](kit));
   const eggTotal = SC.reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
