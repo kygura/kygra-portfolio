@@ -20,9 +20,9 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 Keys `1`–`6`, or `t` to cycle, or the row of six squares at the right of the nav bar. Stored in `localStorage["nca-accent"]` (guarded with try/catch; an inline script in `index.html` applies it before first paint). One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
 
 1. Lichen `#bcc77c` (default)
-2. Torch Amber `#eaa24c`
-3. Astral Cyan `#86d3dc`
-4. Ritual Madder `#e5787f`
+2. Amber `#eaa24c`
+3. Sky `#86d3dc`
+4. Rose `#e5787f`
 5. Graphite `#d4d4d4`: the monochrome option. Also swaps the ground, ink, rules, danger and shadcn kit tokens for pure grays (`:root[data-accent="mono"]` in `src/index.css`), so the sheet carries no hue. Errors read as the brightest ink rather than red.
 6. Manuscript `#e08a62`: the brown lamp-lit sheet from the Manuscript mock (`design/mock/prose-mock.html` on the `theme/manuscript` branch). Like Graphite it swaps the ground, ink, rules and kit tokens (`:root[data-accent="manuscript"]`): warm brown ground, paper-coloured ink, clay accent. Fonts stay as they are.
 
