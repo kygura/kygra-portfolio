@@ -175,6 +175,8 @@ main { padding-block: clamp(3rem, 8vw, 6rem) clamp(4rem, 9vw, 7rem); }
 .opening .ch { color: var(--ink); transition: color 90ms linear; }
 .opening.armed .ch { color: var(--ghost); }
 .opening.armed .ch.on { color: var(--ink); }
+/* the revision stays unwritten until "quit" is struck through */
+.opening.armed .ch.late:not(.on) { visibility: hidden; }
 .opening del { text-decoration: none; position: relative; color: inherit; }
 .opening del::after {
   content: ""; position: absolute; left: -0.04em; right: -0.04em; top: 0.56em; height: 0.075em;
@@ -343,7 +345,7 @@ blockquote.epi { margin: 0; padding-left: 1.25rem; border-left: 1px solid var(--
         <div class="t">
           <p class="opening" id="opening">
             <span class="sr">Everything built to set people free ends up as something they need freeing from. I build anyway.</span>
-            <span aria-hidden="true" class="draft"><span class="seg">Everything built to set people free ends up as something they need freeing from. I </span><del class="seg">quit</del><span class="seg"> build anyway.</span></span>
+            <span aria-hidden="true" class="draft"><span class="seg">Everything built to set people free ends up as something they need freeing from. I </span><del class="seg">quit</del><span class="seg after"> build anyway.</span></span>
           </p>
         </div>
       </div>
@@ -565,7 +567,7 @@ blockquote.epi { margin: 0; padding-left: 1.25rem; border-left: 1px solid var(--
       </div>
       <hr class="rule">
       <div class="ln"><p class="m label">Motion</p>
-        <p class="t" style="color:var(--ink-2)">The opening sentence is laid out in ghost ink and typed over at a human cadence, with pauses at punctuation and one visible revision. View changes fade in over 260ms. Under reduced motion the sentence arrives finished and the caret holds still.</p></div>
+        <p class="t" style="color:var(--ink-2)">The opening sentence is laid out in ghost ink and typed over at a human cadence, with pauses at punctuation and one visible revision. The words after the struck one stay unwritten until the strike lands. View changes fade in over 260ms. Under reduced motion the sentence arrives finished and the caret holds still.</p></div>
     </section>
 
   </div>
@@ -648,7 +650,7 @@ blockquote.epi { margin: 0; padding-left: 1.25rem; border-left: 1px solid var(--
     seg.textContent = "";
     for (var i = 0; i < text.length; i++) {
       var s = document.createElement("span");
-      s.className = "ch";
+      s.className = seg.classList.contains("after") ? "ch late" : "ch";
       s.textContent = text[i];
       seg.appendChild(s);
       chars.push(s);
