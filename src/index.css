@@ -206,6 +206,12 @@
     cartoNameReveal 1.15s cubic-bezier(0.22, 1, 0.36, 1) 0.35s backwards;
 }
 
+/* Paused at frame 0 (hidden, via `backwards`) until index.html sees Literata. */
+.fonts-pending .hero__name-text,
+.fonts-pending .hero__tagline {
+  animation-play-state: paused;
+}
+
 /* Per-letter boxes so scroll can open the tracking with transforms
    instead of re-laying out the headline every frame. */
 .hero__letter {
