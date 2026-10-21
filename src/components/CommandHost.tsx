@@ -6,7 +6,7 @@ const CommandPalette = lazy(() => import("./CommandPalette"));
 /**
  * Keeps the command palette out of the initial bundle, like TerminalHost.
  * `:` (vim's command line) or ⌘K opens it; Ctrl+K stays with the terminal.
- * Phones get a button in the nav, which calls `openCommands`.
+ * Under 1024px the nav carries a button for touch screens (`openCommands`).
  */
 export default function CommandHost() {
   const [open, setOpen] = useState(false);

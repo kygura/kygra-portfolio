@@ -1091,6 +1091,30 @@
   font-size: clamp(9.5px, 2.8vw, 13px);
 }
 
+/* Space between the links grows with the bar, sized per range from the room
+   each one has left once all four links fit unscrolled (checked 360–1600px). */
+.nav-bar .nav-items { gap: clamp(10px, 6vw - 10px, 28px); }
+@media (min-width: 640px) {
+  .nav-bar .nav-items { gap: clamp(14px, 4vw - 12px, 24px); }
+}
+@media (min-width: 800px) {
+  .nav-bar .nav-items { gap: clamp(16px, 4vw - 14px, 28px); }
+}
+@media (min-width: 1024px) {
+  .nav-bar .nav-items { gap: clamp(28px, 6vw - 30px, 48px); }
+}
+
+/* Tablet widths get the desktop bar at phone-scale room: tighten the link
+   tracking and drop the year (and, narrowest, "Ventures") so the links fit. */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .nav-bar .nav-link { letter-spacing: 0.08em; }
+  .nav-bar .nav-year { display: none; }
+}
+@media (min-width: 640px) and (max-width: 799px) {
+  .nav-bar .nav-link { font-size: 11.5px; letter-spacing: 0.05em; }
+  .nav-bar .wordmark em { display: none; }
+}
+
 /* ─────────────────────────────────────────────
    PAGE SHELL — shared gutters + vertical rhythm
    ───────────────────────────────────────────── */
@@ -1428,18 +1452,41 @@ kbd {
   .wordmark em { display: none; }
 }
 
-/* Palette button for phones, which have no keyboard to press `:` with.
-   Kept off wider bars: from 640px the nav links already run out of room. */
-.cmd-open {
-  display: none; align-items: center; justify-content: center; width: 22px; height: 18px; padding: 0;
-  font: 12px var(--f-mono); line-height: 1; color: var(--accent); background: transparent;
-  border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
+/* Under 1024px the squares fold into one swatch (AccentMenu) that opens the
+   themes as a vertical list; the freed room takes the palette button, the
+   way in for touch screens that can't press `:`. */
+.accent-menu, .cmd-open {
+  display: none; align-items: center; justify-content: center; width: 26px; height: 24px; padding: 0;
+  background: transparent; border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
 }
+.accent-menu::before { content: ""; width: 10px; height: 10px; background: var(--sw); }
+.cmd-open { font: 13px var(--f-mono); line-height: 1; color: var(--accent); }
+.accent-menu:hover, .accent-menu:focus-visible, .accent-menu[data-state="open"],
 .cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); }
 .cmd-open:active { opacity: 0.7; }
-@media (max-width: 639px) {
-  .cmd-open { display: inline-flex; }
+@media (max-width: 1023px) {
+  .accent-pick { display: none; }
+  .accent-menu, .cmd-open { display: inline-flex; }
 }
+@media (max-width: 639px) {
+  .accent-menu, .cmd-open { width: 22px; height: 18px; }
+  .accent-menu::before { width: 8px; height: 8px; }
+  .cmd-open { font-size: 12px; }
+}
+.accent-list {
+  z-index: 99000; display: flex; flex-direction: column; min-width: 190px; padding: 4px 0;
+  background: var(--bg-2); border: 1px solid var(--accent); font-family: var(--f-mono);
+  animation: themeFade 0.12s ease; outline: none;
+}
+.accent-list button {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 10px; text-align: left;
+  font: 12px var(--f-mono); letter-spacing: 0.04em; color: var(--ink-2); background: transparent;
+  border: 0; border-left: 2px solid transparent;
+}
+.accent-list button:hover, .accent-list button:focus-visible { color: var(--ink); background: var(--sheet); outline: none; }
+.accent-list button[aria-pressed="true"] { color: var(--ink); border-left-color: var(--accent); }
+.accent-list i { width: 10px; height: 10px; flex: none; background: var(--sw); }
+.accent-list span { flex: 1; }
 
 .skip-link {
   position: fixed; top: 8px; left: 8px; z-index: 100001; padding: 6px 10px;

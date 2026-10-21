@@ -32,7 +32,7 @@ Keys `1`–`6`, or `t` to cycle, or the row of six squares at the right of the n
 - **Fragment Mono**: code, data, nav links, buttons, terminal, labels (`font-mono`).
 - **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings, and the "NCA" of the wordmark. Nowhere else.
 
-Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 640px the bar keeps only "NCA" so the five links still fit unscrolled, as master's did.
+Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 800px the bar keeps only "NCA" (and from 640px to 1023px drops "©2026" and tightens link tracking) so the links fit unscrolled at every width. The space between links grows with the bar (from about 12px on a phone to 48px on a wide screen), sized per range from the room left once all four fit. Under 1024px the six accent squares fold into one swatch that opens the themes as a vertical list, and a `:` button beside it opens the command palette for touch screens.
 
 ## Layout
 
@@ -79,7 +79,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 
 ## Command palette
 
-`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 640px a small `:` button after the accent squares opens it (`openCommands` in `src/theme/keymap.ts`); wider bars don't show it because the nav links already run out of room there.
+`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 1024px a `:` button in the nav opens it (`openCommands` in `src/theme/keymap.ts`), for touch screens that can't press `:`.
 
 ## Also fixed
 
