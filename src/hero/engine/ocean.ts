@@ -263,9 +263,11 @@ export function buildOcean(k: PsxKit): SceneDef {
     sail: psx({ map: sailTex(), tint: "#ffffff", amb: "#7a8890", side: THREE.DoubleSide }),
   };
   const ship = new THREE.Group();
-  const SX = 12, SZ = -13.1;
+  // built at 1:1, then scaled down so the boat sits in proportion to the pier and the palms
+  const SX = 12, SZ = -12.85;
   ship.position.set(SX, 0, SZ);
   ship.rotation.y = 0.04;
+  ship.scale.setScalar(0.75);
   scene.add(ship);
   // Bow at -x: the hull narrows to a point and the sheer rises toward it; the stern keeps a narrow transom.
   const HL = 7;
