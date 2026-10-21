@@ -70,6 +70,8 @@ const ANY = UPPER + DIGIT + SYM;
 const SPEED = 520, BAND = 36, TAIL = 55, FADE = 1.6;
 /** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
 const REEL_MS = 520, REEL_STAGGER = 70;
+/** Click surge on a word: delay between neighbouring letters and the pop length (s). */
+const HIT_STAGGER = 0.05, HIT_POP = 0.55;
 
 // Neutral grey, so the accent (in the pulse and in words) is the only colour on the sheet.
 const INK = "#b4b4b4";
@@ -106,6 +108,8 @@ interface Word {
   text: string;
   seen: number;
   fading: boolean;
+  /** When the word was clicked; drives the letter-by-letter surge. */
+  hit?: number;
 }
 
 interface Pulse {
@@ -417,6 +421,25 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       }
 
       const g = glyph[i];
+      if (w && w.hit !== undefined && !w.fading) {
+        const t = (now - w.hit) / 1000 - (i - (w.row * cols + w.start)) * HIT_STAGGER;
+        if (t >= 0 && t < HIT_POP) {
+          const e = Math.sin((Math.PI * t) / HIT_POP);
+          ctx.save();
+          ctx.globalAlpha = 1;
+          ctx.fillStyle = HOT;
+          if (!reduced) {
+            ctx.shadowColor = accent;
+            ctx.shadowBlur = 16 * e;
+            ctx.translate(x, y - e * ch * 0.25);
+            ctx.scale(1 + 0.6 * e, 1 + 0.6 * e);
+            ctx.fillText(g, 0, 0);
+          } else ctx.fillText(g, x, y);
+          ctx.restore();
+          fill = "";
+          continue;
+        }
+      }
       if (g === " " || a < 0.03) continue;
       ctx.globalAlpha = Math.min(1, a);
       if (fill !== col) ctx.fillStyle = fill = col;
@@ -456,6 +479,19 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     if (e.pointerType === "touch" || e.type === "pointerleave") ptr.in = false;
     kick();
   };
+  /** A click on a live word sets it off: its letters surge in turn and a shock ring leaves from its centre. */
+  const hitWord = (now: number) => {
+    const c = Math.round((ptr.x - ox) / cw), r = Math.round((ptr.y - oy) / ch);
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+    const w = words.get(owner[r * cols + c]);
+    if (!w || w.fading) return;
+    w.hit = now;
+    w.seen = now + 1500;
+    if (reduced) return;
+    const x = ox + (w.start + (w.text.length - 1) / 2) * cw, y = oy + w.row * ch;
+    const reach = Math.hypot(Math.max(x, cssW - x), Math.max(y, cssH - y)) + BAND;
+    pulses.push({ x, y, t0: now, reach: Math.min(reach, 520), life: Math.min(reach, 520) / SPEED + FADE });
+  };
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0) return;
     local(e);
@@ -465,6 +501,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       ptr.in = true;
       ptr.moved = true;
     }
+    hitWord(performance.now());
     if (!reduced) {
       const reach = Math.hypot(Math.max(ptr.x, cssW - ptr.x), Math.max(ptr.y, cssH - ptr.y)) + BAND;
       pulses.push({ x: ptr.x, y: ptr.y, t0: performance.now(), reach, life: reach / SPEED + FADE });
