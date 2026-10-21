@@ -26,7 +26,9 @@ export const ACCENTS: Accent[] = [
 ];
 
 export const ACCENT_KEY = "nca-accent";
-export const SHEET_KEY = "nca-sheet";
+export const SHEET_KEY = "nca-sheet-v2";
+/** Pre-reorder key: its index counted Cipher last, so it maps to the new order by shifting. */
+const LEGACY_SHEET_KEY = "nca-sheet";
 export const EGGS_KEY = "nca-eggs";
 
 export function readStored(key: string): string | null {
@@ -48,6 +50,15 @@ export function writeStored(key: string, value: string) {
 export function storedIndex(key: string, length: number): number {
   const n = Number.parseInt(readStored(key) ?? "", 10);
   return Number.isInteger(n) && n >= 0 && n < length ? n : 0;
+}
+
+/** Last active scene. A visitor still on the old key keeps their scene across the reorder. */
+export function storedSheet(length: number): number {
+  if (readStored(SHEET_KEY) === null) {
+    const old = Number.parseInt(readStored(LEGACY_SHEET_KEY) ?? "", 10);
+    if (Number.isInteger(old) && old >= 0 && old < length) return (old + 1) % length;
+  }
+  return storedIndex(SHEET_KEY, length);
 }
 
 let current = typeof window === "undefined" ? 0 : storedIndex(ACCENT_KEY, ACCENTS.length);

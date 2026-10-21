@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedIndex, useAccent, writeStored } from "@/theme/accent";
+import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedSheet, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS, sheetNo } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
@@ -8,7 +8,7 @@ import { createCipherField, type CipherField } from "@/hero/cipher";
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 renderer (ocean / astral / ruins / rail / field / matrix / cipher). three.js is fetched
+ * the PS1 renderer (cipher / ocean / astral / ruins / rail / field / matrix). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
@@ -33,7 +33,7 @@ const reduceQuery = () =>
 
 const CartographicHero = () => {
   const accent = useAccent();
-  const [sheet, setSheet] = useState(() => storedIndex(SHEET_KEY, SHEETS.length));
+  const [sheet, setSheet] = useState(() => storedSheet(SHEETS.length));
   const [noGl, setNoGl] = useState(false);
   const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
   const found = useRef<Set<string> | null>(null);

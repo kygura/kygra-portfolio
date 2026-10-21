@@ -10,6 +10,12 @@ export interface SheetMeta {
 
 export const SHEETS: SheetMeta[] = [
   {
+    id: "cipher",
+    name: "Cipher",
+    aria: "Interactive black field of random characters: the cursor lights and pushes the glyphs aside and rolls them like slot reels until they stop on words, and a click sends a pulse in the accent colour rippling out from where it landed.",
+    hint: "HOVER TO DECODE \u00b7 CLICK TO PULSE",
+  },
+  {
     id: "ocean",
     name: "Ocean",
     aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and a wing-sail ship moored at a pier, under two setting suns.",
@@ -39,12 +45,6 @@ export const SHEETS: SheetMeta[] = [
     id: "matrix",
     name: "Matrix",
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
-  },
-  {
-    id: "cipher",
-    name: "Cipher",
-    aria: "Interactive black field of random characters: the cursor lights and pushes the glyphs aside and rolls them like slot reels until they stop on words, and a click sends a pulse in the accent colour rippling out from where it landed.",
-    hint: "HOVER TO DECODE \u00b7 CLICK TO PULSE",
   },
 ];
 
