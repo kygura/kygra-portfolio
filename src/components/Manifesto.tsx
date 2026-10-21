@@ -10,32 +10,36 @@ import { motion, useInView, useReducedMotion, useScroll, useSpring } from "frame
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const OPENING = "Everything built to set people free ends up as something they need freeing from. I build anyway.";
+const OPENING = "I build small tools. These are the ideas behind them.";
 
 const THESES: { n: string; text: string }[] = [
   {
     n: "I",
-    text: "Every system that frees people from the last one becomes the next one to escape. Software is no exception. I try to make things that expect to be outgrown, and leave the door open when they are.",
+    text: "Software that frees you from one system tends to become the next one you need to leave. I assume mine will too, so it should be easy to outgrow.",
   },
   {
     n: "II",
-    text: "When an institution stops serving the people inside it, I would rather build the road around it than petition for repairs. Exit is a form of speech. Code is a cheap way to say it.",
+    text: "Leaving should be cheap. Your work belongs to you, in a form you can carry out, and nothing should be built to stop you going.",
   },
   {
     n: "III",
-    text: "A good tool hands your attention back. The ones I trust do one thing, show their workings, and never ask to be believed in. The thinking that makes you who you are should stay yours.",
+    text: "A tool should give your attention back. No feeds, streaks or nudges designed to pull you in. It does its job and gets out of the way.",
   },
   {
     n: "IV",
-    text: "Markets, agents, the open web, a running track before any of them. The fields were surfaces. What stayed the same was the one crossing them.",
+    text: "When a model is involved, I describe it as what it is: a system predicting text. It has no inner life, and I won't dress it up as if it had one.",
   },
   {
     n: "V",
-    text: "Winning is exhaust. Aim at it directly and you spoil whatever was producing it. So I aim at the work.",
+    text: "Defaults drift toward the median. I would rather make something with a specific shape, built by someone paying attention to particular problems, than something that fits everyone a little.",
+  },
+  {
+    n: "VI",
+    text: "When an existing tool stops serving the people using it, I build a smaller one beside it instead of waiting for it to change.",
   },
 ];
 
-const CLOSER = "No final shape. Only the process, and the wonder that started it.";
+const CLOSER = "None of it is finished. It changes as I do.";
 
 const Thesis = ({ n, text, still }: { n: string; text: string; still: boolean }) => {
   const ref = useRef<HTMLLIElement>(null);
@@ -79,7 +83,7 @@ const Manifesto = () => {
           animate={show ? { opacity: 1 } : undefined}
           transition={{ duration: 0.8 }}
         >
-          ( 00 &mdash; PREMISE )
+          ( 00 &mdash; NOTES )
         </motion.p>
 
         <h2 id="manifesto-title" className="manifesto__opening">
