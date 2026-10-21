@@ -234,8 +234,8 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   };
 
   /** Drop a word into the free run of the row under the cursor. */
-  const spawnWord = (now: number) => {
-    const c = Math.round((ptr.x - ox) / cw), r = Math.round((ptr.y - oy) / ch);
+  const spawnWord = (now: number, px = ptr.x, py = ptr.y) => {
+    const c = Math.round((px - ox) / cw), r = Math.round((py - oy) / ch);
     if (c < 0 || c >= cols || r < 0 || r >= rows || owner[r * cols + c]) return;
     let lo = c, hi = c;
     while (lo > 0 && c - lo < 9 && !owner[r * cols + lo - 1]) lo--;
@@ -480,17 +480,27 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     kick();
   };
   /** A click on a live word sets it off: its letters surge in turn and a shock ring leaves from its centre. */
-  const hitWord = (now: number) => {
+  const hitWord = (now: number): boolean => {
     const c = Math.round((ptr.x - ox) / cw), r = Math.round((ptr.y - oy) / ch);
-    if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+    if (c < 0 || c >= cols || r < 0 || r >= rows) return false;
     const w = words.get(owner[r * cols + c]);
-    if (!w || w.fading) return;
+    if (!w || w.fading) return false;
     w.hit = now;
     w.seen = now + 1500;
-    if (reduced) return;
+    if (reduced) return true;
     const x = ox + (w.start + (w.text.length - 1) / 2) * cw, y = oy + w.row * ch;
     const reach = Math.hypot(Math.max(x, cssW - x), Math.max(y, cssH - y)) + BAND;
     pulses.push({ x, y, t0: now, reach: Math.min(reach, 520), life: Math.min(reach, 520) / SPEED + FADE });
+    return true;
+  };
+  /** A click on bare noise lights up a few words in a small radius around it. */
+  const revealAround = (now: number) => {
+    const rad = Math.max(70, cw * 7);
+    spawnWord(now);
+    for (let n = 0; n < 4; n++) {
+      const a = Math.random() * Math.PI * 2, d = rad * (0.35 + Math.random() * 0.65);
+      spawnWord(now + n * 40, ptr.x + Math.cos(a) * d, ptr.y + Math.sin(a) * d * 0.6);
+    }
   };
   const onDown = (e: PointerEvent) => {
     if (e.button !== 0) return;
@@ -501,7 +511,8 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       ptr.in = true;
       ptr.moved = true;
     }
-    hitWord(performance.now());
+    const t = performance.now();
+    if (!hitWord(t)) revealAround(t);
     if (!reduced) {
       const reach = Math.hypot(Math.max(ptr.x, cssW - ptr.x), Math.max(ptr.y, cssH - ptr.y)) + BAND;
       pulses.push({ x: ptr.x, y: ptr.y, t0: performance.now(), reach, life: reach / SPEED + FADE });
