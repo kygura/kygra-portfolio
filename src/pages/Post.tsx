@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -7,6 +7,7 @@ import { useMarkdownPost } from "../hooks/useMarkdownPosts";
 import CodeBlock from "../components/CodeBlock";
 import PostImage from "../components/PostImage";
 import Alert from "../components/Alert";
+import PostToc from "../components/PostToc";
 
 type MarkdownCodeProps = React.ComponentPropsWithoutRef<"code"> & {
   node?: unknown;
@@ -62,6 +63,7 @@ function formatPostDate(date: string): string | null {
 const Post = () => {
   const { slug } = useParams();
   const { post, loading, error } = useMarkdownPost(slug);
+  const articleRef = useRef<HTMLElement>(null);
 
   if (loading) {
     return (
@@ -125,14 +127,16 @@ const Post = () => {
         )}
       </div>
 
-      <article className="prose-minimal text-lg leading-relaxed text-foreground">
+      <PostToc articleRef={articleRef} contentKey={post.content} />
+
+      <article ref={articleRef} className="prose-minimal text-lg leading-relaxed text-foreground">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
             // The page title owns the only <h1>; a markdown h1 is a section.
-            h1({ node, ...props }: MarkdownHeadingProps) {
+            h1({ node, className, ...props }: MarkdownHeadingProps) {
               void node;
-              return <h2 {...props} />;
+              return <h2 {...props} className={["md-h1", className].filter(Boolean).join(" ")} />;
             },
             pre({ children }) {
               // Fenced blocks arrive as <pre><code class="language-x">. The
