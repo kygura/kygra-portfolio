@@ -10,6 +10,12 @@ const GITHUB_API = "https://api.github.com";
 /** Repos tagged with this topic never appear in the index. */
 export const HIDE_TOPIC = "portfolio-hide";
 
+/** Repos tagged with this topic rank ahead of everything else. */
+export const FLAGSHIP_TOPIC = "flagship";
+
+/** Bookkeeping topics that steer the index but say nothing to a visitor. */
+const INTERNAL_TOPICS = new Set([HIDE_TOPIC, FLAGSHIP_TOPIC]);
+
 export interface GithubRepo {
   name: string;
   full_name: string;
@@ -75,12 +81,19 @@ export function scoreRepo(repo: GithubRepo, now: Date): number {
   return repo.stargazers_count + 6 * Math.exp(-days / 60);
 }
 
+const isFlagship = (repo: GithubRepo) => (repo.topics ?? []).includes(FLAGSHIP_TOPIC);
+
 export function rankRepos(repos: GithubRepo[], user: string, now: Date, limit: number): GithubRepo[] {
   return repos
     .filter((repo) => !repo.fork && !repo.archived)
     .filter((repo) => !(repo.topics ?? []).includes(HIDE_TOPIC))
     .filter((repo) => repo.name.toLowerCase() !== user.toLowerCase()) // profile README repo
-    .sort((a, b) => scoreRepo(b, now) - scoreRepo(a, now) || b.pushed_at.localeCompare(a.pushed_at))
+    .sort(
+      (a, b) =>
+        Number(isFlagship(b)) - Number(isFlagship(a)) ||
+        scoreRepo(b, now) - scoreRepo(a, now) ||
+        b.pushed_at.localeCompare(a.pushed_at),
+    )
     .slice(0, limit);
 }
 
@@ -263,7 +276,7 @@ export async function buildShowcase({
         stars: repo.stargazers_count,
         forks: repo.forks_count,
         language: repo.language,
-        topics: (repo.topics ?? []).filter((topic) => topic !== HIDE_TOPIC),
+        topics: (repo.topics ?? []).filter((topic) => !INTERNAL_TOPICS.has(topic)),
         pushedAt: repo.pushed_at,
         card,
         preview,

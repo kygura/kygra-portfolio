@@ -45,6 +45,20 @@ test("ranks by stars with a fading bonus for recent pushes", () => {
   assert.deepEqual(ranked.map((r) => r.name), ["old-starred", "fresh", "stale"]);
 });
 
+test("flagship repos rank ahead of starred and recent ones", () => {
+  const ranked = rankRepos(
+    [
+      repo("starred", { stargazers_count: 40, pushed_at: "2026-10-20T00:00:00Z" }),
+      repo("flag-old", { topics: ["flagship"], pushed_at: "2025-01-01T00:00:00Z" }),
+      repo("flag-new", { topics: ["flagship"], pushed_at: "2026-10-01T00:00:00Z" }),
+    ],
+    "kygura",
+    NOW,
+    10,
+  );
+  assert.deepEqual(ranked.map((r) => r.name), ["flag-new", "flag-old", "starred"]);
+});
+
 test("drops forks, archived repos, hidden repos and the profile repo", () => {
   const ranked = rankRepos(
     [
@@ -98,7 +112,7 @@ test("builds previews: frame when allowed, og:image when blocked, card otherwise
     if (url.endsWith("/readme")) return new Response("Not Found", { status: 404 });
     if (url.startsWith("https://api.github.com/users/")) {
       return Response.json([
-        repo("framed", { stargazers_count: 3, homepage: "https://framed.dev" }),
+        repo("framed", { stargazers_count: 3, homepage: "https://framed.dev", topics: ["flagship", "web"] }),
         repo("blocked", { stargazers_count: 2, homepage: "https://blocked.dev" }),
         repo("offline", { stargazers_count: 1, homepage: "https://offline.dev" }),
         repo("code-only"),
@@ -117,6 +131,7 @@ test("builds previews: frame when allowed, og:image when blocked, card otherwise
   const descriptions = Object.fromEntries(showcase.repos.map((r) => [r.name, r.description]));
   assert.equal(descriptions.framed, "A framed site that renders straight into the software index preview.");
   assert.equal(descriptions.blocked, null); // no README, no About line
+  assert.deepEqual(showcase.repos[0].topics, ["web"]); // internal topics stay off the page
   const previews = Object.fromEntries(showcase.repos.map((r) => [r.name, r.preview]));
 
   assert.deepEqual(previews.framed, { kind: "frame", src: "https://framed.dev/" });
