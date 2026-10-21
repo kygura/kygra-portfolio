@@ -267,11 +267,16 @@ const README_CHAR_LIMIT = 40_000;
 
 const DESCRIBE_SYSTEM = [
   "You write the description line for a software project on a developer's portfolio page.",
-  "Given the project's README, reply with one or two plain sentences, at most 40 words, saying what the project is and what makes it interesting.",
+  "The project's name is already shown as the card title, so never mention it; open with what the thing is,",
+  "for example 'A personal market terminal that…' or 'An engine that…'.",
+  "Reply with one or two plain sentences, 35 words at most, saying what the project is and what makes it interesting.",
   "Write for a curious visitor, not a contributor: no install steps, ports, commands, file paths or badges.",
-  "No markdown, no quotes, no lead-in such as 'This project'. Do not start with the project name.",
+  "No markdown, no quotes, no lead-in such as 'This project'.",
   "If the README says too little to describe the project, reply with exactly: SKIP",
 ].join(" ");
+
+/** Bump when the prompt changes, so cached descriptions are written afresh. */
+const DESCRIBE_VERSION = "v2";
 
 interface DescriberOptions {
   apiKey: string;
@@ -353,7 +358,7 @@ export function createDescriber({
   };
 
   return (repo, readme) => {
-    const key = `showcase/descriptions/${repo.full_name}/${readme.sha}.txt`;
+    const key = `showcase/descriptions/${DESCRIBE_VERSION}/${repo.full_name}/${readme.sha}.txt`;
     let pending = memo.get(key);
     if (!pending) {
       pending = (async () => {
