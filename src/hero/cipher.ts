@@ -65,8 +65,9 @@ const SYM = "#$%&*+=~^<>/\\|{}[]():;!?_-.";
 const ANY = UPPER + DIGIT + SYM;
 
 /** Pulse: front speed (px/s), lit band ahead of the front, glow trailing behind it,
- *  how far it travels (px) and how long it takes to fade out (s). */
-const SPEED = 260, BAND = 36, TAIL = 55, REACH = 240, LIFE = 2.4;
+ *  and the fade-out time (s) once the front has run off the far corner. A pulse travels
+ *  until it has covered the whole sheet. */
+const SPEED = 520, BAND = 36, TAIL = 55, FADE = 1.6;
 /** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
 const REEL_MS = 520, REEL_STAGGER = 70;
 
@@ -111,6 +112,10 @@ interface Pulse {
   x: number;
   y: number;
   t0: number;
+  /** Distance to the farthest corner, so the front sweeps the entire sheet. */
+  reach: number;
+  /** Seconds the front takes to get there plus the fade. */
+  life: number;
 }
 
 /** A reel strip: rolls from strip[0] to the last stop between t0 and t1. */
@@ -286,7 +291,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       }
     }
 
-    for (let p = pulses.length - 1; p >= 0; p--) if ((now - pulses[p].t0) / 1000 > LIFE) pulses.splice(p, 1);
+    for (let p = pulses.length - 1; p >= 0; p--) if ((now - pulses[p].t0) / 1000 > pulses[p].life) pulses.splice(p, 1);
 
     // Gather this frame's cells: last frame's live ones plus everything under the
     // cursor and inside each pulse's reach.
@@ -302,7 +307,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     };
     for (const i of live) add(i);
     if (hovering) box(ptr.sx, ptr.sy, R);
-    for (const p of pulses) box(p.x, p.y, Math.min(((now - p.t0) / 1000) * SPEED, REACH) + BAND);
+    for (const p of pulses) box(p.x, p.y, Math.min(((now - p.t0) / 1000) * SPEED, p.reach) + BAND);
 
     const decay = Math.exp(-dt * 2.6);
     const spring = 1 - Math.exp(-dt * 14);
@@ -328,14 +333,14 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       for (const p of pulses) {
         const age = (now - p.t0) / 1000;
         const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
-        // The front stops at REACH; inside it the glow falls off behind the front.
-        const front = Math.min(age * SPEED, REACH);
+        // The front stops at the far corner; inside it the glow falls off behind the front.
+        const front = Math.min(age * SPEED, p.reach);
         const k = d > front ? 1 - (d - front) / BAND : Math.exp(-(front - d) / TAIL);
         if (k <= 0.01) continue;
-        const life = Math.max(0, 1 - age / LIFE);
+        const life = Math.max(0, 1 - Math.max(0, age - p.reach / SPEED) / FADE);
         if (k * life > g) g = k * life;
         // Only the moving front pushes; the trailing glow just lights.
-        if (age * SPEED < REACH) {
+        if (age * SPEED < p.reach) {
           const push = Math.max(0, 1 - Math.abs(d - front) / BAND) * life * 5;
           tx += (ddx / d) * push;
           ty += (ddy / d) * push;
@@ -460,7 +465,10 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       ptr.in = true;
       ptr.moved = true;
     }
-    if (!reduced) pulses.push({ x: ptr.x, y: ptr.y, t0: performance.now() });
+    if (!reduced) {
+      const reach = Math.hypot(Math.max(ptr.x, cssW - ptr.x), Math.max(ptr.y, cssH - ptr.y)) + BAND;
+      pulses.push({ x: ptr.x, y: ptr.y, t0: performance.now(), reach, life: reach / SPEED + FADE });
+    }
     kick();
   };
   const onVisibility = () => kick();
