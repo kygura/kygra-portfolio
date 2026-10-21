@@ -19,7 +19,6 @@ const ALL_SHEETS: SheetMeta[] = [
   },
   {
     id: "ocean",
-    enabled: false,
     name: "Ocean",
     aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and a wing-sail ship moored at a pier, under two setting suns.",
   },
