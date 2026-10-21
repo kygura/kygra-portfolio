@@ -700,12 +700,7 @@
   font-size: 0.98rem;
   line-height: 1.6;
   color: var(--ink);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
-  overflow: hidden;
 }
-.repo-card--featured .repo-card__description { -webkit-line-clamp: unset; }
 
 .repo-card__topics {
   display: flex;

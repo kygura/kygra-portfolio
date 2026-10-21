@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   blocksFraming,
   buildShowcase,
+  capWords,
+  clip,
   createDescriber,
   findSocialImage,
   liveUrlFor,
@@ -202,8 +204,8 @@ test("README summary skips banners, badges and code to the opening prose", () =>
 
 test("README summary returns null when there is no prose, and clips long text", () => {
   assert.equal(readmeSummary("# repo\n\n- a list\n- only", "repo"), null);
-  const long = readmeSummary(`${"Word ".repeat(200)}`, "repo");
-  assert.ok(long && long.length <= 601 && long.endsWith("…"));
+  const long = readmeSummary(`${"Long sentence goes on here. ".repeat(40)}`, "repo");
+  assert.ok(long && long.length <= 600 && long.endsWith("."));
 });
 
 test("model descriptions win over the README excerpt, and only kept repos are described", async () => {
@@ -292,6 +294,16 @@ test("a token switches to the owner's own listing, which includes private repos"
   }) as typeof fetch;
   await buildShowcase({ user: "kygura", token: "t0k", fetchImpl });
   assert.match(seen[0], /^https:\/\/api\.github\.com\/user\/repos\?affiliation=owner&visibility=all.* Bearer t0k$/);
+});
+
+test("descriptions are cut at whole sentences, never with an ellipsis", () => {
+  assert.equal(clip("One. Two. Three.", 10), "One. Two.");
+  assert.equal(clip("A single sentence that runs well past the limit. Then more.", 10), "A single sentence that runs well past the limit.");
+  assert.equal(clip("no stops at all in this one", 5), "no stops at all in this one");
+  assert.equal(clip("Version 1.5 ships. Next.", 19), "Version 1.5 ships."); // decimals are not sentence ends
+  assert.equal(capWords("Short and done.", 40), "Short and done.");
+  const wordy = `First sentence stands alone. ${"more words ".repeat(30)}end.`;
+  assert.equal(capWords(wordy, 40), "First sentence stands alone.");
 });
 
 test("surfaces a GitHub failure instead of an empty index", async () => {

@@ -205,13 +205,26 @@ function plainInline(text: string): string {
     .trim();
 }
 
-/** Cuts at the last sentence end inside the limit, else the last word. */
-function clip(text: string, max: number): string {
+/** Sentence ends: a stop followed by whitespace or the end of the text. */
+const SENTENCE_END = /[.!?](?=\s|$)/g;
+
+/**
+ * Whole sentences only, never a trailing "…": the last sentence end inside
+ * the limit, else the first sentence however long, else the text as is.
+ */
+export function clip(text: string, max: number): string {
   if (text.length <= max) return text;
-  const cut = text.slice(0, max);
-  const sentence = cut.search(/[.!?](?=[^.!?]*$)/);
-  if (sentence > max * 0.5) return cut.slice(0, sentence + 1);
-  return `${cut.slice(0, cut.lastIndexOf(" "))}…`;
+  const ends = [...text.matchAll(SENTENCE_END)].map((match) => (match.index ?? 0) + 1);
+  const fits = ends.filter((end) => end <= max);
+  if (fits.length) return text.slice(0, fits[fits.length - 1]);
+  return ends.length ? text.slice(0, ends[0]) : text;
+}
+
+/** Model output past the word cap keeps its opening sentence, which stands alone. */
+export function capWords(text: string, maxWords: number): string {
+  if (text.split(/\s+/).length <= maxWords) return text;
+  const first = text.match(/^.*?[.!?](?=\s|$)/s)?.[0];
+  return first ?? text;
 }
 
 /**
@@ -346,7 +359,7 @@ export function createDescriber({
         .flatMap((block) => (block.type === "text" ? [block.text] : []))
         .join("")
         .trim();
-      return text && text !== "SKIP" ? text : null;
+      return text && text !== "SKIP" ? capWords(text, 40) : null;
     } catch (error) {
       if (error instanceof Anthropic.APIError) {
         console.warn(`Haiku description failed for ${repo.full_name}: ${error.status}`, error.message);
@@ -363,7 +376,7 @@ export function createDescriber({
     if (!pending) {
       pending = (async () => {
         const cached = await fromBlob(key);
-        if (cached) return cached;
+        if (cached) return capWords(cached, 40);
         const fresh = await generate(repo, readme);
         if (fresh) await toBlob(key, fresh);
         return fresh;
