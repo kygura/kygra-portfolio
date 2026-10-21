@@ -9,7 +9,7 @@ const CV = () => {
     location: "Malaga, Spain",
     phone: "+34 658 50 37 43",
     email: "ncerratoanton@gmail.com",
-    website: "kygra.xyz",
+    website: "nca.ink",
     github: "github.com/kygura",
     linkedin: "https://www.linkedin.com/in/nicolas-cerrato-anton-746bb1412/"
   };
