@@ -36,6 +36,9 @@ function Cursor() {
   const ringY = useSpring(cursorY, { stiffness: 220, damping: 24 });
   const [isHovering, setIsHovering] = useState(false);
   const [isDown, setIsDown] = useState(false);
+  // Inside an iframe the page gets no mouse events, so the cursor would
+  // freeze at the frame's edge; it steps aside and the native one shows.
+  const [inFrame, setInFrame] = useState(false);
   const [accentColor, setAccentColor] = useState<string>("var(--accent-amber)");
   const [clicks, setClicks] = useState<{ id: number; x: number; y: number }[]>([]);
 
@@ -48,6 +51,7 @@ function Cursor() {
 
     const onEnter = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      setInFrame(target.tagName === "IFRAME");
       const closest = target.closest("a, button, [data-cursor]");
       if (closest) {
         const dataColor = (closest as HTMLElement).dataset.cursorColor;
@@ -95,7 +99,7 @@ function Cursor() {
       {/* Dot: painted in the theme's ink rather than mix-blend-difference,
           which would force re-blending against the animating hero canvas. */}
       <motion.div
-        style={{ x: cursorX, y: cursorY }}
+        style={{ x: cursorX, y: cursorY, opacity: inFrame ? 0 : 1 }}
         className="fixed top-0 left-0 z-[99999] pointer-events-none"
         animate={{ width: isHovering ? 4 : 6, height: isHovering ? 4 : 6, scale: isDown ? 0.6 : 1 }}
         transition={{ duration: 0.15, ease: "easeOut" }}
@@ -106,7 +110,7 @@ function Cursor() {
       {/* One square ring: small at rest, grows and takes the accent over
           links and buttons, squeezes while the button is down. */}
       <motion.div
-        style={{ x: ringX, y: ringY }}
+        style={{ x: ringX, y: ringY, opacity: inFrame ? 0 : 1 }}
         className="fixed top-0 left-0 z-[99998] pointer-events-none"
         animate={{ width: ring, height: ring, scale: isDown ? 0.82 : 1 }}
         transition={{ duration: 0.22, ease: "easeOut" }}
