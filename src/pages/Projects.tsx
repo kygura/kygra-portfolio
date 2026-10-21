@@ -11,6 +11,7 @@ const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
     </span>
     {repo.language && <span>{repo.language}</span>}
     <span>pushed {timeAgo(repo.pushedAt)}</span>
+    {repo.archived && <span className="repo-card__flag">archived</span>}
   </p>
 );
 
@@ -22,10 +23,14 @@ const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
         <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
       </a>
     )}
-    <a href={repo.url} target="_blank" rel="noopener noreferrer" className="repo-card__link">
-      <GitBranch className="w-4 h-4" aria-hidden="true" />
-      Source
-    </a>
+    {repo.private ? (
+      <span className="repo-card__link repo-card__link--muted">Private source</span>
+    ) : (
+      <a href={repo.url} target="_blank" rel="noopener noreferrer" className="repo-card__link">
+        <GitBranch className="w-4 h-4" aria-hidden="true" />
+        Source
+      </a>
+    )}
   </div>
 );
 
@@ -34,15 +39,21 @@ const RepoCard = ({ repo, index, featured }: { repo: ShowcaseRepo; index: number
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
-    <a
-      href={repo.liveUrl ?? repo.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="repo-card__preview"
-      aria-label={repo.liveUrl ? `Open ${repo.name} live` : `Open ${repo.name} on GitHub`}
-    >
-      <RepoPreview repo={repo} />
-    </a>
+    {repo.liveUrl || !repo.private ? (
+      <a
+        href={repo.liveUrl ?? repo.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="repo-card__preview"
+        aria-label={repo.liveUrl ? `Open ${repo.name} live` : `Open ${repo.name} on GitHub`}
+      >
+        <RepoPreview repo={repo} />
+      </a>
+    ) : (
+      <div className="repo-card__preview">
+        <RepoPreview repo={repo} />
+      </div>
+    )}
 
     <div className="repo-card__body">
       <p className="repo-card__index">{String(index + 1).padStart(2, "0")}</p>
@@ -75,8 +86,8 @@ const Projects = () => {
           Software
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          Straight from GitHub: my most starred and most active repositories, with a window onto
-          anything that's deployed.
+          Straight from GitHub: the projects I'm building now, with a window onto anything that's
+          deployed.
         </p>
         {data && (
           <p className="repo-index__stamp">

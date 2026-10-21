@@ -13,8 +13,9 @@ type RepoPreviewProps = {
 /**
  * A browser window onto the repo's deployment. Sites that allow framing load
  * live (only once scrolled near, never interactive); the rest show their
- * og:image or GitHub's card. The card also sits under every frame until it
- * finishes loading.
+ * og:image or GitHub's card, and a drawn tile when there is no image at all
+ * (private repos have no card). The card also sits under every frame until
+ * it finishes loading.
  */
 const RepoPreview = ({ repo }: RepoPreviewProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -24,6 +25,7 @@ const RepoPreview = ({ repo }: RepoPreviewProps) => {
   const [imageFailed, setImageFailed] = useState(false);
   const frame = repo.preview.kind === "frame" ? repo.preview.src : null;
   const image = repo.preview.kind === "image" ? repo.preview.src : repo.card;
+  const showTile = imageFailed || !image;
 
   useEffect(() => {
     const el = viewportRef.current;
@@ -58,13 +60,13 @@ const RepoPreview = ({ repo }: RepoPreviewProps) => {
           <i />
         </span>
         <span className="repo-window__address">
-          {repo.liveUrl ? displayHost(repo.liveUrl) : `github.com/${repo.fullName}`}
+          {repo.liveUrl ? displayHost(repo.liveUrl) : repo.private ? repo.name : `github.com/${repo.fullName}`}
         </span>
         {frame && <span className="repo-window__live" data-on={loaded}>live</span>}
       </div>
 
       <div ref={viewportRef} className="repo-window__viewport">
-        {imageFailed ? (
+        {showTile ? (
           <div className="repo-window__fallback" aria-hidden="true">
             <span>{repo.name}</span>
           </div>

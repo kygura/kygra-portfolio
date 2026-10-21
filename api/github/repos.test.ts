@@ -26,6 +26,7 @@ function repo(name: string, overrides: Partial<GithubRepo> = {}): GithubRepo {
     pushed_at: "2026-01-01T00:00:00Z",
     fork: false,
     archived: false,
+    private: false,
     has_pages: false,
     ...overrides,
   };
@@ -45,18 +46,24 @@ test("ranks by stars with a fading bonus for recent pushes", () => {
   assert.deepEqual(ranked.map((r) => r.name), ["old-starred", "fresh", "stale"]);
 });
 
-test("flagship repos rank ahead of starred and recent ones", () => {
+test("flagship-tagged repos replace the automatic ranking, archived and private included", () => {
   const ranked = rankRepos(
     [
-      repo("starred", { stargazers_count: 40, pushed_at: "2026-10-20T00:00:00Z" }),
-      repo("flag-old", { topics: ["flagship"], pushed_at: "2025-01-01T00:00:00Z" }),
-      repo("flag-new", { topics: ["flagship"], pushed_at: "2026-10-01T00:00:00Z" }),
+      repo("popular", { stargazers_count: 40 }),
+      repo("swarm", { topics: ["flagship"], archived: true }),
+      repo("polytech", { topics: ["flagship"], private: true, pushed_at: "2026-10-20T00:00:00Z" }),
+      repo("hidden", { topics: ["flagship", "portfolio-hide"] }),
     ],
     "kygura",
     NOW,
     10,
   );
-  assert.deepEqual(ranked.map((r) => r.name), ["flag-new", "flag-old", "starred"]);
+  assert.deepEqual(ranked.map((r) => r.name), ["polytech", "swarm"]);
+});
+
+test("without flagship tags, private repos stay out of the ranking", () => {
+  const ranked = rankRepos([repo("public"), repo("secret", { private: true })], "kygura", NOW, 10);
+  assert.deepEqual(ranked.map((r) => r.name), ["public"]);
 });
 
 test("drops forks, archived repos, hidden repos and the profile repo", () => {
@@ -113,9 +120,10 @@ test("builds previews: frame when allowed, og:image when blocked, card otherwise
     if (url.startsWith("https://api.github.com/users/")) {
       return Response.json([
         repo("framed", { stargazers_count: 3, homepage: "https://framed.dev", topics: ["flagship", "web"] }),
-        repo("blocked", { stargazers_count: 2, homepage: "https://blocked.dev" }),
-        repo("offline", { stargazers_count: 1, homepage: "https://offline.dev" }),
-        repo("code-only"),
+        repo("blocked", { stargazers_count: 2, homepage: "https://blocked.dev", topics: ["flagship"] }),
+        repo("offline", { stargazers_count: 1, homepage: "https://offline.dev", topics: ["flagship"] }),
+        repo("code-only", { topics: ["flagship"] }),
+        repo("private-app", { private: true, topics: ["flagship"] }),
       ]);
     }
     if (url.startsWith("https://framed.dev")) return new Response("<html></html>");
@@ -132,13 +140,14 @@ test("builds previews: frame when allowed, og:image when blocked, card otherwise
   assert.equal(descriptions.framed, "A framed site that renders straight into the software index preview.");
   assert.equal(descriptions.blocked, null); // no README, no About line
   assert.deepEqual(showcase.repos[0].topics, ["web"]); // internal topics stay off the page
-  const previews = Object.fromEntries(showcase.repos.map((r) => [r.name, r.preview]));
+  const previews = Object.fromEntries(showcase.repos.map((r) => [r.name, r.preview])) as Record<string, { kind: string; src?: string }>;
 
   assert.deepEqual(previews.framed, { kind: "frame", src: "https://framed.dev/" });
   assert.deepEqual(previews.blocked, { kind: "image", src: "https://blocked.dev/card.png" });
   assert.equal(previews.offline.kind, "image");
-  assert.match(previews.offline.src, /^https:\/\/opengraph\.githubassets\.com\/\d+\/kygura\/offline$/);
-  assert.match(previews["code-only"].src, /opengraph\.githubassets\.com/);
+  assert.match(previews.offline.src ?? "", /^https:\/\/opengraph\.githubassets\.com\/\d+\/kygura\/offline$/);
+  assert.match(previews["code-only"].src ?? "", /opengraph\.githubassets\.com/);
+  assert.deepEqual(previews["private-app"], { kind: "none" }); // GitHub has no public card for it
 });
 
 test("README summary skips banners, badges and code to the opening prose", () => {
@@ -164,6 +173,16 @@ test("README summary returns null when there is no prose, and clips long text", 
   assert.equal(readmeSummary("# repo\n\n- a list\n- only", "repo"), null);
   const long = readmeSummary(`${"Word ".repeat(200)}`, "repo");
   assert.ok(long && long.length <= 601 && long.endsWith("…"));
+});
+
+test("a token switches to the owner's own listing, which includes private repos", async () => {
+  const seen: string[] = [];
+  const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
+    seen.push(`${String(input)} ${new Headers(init?.headers).get("authorization") ?? ""}`);
+    return Response.json([]);
+  }) as typeof fetch;
+  await buildShowcase({ user: "kygura", token: "t0k", fetchImpl });
+  assert.match(seen[0], /^https:\/\/api\.github\.com\/user\/repos\?affiliation=owner&visibility=all.* Bearer t0k$/);
 });
 
 test("surfaces a GitHub failure instead of an empty index", async () => {

@@ -621,6 +621,11 @@
   color: var(--ink-3);
 }
 .repo-card__stars { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--ink-2); }
+.repo-card__flag {
+  padding: 0 0.4rem;
+  border: 1px solid var(--rule-2);
+  color: var(--ink-2);
+}
 
 .repo-card__description {
   margin-top: 0.9rem;
@@ -670,6 +675,8 @@
 }
 .repo-card__link:hover,
 .repo-card__link:focus-visible { border-color: var(--accent); color: var(--accent); }
+.repo-card__link--muted,
+.repo-card__link--muted:hover { border-style: dashed; border-color: var(--rule-2); color: var(--ink-3); }
 .repo-card__link--live { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .repo-card__link--live:hover,
 .repo-card__link--live:focus-visible { background: transparent; color: var(--accent); }

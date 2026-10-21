@@ -1,7 +1,8 @@
 /**
- * GET /api/github/repos — the software index, built from the public GitHub API: the owner's own
- * repositories, ranked by stars and recent pushes, each with a live URL and
- * the best preview that URL allows (an embedded frame, its og:image, or
+ * GET /api/github/repos — the software index, built from the GitHub API: the
+ * owner's repositories (private ones too, given a token that can read them),
+ * curated by topic, ranked by stars and recent pushes, each with a live URL
+ * and the best preview that URL allows (an embedded frame, its og:image, or
  * GitHub's generated social card).
  */
 
@@ -10,7 +11,11 @@ const GITHUB_API = "https://api.github.com";
 /** Repos tagged with this topic never appear in the index. */
 export const HIDE_TOPIC = "portfolio-hide";
 
-/** Repos tagged with this topic rank ahead of everything else. */
+/**
+ * Once any repo carries this topic, the index shows only those repos,
+ * archived or private included. Untagged, it falls back to ranking every
+ * public, active repo.
+ */
 export const FLAGSHIP_TOPIC = "flagship";
 
 /** Bookkeeping topics that steer the index but say nothing to a visitor. */
@@ -29,12 +34,14 @@ export interface GithubRepo {
   pushed_at: string;
   fork: boolean;
   archived: boolean;
+  private: boolean;
   has_pages: boolean;
 }
 
 export type RepoPreview =
   | { kind: "frame"; src: string }
-  | { kind: "image"; src: string };
+  | { kind: "image"; src: string }
+  | { kind: "none" };
 
 export interface ShowcaseRepo {
   name: string;
@@ -48,8 +55,11 @@ export interface ShowcaseRepo {
   language: string | null;
   topics: string[];
   pushedAt: string;
-  /** GitHub's social card: the placeholder while a frame loads. */
-  card: string;
+  archived: boolean;
+  /** Private repos get no source link: visitors would hit a 404. */
+  private: boolean;
+  /** GitHub's social card, the placeholder while a frame loads; private repos have none. */
+  card: string | null;
   preview: RepoPreview;
 }
 
@@ -81,19 +91,17 @@ export function scoreRepo(repo: GithubRepo, now: Date): number {
   return repo.stargazers_count + 6 * Math.exp(-days / 60);
 }
 
-const isFlagship = (repo: GithubRepo) => (repo.topics ?? []).includes(FLAGSHIP_TOPIC);
+const hasTopic = (repo: GithubRepo, topic: string) => (repo.topics ?? []).includes(topic);
 
 export function rankRepos(repos: GithubRepo[], user: string, now: Date, limit: number): GithubRepo[] {
-  return repos
-    .filter((repo) => !repo.fork && !repo.archived)
-    .filter((repo) => !(repo.topics ?? []).includes(HIDE_TOPIC))
+  const curated = repos.filter((repo) => hasTopic(repo, FLAGSHIP_TOPIC));
+  const candidates = curated.length
+    ? curated
+    : repos.filter((repo) => !repo.fork && !repo.archived && !repo.private);
+  return candidates
+    .filter((repo) => !hasTopic(repo, HIDE_TOPIC))
     .filter((repo) => repo.name.toLowerCase() !== user.toLowerCase()) // profile README repo
-    .sort(
-      (a, b) =>
-        Number(isFlagship(b)) - Number(isFlagship(a)) ||
-        scoreRepo(b, now) - scoreRepo(a, now) ||
-        b.pushed_at.localeCompare(a.pushed_at),
-    )
+    .sort((a, b) => scoreRepo(b, now) - scoreRepo(a, now) || b.pushed_at.localeCompare(a.pushed_at))
     .slice(0, limit);
 }
 
@@ -221,19 +229,19 @@ async function readmeFor(
   }
 }
 
-async function previewFor(liveUrl: string, fallback: string, fetchImpl: Fetch): Promise<RepoPreview> {
+async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fetch): Promise<RepoPreview> {
   try {
     const response = await fetchImpl(liveUrl, {
       redirect: "follow",
       headers: { accept: "text/html", "user-agent": "kygra-portfolio-showcase" },
       signal: AbortSignal.timeout(5000),
     });
-    if (!response.ok) return { kind: "image", src: fallback };
+    if (!response.ok) return fallback;
     if (!blocksFraming(response.headers)) return { kind: "frame", src: response.url || liveUrl };
     const image = findSocialImage(await response.text(), response.url || liveUrl);
-    return { kind: "image", src: image ?? fallback };
+    return image ? { kind: "image", src: image } : fallback;
   } catch {
-    return { kind: "image", src: fallback };
+    return fallback;
   }
 }
 
@@ -250,10 +258,12 @@ export async function buildShowcase({
     "user-agent": "kygra-portfolio-showcase",
     ...(token ? { authorization: `Bearer ${token}` } : {}),
   };
-  const response = await fetchImpl(
-    `${GITHUB_API}/users/${encodeURIComponent(user)}/repos?type=owner&sort=pushed&per_page=100`,
-    { headers },
-  );
+  // A token reads the owner's own listing, private repos included; without
+  // one only the public listing is reachable.
+  const listing = token
+    ? `${GITHUB_API}/user/repos?affiliation=owner&visibility=all&sort=pushed&per_page=100`
+    : `${GITHUB_API}/users/${encodeURIComponent(user)}/repos?type=owner&sort=pushed&per_page=100`;
+  const response = await fetchImpl(listing, { headers });
   if (!response.ok) {
     throw new Error(`GitHub responded ${response.status} for ${user}'s repositories`);
   }
@@ -262,10 +272,11 @@ export async function buildShowcase({
   const repos = await Promise.all(
     ranked.map(async (repo): Promise<ShowcaseRepo> => {
       const liveUrl = liveUrlFor(repo, user);
-      const card = githubCard(repo.full_name, repo.pushed_at);
+      const card = repo.private ? null : githubCard(repo.full_name, repo.pushed_at);
+      const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
       const [readme, preview] = await Promise.all([
         readmeFor(repo, headers, fetchImpl),
-        liveUrl ? previewFor(liveUrl, card, fetchImpl) : Promise.resolve<RepoPreview>({ kind: "image", src: card }),
+        liveUrl ? previewFor(liveUrl, fallback, fetchImpl) : Promise.resolve(fallback),
       ]);
       return {
         name: repo.name,
@@ -278,6 +289,8 @@ export async function buildShowcase({
         language: repo.language,
         topics: (repo.topics ?? []).filter((topic) => !INTERNAL_TOPICS.has(topic)),
         pushedAt: repo.pushed_at,
+        archived: repo.archived,
+        private: repo.private,
         card,
         preview,
       };
@@ -287,12 +300,13 @@ export async function buildShowcase({
   return { user, generatedAt: now.toISOString(), repos };
 }
 
-/** GitHub account whose public repositories make up the software index. */
+/** GitHub account whose repositories make up the software index. */
 const GITHUB_USER = process.env.GITHUB_USER?.trim() || "kygura";
 
 /**
- * Optional token for the GitHub API. Unauthenticated requests share a 60/hour
- * limit per IP; the CDN cache keeps the index well under it either way.
+ * Optional token for the GitHub API, needed for private repos (read access to
+ * metadata and contents). Without it requests share a 60/hour limit per IP;
+ * the CDN cache keeps the index well under that either way.
  */
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
 
