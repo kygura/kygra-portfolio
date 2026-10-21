@@ -15,6 +15,23 @@ const GITHUB_API = "https://api.github.com";
 /** Mirrors the index's hide topic: a hidden repo has no session either. */
 const HIDE_TOPIC = "portfolio-hide";
 
+/** Mirrors the index's SHOWCASE_INCLUDE / SHOWCASE_EXCLUDE lists (see repos.ts). */
+export interface RepoFilter {
+  include: Set<string>;
+  exclude: Set<string>;
+}
+
+export function parseRepoList(value: string | null | undefined): Set<string> {
+  return new Set(
+    (value ?? "")
+      .split(/[\s,]+/)
+      .map((entry) => entry.trim().toLowerCase().split("/").pop() ?? "")
+      .filter(Boolean),
+  );
+}
+
+const NO_FILTER: RepoFilter = { include: new Set(), exclude: new Set() };
+
 type Fetch = typeof fetch;
 
 export interface TerminalStep {
@@ -112,7 +129,14 @@ export async function locateRepo(
   name: string,
   token: string | null,
   fetchImpl: Fetch = fetch,
+  filter: RepoFilter = NO_FILTER,
 ): Promise<LocatedRepo> {
+  // Checked before any request, so a left-out repo's name gets the same
+  // answer as one that does not exist.
+  const key = name.toLowerCase();
+  if (filter.exclude.has(key) || (filter.include.size > 0 && !filter.include.has(key))) {
+    throw new NotScriptable(`No repository named ${name}`);
+  }
   const headers: Record<string, string> = {
     accept: "application/vnd.github+json",
     "x-github-api-version": "2022-11-28",
@@ -138,7 +162,7 @@ export async function locateRepo(
     repo.topics?.includes(HIDE_TOPIC) ||
     !repo.default_branch
   ) {
-    throw new NotScriptable(`${name} is not in the index`);
+    throw new NotScriptable(`No repository named ${name}`);
   }
 
   const treeResponse = await fetchImpl(
@@ -347,6 +371,10 @@ export function createSessionStore({ script, blobToken, blobAccess = "public" }:
 
 const GITHUB_USER = process.env.GITHUB_USER?.trim() || "kygura";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
+const FILTER: RepoFilter = {
+  include: parseRepoList(process.env.SHOWCASE_INCLUDE),
+  exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
+};
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim() || null;
 
 const sessions = ANTHROPIC_API_KEY
@@ -368,7 +396,12 @@ const REPO_NAME = /^[A-Za-z0-9._-]{1,100}$/;
 export async function handleTerminal(
   request: Request,
   store: ReturnType<typeof createSessionStore> | null,
-  { user = GITHUB_USER, token = GITHUB_TOKEN, fetchImpl = fetch }: { user?: string; token?: string | null; fetchImpl?: Fetch } = {},
+  {
+    user = GITHUB_USER,
+    token = GITHUB_TOKEN,
+    filter = FILTER,
+    fetchImpl = fetch,
+  }: { user?: string; token?: string | null; filter?: RepoFilter; fetchImpl?: Fetch } = {},
 ): Promise<Response> {
   const name = new URL(request.url).searchParams.get("repo") ?? "";
   if (!REPO_NAME.test(name) || name.startsWith(".")) {
@@ -378,7 +411,7 @@ export async function handleTerminal(
     return Response.json({ error: "Terminal sessions are not configured" }, { status: 503 });
   }
   try {
-    const located = await locateRepo(user, name, token, fetchImpl);
+    const located = await locateRepo(user, name, token, fetchImpl, filter);
     const steps = await store(located);
     if (!steps) {
       return Response.json(

@@ -2,7 +2,7 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import path from "path";
-import { buildShowcase, type Showcase } from "./api/github/repos";
+import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
 import { createScripter, createSessionStore, handleTerminal } from "./api/github/terminal";
 
 /**
@@ -15,6 +15,10 @@ function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   const sessions = apiKey ? createSessionStore({ script: createScripter({ apiKey }) }) : null;
+  const filter = {
+    include: parseRepoList(process.env.SHOWCASE_INCLUDE),
+    exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
+  };
   return {
     name: "dev-github-api",
     apply: "serve",
@@ -27,6 +31,7 @@ function devGithubApi(): Plugin {
               user: process.env.GITHUB_USER || "kygura",
               token: process.env.GITHUB_TOKEN,
               terminal: sessions !== null,
+              filter,
             });
             cached = { at: Date.now(), body };
           }
@@ -40,6 +45,7 @@ function devGithubApi(): Plugin {
         const response = await handleTerminal(new Request(`http://localhost${req.originalUrl ?? req.url}`), sessions, {
           user: process.env.GITHUB_USER || "kygura",
           token: process.env.GITHUB_TOKEN || null,
+          filter,
         });
         res.statusCode = response.status;
         res.setHeader("content-type", "application/json");

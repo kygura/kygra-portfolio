@@ -4,6 +4,7 @@ import {
   createScripter,
   createSessionStore,
   handleTerminal,
+  parseRepoList,
   pickEntry,
   sourcePrompt,
   tidySteps,
@@ -130,6 +131,36 @@ test("refuses private, forked, hidden, foreign and malformed repos without calli
     assert.equal(response.status, 400, bad);
   }
   assert.equal(calls, 0);
+});
+
+test("left-out repos look exactly like missing ones, and GitHub is never asked about them", async () => {
+  let calls = 0;
+  const store = createSessionStore({ script: async () => (calls++, []) });
+  const seen: string[] = [];
+  const answers = [];
+  for (const filter of [
+    { include: new Set<string>(), exclude: parseRepoList("tally") },
+    { include: parseRepoList("lexis"), exclude: new Set<string>() },
+  ]) {
+    const response = await handleTerminal(request("tally"), store, { user: "kygura", filter, fetchImpl: github({}, seen) });
+    answers.push([response.status, await response.json()]);
+  }
+  const missing = await handleTerminal(request("missing"), store, { user: "kygura", fetchImpl: github() });
+  const missingBody = await missing.json();
+  assert.deepEqual(answers, [
+    [404, { error: "No repository named tally" }],
+    [404, { error: "No repository named tally" }],
+  ]);
+  assert.deepEqual(missingBody, { error: "No repository named missing" });
+  assert.deepEqual(seen, []);
+  assert.equal(calls, 0);
+
+  const allowed = await handleTerminal(request("tally"), store, {
+    user: "kygura",
+    filter: { include: parseRepoList("Tally"), exclude: new Set() },
+    fetchImpl: github(),
+  });
+  assert.equal(allowed.status, 200);
 });
 
 test("without a model key the endpoint says so instead of failing", async () => {

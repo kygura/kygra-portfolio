@@ -20,6 +20,35 @@ export const FLAGSHIP_TOPIC = "flagship";
 /** Bookkeeping topics that steer the index but say nothing to a visitor. */
 const INTERNAL_TOPICS = new Set([HIDE_TOPIC, FLAGSHIP_TOPIC]);
 
+/**
+ * Which repos may appear, set in the environment so the names stay out of
+ * this public repo. A non-empty `include` turns the index into an allowlist;
+ * `exclude` (and the hide topic) always wins over it.
+ */
+export interface RepoFilter {
+  include: Set<string>;
+  exclude: Set<string>;
+}
+
+/** "a, b c\nowner/d" → {"a", "b", "c", "d"}: commas or whitespace, owner prefix and case ignored. */
+export function parseRepoList(value: string | null | undefined): Set<string> {
+  return new Set(
+    (value ?? "")
+      .split(/[\s,]+/)
+      .map((entry) => entry.trim().toLowerCase().split("/").pop() ?? "")
+      .filter(Boolean),
+  );
+}
+
+/** True when the filter lets this repo name onto the page. */
+export function isListed(name: string, filter: RepoFilter): boolean {
+  const key = name.toLowerCase();
+  if (filter.exclude.has(key)) return false;
+  return filter.include.size === 0 || filter.include.has(key);
+}
+
+const NO_FILTER: RepoFilter = { include: new Set(), exclude: new Set() };
+
 export interface GithubRepo {
   name: string;
   full_name: string;
@@ -115,6 +144,7 @@ interface ShowcaseOptions {
   user: string;
   /** The repo this site deploys from, left out so the page never frames itself. */
   selfRepo?: string | null;
+  filter?: RepoFilter;
   token?: string | null;
   limit?: number;
   now?: Date;
@@ -139,9 +169,9 @@ const hasTopic = (repo: GithubRepo, topic: string) => (repo.topics ?? []).includ
 
 /**
  * Every repo of the owner's own (archived ones included: a working deployment
- * is the bar, checked later), minus forks, hidden repos, the profile README
- * repo and this site's own repo. Flagship repos lead; stars and recency order
- * the rest.
+ * is the bar, checked later), minus forks, hidden repos, repos the filter
+ * leaves out, the profile README repo and this site's own repo. Flagship
+ * repos lead; stars and recency order the rest.
  */
 export function rankRepos(
   repos: GithubRepo[],
@@ -149,10 +179,17 @@ export function rankRepos(
   now: Date,
   limit: number,
   selfRepo?: string | null,
+  filter: RepoFilter = NO_FILTER,
 ): GithubRepo[] {
   const skip = new Set([user.toLowerCase(), selfRepo?.toLowerCase()]);
   return repos
-    .filter((repo) => !repo.fork && !hasTopic(repo, HIDE_TOPIC) && !skip.has(repo.name.toLowerCase()))
+    .filter(
+      (repo) =>
+        !repo.fork &&
+        !hasTopic(repo, HIDE_TOPIC) &&
+        !skip.has(repo.name.toLowerCase()) &&
+        isListed(repo.name, filter),
+    )
     .sort(
       (a, b) =>
         Number(hasTopic(b, FLAGSHIP_TOPIC)) - Number(hasTopic(a, FLAGSHIP_TOPIC)) ||
@@ -621,6 +658,7 @@ async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fet
 export async function buildShowcase({
   user,
   selfRepo,
+  filter,
   describe,
   token,
   limit = 9,
@@ -649,7 +687,7 @@ export async function buildShowcase({
   // code-only card whose map is fetched below. Private repos need a site:
   // visitors could open nothing else.
   type Candidate = { repo: GithubRepo; liveUrl: string | null; card: string | null; preview: RepoPreview | null };
-  const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo);
+  const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo, filter);
   const candidates = (
     await Promise.all(
       ranked.map(async (repo): Promise<Candidate | null> => {
@@ -734,6 +772,17 @@ const describe = ANTHROPIC_API_KEY
     })
   : null;
 
+/**
+ * SHOWCASE_INCLUDE: when set, only these repos appear (an allowlist).
+ * SHOWCASE_EXCLUDE: these repos never appear, whatever else says so.
+ * Both take names separated by commas or whitespace. The terminal endpoint
+ * reads the same two variables, so a left-out repo cannot be scripted either.
+ */
+const FILTER: RepoFilter = {
+  include: parseRepoList(process.env.SHOWCASE_INCLUDE),
+  exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
+};
+
 // ---- Handler -------------------------------------------------------------------
 // This file imports no sibling modules (packages are fine): Vercel compiles
 // each function to .js but keeps `.ts` import specifiers, so a relative
@@ -755,6 +804,7 @@ export async function GET(): Promise<Response> {
       terminal: ANTHROPIC_API_KEY !== null,
       // Vercel's system env names the repo each deployment builds from.
       selfRepo: process.env.VERCEL_GIT_REPO_SLUG,
+      filter: FILTER,
     });
     return Response.json(showcase, {
       headers: { "cache-control": "public, s-maxage=3600, stale-while-revalidate=86400" },

@@ -8,8 +8,10 @@ import {
   clip,
   createDescriber,
   findSocialImage,
+  isListed,
   languageOf,
   liveUrlFor,
+  parseRepoList,
   rankRepos,
   readmeSummary,
   type GithubRepo,
@@ -92,6 +94,26 @@ test("drops forks, hidden repos and the profile repo, but keeps archived ones", 
     10,
   );
   assert.deepEqual(ranked.map((r) => r.name), ["keep", "archived"]);
+});
+
+test("repo lists ignore case, owner prefixes and separators", () => {
+  assert.deepEqual([...parseRepoList(" Lexis, kygura/Tally\n  atlas  ")], ["lexis", "tally", "atlas"]);
+  assert.equal(parseRepoList(undefined).size, 0);
+  assert.equal(parseRepoList(" , ").size, 0);
+});
+
+test("an include list makes the index an allowlist; exclude always wins", () => {
+  const all = [repo("lexis"), repo("tally"), repo("secret"), repo("draft", { topics: ["portfolio-hide"] })];
+  const names = (include: string, exclude: string) =>
+    rankRepos(all, "kygura", NOW, 10, null, { include: parseRepoList(include), exclude: parseRepoList(exclude) })
+      .map((r) => r.name)
+      .sort();
+  assert.deepEqual(names("", ""), ["lexis", "secret", "tally"]);
+  assert.deepEqual(names("", "secret"), ["lexis", "tally"]);
+  assert.deepEqual(names("lexis, Tally", ""), ["lexis", "tally"]);
+  assert.deepEqual(names("lexis,tally", "tally"), ["lexis"]);
+  assert.deepEqual(names("draft", ""), []); // the hide topic still wins
+  assert.equal(isListed("LEXIS", { include: parseRepoList("lexis"), exclude: new Set() }), true);
 });
 
 test("live URL prefers the homepage, then GitHub Pages", () => {
