@@ -1,7 +1,7 @@
 /**
  * GET /api/github/repos — the software index, built from the GitHub API: the
- * owner's deployed repositories (private ones too, given a token that can
- * read them), curated by topic, ranked by stars and recent pushes, each with
+ * owner's repositories that have a working live site (private ones too,
+ * given a token that can read them), ranked by stars and recent pushes, each with
  * the best preview its live site allows (an embedded frame, its og:image, or
  * GitHub's generated social card).
  */
@@ -11,11 +11,7 @@ const GITHUB_API = "https://api.github.com";
 /** Repos tagged with this topic never appear in the index. */
 export const HIDE_TOPIC = "portfolio-hide";
 
-/**
- * Once any repo carries this topic, the index shows only those repos,
- * archived or private included. Untagged, it falls back to ranking every
- * public, active repo.
- */
+/** Optional: repos tagged with this topic rank ahead of the rest. */
 export const FLAGSHIP_TOPIC = "flagship";
 
 /** Bookkeeping topics that steer the index but say nothing to a visitor. */
@@ -74,6 +70,8 @@ type Fetch = typeof fetch;
 
 interface ShowcaseOptions {
   user: string;
+  /** The repo this site deploys from, left out so the page never frames itself. */
+  selfRepo?: string | null;
   token?: string | null;
   limit?: number;
   now?: Date;
@@ -94,15 +92,28 @@ export function scoreRepo(repo: GithubRepo, now: Date): number {
 
 const hasTopic = (repo: GithubRepo, topic: string) => (repo.topics ?? []).includes(topic);
 
-export function rankRepos(repos: GithubRepo[], user: string, now: Date, limit: number): GithubRepo[] {
-  const curated = repos.filter((repo) => hasTopic(repo, FLAGSHIP_TOPIC));
-  const candidates = curated.length
-    ? curated
-    : repos.filter((repo) => !repo.fork && !repo.archived && !repo.private);
-  return candidates
-    .filter((repo) => !hasTopic(repo, HIDE_TOPIC))
-    .filter((repo) => repo.name.toLowerCase() !== user.toLowerCase()) // profile README repo
-    .sort((a, b) => scoreRepo(b, now) - scoreRepo(a, now) || b.pushed_at.localeCompare(a.pushed_at))
+/**
+ * Every repo of the owner's own (archived ones included: a working deployment
+ * is the bar, checked later), minus forks, hidden repos, the profile README
+ * repo and this site's own repo. Flagship repos lead; stars and recency order
+ * the rest.
+ */
+export function rankRepos(
+  repos: GithubRepo[],
+  user: string,
+  now: Date,
+  limit: number,
+  selfRepo?: string | null,
+): GithubRepo[] {
+  const skip = new Set([user.toLowerCase(), selfRepo?.toLowerCase()]);
+  return repos
+    .filter((repo) => !repo.fork && !hasTopic(repo, HIDE_TOPIC) && !skip.has(repo.name.toLowerCase()))
+    .sort(
+      (a, b) =>
+        Number(hasTopic(b, FLAGSHIP_TOPIC)) - Number(hasTopic(a, FLAGSHIP_TOPIC)) ||
+        scoreRepo(b, now) - scoreRepo(a, now) ||
+        b.pushed_at.localeCompare(a.pushed_at),
+    )
     .slice(0, limit);
 }
 
@@ -254,6 +265,7 @@ async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fet
 
 export async function buildShowcase({
   user,
+  selfRepo,
   token,
   limit = 9,
   now = new Date(),
@@ -277,7 +289,7 @@ export async function buildShowcase({
 
   // Only deployed projects make the page, so rank everything, keep repos with
   // a live URL that still answers, then cap.
-  const deployed = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity).flatMap((repo) => {
+  const deployed = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo).flatMap((repo) => {
     const liveUrl = liveUrlFor(repo, user);
     return liveUrl ? [{ repo, liveUrl }] : [];
   });
@@ -336,7 +348,12 @@ export const runtime = "nodejs";
  */
 export async function GET(): Promise<Response> {
   try {
-    const showcase = await buildShowcase({ user: GITHUB_USER, token: GITHUB_TOKEN });
+    const showcase = await buildShowcase({
+      user: GITHUB_USER,
+      token: GITHUB_TOKEN,
+      // Vercel's system env names the repo each deployment builds from.
+      selfRepo: process.env.VERCEL_GIT_REPO_SLUG,
+    });
     return Response.json(showcase, {
       headers: { "cache-control": "public, s-maxage=3600, stale-while-revalidate=86400" },
     });

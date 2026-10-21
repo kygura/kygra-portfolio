@@ -46,27 +46,27 @@ test("ranks by stars with a fading bonus for recent pushes", () => {
   assert.deepEqual(ranked.map((r) => r.name), ["old-starred", "fresh", "stale"]);
 });
 
-test("flagship-tagged repos replace the automatic ranking, archived and private included", () => {
+test("flagship is an optional boost: tagged repos lead, untagged ones still show", () => {
   const ranked = rankRepos(
     [
       repo("popular", { stargazers_count: 40 }),
       repo("swarm", { topics: ["flagship"], archived: true }),
       repo("polytech", { topics: ["flagship"], private: true, pushed_at: "2026-10-20T00:00:00Z" }),
-      repo("hidden", { topics: ["flagship", "portfolio-hide"] }),
+      repo("quiet"),
     ],
     "kygura",
     NOW,
     10,
   );
-  assert.deepEqual(ranked.map((r) => r.name), ["polytech", "swarm"]);
+  assert.deepEqual(ranked.map((r) => r.name), ["polytech", "swarm", "popular", "quiet"]);
 });
 
-test("without flagship tags, private repos stay out of the ranking", () => {
-  const ranked = rankRepos([repo("public"), repo("secret", { private: true })], "kygura", NOW, 10);
-  assert.deepEqual(ranked.map((r) => r.name), ["public"]);
+test("leaves out the site's own repo", () => {
+  const ranked = rankRepos([repo("kygra-portfolio"), repo("lexis")], "kygura", NOW, 10, "kygra-portfolio");
+  assert.deepEqual(ranked.map((r) => r.name), ["lexis"]);
 });
 
-test("drops forks, archived repos, hidden repos and the profile repo", () => {
+test("drops forks, hidden repos and the profile repo, but keeps archived ones", () => {
   const ranked = rankRepos(
     [
       repo("keep"),
@@ -79,7 +79,7 @@ test("drops forks, archived repos, hidden repos and the profile repo", () => {
     NOW,
     10,
   );
-  assert.deepEqual(ranked.map((r) => r.name), ["keep"]);
+  assert.deepEqual(ranked.map((r) => r.name), ["keep", "archived"]);
 });
 
 test("live URL prefers the homepage, then GitHub Pages", () => {
