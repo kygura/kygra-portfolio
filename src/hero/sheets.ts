@@ -20,7 +20,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "ocean",
     name: "Ocean",
-    aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and a wing-sail ship moored at a pier, under two setting suns.",
+    aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, under two setting suns.",
   },
   {
     id: "sea",

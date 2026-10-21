@@ -1,8 +1,37 @@
-/** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, a moored wing-sail ship, twin suns. */
+/** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, the King of Red Lions moored at a pier, twin suns. */
 import * as THREE from "three";
-import { burst, pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
+import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 
 type Kind = "box" | "cyl" | "taper";
+
+// Sail cloth with the Wind Waker crest (a hooked S curling into a spiral) near the luff.
+// u runs luff to leech, v foot to head; 64px, nearest-filtered like the kit's textures.
+function sailTex() {
+  const S = 64, c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d");
+  if (!g) throw new Error("2d canvas unavailable");
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const k = 0.92 + ((x * 7 + y * 13) % 5) * 0.02;
+    g.fillStyle = `rgb(${236 * k},${230 * k},${212 * k})`;
+    g.fillRect(x, y, 1, 1);
+  }
+  g.strokeStyle = g.fillStyle = "#3f8c8e";
+  g.lineWidth = 4.5;
+  g.lineCap = "round";
+  g.beginPath();
+  g.arc(20, 24, 6, Math.PI * 1.15, Math.PI * 0.5);
+  g.arc(20, 36, 6, Math.PI * 1.5, Math.PI * 0.1, true);
+  g.arc(23, 37, 2.5, Math.PI * 0.1, Math.PI * 1.2);
+  g.stroke();
+  g.beginPath();
+  g.moveTo(13, 21); g.lineTo(17, 13); g.lineTo(19, 20);
+  g.fill();
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false;
+  return t;
+}
 
 export function buildOcean(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view } = k;
@@ -27,8 +56,6 @@ export function buildOcean(k: PsxKit): SceneDef {
     trunk: psx({ map: tex.tBark, tint: "#b8a488" }),
     frond: psx({ map: tex.tLeaf, tint: "#a8c47c", uv: 1.5 }),
     wood: psx({ map: tex.tBark, tint: "#9c8a74", uv: 2 }),
-    hull: psx({ map: tex.tPlain, tint: "#dcd8cb", amb: "#6d7c84" }),
-    sail: psx({ map: tex.tPlain, tint: "#e9e4d4", amb: "#7a8890" }),
   };
 
   const { add, flush } = k.batcher();
@@ -222,47 +249,109 @@ export function buildOcean(k: PsxKit): SceneDef {
   add(facet(new THREE.BoxGeometry(0.22, 0.22, 0.22)), M.glyph, 9, 3.45, PZ + 0.6);
   flush(scene);
 
-  /* ---- wing-sail ship, moored alongside ---- */
+  /* ---- King of Red Lions, moored alongside ---- */
+  // After The Wind Waker: red hull with a cream gunwale, a banded neck curling up from the bow
+  // into a lion's head (gold snout and horns, white curled mane), green mast, crest on the sail.
+  const kc = {
+    red: psx({ map: tex.tPlain, tint: "#e8603f", amb: "#7a6460" }),
+    cream: psx({ map: tex.tPlain, tint: "#f2ead6", amb: "#7a8088" }),
+    gold: psx({ map: tex.tPlain, tint: "#f0c75c", amb: "#7c6c50" }),
+    mane: psx({ map: tex.tPlain, tint: "#f4efe2", amb: "#80878c" }),
+    eye: psx({ map: tex.tPlain, tint: "#4f86d0", amb: "#3a5a8a" }),
+    mast: psx({ map: tex.tPlain, tint: "#64a582", amb: "#4e6a66" }),
+    boom: psx({ map: tex.tBark, tint: "#f0c890", uv: 1.5 }),
+    sail: psx({ map: sailTex(), tint: "#ffffff", amb: "#7a8890", side: THREE.DoubleSide }),
+  };
   const ship = new THREE.Group();
-  const SX = 11.6, SZ = -13.6;
+  const SX = 12, SZ = -13.1;
   ship.position.set(SX, 0, SZ);
   ship.rotation.y = 0.04;
   scene.add(ship);
-  const hullG = new THREE.BoxGeometry(10, 1.6, 2.6, 10, 2, 2);
-  const hp = hullG.attributes.position;
-  for (let i = 0; i < hp.count; i++) {
-    const x = hp.getX(i), y = hp.getY(i), z = hp.getZ(i), f = (x + 5) / 10;
-    let wz = f < 0.35 ? Math.sqrt(f / 0.35) : 1 - Math.max(0, f - 0.85) * 1.2;
-    wz = Math.max(wz, 0.06) * (y < 0 ? 0.55 : 1);
-    hp.setXYZ(i, x, y + (y > 0 ? 0.45 * (1 - f) ** 3 : 0), z * wz);
+  // Bow at -x: the hull narrows to a point and the sheer rises toward it; the stern keeps a narrow transom.
+  const HL = 7;
+  const hullShape = (g: THREE.BufferGeometry, widen: number) => {
+    const hp = g.attributes.position;
+    for (let i = 0; i < hp.count; i++) {
+      const x = hp.getX(i), y = hp.getY(i), z = hp.getZ(i), f = (x + HL / 2) / HL;
+      let wz = f < 0.4 ? Math.sqrt(f / 0.4) : 1 - Math.max(0, f - 0.8) * 1.5;
+      wz = Math.max(wz, 0.04) * (y < 0 ? 0.5 : 1) * widen;
+      hp.setXYZ(i, x, y + (y > 0 ? 0.55 * (1 - f) ** 3 : 0), z * wz);
+    }
+    return g;
+  };
+  add(facet(hullShape(new THREE.BoxGeometry(HL, 1.1, 2, 10, 2, 2), 1), 0.03), kc.red);
+  add(facet(hullShape(new THREE.BoxGeometry(HL, 0.16, 2, 10, 1, 1).translate(0, 0.6, 0), 1.06)), kc.cream);
+  add(facet(new THREE.BoxGeometry(4.6, 0.06, 1.5)), mat.wood, 0.6, 0.7, 0);
+  // iron fittings: mast step and the tiller box at the stern
+  add(facet(new THREE.BoxGeometry(0.7, 0.55, 0.8)), M.solid, -0.9, 0.95, 0);
+  add(facet(new THREE.BoxGeometry(0.6, 0.4, 0.7)), M.solid, 2.7, 0.9, 0);
+  add(facet(new THREE.BoxGeometry(0.1, 0.6, 0.1)), M.solid, 2.85, 1.35, 0);
+  // neck: rises off the bow, leans back toward the deck, then the head juts forward
+  const neck = [new THREE.Vector3(-3.1, 0.5, 0), new THREE.Vector3(-3.6, 1.5, 0), new THREE.Vector3(-3.5, 2.4, 0), new THREE.Vector3(-3.1, 3.1, 0), new THREE.Vector3(-3.15, 3.7, 0)];
+  const flat = (g: THREE.BufferGeometry) => { g.scale(1, 1, 0.6); g.computeVertexNormals(); return g; };
+  for (let i = 0; i < neck.length - 1; i++) add(flat(seg(neck[i], neck[i + 1], 0.55 - i * 0.05, 0.5 - i * 0.05, 6)), kc.red);
+  for (const [i, f] of [[1, 0.3], [2, 0.2]] as const) {
+    const a = neck[i].clone().lerp(neck[i + 1], f), b = neck[i].clone().lerp(neck[i + 1], f + 0.22);
+    add(flat(seg(a, b, 0.53 - i * 0.05, 0.53 - i * 0.05, 6)), kc.cream);
   }
-  add(facet(hullG, 0.03), mat.hull);
-  add(facet(new THREE.BoxGeometry(5.5, 0.06, 2.4)), mat.wood, 1, 0.83, 0);
-  for (const s of [-1, 1]) add(facet(new THREE.BoxGeometry(5, 0.12, 0.04)), M.glyph, 1, 0.45, s * 1.32);
-  add(wallUV(facet(new THREE.BoxGeometry(2.2, 0.9, 1.7)), 1 / 3), mat.glass2, 3.1, 1.25, 0);
-  add(facet(new THREE.BoxGeometry(2.5, 0.1, 1.9)), mat.hull, 3.1, 1.75, 0);
-  const sails: [number, number][] = [[-2, 8.5], [0.7, 7.2]];
-  sails.forEach(([sx, sh]) => {
-    const g = new THREE.CylinderGeometry(0.32, 0.55, sh, 8, 3);
-    g.scale(1.9, 1, 0.32);
-    g.translate(0, sh / 2, 0);
-    add(facet(g, 0.02), mat.sail, sx, 0.8, 0, 0, 0.35, 0);
-    add(facet(new THREE.BoxGeometry(0.16, 0.16, 0.16)), M.glyph, sx, 0.88 + sh, 0);
-  });
-  add(facet(new THREE.CylinderGeometry(0.06, 0.08, 2.6, 5)), M.solid, 4.5, 2.1, 0);
+  // mast, with dark bands where the boom and the sail head are lashed
+  const MX = -0.9, MH = 9.2;
+  add(facet(new THREE.CylinderGeometry(0.11, 0.14, MH, 6)), kc.mast, MX, 0.7 + MH / 2, 0);
+  for (const y of [2.15, 7.3]) add(facet(new THREE.CylinderGeometry(0.17, 0.17, 0.22, 6)), M.solid, MX, y, 0);
   flush(ship);
-  // vertical-axis wind turbine on the stern
-  const rotor = new THREE.Group();
-  rotor.position.set(4.5, 2.7, 0);
-  ship.add(rotor);
-  for (let b = 0; b < 3; b++) {
-    const a = (b / 3) * Math.PI * 2;
-    add(facet(new THREE.BoxGeometry(0.06, 1.4, 0.32)), mat.sail, Math.cos(a) * 0.45, 0, Math.sin(a) * 0.45, 0, -a, 0.12);
+
+  // head: forward is -x; its own group so it can look around and nod
+  const head = new THREE.Group();
+  head.position.set(-3.45, 4.05, 0);
+  head.scale.setScalar(1.35);
+  ship.add(head);
+  add(facet(new THREE.BoxGeometry(1, 0.75, 0.9), 0.06), kc.red);
+  add(facet(new THREE.BoxGeometry(0.7, 0.42, 0.72), 0.04), kc.gold, -0.72, 0.06, 0);
+  add(facet(new THREE.BoxGeometry(0.22, 0.2, 0.42)), kc.gold, -1.05, 0.22, 0);
+  for (const s of [-1, 1]) {
+    add(facet(new THREE.BoxGeometry(0.42, 0.12, 0.2)), kc.gold, -0.42, 0.38, s * 0.28, 0, 0, -0.25 * s * s);
+    add(facet(new THREE.BoxGeometry(0.14, 0.12, 0.08)), kc.eye, -0.46, 0.25, s * 0.42);
+    // whisker spikes swept back off the cheeks
+    add(facet(new THREE.ConeGeometry(0.1, 0.7, 4).rotateZ(Math.PI / 2 + 0.4)), kc.gold, 0.1, -0.15, s * 0.5, 0, s * 0.35, 0);
+    // horns: tall, flaring out, tips tipping forward
+    const hp = [[0.15, 0.3, 0.22], [0.3, 0.9, 0.3], [0.25, 1.55, 0.38], [0.02, 2.0, 0.42]].map(([x, y, z]) => new THREE.Vector3(x, y, z * s));
+    for (let i = 0; i < 3; i++) add(seg(hp[i], hp[i + 1], 0.16 - i * 0.04, 0.12 - i * 0.04, 5), kc.gold);
   }
-  for (const y of [-0.72, 0.72]) add(facet(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 6)), M.stone2, 0, y, 0);
-  flush(rotor);
+  // mane: white curls ringing the back of the head
+  const curl = facet(new THREE.TorusGeometry(0.2, 0.09, 4, 7), 0.02);
+  const tuft = facet(new THREE.IcosahedronGeometry(0.32, 0), 0.06);
+  for (let i = 0; i < 9; i++) {
+    const a = -Math.PI * 0.55 + (i / 8) * Math.PI * 1.1, r = 0.62;
+    add(curl, kc.mane, 0.35, Math.sin(a) * r * 0.9 + 0.05, Math.cos(a) * r, 0, Math.PI / 2 + Math.cos(a) * 0.4, rnd() * 3);
+    add(tuft, kc.mane, 0.55, Math.sin(a) * r * 0.75, Math.cos(a) * r * 0.85, rnd() * 3, rnd() * 3, 0, 0.8 + rnd() * 0.3);
+  }
+  add(tuft, kc.mane, 0.7, 0.1, 0, 0, 0, 0, 1.3);
+  flush(head);
+  const jaw = new THREE.Group();
+  jaw.position.set(0.15, -0.3, 0);
+  head.add(jaw);
+  add(facet(new THREE.BoxGeometry(1.15, 0.2, 0.78), 0.03), kc.red, -0.55, -0.06, 0);
+  add(facet(new THREE.BoxGeometry(0.2, 0.12, 0.6)), kc.cream, -1.05, 0.06, 0);
+  flush(jaw);
+
+  // sail and boom swing together about the mast
+  const sail = new THREE.Group();
+  sail.position.set(MX, 0, 0);
+  ship.add(sail);
+  const SY0 = 2.2, SH = 7.6, SW = 3.6;
+  const sg = new THREE.PlaneGeometry(1, 1, 3, 5);
+  const sp = sg.attributes.position;
+  for (let i = 0; i < sp.count; i++) {
+    const v = sp.getX(i) + 0.5, u = sp.getY(i) + 0.5, w = Math.max(0.22, SW * (1 - u) ** 0.7);
+    sp.setXYZ(i, v * w, SY0 + u * SH, -0.55 * Math.sin(Math.PI * v) * (1 - u * 0.6));
+  }
+  add(facet(sg), kc.sail);
+  add(facet(new THREE.CylinderGeometry(0.12, 0.12, 0.5, 5)), kc.sail, 0.12, SY0 + SH + 0.15, 0);
+  add(facet(new THREE.CylinderGeometry(0.06, 0.06, SW + 0.3, 5).rotateZ(Math.PI / 2)), kc.boom, SW / 2, SY0 - 0.08, 0);
+  add(facet(new THREE.BoxGeometry(0.2, 0.16, 0.16)), M.solid, SW + 0.25, SY0 - 0.08, 0);
+  flush(sail);
   // mooring lines, re-strung every frame as the hull rides the swell
-  const cleats = [new THREE.Vector3(-3.2, 0.85, 1.0), new THREE.Vector3(4.2, 0.85, 1.1)];
+  const cleats = [new THREE.Vector3(-2.4, 0.75, 0.95), new THREE.Vector3(2.6, 0.75, 0.9)];
   const bollards = [new THREE.Vector3(8, 1.3, PZ - 0.7), new THREE.Vector3(15.6, 1.3, PZ - 0.7)];
   const lineGeo = new THREE.BufferGeometry().setFromPoints([...cleats, ...bollards]);
   lineGeo.setIndex([0, 2, 1, 3]);
@@ -297,20 +386,20 @@ export function buildOcean(k: PsxKit): SceneDef {
   });
 
   // easter eggs: start times, negative = never fired
-  let tRotor = -99, tSun = -99, tGull = -99;
+  let tTalk = -99, tSun = -99, tGull = -99;
   const tmpV = new THREE.Vector3();
   return {
     scene, cam, fog: [25, 120], fov: [64, 74], limits: { pitch: [-0.05, 0.7], zoom: [0.55, 1.5] },
     labels: [
       { name: "Drowned spire", sub: "canopy reclaimed", at: (v) => { v.set(0, spireTop, 0); } },
-      { name: "Wing-ship", sub: "moored · 2 sails", at: (v) => { v.set(-2, 9.6, 0); ship.localToWorld(v); } },
+      { name: "King of Red Lions", sub: "moored · talks back", at: (v) => { v.set(-0.9, 10.6, 0); ship.localToWorld(v); } },
       { name: "Twin suns", sub: "binary, setting", at: (v) => { v.copy(sunA.position).y += 16; } },
     ],
     eggs: [
       {
-        id: "ocean-turbine", r: 34,
-        at: (v) => { rotor.getWorldPosition(v); },
-        fire: (t) => { tRotor = t; },
+        id: "ocean-korl", r: 34,
+        at: (v) => { head.getWorldPosition(v); },
+        fire: (t) => { tTalk = t; },
       },
       {
         id: "ocean-suns", r: 40,
@@ -329,11 +418,15 @@ export function buildOcean(k: PsxKit): SceneDef {
       water.computeVertexNormals();
       for (const f of foams) f.m.position.y = wave(f.x, f.z, t) + 0.08;
 
-      ship.position.y = wave(SX, SZ, t) * 0.7 - 0.3;
+      ship.position.y = wave(SX, SZ, t) * 0.7 + 0.05;
       ship.rotation.x = Math.sin(t * 0.8) * 0.025;
       ship.rotation.z = (wave(SX - 3, SZ, t) - wave(SX + 3, SZ, t)) * 0.05;
-      const er = t - tRotor;
-      rotor.rotation.y = t * 2.6 + burst(er, 38, 5);
+      // idle: the head looks about; tapped, he talks, jaw flapping, nodding along
+      const er = t - tTalk, talk = pulse(er, 2.8);
+      head.rotation.y = Math.sin(t * 0.37) * 0.12 + Math.sin(t * 0.11) * 0.08;
+      head.rotation.z = Math.sin(t * 0.6) * 0.03 + talk * 0.12 * Math.sin(er * 3.5);
+      jaw.rotation.z = 0.03 + (er > 0 && er < 2.8 ? 0.38 * Math.abs(Math.sin(er * 9)) * talk : 0);
+      sail.rotation.y = -0.18 + Math.sin(t * 0.9) * 0.04;
       ship.position.y += 0.1 * pulse(er, 1.2);
       ship.updateMatrixWorld();
       const lp = lineGeo.attributes.position;
