@@ -1,86 +1,120 @@
-import { ExternalLink, GitBranch } from "lucide-react";
-import { Link } from "react-router-dom";
-import { projects } from "@/lib/projects";
+import { ArrowUpRight, GitBranch, Star } from "lucide-react";
+import RepoPreview from "@/components/RepoPreview";
+import { timeAgo, useShowcase, type ShowcaseRepo } from "@/lib/showcase";
 
-// Every entry takes the site accent: per-project hues would sit outside
-// the survey palette, and the accent switch should recolour the index too.
-const DEFAULT_ACCENT = "var(--accent)";
+const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
+  <p className="repo-card__meta">
+    <span className="repo-card__stars">
+      <Star className="w-3.5 h-3.5" aria-hidden="true" />
+      {repo.stars}
+      <span className="sr-only"> stars</span>
+    </span>
+    {repo.language && <span>{repo.language}</span>}
+    <span>pushed {timeAgo(repo.pushedAt)}</span>
+  </p>
+);
+
+const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
+  <div className="repo-card__links">
+    {repo.liveUrl && (
+      <a href={repo.liveUrl} target="_blank" rel="noopener noreferrer" className="repo-card__link repo-card__link--live">
+        Visit site
+        <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+      </a>
+    )}
+    <a href={repo.url} target="_blank" rel="noopener noreferrer" className="repo-card__link">
+      <GitBranch className="w-4 h-4" aria-hidden="true" />
+      Source
+    </a>
+  </div>
+);
+
+const RepoCard = ({ repo, index, featured }: { repo: ShowcaseRepo; index: number; featured?: boolean }) => (
+  <article
+    className={`repo-card${featured ? " repo-card--featured" : ""}`}
+    style={{ animationDelay: `${index * 80}ms` }}
+  >
+    <a
+      href={repo.liveUrl ?? repo.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="repo-card__preview"
+      aria-label={repo.liveUrl ? `Open ${repo.name} live` : `Open ${repo.name} on GitHub`}
+    >
+      <RepoPreview repo={repo} />
+    </a>
+
+    <div className="repo-card__body">
+      <p className="repo-card__index">{String(index + 1).padStart(2, "0")}</p>
+      <h2 className="repo-card__title">{repo.name}</h2>
+      <RepoMeta repo={repo} />
+      {repo.description && <p className="repo-card__description">{repo.description}</p>}
+      {repo.topics.length > 0 && (
+        <ul className="repo-card__topics" aria-label="Topics">
+          {repo.topics.slice(0, featured ? 8 : 4).map((topic) => (
+            <li key={topic}>{topic}</li>
+          ))}
+        </ul>
+      )}
+      <RepoLinks repo={repo} />
+    </div>
+  </article>
+);
 
 const Projects = () => {
+  const { data, isPending, error } = useShowcase();
+  const [lead, ...rest] = data?.repos ?? [];
+
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
-      <div className="mb-10 sm:mb-16 pb-6 sm:pb-8 border-b border-[var(--border-muted)] relative">
+      <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)]">
         <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
           ( 02 &mdash; SOFTWARE )
         </p>
-        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">
-          Software Projects
+        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4">
+          Software
         </h1>
-        <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
-          The current software index. Open any dossier for a more detailed breakdown.
+        <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
+          Straight from GitHub: my most starred and most active repositories, with a window onto
+          anything that's deployed.
         </p>
+        {data && (
+          <p className="repo-index__stamp">
+            <a href={`https://github.com/${data.user}`} target="_blank" rel="noopener noreferrer">
+              github.com/{data.user}
+            </a>
+            <span aria-hidden="true">/</span>
+            <span>synced {timeAgo(data.generatedAt)}</span>
+          </p>
+        )}
       </div>
 
-      <div className="space-y-10 sm:space-y-16">
-        {projects.map((project, index) => {
-          const githubUrl = project.links.find((link) => link.label === "GitHub")?.href;
-          const deployment = project.links.find((link) => link.label === "Live demo")?.href;
+      {isPending && (
+        <div className="repo-grid" aria-busy="true" aria-label="Loading repositories">
+          {Array.from({ length: 4 }, (_, i) => (
+            <div key={i} className={`repo-skeleton${i === 0 ? " repo-card--featured" : ""}`} />
+          ))}
+        </div>
+      )}
 
-          return (
-          <article
-            key={project.slug}
-            className="project-entry relative group border-b border-dashed border-muted pb-8 sm:pb-12 last:border-0"
-            style={{
-              "--project-accent": DEFAULT_ACCENT,
-              animationDelay: `${index * 100}ms`,
-            } as React.CSSProperties}
-          >
-            <header className="mb-4">
-              <div>
-                <p className="text-[0.72rem] uppercase tracking-[0.24em] text-muted-foreground mb-3">
-                  {project.subtitle}
-                </p>
-                <div className="flex flex-col gap-3 md:flex-row md:items-baseline md:gap-8">
-                  <Link to={`/projects/${project.slug}`}>
-                    <h2 className="project-entry__title text-3xl md:text-5xl font-display uppercase tracking-[-0.01em] text-foreground leading-[0.9]">
-                      {project.title}
-                    </h2>
-                  </Link>
+      {error && (
+        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+          Couldn't reach GitHub ({error.message}).{" "}
+          <a href="https://github.com/kygura" className="underline text-foreground">
+            Browse the repositories there
+          </a>
+          .
+        </div>
+      )}
 
-                  <div className="project-entry__links flex gap-3 md:self-start">
-                    {githubUrl && (
-                      <a
-                        href={githubUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="project-entry__link"
-                      >
-                        <span className="project-entry__link-icon"><GitBranch className="w-4 h-4" /></span>
-                        <span className="project-entry__link-text">View Code</span>
-                      </a>
-                    )}
-                    {deployment && (
-                      <a
-                        href={deployment}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="project-entry__link"
-                      >
-                        <span className="project-entry__link-icon"><ExternalLink className="w-4 h-4" /></span>
-                        <span className="project-entry__link-text">Live Demo</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-[0.95rem] text-foreground leading-[1.7] max-w-3xl mb-6">
-                {project.summary}
-              </p>
-            </header>
-          </article>
-        )})}
-      </div>
+      {lead && (
+        <div className="repo-grid">
+          <RepoCard repo={lead} index={0} featured />
+          {rest.map((repo, i) => (
+            <RepoCard key={repo.fullName} repo={repo} index={i + 1} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

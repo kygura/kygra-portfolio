@@ -5,13 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "bun scripts/build-writings.ts --offline && vite",
-    "build": "bun scripts/build-projects.ts && bun scripts/build-writings.ts && vite build",
+    "build": "bun scripts/build-writings.ts && vite build",
     "build:dev": "bun scripts/build-writings.ts --offline && vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "sync-posts": "bun scripts/build-writings.ts",
-    "build-projects": "bun scripts/build-projects.ts",
-    "maintain-projects": "bun scripts/maintain-projects.ts",
     "test": "node --test --experimental-strip-types \"api/**/*.test.ts\" \"scripts/**/*.test.ts\" \"content/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.api.json"
   },

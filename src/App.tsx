@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import SmoothScroll from "./components/SmoothScroll";
@@ -21,7 +21,6 @@ const Sonner = lazy(() =>
 const Writings = lazy(() => import("./pages/Writings"));
 const Post = lazy(() => import("./pages/Post"));
 const Projects = lazy(() => import("./pages/Projects"));
-const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
 const CV = lazy(() => import("./pages/CV"));
@@ -75,14 +74,8 @@ const App = () => (
                 </Layout>
               }
             />
-            <Route
-              path="/projects/:slug"
-              element={
-                <Layout>
-                  <ProjectDetail />
-                </Layout>
-              }
-            />
+            {/* Old dossier links land on the index. */}
+            <Route path="/projects/:slug" element={<Navigate to="/projects" replace />} />
             <Route
               path="/cv"
               element={
