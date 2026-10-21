@@ -10,40 +10,36 @@ import { motion, useInView, useReducedMotion, useScroll, useSpring } from "frame
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const OPENING = "How I build, and why.";
+const OPENING = "I build small tools. These are the ideas behind them.";
 
 const THESES: { n: string; text: string }[] = [
   {
     n: "I",
-    text: "Anything I make will eventually get in someone's way, mine included. So I keep things small, easy to leave and easy to take apart.",
+    text: "Software that frees you from one system tends to become the next one you need to leave. I assume mine will too, so it should be easy to outgrow.",
   },
   {
     n: "II",
-    text: "When something I rely on stops working for me, I build my own version instead of waiting for it to get fixed. Most of what I've made started that way.",
+    text: "Leaving should be cheap. Your work belongs to you, in a form you can carry out, and nothing should be built to stop you going.",
   },
   {
     n: "III",
-    text: "I build to own my time and my tools. Money matters because it buys room to work on what I care about. Past that, it isn't the point.",
+    text: "A tool should give your attention back. No feeds, streaks or nudges designed to pull you in. It does its job and gets out of the way.",
   },
   {
     n: "IV",
-    text: "I don't want software that thinks for me. A tool should do one job, show how it works, and leave the judgement to whoever is using it.",
+    text: "When a model is involved, I describe it as what it is: a system predicting text. It has no inner life, and I won't dress it up as if it had one.",
   },
   {
     n: "V",
-    text: "The averaged answer is usually the useless one. I'd take something odd that's clearly mine over something polished anyone could have made.",
+    text: "Defaults drift toward the median. I would rather make something with a specific shape, built by someone paying attention to particular problems, than something that fits everyone a little.",
   },
   {
     n: "VI",
-    text: "I work in bursts. Between them I build whatever keeps the results, so the next one starts from there and not from zero.",
-  },
-  {
-    n: "VII",
-    text: "I don't build to win. I build because I want to see the thing exist. The rest follows or it doesn't.",
+    text: "When an existing tool stops serving the people using it, I build a smaller one beside it instead of waiting for it to change.",
   },
 ];
 
-const CLOSER = "None of it is finished. That's fine.";
+const CLOSER = "None of it is finished. It changes as I do.";
 
 const Thesis = ({ n, text, still }: { n: string; text: string; still: boolean }) => {
   const ref = useRef<HTMLLIElement>(null);
