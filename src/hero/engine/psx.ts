@@ -41,8 +41,8 @@ export interface EggDef {
   id: string;
   at: (v: V3) => void;
   r?: number;
-  /** Start the reaction at scene time `t`; returns the line shown to the visitor. */
-  fire: (t: number) => string;
+  /** Start the reaction at scene time `t`. */
+  fire: (t: number) => void;
 }
 
 export interface SceneDef {

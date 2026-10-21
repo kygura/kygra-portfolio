@@ -1,5 +1,5 @@
 /** Sheet 03 · Astral: halo with orbiting glyphs, an armillary around the core, cored polyhedra, a star tetrahedron,
- *  a turning tesseract, a debris belt, a constellation, the watcher, a moon with a satellite, and a populated
+ *  a debris belt, a constellation, the watcher, a moon with a satellite, and a populated
  *  outer field: drifting polyhedra, asteroid clumps, star clusters, comets, a ringed planet, a gas giant and a twin world. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
@@ -100,37 +100,6 @@ export function buildAstral(k: PsxKit): SceneDef {
     g.add(new THREE.LineSegments(new THREE.EdgesGeometry(tetra), lm));
     return g;
   });
-
-  // Tesseract: the 16 corners of a 4-cube, turned in the XW and ZW planes and projected down to 3D each frame.
-  const tess = new THREE.Group();
-  tess.position.set(-3, -6, -13);
-  scene.add(tess);
-  const tv = Array.from({ length: 16 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
-  const te: [number, number][] = [];
-  for (let i = 0; i < 16; i++) for (let b = 1; b < 16; b <<= 1) if (!(i & b)) te.push([i, i | b]);
-  const tPos = new Float32Array(te.length * 6);
-  const tGeo = new THREE.BufferGeometry();
-  tGeo.setAttribute("position", new THREE.BufferAttribute(tPos, 3));
-  const tLines = new THREE.LineSegments(tGeo, M.lAccent);
-  tLines.frustumCulled = false;
-  tess.add(tLines);
-  const tNodes = tv.map(() => mesh(new THREE.OctahedronGeometry(0.13, 0), M.glyph, tess));
-  const tp = tv.map(() => new THREE.Vector3());
-  const turnTess = (a: number, b: number) => {
-    const ca = Math.cos(a), sa = Math.sin(a), cb = Math.cos(b), sb = Math.sin(b);
-    tv.forEach(([x, y, z, w], i) => {
-      const x1 = x * ca - w * sa, w1 = x * sa + w * ca;
-      const z1 = z * cb - w1 * sb, w2 = z * sb + w1 * cb;
-      const s = 1.7 / (3 - w2);
-      tp[i].set(x1 * s * 2.4, y * s * 2.4, z1 * s * 2.4);
-      tNodes[i].position.copy(tp[i]);
-    });
-    te.forEach(([i, j], n) => {
-      tp[i].toArray(tPos, n * 6);
-      tp[j].toArray(tPos, n * 6 + 3);
-    });
-    tGeo.attributes.position.needsUpdate = true;
-  };
 
   // Debris belt: a tilted ring of rough faceted shards with a dashed guide orbit, turning as one body.
   const beltTilt = new THREE.Group();
@@ -346,7 +315,7 @@ export function buildAstral(k: PsxKit): SceneDef {
   const dir = new THREE.Vector3();
 
   // easter eggs: start times
-  let tCore = -99, tWatch = -99, tSat = -99, tMoon = -99, tTess = -99, tStella = -99;
+  let tCore = -99, tWatch = -99, tSat = -99, tMoon = -99, tStella = -99;
 
   return {
     scene, cam, fog: [60, 170], fov: [60, 72], limits: { pitch: [-0.7, 0.9], zoom: [0.5, 1.6] },
@@ -355,38 +324,32 @@ export function buildAstral(k: PsxKit): SceneDef {
       { name: "Watcher", sub: "fixed, faces observer", at: (v) => { v.set(0, 14, 0); watcher.localToWorld(v); } },
       { name: "Moon", sub: "1 satellite", at: (v) => { v.set(0, 6, 0); moonRig.localToWorld(v); } },
       { name: "Icosahedron", sub: "20 faces", at: (v) => { polys[0].g.getWorldPosition(v); v.y += 3.2; } },
-      { name: "Tesseract", sub: "4D · 8 cells", at: (v) => { tess.getWorldPosition(v); v.y += 4.6; } },
     ],
     eggs: [
       {
         id: "astral-core", r: 38,
         at: (v) => { v.copy(core.position); },
-        fire: (t) => { tCore = t; return "CORE \u00b7 twenty faces, none of them honest."; },
+        fire: (t) => { tCore = t; },
       },
       {
         id: "astral-watcher", r: 48,
         at: (v) => { v.copy(watcher.position); },
-        fire: (t) => { tWatch = t; return "WATCHER \u00b7 blinked first. Probably."; },
+        fire: (t) => { tWatch = t; },
       },
       {
         id: "astral-satellite", r: 30,
         at: (v) => { sat.getWorldPosition(v); },
-        fire: (t) => { tSat = t; return "SATELLITE \u00b7 ping. No reply, as usual."; },
-      },
-      {
-        id: "astral-tesseract", r: 34,
-        at: (v) => { tess.getWorldPosition(v); },
-        fire: (t) => { tTess = t; return "TESSERACT \u00b7 inside out, then back. Mostly."; },
+        fire: (t) => { tSat = t; },
       },
       {
         id: "astral-stella", r: 32,
         at: (v) => { stella.getWorldPosition(v); },
-        fire: (t) => { tStella = t; return "STELLA \u00b7 two tetrahedra, one argument."; },
+        fire: (t) => { tStella = t; },
       },
       {
         id: "astral-moon", r: 46,
         at: (v) => { v.copy(moonRig.position); },
-        fire: (t) => { tMoon = t; return "MOON \u00b7 tidally locked, as advertised."; },
+        fire: (t) => { tMoon = t; },
       },
     ],
     update(t) {
@@ -416,8 +379,6 @@ export function buildAstral(k: PsxKit): SceneDef {
       stellaHalves[0].rotation.y = es;
       stellaHalves[1].rotation.y = Math.PI / 2 - es;
       stella.position.y = -3 + Math.sin(t * 0.25 + 1.3) * 0.5;
-      turnTess(t * 0.23 + burst(t - tTess, 6, 3.5), t * 0.17);
-      tess.rotation.set(t * 0.03, t * 0.05, 0);
       belt.rotation.y = t * 0.008;
       drift.rotation.y = -t * 0.004;
       ringedBody.rotation.y = t * 0.03;

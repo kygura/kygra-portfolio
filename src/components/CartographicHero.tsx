@@ -35,7 +35,7 @@ const CartographicHero = () => {
   const accent = useAccent();
   const [sheet, setSheet] = useState(() => storedSheet(SHEETS.length));
   const [noGl, setNoGl] = useState(false);
-  const [egg, setEgg] = useState<{ n: number; text: string; total: number; fresh: boolean; key: number } | null>(null);
+  const [egg, setEgg] = useState<{ n: number; total: number; fresh: boolean; key: number } | null>(null);
   const found = useRef<Set<string> | null>(null);
   const eggTimer = useRef(0);
 
@@ -70,14 +70,14 @@ const CartographicHero = () => {
           psx: true,
           reducedMotion: reduced,
           onContextLost: () => setNoGl(true),
-          onEgg: ({ id, text, total }) => {
+          onEgg: ({ id, total }) => {
             found.current ??= new Set(readFound());
             const fresh = !found.current.has(id);
             if (fresh) {
               found.current.add(id);
               writeStored(EGGS_KEY, JSON.stringify([...found.current]));
             }
-            setEgg({ n: found.current.size, text, total, fresh, key: Date.now() });
+            setEgg({ n: found.current.size, total, fresh, key: Date.now() });
             window.clearTimeout(eggTimer.current);
             eggTimer.current = window.setTimeout(() => setEgg(null), 5000);
           },
@@ -179,7 +179,6 @@ const CartographicHero = () => {
               <small>
                 {egg.fresh ? "FOUND" : "AGAIN"} {String(egg.n).padStart(2, "0")}/{String(egg.total).padStart(2, "0")}
               </small>
-              {egg.text}
             </p>
           )}
         </div>

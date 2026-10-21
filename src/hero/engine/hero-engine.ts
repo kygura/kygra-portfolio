@@ -54,7 +54,7 @@ export interface HeroEngineOptions {
   reducedMotion: boolean;
   onContextLost: () => void;
   /** A tap landed on a hidden egg. `total` counts the eggs across every scene. */
-  onEgg?: (egg: { id: string; text: string; total: number }) => void;
+  onEgg?: (egg: { id: string; total: number }) => void;
 }
 
 export interface HeroEngine {
@@ -173,8 +173,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       if (d <= (g.r ?? 30) && d < bd) { best = g; bd = d; }
     }
     if (!best) return false;
-    const text = best.fire(t);
-    o.onEgg?.({ id: best.id, text, total: eggTotal });
+    best.fire(t);
+    o.onEgg?.({ id: best.id, total: eggTotal });
     dirty = true;
     kick();
     return true;

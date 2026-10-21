@@ -215,17 +215,17 @@ export function buildMatrix(k: PsxKit): SceneDef {
       {
         id: "matrix-core", r: 44,
         at: (v) => { v.copy(PIVOT); },
-        fire: (t) => { tCore = t; return "TESSERACT · eight cubes, folded where you can't see."; },
+        fire: (t) => { tCore = t; },
       },
       {
         id: "matrix-deja", r: 30,
         at: (v) => { v.set(streams[0].x, streams[0].top - 6, streams[0].z); },
-        fire: (t) => { tDeja = t; return "DÉJÀ VU · that stream just fell twice."; },
+        fire: (t) => { tDeja = t; },
       },
       {
         id: "matrix-ring", r: 36,
         at: (v) => { v.set(0, 0, 6); },
-        fire: (t) => { tRing = t; return "RING · thirty-six marks, no exits."; },
+        fire: (t) => { tRing = t; },
       },
     ],
     update(t) {
