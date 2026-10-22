@@ -7,16 +7,6 @@ interface PostCellProps {
   loading?: boolean;
 }
 
-function getPostYear(date: string): string | null {
-  const parsedDate = new Date(date);
-
-  if (!date || Number.isNaN(parsedDate.getTime())) {
-    return null;
-  }
-
-  return String(parsedDate.getFullYear());
-}
-
 export default function PostCell({ post, loading }: PostCellProps) {
   if (loading) {
     return (
@@ -32,7 +22,6 @@ export default function PostCell({ post, loading }: PostCellProps) {
     );
   }
 
-  const year = getPostYear(post.date);
   const tag = post.tags[0] ?? null;
 
   return (
@@ -43,7 +32,6 @@ export default function PostCell({ post, loading }: PostCellProps) {
         aria-label={`Read: ${post.title}`}
       >
         <div className="canvas-cell__post-meta">
-          {year && <span>{year}</span>}
           {tag && <span>{tag}</span>}
           <span>{post.readTime} min</span>
         </div>

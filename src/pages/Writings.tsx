@@ -1,22 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, Clock } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
 import { resolvePostTags } from "../lib/postTagFallbacks";
-
-function formatPostDate(date: string): string | null {
-  const parsedDate = new Date(date);
-
-  if (!date || Number.isNaN(parsedDate.getTime())) {
-    return null;
-  }
-
-  return parsedDate.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 const Writings = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -81,8 +67,6 @@ const Writings = () => {
 
       <div className="space-y-10 sm:space-y-16">
         {filteredPosts.map((post, index) => {
-          const formattedDate = formatPostDate(post.date);
-
           return (
             <article
               key={post.slug}
@@ -94,13 +78,7 @@ const Writings = () => {
 
               <Link to={`/writings/${post.slug}`} className="block no-underline text-foreground">
                 <header className="mb-4">
-                  {formattedDate && (
-                    <div className="flex items-center gap-3 mb-3 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                      <span>{new Date(post.date).getFullYear()}</span>
-                    </div>
-                  )}
-
-                  <h2 className="text-3xl md:text-5xl font-display uppercase tracking-[-0.01em] text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
+                  <h2 className="text-xl md:text-3xl font-display uppercase tracking-[-0.01em] text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
                     {post.title}
                   </h2>
 
@@ -110,12 +88,6 @@ const Writings = () => {
                 </header>
 
                 <div className="mt-5 sm:mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 text-[0.7rem] text-muted-foreground uppercase tracking-widest font-bold">
-                  {formattedDate && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-foreground/50" />
-                      <span>{formattedDate}</span>
-                    </div>
-                  )}
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-foreground/50" />
                     <span>{post.readTime} min read</span>
