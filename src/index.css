@@ -1299,11 +1299,11 @@
    ───────────────────────────────────────────── */
 /* Sizes are variables so the ?tune panel (TocTuner) can adjust them live. */
 .post-toc {
-  --toc-bar: 1.5rem;        /* section bar length; subsections are 60% */
+  --toc-bar: 1.9rem;        /* section bar length; subsections are 60% */
   --toc-bar-h: 3px;         /* bar thickness */
-  --toc-step: 1.2rem;       /* vertical space per heading */
-  --toc-label: 12rem;       /* heading titles beside the bars; 0 hides them */
-  --toc-label-size: 0.74rem;
+  --toc-step: 1.45rem;       /* vertical space per heading */
+  --toc-label: 20rem;       /* heading titles beside the bars; 0 hides them */
+  --toc-label-size: 0.84rem;
   --toc-edge: 2rem;         /* distance from the window edge */
   --toc-max-h: 70vh;
   /* Bar column, and the title column clamped to the space beside the text */
@@ -1336,7 +1336,7 @@
 
 .post-toc__readout {
   font-family: var(--f-pixel);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   letter-spacing: 0.06em;
   color: var(--accent);
 }
@@ -1420,8 +1420,8 @@
   align-items: baseline;
   gap: 0.5rem;
   width: max-content;
-  max-width: 17rem;
-  padding: 0.35rem 0.6rem;
+  max-width: 22rem;
+  padding: 0.45rem 0.75rem;
   white-space: nowrap;
   background: color-mix(in srgb, var(--sheet) 94%, transparent);
   backdrop-filter: blur(8px);

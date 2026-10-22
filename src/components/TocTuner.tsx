@@ -10,11 +10,11 @@ import { createPortal } from "react-dom";
 type Knob = { key: string; label: string; min: number; max: number; step: number; unit: string; value: number };
 
 const KNOBS: Knob[] = [
-  { key: "--toc-bar", label: "bar length", min: 0.6, max: 3, step: 0.05, unit: "rem", value: 1.5 },
+  { key: "--toc-bar", label: "bar length", min: 0.6, max: 3, step: 0.05, unit: "rem", value: 1.9 },
   { key: "--toc-bar-h", label: "bar thickness", min: 1, max: 6, step: 0.5, unit: "px", value: 3 },
-  { key: "--toc-step", label: "spacing", min: 0.6, max: 2.4, step: 0.05, unit: "rem", value: 1.2 },
-  { key: "--toc-label", label: "title width", min: 0, max: 18, step: 0.25, unit: "rem", value: 12 },
-  { key: "--toc-label-size", label: "title size", min: 0.6, max: 1, step: 0.01, unit: "rem", value: 0.74 },
+  { key: "--toc-step", label: "spacing", min: 0.6, max: 2.4, step: 0.05, unit: "rem", value: 1.45 },
+  { key: "--toc-label", label: "title width", min: 0, max: 28, step: 0.25, unit: "rem", value: 20 },
+  { key: "--toc-label-size", label: "title size", min: 0.6, max: 1, step: 0.01, unit: "rem", value: 0.84 },
   { key: "--toc-edge", label: "edge gap", min: 0.5, max: 6, step: 0.25, unit: "rem", value: 2 },
   { key: "--toc-max-h", label: "max height", min: 30, max: 90, step: 1, unit: "vh", value: 70 },
 ];
