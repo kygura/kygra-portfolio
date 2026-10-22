@@ -1597,11 +1597,15 @@
 }
 .post-toc__link[data-depth="3"] .post-toc__text { font-size: 0.8rem; }
 
+/* data-pointed: the title a pull from the rail would land on */
 .post-toc__link:hover,
-.post-toc__link:focus-visible { color: var(--ink); background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.post-toc__link:focus-visible,
+.post-toc__link[data-pointed] { color: var(--ink); background: color-mix(in srgb, var(--ink) 4%, transparent); }
 .post-toc__link:hover .post-toc__text,
-.post-toc__link:focus-visible .post-toc__text { background-size: 100% 1px; }
-.post-toc__link:hover .post-toc__cur { opacity: 0.45; }
+.post-toc__link:focus-visible .post-toc__text,
+.post-toc__link[data-pointed] .post-toc__text { background-size: 100% 1px; }
+.post-toc__link:hover .post-toc__cur,
+.post-toc__link[data-pointed] .post-toc__cur { opacity: 0.45; }
 
 .post-toc__link[data-active="true"] { color: var(--ink); }
 .post-toc__link[data-active="true"] .post-toc__num { color: var(--accent); }
