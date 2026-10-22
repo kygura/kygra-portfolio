@@ -141,6 +141,8 @@
     linear-gradient(rgba(134, 211, 220, 0.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(134, 211, 220, 0.045) 1px, transparent 1px);
   --tex-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  /* Drafting sans in place of Literata (loaded on demand, see theme/accent.ts). */
+  --f-body: "IBM Plex Sans", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
   --background: 219 55% 9%;
   --foreground: 205 52% 89%;

@@ -14,13 +14,21 @@ export interface Accent {
   deep: string;
   fog: string;
   zen: string;
+  /** Body/heading face this variant swaps in (default: Literata). Loaded on demand. */
+  font?: { family: string; href: string };
 }
+
+const PLEX_SANS =
+  "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap";
 
 export const ACCENTS: Accent[] = [
   { id: "lichen", name: "Lichen", hex: "#bcc77c", deep: "#5d7a3a", fog: "#3b4c4b", zen: "#0f171b" },
   // Amber, Sky and Rose also swap the ground, ink and surface texture (see index.css); fog and zenith follow the ground.
   { id: "torch", name: "Amber", hex: "#eaa24c", deep: "#a24e1c", fog: "#4d4046", zen: "#130f16" },
-  { id: "astral", name: "Sky", hex: "#86d3dc", deep: "#2f6f9a", fog: "#2f4562", zen: "#08101e" },
+  {
+    id: "astral", name: "Sky", hex: "#86d3dc", deep: "#2f6f9a", fog: "#2f4562", zen: "#08101e",
+    font: { family: "IBM Plex Sans", href: PLEX_SANS },
+  },
   { id: "madder", name: "Rose", hex: "#e5787f", deep: "#7e2638", fog: "#4d343c", zen: "#150b10" },
   // Graphite also neutralises the ground and ink (see index.css), so the whole sheet goes grayscale.
   { id: "mono", name: "Graphite", hex: "#d4d4d4", deep: "#6b6b6b", fog: "#3f3f3f", zen: "#0e0e0e" },
@@ -67,11 +75,22 @@ export function storedSheet(length: number): number {
 let current = typeof window === "undefined" ? 0 : storedIndex(ACCENT_KEY, ACCENTS.length);
 const listeners = new Set<() => void>();
 
+/** Adds the variant's font stylesheet once; the pre-paint script in index.html does the same for a saved one. */
+function loadFont(a: Accent) {
+  if (!a.font || document.querySelector(`link[data-font="${a.id}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = a.font.href;
+  link.dataset.font = a.id;
+  document.head.appendChild(link);
+}
+
 export function setAccent(i: number) {
   const n = ((i % ACCENTS.length) + ACCENTS.length) % ACCENTS.length;
   current = n;
   writeStored(ACCENT_KEY, String(n));
   const a = ACCENTS[n];
+  loadFont(a);
   if (a.id === "lichen") document.documentElement.removeAttribute("data-accent");
   else document.documentElement.setAttribute("data-accent", a.id);
   listeners.forEach((l) => l());

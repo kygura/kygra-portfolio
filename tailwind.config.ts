@@ -22,15 +22,16 @@ export default {
   		none: 'none', '2xs': 'none', xs: 'none', sm: 'none', DEFAULT: 'none', md: 'none', lg: 'none', xl: 'none', '2xl': 'none', inner: 'none'
   	},
   	extend: {
-  		// One serif (Literata) for reading and headings, Fragment Mono for
-  		// code/data/labels, Silkscreen only for tiny eyebrows and the wordmark.
+  		// Families read the theme's CSS tokens (--f-body, --f-mono, --f-pixel in
+  		// index.css), so a variant can change the type: Literata, Fragment Mono
+  		// and Silkscreen by default.
   		fontFamily: {
-  			display: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
-  			body: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
-  			sans: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
-  			serif: ['Literata', 'Iowan Old Style', 'Palatino Linotype', 'Georgia', 'serif'],
-  			mono: ['Fragment Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
-  			pixel: ['Silkscreen', 'Courier New', 'monospace']
+  			display: ['var(--f-body)'],
+  			body: ['var(--f-body)'],
+  			sans: ['var(--f-body)'],
+  			serif: ['var(--f-body)'],
+  			mono: ['var(--f-mono)'],
+  			pixel: ['var(--f-pixel)']
   		},
   		colors: {
   			border: 'hsl(var(--border))',

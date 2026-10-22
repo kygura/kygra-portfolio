@@ -28,6 +28,18 @@
         if (a && a !== "lichen") document.documentElement.setAttribute("data-accent", a);
       } catch (e) {}
 
+      // Sky sets its own type: fetch it now, and hold the hero name on it
+      // instead of Literata. Keep in step with ACCENTS[].font in theme/accent.ts.
+      var face = "Literata";
+      if (a === "astral") {
+        face = "IBM Plex Sans";
+        var l = document.createElement("link");
+        l.rel = "stylesheet";
+        l.dataset.font = "astral";
+        l.href = "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap";
+        document.head.appendChild(l);
+      }
+
       // Hold the hero name reveal until Literata is in: with display=swap the
       // fallback serif paints first, sits higher, and jumps mid-reveal. The
       // timeout keeps a slow font from hiding the name.
@@ -37,7 +49,7 @@
         root.classList.add("fonts-pending");
         var done = function () { root.classList.remove("fonts-pending"); };
         Promise.race([
-          document.fonts.load('400 1em "Literata"'),
+          document.fonts.load('400 1em "' + face + '"'),
           new Promise(function (r) { setTimeout(r, 1500); })
         ]).then(done, done);
       })();
