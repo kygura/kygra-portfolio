@@ -327,6 +327,28 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
     goTo(scrollForFraction(f), true);
   };
 
+  // While the sheet is open it tracks the rail: the point in the list that
+  // matches the playhead (interpolated between the titles either side of
+  // it, as the rail is between bars) is held level with the playhead.
+  // A pull in progress owns the list, so it is left alone then.
+  useEffect(() => {
+    const panel = panelRef.current;
+    const track = trackRef.current;
+    if (!open || !panel || !track || items.length < 2 || press.current?.mode === "pull") return;
+
+    const links = panel.querySelectorAll<HTMLAnchorElement>(".post-toc__link");
+    const n = items.length;
+    const slot = Math.min(n - 1, Math.max(0, progress * n - 0.5));
+    const i = Math.floor(slot);
+    const centre = (k: number) => {
+      const box = links[Math.min(n - 1, k)].getBoundingClientRect();
+      return box.top + box.height / 2;
+    };
+    const at = centre(i) + (slot - i) * (centre(i + 1) - centre(i));
+    const box = track.getBoundingClientRect();
+    panel.scrollTop += at - (box.top + progress * box.height);
+  }, [open, progress, items]);
+
   if (items.length < 2) return null;
 
   // The current section is the last bar the page has reached.
