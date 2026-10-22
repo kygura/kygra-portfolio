@@ -55,6 +55,8 @@ const barAt = (i: number, n: number) => (i + 0.5) / n;
 
 // A press that travels less than this is a click, not a drag.
 const DRAG_SLOP = 3;
+// A press must travel this far before its direction picks scrub or pull.
+const PULL_SLOP = 6;
 // Within this many pixels of a bar, a click lands exactly on its heading.
 const SNAP_PX = 7;
 // One arrow press scrolls this share of the viewport.
@@ -81,7 +83,19 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
   const readoutRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLSpanElement>(null);
-  const press = useRef<{ y: number; moved: boolean; pointerId: number } | null>(null);
+  /*
+   * A press on the rail becomes one of two drags once it has travelled a
+   * little: mostly vertical scrubs the page, mostly leftward pulls the
+   * contents sheet open at the pressed section, where sliding onto a title
+   * and letting go jumps there.
+   */
+  const press = useRef<{
+    x: number;
+    y: number;
+    mode: "scrub" | "pull" | null;
+    pointerId: number;
+  } | null>(null);
+  const [pointed, setPointed] = useState<number | null>(null);
 
   // Give every section heading a unique id and collect the outline.
   useEffect(() => {
@@ -239,18 +253,51 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.currentTarget.setPointerCapture(event.pointerId);
-    press.current = { y: event.clientY, moved: false, pointerId: event.pointerId };
+    press.current = { x: event.clientX, y: event.clientY, mode: null, pointerId: event.pointerId };
+  };
+
+  const linkAt = (index: number) =>
+    panelRef.current?.querySelectorAll<HTMLAnchorElement>(".post-toc__link")[index] ?? null;
+
+  // Open the sheet with the section under the pointer lined up beside it.
+  const pullOpen = (clientY: number) => {
+    const index = Math.min(items.length - 1, Math.max(0, Math.round(fractionAtPointer(clientY) * items.length - 0.5)));
+    setOpen(true);
+    setPointed(index);
+    const panel = panelRef.current;
+    const link = linkAt(index);
+    if (panel && link) {
+      const box = link.getBoundingClientRect();
+      panel.scrollTop += box.top + box.height / 2 - clientY;
+    }
+  };
+
+  // While pulling, the title under the pointer is the one a release picks.
+  const pointAt = (clientX: number, clientY: number) => {
+    const hit = document.elementFromPoint(clientX, clientY)?.closest(".post-toc__link");
+    const links = panelRef.current ? Array.from(panelRef.current.querySelectorAll(".post-toc__link")) : [];
+    const index = hit ? links.indexOf(hit) : -1;
+    setPointed(index >= 0 ? index : null);
   };
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const p = press.current;
     if (!p || p.pointerId !== event.pointerId) return;
-    if (!p.moved && Math.abs(event.clientY - p.y) < DRAG_SLOP) return;
-    if (!p.moved) {
-      p.moved = true;
+    const dx = event.clientX - p.x;
+    const dy = event.clientY - p.y;
+    if (!p.mode) {
+      if (Math.abs(dy) < DRAG_SLOP && -dx < PULL_SLOP) return;
+      if (-dx >= PULL_SLOP && -dx > Math.abs(dy)) {
+        p.mode = "pull";
+        pullOpen(p.y);
+        return;
+      }
+      if (Math.abs(dy) < DRAG_SLOP) return;
+      p.mode = "scrub";
       setScrubbing(true);
     }
-    goTo(scrollForFraction(fractionAtPointer(event.clientY)), false);
+    if (p.mode === "pull") pointAt(event.clientX, event.clientY);
+    else goTo(scrollForFraction(fractionAtPointer(event.clientY)), false);
   };
 
   const endPress = (event: PointerEvent<HTMLDivElement>) => {
@@ -258,7 +305,13 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
     if (!p || p.pointerId !== event.pointerId) return;
     press.current = null;
     setScrubbing(false);
-    if (p.moved || event.type === "pointercancel") return;
+    if (p.mode === "pull") {
+      setPointed(null);
+      const hit = event.type === "pointerup" ? pointed : null;
+      if (hit !== null) jumpToId(items[hit].id);
+      return;
+    }
+    if (p.mode || event.type === "pointercancel") return;
 
     // A click: snap to the nearest bar when close, else land where pressed.
     const rect = trackRef.current?.getBoundingClientRect();
@@ -273,6 +326,28 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
     }
     goTo(scrollForFraction(f), true);
   };
+
+  // While the sheet is open it tracks the rail: the point in the list that
+  // matches the playhead (interpolated between the titles either side of
+  // it, as the rail is between bars) is held level with the playhead.
+  // A pull in progress owns the list, so it is left alone then.
+  useEffect(() => {
+    const panel = panelRef.current;
+    const track = trackRef.current;
+    if (!open || !panel || !track || items.length < 2 || press.current?.mode === "pull") return;
+
+    const links = panel.querySelectorAll<HTMLAnchorElement>(".post-toc__link");
+    const n = items.length;
+    const slot = Math.min(n - 1, Math.max(0, progress * n - 0.5));
+    const i = Math.floor(slot);
+    const centre = (k: number) => {
+      const box = links[Math.min(n - 1, k)].getBoundingClientRect();
+      return box.top + box.height / 2;
+    };
+    const at = centre(i) + (slot - i) * (centre(i + 1) - centre(i));
+    const box = track.getBoundingClientRect();
+    panel.scrollTop += at - (box.top + progress * box.height);
+  }, [open, progress, items]);
 
   if (items.length < 2) return null;
 
@@ -440,6 +515,7 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
                 tabIndex={open ? undefined : -1}
                 data-depth={item.depth}
                 data-active={i === activeIndex}
+                data-pointed={i === pointed || undefined}
                 aria-current={i === activeIndex ? "location" : undefined}
                 onClick={(event) => linkClick(event, item.id)}
               >
@@ -453,7 +529,7 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
           ))}
         </ol>
         <p className="post-toc__keys" aria-hidden="true">
-          drag rail · ↑↓ scroll · [ ] section · t toggle
+          drag ↕ scrub · drag ← open · [ ] section · t toggle
         </p>
       </div>
       <TocTuner target={navRef} />
