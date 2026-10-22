@@ -15,6 +15,11 @@
   --rule: #2b3739;
   --rule-2: #3d4b4d;
   --grid: rgba(224, 217, 200, 0.035);
+  /* Surface texture behind every sheet; a variant may replace both. */
+  --tex:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  --tex-size: 48px 48px;
   --scrim: rgba(12, 17, 18, 0.86);
   --danger: #e5787f;
   /* Accent — default variant "Lichen"; [data-accent] variants below.
@@ -63,9 +68,143 @@
   --page-block: clamp(2.25rem, 7vw, 4rem);
 }
 
-:root[data-accent="torch"]  { --accent: #eaa24c; --accent-deep: #a24e1c; --on-accent: #1d1206; --accent-h: 33 79% 61%; --on-accent-h: 31 66% 7%; }
-:root[data-accent="astral"] { --accent: #86d3dc; --accent-deep: #2f6f9a; --on-accent: #08171b; --accent-h: 186 55% 69%; --on-accent-h: 193 54% 7%; }
-:root[data-accent="madder"] { --accent: #e5787f; --accent-deep: #7e2638; --on-accent: #1f0a0d; --accent-h: 356 68% 68%; --on-accent-h: 351 51% 8%; }
+/* Amber, Sky and Rose, like Manuscript and Graphite, swap the whole sheet:
+   ground, ink, rules, kit tokens and the surface texture behind the page, so
+   each reads as its own place and not the Lichen sheet with a new highlight.
+   Amber: a plum-black dusk lit from above. Sky: a navy blueprint with a
+   drafting grid. Rose: oxblood wine with a dotted lattice. */
+:root[data-accent="torch"] {
+  --bg: #17121a;
+  --bg-2: #1d1721;
+  --sheet: #271e2a;
+  --code: #110d14;
+  --ink: #f0e1cd;
+  --ink-2: #c1ae9f;
+  --ink-3: #8b7a78;
+  --rule: #342a38;
+  --rule-2: #4b3d4c;
+  --grid: transparent;
+  --scrim: rgba(17, 13, 20, 0.86);
+  --danger: #f0836b;
+  --accent: #eaa24c;
+  --accent-deep: #a24e1c;
+  --on-accent: #1d1206;
+  --accent-h: 33 79% 61%;
+  --on-accent-h: 31 66% 7%;
+  /* No lattice: a lamp-glow falling from the top edge instead. */
+  --tex: radial-gradient(120% 70% at 50% -10%, rgba(234, 162, 76, 0.1), transparent 70%);
+  --tex-size: auto;
+
+  --background: 275 19% 9%;
+  --foreground: 36 55% 87%;
+  --card: 277 20% 11%;
+  --card-foreground: 36 55% 87%;
+  --popover: 277 20% 11%;
+  --popover-foreground: 36 55% 87%;
+  --secondary: 280 17% 14%;
+  --secondary-foreground: 36 55% 87%;
+  --destructive: 11 82% 67%;
+  --destructive-foreground: 275 19% 9%;
+  --muted: 280 17% 14%;
+  --muted-foreground: 17 14% 66%;
+  --border: 288 14% 18%;
+  --input: 290 12% 27%;
+  --sidebar-background: 277 20% 11%;
+  --sidebar-foreground: 36 55% 87%;
+  --sidebar-border: 288 14% 18%;
+  --sidebar-accent: 280 17% 14%;
+  --sidebar-accent-foreground: 36 55% 87%;
+}
+
+:root[data-accent="astral"] {
+  --bg: #0b1424;
+  --bg-2: #0f1a2e;
+  --sheet: #15233b;
+  --code: #070d19;
+  --ink: #d6e6f2;
+  --ink-2: #9db4c8;
+  --ink-3: #6a8199;
+  --rule: #1f3250;
+  --rule-2: #2f4a70;
+  --grid: rgba(134, 211, 220, 0.07);
+  --scrim: rgba(8, 14, 27, 0.86);
+  --danger: #ff8f9a;
+  --accent: #86d3dc;
+  --accent-deep: #2f6f9a;
+  --on-accent: #08171b;
+  --accent-h: 186 55% 69%;
+  --on-accent-h: 193 54% 7%;
+  /* Drafting paper: a fine 24px grid with a heavier line every 120px. */
+  --tex:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(rgba(134, 211, 220, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(134, 211, 220, 0.045) 1px, transparent 1px);
+  --tex-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+
+  --background: 219 55% 9%;
+  --foreground: 205 52% 89%;
+  --card: 218 51% 12%;
+  --card-foreground: 205 52% 89%;
+  --popover: 218 51% 12%;
+  --popover-foreground: 205 52% 89%;
+  --secondary: 217 48% 15%;
+  --secondary-foreground: 205 52% 89%;
+  --destructive: 354 100% 78%;
+  --destructive-foreground: 219 55% 9%;
+  --muted: 217 48% 15%;
+  --muted-foreground: 208 25% 66%;
+  --border: 215 45% 21%;
+  --input: 214 41% 30%;
+  --sidebar-background: 218 51% 12%;
+  --sidebar-foreground: 205 52% 89%;
+  --sidebar-border: 215 45% 21%;
+  --sidebar-accent: 217 48% 15%;
+  --sidebar-accent-foreground: 205 52% 89%;
+}
+
+:root[data-accent="madder"] {
+  --bg: #1a0f14;
+  --bg-2: #21141a;
+  --sheet: #2d1b23;
+  --code: #130a0e;
+  --ink: #f2dfdc;
+  --ink-2: #c4a9ab;
+  --ink-3: #8c6f75;
+  --rule: #3a252d;
+  --rule-2: #53363f;
+  --grid: rgba(229, 120, 127, 0.1);
+  --scrim: rgba(19, 10, 14, 0.86);
+  --danger: #ffb3a0;
+  --accent: #e5787f;
+  --accent-deep: #7e2638;
+  --on-accent: #1f0a0d;
+  --accent-h: 356 68% 68%;
+  --on-accent-h: 351 51% 8%;
+  /* Dotted lattice: a pinprick at each 32px crossing, no lines. */
+  --tex: radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.5px);
+  --tex-size: 32px 32px;
+
+  --background: 342 27% 8%;
+  --foreground: 7 38% 91%;
+  --card: 342 26% 11%;
+  --card-foreground: 7 38% 91%;
+  --popover: 342 26% 11%;
+  --popover-foreground: 7 38% 91%;
+  --secondary: 342 24% 14%;
+  --secondary-foreground: 7 38% 91%;
+  --destructive: 12 100% 82%;
+  --destructive-foreground: 342 27% 8%;
+  --muted: 342 24% 14%;
+  --muted-foreground: 352 14% 67%;
+  --border: 343 23% 19%;
+  --input: 344 19% 27%;
+  --sidebar-background: 342 26% 11%;
+  --sidebar-foreground: 7 38% 91%;
+  --sidebar-border: 343 23% 19%;
+  --sidebar-accent: 342 24% 14%;
+  --sidebar-accent-foreground: 7 38% 91%;
+}
 
 /* Graphite: unlike the hue variants it also swaps the ground, ink, rules and
    kit tokens for pure grays, so nothing on the sheet carries a colour. */
@@ -216,8 +355,8 @@
   /* The mock's map-sheet scrims: darken the top under the nav and the
      lower half under the type, so it reads over any of the three scenes. */
   background:
-    linear-gradient(var(--scrim), rgba(12, 17, 18, 0) 120px),
-    linear-gradient(rgba(12, 17, 18, 0) 38%, var(--scrim) 92%);
+    linear-gradient(var(--scrim), transparent 120px),
+    linear-gradient(transparent 38%, var(--scrim) 92%);
   /* Own layer, so canvas repaints never re-rasterise the scrim. */
   transform: translateZ(0);
 }
@@ -1037,10 +1176,8 @@
   /* Survey grid: a faint 48px hairline lattice behind every sheet. */
   body {
     background-color: var(--bg);
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 48px 48px;
+    background-image: var(--tex);
+    background-size: var(--tex-size);
     color: var(--ink);
     font-family: var(--f-body);
     font-size: 1.125rem;
