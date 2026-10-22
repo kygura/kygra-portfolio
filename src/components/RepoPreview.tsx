@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import CodeWindow from "@/components/CodeWindow";
 import { displayHost, type ShowcaseRepo } from "@/lib/showcase";
 
 // The frame lays the site out at a desktop width, then scales it down to
@@ -9,6 +10,8 @@ const FRAME_HEIGHT = 800;
 
 type RepoPreviewProps = {
   repo: ShowcaseRepo;
+  /** Code-only windows offer a generated terminal session. */
+  terminal?: boolean;
 };
 
 /**
@@ -19,7 +22,9 @@ type RepoPreviewProps = {
  * when there is no image at all (private repos have no card), and link out.
  * The card also sits under every frame until it finishes loading.
  */
-const RepoPreview = ({ repo }: RepoPreviewProps) => {
+const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
+  // Only code-only repos lack a live URL, and those take the code window.
+  const liveUrl = repo.liveUrl ?? repo.url;
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0);
   const [near, setNear] = useState(false);
@@ -85,14 +90,14 @@ const RepoPreview = ({ repo }: RepoPreviewProps) => {
           <i />
           <i />
         </span>
-        <span className="repo-window__address">{displayHost(repo.liveUrl)}</span>
+        <span className="repo-window__address">{displayHost(liveUrl)}</span>
         {frame && (
           <span className="repo-window__live" data-on={loaded} aria-hidden="true">
             {exploring ? "exploring" : "live"}
           </span>
         )}
         <a
-          href={repo.liveUrl}
+          href={liveUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="repo-window__open"
@@ -142,7 +147,7 @@ const RepoPreview = ({ repo }: RepoPreviewProps) => {
           </>
         ) : (
           <a
-            href={repo.liveUrl}
+            href={liveUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="repo-window__link"
@@ -155,5 +160,13 @@ const RepoPreview = ({ repo }: RepoPreviewProps) => {
     </div>
   );
 };
+
+/** The live site when there is one; otherwise the source, as a map and a terminal. */
+const RepoPreview = ({ repo, terminal = false }: RepoPreviewProps) =>
+  repo.preview.kind === "map" ? (
+    <CodeWindow repo={repo} map={repo.preview.map} terminal={terminal} />
+  ) : (
+    <SiteWindow repo={repo} />
+  );
 
 export default RepoPreview;

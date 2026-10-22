@@ -17,14 +17,22 @@ const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
 
 const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   <div className="repo-card__links">
-    <a href={repo.liveUrl} target="_blank" rel="noopener noreferrer" className="repo-card__link repo-card__link--live">
-      Visit site
-      <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-    </a>
+    {repo.liveUrl && (
+      <a href={repo.liveUrl} target="_blank" rel="noopener noreferrer" className="repo-card__link repo-card__link--live">
+        Visit site
+        <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
+      </a>
+    )}
     {repo.private ? (
       <span className="repo-card__link repo-card__link--muted">Private source</span>
     ) : (
-      <a href={repo.url} target="_blank" rel="noopener noreferrer" className="repo-card__link">
+      // With no site to visit, the source is the card's main link.
+      <a
+        href={repo.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`repo-card__link${repo.liveUrl ? "" : " repo-card__link--live"}`}
+      >
         <GitBranch className="w-4 h-4" aria-hidden="true" />
         Source
       </a>
@@ -32,13 +40,15 @@ const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   </div>
 );
 
-const RepoCard = ({ repo, index, featured }: { repo: ShowcaseRepo; index: number; featured?: boolean }) => (
+type RepoCardProps = { repo: ShowcaseRepo; index: number; featured?: boolean; terminal: boolean };
+
+const RepoCard = ({ repo, index, featured, terminal }: RepoCardProps) => (
   <article
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
     <div className="repo-card__preview">
-      <RepoPreview repo={repo} />
+      <RepoPreview repo={repo} terminal={terminal} />
     </div>
 
     <div className="repo-card__body">
@@ -72,7 +82,8 @@ const Projects = () => {
           Software
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          Live projects, straight from GitHub. Each window is the deployment itself.
+          Projects, straight from GitHub. Deployed ones run live in their window; the rest show their source as a
+          map, and can run a short session scripted from the code.
         </p>
         {data && (
           <p className="repo-index__stamp">
@@ -105,9 +116,9 @@ const Projects = () => {
 
       {lead && (
         <div className="repo-grid">
-          <RepoCard repo={lead} index={0} featured />
+          <RepoCard repo={lead} index={0} featured terminal={Boolean(data?.terminal)} />
           {rest.map((repo, i) => (
-            <RepoCard key={repo.fullName} repo={repo} index={i + 1} />
+            <RepoCard key={repo.fullName} repo={repo} index={i + 1} terminal={Boolean(data?.terminal)} />
           ))}
         </div>
       )}

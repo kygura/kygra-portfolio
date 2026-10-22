@@ -2,12 +2,16 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   blocksFraming,
+  buildCodeMap,
   buildShowcase,
   capWords,
   clip,
   createDescriber,
   findSocialImage,
+  isListed,
+  languageOf,
   liveUrlFor,
+  parseRepoList,
   rankRepos,
   readmeSummary,
   type GithubRepo,
@@ -36,6 +40,8 @@ function repo(name: string, overrides: Partial<GithubRepo> = {}): GithubRepo {
     archived: false,
     private: false,
     has_pages: false,
+    default_branch: "main",
+    size: 100,
     ...overrides,
   };
 }
@@ -90,6 +96,26 @@ test("drops forks, hidden repos and the profile repo, but keeps archived ones", 
   assert.deepEqual(ranked.map((r) => r.name), ["keep", "archived"]);
 });
 
+test("repo lists ignore case, owner prefixes and separators", () => {
+  assert.deepEqual([...parseRepoList(" Lexis, kygura/Tally\n  atlas  ")], ["lexis", "tally", "atlas"]);
+  assert.equal(parseRepoList(undefined).size, 0);
+  assert.equal(parseRepoList(" , ").size, 0);
+});
+
+test("an include list makes the index an allowlist; exclude always wins", () => {
+  const all = [repo("lexis"), repo("tally"), repo("secret"), repo("draft", { topics: ["portfolio-hide"] })];
+  const names = (include: string, exclude: string) =>
+    rankRepos(all, "kygura", NOW, 10, null, { include: parseRepoList(include), exclude: parseRepoList(exclude) })
+      .map((r) => r.name)
+      .sort();
+  assert.deepEqual(names("", ""), ["lexis", "secret", "tally"]);
+  assert.deepEqual(names("", "secret"), ["lexis", "tally"]);
+  assert.deepEqual(names("lexis, Tally", ""), ["lexis", "tally"]);
+  assert.deepEqual(names("lexis,tally", "tally"), ["lexis"]);
+  assert.deepEqual(names("draft", ""), []); // the hide topic still wins
+  assert.equal(isListed("LEXIS", { include: parseRepoList("lexis"), exclude: new Set() }), true);
+});
+
 test("live URL prefers the homepage, then GitHub Pages", () => {
   assert.equal(liveUrlFor(repo("a", { homepage: "example.com" }), "kygura"), "https://example.com/");
   assert.equal(liveUrlFor(repo("b", { homepage: "", has_pages: true }), "Kygura"), "https://kygura.github.io/b/");
@@ -118,7 +144,7 @@ test("finds og:image in either attribute order and resolves relative URLs", () =
   assert.equal(findSocialImage("<title>none</title>", "https://site.dev"), null);
 });
 
-test("keeps only live deployments: frame when allowed, og:image when blocked, card when no image", async () => {
+test("deployments keep their preview; code-only and dead sites map their source, private ones drop", async () => {
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
     if (url === "https://api.github.com/repos/kygura/framed/readme") {
@@ -135,7 +161,12 @@ test("keeps only live deployments: frame when allowed, og:image when blocked, ca
         repo("parked", { stargazers_count: 2, homepage: "https://parked.dev", topics: ["flagship"] }),
         repo("private-app", { private: true, homepage: "https://private.dev", topics: ["flagship"] }),
         repo("code-only", { stargazers_count: 9, topics: ["flagship"] }),
+        repo("private-code", { private: true, topics: ["flagship"] }),
       ]);
+    }
+    if (url.includes("/git/trees/")) {
+      if (!url.includes("/code-only/") && !url.includes("/parked/")) return new Response("", { status: 404 });
+      return Response.json({ tree: [{ path: "src/main.rs", type: "blob", size: 900 }, { path: "README.md", type: "blob", size: 100 }] });
     }
     if (url.startsWith("https://framed.dev")) return new Response("<html></html>");
     if (url.startsWith("https://blocked.dev")) {
@@ -155,7 +186,11 @@ test("keeps only live deployments: frame when allowed, og:image when blocked, ca
   const byName = Object.fromEntries(showcase.repos.map((r) => [r.name, r]));
   const previews = Object.fromEntries(showcase.repos.map((r) => [r.name, r.preview])) as Record<string, { kind: string; src?: string }>;
 
-  assert.deepEqual(Object.keys(byName).sort(), ["blocked", "framed", "plain", "private-app", "slow"]);
+  // gone.dev's tree fetch fails, so it has nothing to show and drops out.
+  assert.deepEqual(Object.keys(byName).sort(), ["blocked", "code-only", "framed", "parked", "plain", "private-app", "slow"]);
+  assert.equal(byName["code-only"].liveUrl, null);
+  assert.equal(byName.parked.liveUrl, null); // its site answers 404: the source stands in
+  assert.equal(previews["code-only"].kind, "map");
   assert.equal(byName.framed.description, "A framed site that renders straight into the software index preview.");
   assert.deepEqual(byName.framed.topics, ["web"]); // internal topics stay off the page
   assert.deepEqual(previews.framed, { kind: "frame", src: "https://framed.dev/" });
@@ -165,22 +200,70 @@ test("keeps only live deployments: frame when allowed, og:image when blocked, ca
   assert.deepEqual(previews["private-app"], { kind: "none" }); // GitHub has no public card for it
 });
 
-test("the cap applies after dropping repos without a deployment", async () => {
+test("the cap fills in rank order, and a repo with nothing to map gives up its place", async () => {
+  const trees: string[] = [];
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
     if (url.startsWith("https://api.github.com/users/")) {
       return Response.json([
-        repo("no-site-a", { stargazers_count: 9 }),
-        repo("no-site-b", { stargazers_count: 8 }),
+        repo("binary-only", { stargazers_count: 9 }),
+        repo("empty", { stargazers_count: 8, size: 0 }),
+        repo("code-a", { stargazers_count: 7 }),
         repo("site-a", { stargazers_count: 1, homepage: "https://a.dev" }),
-        repo("site-b", { homepage: "https://b.dev" }),
+        repo("code-b"),
       ]);
     }
     if (url.endsWith("/readme")) return new Response("", { status: 404 });
+    if (url.includes("/git/trees/")) {
+      trees.push(url.split("/")[5]);
+      const path = url.includes("/binary-only/") ? "logo.png" : "lib.py";
+      return Response.json({ tree: [{ path, type: "blob", size: 500 }] });
+    }
     return new Response("<html></html>");
   }) as typeof fetch;
   const showcase = await buildShowcase({ user: "kygura", now: NOW, limit: 2, fetchImpl });
-  assert.deepEqual(showcase.repos.map((r) => r.name), ["site-a", "site-b"]);
+  assert.deepEqual(showcase.repos.map((r) => r.name), ["code-a", "site-a"]);
+  assert.deepEqual(trees.sort(), ["binary-only", "code-a"]); // never fetched past the cap; empty repos skip the call
+});
+
+test("languageOf skips dependencies, build output, dot-dirs, lockfiles and unmapped types", () => {
+  assert.equal(languageOf("src/app.tsx"), "TypeScript");
+  assert.equal(languageOf("Cargo.toml"), "Config");
+  assert.equal(languageOf("node_modules/x/index.js"), null);
+  assert.equal(languageOf("web/dist/app.js"), null);
+  assert.equal(languageOf(".github/workflows/ci.yml"), null);
+  assert.equal(languageOf("package-lock.json"), null);
+  assert.equal(languageOf("public/vendor.min.js"), null);
+  assert.equal(languageOf("assets/hero.png"), null);
+});
+
+test("code map folds the tree to two levels, strips a shared root and caps the plots", () => {
+  const blob = (path: string, size: number) => ({ path, type: "blob", size });
+  const map = buildCodeMap([
+    blob("src/engine/core.rs", 4000),
+    blob("src/engine/deep/nested/step.rs", 1000),
+    blob("src/cli/main.rs", 1500),
+    blob("src/lib.rs", 500),
+    blob("src/ui/theme.css", 300),
+    { path: "src/engine", type: "tree" },
+  ]);
+  assert.ok(map);
+  assert.equal(map.base, "src/");
+  assert.equal(map.files, 5);
+  assert.equal(map.bytes, 7300);
+  assert.deepEqual(map.languages, [{ name: "Rust", bytes: 7000 }, { name: "CSS", bytes: 300 }]);
+  assert.deepEqual(map.nodes.map((n) => n.name), ["engine/", "cli/", "lib.rs", "ui/"]);
+  const engine = map.nodes[0];
+  assert.deepEqual(engine.children?.map((c) => [c.name, c.bytes, c.files]), [["core.rs", 4000, 1], ["deep/", 1000, 1]]);
+  assert.equal(map.nodes[3].lang, "CSS");
+
+  const wide = buildCodeMap(Array.from({ length: 30 }, (_, i) => blob(`m${i}/f.ts`, 100 + i)));
+  assert.equal(wide?.nodes.length, 10);
+  const rest = wide?.nodes[9];
+  assert.equal(rest?.name, "+21");
+  assert.equal(rest?.files, 21);
+
+  assert.equal(buildCodeMap([blob("logo.png", 9000)]), null);
 });
 
 test("README summary skips banners, badges and code to the opening prose", () => {
