@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMarkdownPost } from "../hooks/useMarkdownPosts";
@@ -56,20 +56,6 @@ const alertTypes: Record<AlertType, AlertType> = {
   CAUTION: "CAUTION",
 };
 
-function formatPostDate(date: string): string | null {
-  const parsedDate = new Date(date);
-
-  if (!date || Number.isNaN(parsedDate.getTime())) {
-    return null;
-  }
-
-  return parsedDate.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 const Post = () => {
   const { slug } = useParams();
   const { post, loading, error } = useMarkdownPost(slug);
@@ -102,8 +88,6 @@ const Post = () => {
       replace />;
   }
 
-  const formattedDate = formatPostDate(post.date);
-
   return (
     <div className="page-shell page-shell--narrow animate-fade-in">
       <div className="mb-12 pb-6 border-b border-[var(--border-muted)] relative">
@@ -115,24 +99,16 @@ const Post = () => {
           BACK TO WRITINGS
         </Link>
 
-        <h1 className="text-4xl md:text-6xl font-display tracking-[-0.01em] text-foreground uppercase leading-[0.9] mb-8">
+        <h1 className="text-2xl md:text-4xl font-display tracking-[-0.01em] text-foreground uppercase leading-[0.95] mb-6">
           {post.title}
         </h1>
 
-        {(formattedDate || post.readTime) && (
+        {post.readTime && (
           <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            {formattedDate && (
-              <span className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                {formattedDate}
-              </span>
-            )}
-            {post.readTime && (
-              <span className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                {post.readTime} read
-              </span>
-            )}
+            <span className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {post.readTime} read
+            </span>
           </div>
         )}
       </div>
