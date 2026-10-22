@@ -5,7 +5,6 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
-  type MouseEvent,
   type PointerEvent,
   type RefObject,
 } from "react";
@@ -267,11 +266,6 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
     event.preventDefault();
   };
 
-  const linkClick = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
-    event.preventDefault();
-    jumpToId(id);
-  };
-
   const pct = Math.round(progress * 100);
 
   return (
@@ -312,52 +306,20 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
             };
             return (
               <span key={item.id}>
-                <span className="post-toc__label" {...state}>
+                <span className="post-toc__label" title={item.text} {...state}>
                   {item.text}
                 </span>
                 <span className="post-toc__bar" {...state} />
               </span>
             );
           })}
-          <span className="post-toc__head-mark" style={{ top: `${progress * 100}%` }}>
-            <span className="post-toc__scrub-label">
-              {active.num && <span className="post-toc__scrub-num">{active.num}</span>}
-              <span className="post-toc__scrub-text">{active.text}</span>
-              <span className="post-toc__scrub-pct">{pct}%</span>
-            </span>
-          </span>
+          <span className="post-toc__head-mark" style={{ top: `${progress * 100}%` }} />
+        </span>
+        <span className="post-toc__pct" aria-hidden="true">
+          {pct}%
         </span>
       </div>
 
-      <div className="post-toc__panel">
-        <p className="post-toc__head">
-          <span>( Contents )</span>
-          <span className="post-toc__pct">{pct}% read</span>
-        </p>
-        <ol className="post-toc__list">
-          {items.map((item, i) => (
-            <li key={item.id} style={{ "--i": i } as CSSProperties}>
-              <a
-                href={`#${item.id}`}
-                className="post-toc__link"
-                data-depth={item.depth}
-                data-active={i === activeIndex}
-                aria-current={i === activeIndex ? "location" : undefined}
-                onClick={(event) => linkClick(event, item.id)}
-              >
-                <span className="post-toc__cur" aria-hidden="true">&gt;</span>
-                <span className="post-toc__num" aria-hidden="true">
-                  {item.num ?? "└"}
-                </span>
-                <span className="post-toc__text">{item.text}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-        <p className="post-toc__keys" aria-hidden="true">
-          drag rail · ↑↓ scroll · [ ] section
-        </p>
-      </div>
       <TocTuner target={navRef} />
     </nav>
   );
