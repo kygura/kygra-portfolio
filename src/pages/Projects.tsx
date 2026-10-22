@@ -82,7 +82,7 @@ const Projects = () => {
           Software
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          Projects, straight from GitHub. Deployed ones run live in their window; the rest show their source as a
+          Projects, straight from GitHub. Deployed ones link out to the live site; the rest show their source as a
           map, and can run a short session scripted from the code.
         </p>
         {data && (
