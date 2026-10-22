@@ -16,9 +16,8 @@ type RepoPreviewProps = {
 
 /**
  * A browser window onto the repo's deployment. Sites that allow framing load
- * live once scrolled near, inert until clicked: then the site takes hover,
- * scroll and clicks until the pointer leaves, Escape, or "Exit" (touch has
- * no leave). The rest show their og:image or GitHub's card, or a drawn tile
+ * live once scrolled near, but inert: the window is a link that opens the
+ * deployment in a new tab. The rest show their og:image or GitHub's card, or a drawn tile
  * when there is no image at all (private repos have no card), and link out.
  * The card also sits under every frame until it finishes loading.
  */
@@ -30,7 +29,6 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
   const [near, setNear] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
-  const [exploring, setExploring] = useState(false);
   const frame = repo.preview.kind === "frame" ? repo.preview.src : null;
   const image = repo.preview.kind === "image" ? repo.preview.src : repo.card;
   const showTile = imageFailed || !image;
@@ -59,13 +57,6 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
     };
   }, [frame]);
 
-  useEffect(() => {
-    if (!exploring) return;
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setExploring(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [exploring]);
-
   const backdrop = showTile ? (
     <div className="repo-window__fallback" aria-hidden="true">
       <span>{repo.name}</span>
@@ -83,7 +74,7 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
   );
 
   return (
-    <div className="repo-window" data-exploring={exploring} onMouseLeave={() => setExploring(false)}>
+    <div className="repo-window">
       <div className="repo-window__bar">
         <span className="repo-window__dots" aria-hidden="true">
           <i />
@@ -93,7 +84,7 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
         <span className="repo-window__address">{displayHost(liveUrl)}</span>
         {frame && (
           <span className="repo-window__live" data-on={loaded} aria-hidden="true">
-            {exploring ? "exploring" : "live"}
+            live
           </span>
         )}
         <a
@@ -116,8 +107,8 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
                 src={frame}
                 title={`${repo.name} live preview`}
                 loading="lazy"
-                tabIndex={exploring ? 0 : -1}
-                aria-hidden={!exploring}
+                tabIndex={-1}
+                aria-hidden="true"
                 sandbox="allow-scripts allow-same-origin allow-forms"
                 referrerPolicy="no-referrer"
                 className="repo-window__frame"
@@ -130,20 +121,13 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
                 }}
               />
             )}
-            {exploring ? (
-              <button type="button" className="repo-window__exit" onClick={() => setExploring(false)}>
-                Exit
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="repo-window__explore"
-                onClick={() => setExploring(true)}
-                aria-label={`Explore ${repo.name} here`}
-              >
-                <span>Click to explore</span>
-              </button>
-            )}
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="repo-window__link"
+              aria-label={`Open ${repo.name} live`}
+            />
           </>
         ) : (
           <a

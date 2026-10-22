@@ -722,10 +722,6 @@
   background: currentColor;
 }
 .repo-window__live[data-on="true"] { color: var(--accent); }
-.repo-window[data-exploring="true"] {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent), 0 18px 40px -24px color-mix(in srgb, var(--accent) 45%, transparent);
-}
 
 .repo-window__open {
   display: grid;
@@ -741,53 +737,6 @@
 .repo-window__open:focus-visible { color: var(--accent); background: var(--rule); }
 
 .repo-window__link { position: absolute; inset: 0; display: block; }
-
-/* Covers the inert frame; hover reveals the prompt, a click hands the site
-   the pointer. */
-.repo-window__explore {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  border: 0;
-  transition: background-color 0.25s ease;
-}
-.repo-window__explore span {
-  padding: 0.45rem 0.8rem;
-  border: 1px solid var(--accent);
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  font-family: var(--f-pixel);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.2s ease, transform 0.25s ease;
-}
-.repo-window__explore:hover,
-.repo-window__explore:focus-visible { background: color-mix(in srgb, var(--bg) 35%, transparent); }
-.repo-window__explore:hover span,
-.repo-window__explore:focus-visible span { opacity: 1; transform: none; }
-@media (pointer: coarse) {
-  .repo-window__explore span { opacity: 0.85; transform: none; }
-}
-
-.repo-window__exit {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  padding: 0.25rem 0.55rem;
-  border: 1px solid var(--accent);
-  background: var(--bg);
-  font-family: var(--f-pixel);
-  font-size: 0.58rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.repo-window__exit:hover { background: var(--accent); color: var(--on-accent); }
 
 .repo-window__viewport {
   position: relative;
@@ -834,7 +783,6 @@
   opacity: 0;
   background: #fff;
 }
-.repo-window[data-exploring="true"] .repo-window__frame { pointer-events: auto; }
 .repo-window__frame[data-loaded="true"] { opacity: 1; }
 
 /* ── Code-only windows: the source as a survey plat, and a terminal ── */
@@ -1098,8 +1046,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .repo-card, .repo-skeleton, .code-map__group, .code-map__cell, .code-term__caret { animation: none; }
-  .repo-card__preview, .repo-window__frame, .repo-window__image,
-  .repo-window__explore, .repo-window__explore span { transition: none; }
+  .repo-card__preview, .repo-window__frame, .repo-window__image { transition: none; }
 }
 
 /* ─────────────────────────────────────────────
