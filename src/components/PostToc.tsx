@@ -5,6 +5,7 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
   type RefObject,
 } from "react";
@@ -42,13 +43,26 @@ const SNAP_PX = 7;
 // One arrow press scrolls this share of the viewport.
 const STEP_VH = 0.12;
 
+// The contents sheet's open state is a per-viewer preference.
+const OPEN_KEY = "post-toc-open";
+const readOpen = () => {
+  try {
+    return localStorage.getItem(OPEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
   const [items, setItems] = useState<TocItem[]>([]);
   const [progress, setProgress] = useState(0);
   const [scrubbing, setScrubbing] = useState(false);
+  const [open, setOpen] = useState(readOpen);
   const navRef = useRef<HTMLElement>(null);
+  const readoutRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLSpanElement>(null);
   const press = useRef<{ y: number; moved: boolean; pointerId: number } | null>(null);
 
@@ -157,6 +171,25 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
     };
   }, [items, articleRef, fractionForScroll]);
 
+  useEffect(() => {
+    try {
+      localStorage.setItem(OPEN_KEY, open ? "1" : "0");
+    } catch {
+      // Storage blocked: the sheet just won't be remembered.
+    }
+    if (!open) {
+      // The sheet hid with focus inside it: hand focus back to the toggle.
+      if (panelRef.current?.contains(document.activeElement)) readoutRef.current?.focus();
+      return;
+    }
+    // A press anywhere outside the rail and sheet closes the sheet.
+    const onDown = (event: globalThis.PointerEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [open]);
+
   const goTo = useCallback((top: number, smooth: boolean) => {
     window.scrollTo({ top, behavior: smooth && !prefersReducedMotion() ? "smooth" : "instant" });
   }, []);
@@ -257,6 +290,9 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
       case "Home":
         goTo(scrollForFraction(0), true);
         break;
+      case "t":
+        setOpen((o) => !o);
+        break;
       case "End":
         goTo(scrollForFraction(1), true);
         break;
@@ -266,10 +302,42 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
     event.preventDefault();
   };
 
+  const linkClick = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    event.preventDefault();
+    jumpToId(id);
+  };
+
+  const onNavKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape" && open) {
+      setOpen(false);
+      event.stopPropagation();
+    }
+  };
+
   const pct = Math.round(progress * 100);
 
   return (
-    <nav ref={navRef} className="post-toc" aria-label="On this page" data-scrubbing={scrubbing || undefined}>
+    <nav
+      ref={navRef}
+      className="post-toc"
+      aria-label="On this page"
+      data-scrubbing={scrubbing || undefined}
+      data-open={open || undefined}
+      onKeyDown={onNavKeyDown}
+    >
+      <button
+        type="button"
+        ref={readoutRef}
+        className="post-toc__readout"
+        aria-expanded={open}
+        aria-controls="post-toc-sheet"
+        title={open ? "Hide contents (t)" : "Show contents (t)"}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {activeNum}
+        <span>/{String(sectionCount).padStart(2, "0")}</span>
+        <span className="post-toc__caret" aria-hidden="true" />
+      </button>
       <div
         className="post-toc__rail"
         role="slider"
@@ -286,10 +354,6 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
         onPointerCancel={endPress}
         onKeyDown={onKeyDown}
       >
-        <span className="post-toc__readout" aria-hidden="true">
-          {activeNum}
-          <span>/{String(sectionCount).padStart(2, "0")}</span>
-        </span>
         <span
           ref={trackRef}
           className="post-toc__track"
@@ -320,6 +384,45 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
         </span>
       </div>
 
+      <div ref={panelRef} className="post-toc__panel" id="post-toc-sheet" aria-hidden={!open}>
+        <p className="post-toc__head">
+          <span>( Contents )</span>
+          <span className="post-toc__read">{pct}%</span>
+          <button
+            type="button"
+            className="post-toc__close"
+            aria-label="Hide contents"
+            tabIndex={open ? undefined : -1}
+            onClick={() => setOpen(false)}
+          >
+            ×
+          </button>
+        </p>
+        <ol className="post-toc__list">
+          {items.map((item, i) => (
+            <li key={item.id} style={{ "--i": i } as CSSProperties}>
+              <a
+                href={`#${item.id}`}
+                className="post-toc__link"
+                tabIndex={open ? undefined : -1}
+                data-depth={item.depth}
+                data-active={i === activeIndex}
+                aria-current={i === activeIndex ? "location" : undefined}
+                onClick={(event) => linkClick(event, item.id)}
+              >
+                <span className="post-toc__cur" aria-hidden="true">&gt;</span>
+                <span className="post-toc__num" aria-hidden="true">
+                  {item.num ?? "\u2514"}
+                </span>
+                <span className="post-toc__text">{item.text}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+        <p className="post-toc__keys" aria-hidden="true">
+          drag rail · ↑↓ scroll · [ ] section · t toggle
+        </p>
+      </div>
       <TocTuner target={navRef} />
     </nav>
   );
