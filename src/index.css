@@ -1290,10 +1290,12 @@
 .page-shell--narrow { max-width: 48rem; }
 
 /* ─────────────────────────────────────────────
-   POST TOC — a survey rail on the right edge. Collapsed, it is a hairline
-   that fills with reading progress, one tick per heading, the current
-   section numbered beside its tick. Hover or focus opens the contents
-   sheet: pixel-font numbers, Literata titles, the nav's blinking cursor.
+   POST TOC — a survey rail on the right edge. Collapsed, it is a column of
+   Notion-style bars, one per heading, over a hairline that fills with
+   reading progress. The rail is a scrubber: drag it to move through the
+   post (a label rides the playhead), click a bar to jump to its heading,
+   or focus it and use the keys. Resting on it opens the contents sheet
+   beside it: pixel-font numbers, Literata titles, the nav's blinking cursor.
    ───────────────────────────────────────────── */
 .post-toc {
   position: fixed;
@@ -1310,11 +1312,16 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.9rem;
-  padding: 0.5rem 0 0.5rem 2.5rem; /* generous hover target */
-  transition: opacity 0.25s ease;
+  padding: 0.5rem 0.25rem 0.5rem 1.75rem; /* generous hover target */
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  outline: none;
 }
-.post-toc:hover .post-toc__rail,
-.post-toc:focus-within .post-toc__rail { opacity: 0.25; }
+.post-toc__rail:focus-visible .post-toc__track {
+  box-shadow: 0 0 0 1px var(--accent);
+  border-radius: 2px;
+}
 
 .post-toc__readout {
   font-family: var(--f-pixel);
@@ -1326,12 +1333,10 @@
 
 .post-toc__track {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.85rem;
-  padding: 0.35rem 0;
-  border-right: 1px solid var(--rule-2);
+  display: block;
+  width: 1.5rem;
+  height: min(60vh, calc(var(--n) * 0.85rem + 0.5rem));
+  border-right: 1px solid color-mix(in srgb, var(--rule-2) 60%, transparent);
 }
 .post-toc__fill {
   position: absolute;
@@ -1341,36 +1346,88 @@
   height: 100%;
   background: var(--accent);
   transform-origin: top;
-  transition: transform 0.15s linear;
 }
 
-.post-toc__tick {
-  position: relative;
-  display: block;
-  height: 1px;
-  width: 0.75rem;
-  background: var(--rule-2);
-  transition: width 0.3s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s;
-}
-.post-toc__tick[data-depth="3"] { width: 0.4rem; }
-.post-toc__tick[data-passed="true"] { background: var(--ink-3); }
-.post-toc__tick[data-active="true"] { width: 1.5rem; background: var(--accent); }
-.post-toc__tick-num {
+/* Bars: short rounded strokes, longer for sections than subsections */
+.post-toc__bar {
   position: absolute;
-  right: calc(100% + 0.45rem);
+  right: 0.35rem;
+  height: 2px;
+  width: 0.95rem;
+  margin-top: -1px;
+  border-radius: 2px;
+  background: var(--rule-2);
+  transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s;
+}
+.post-toc__bar[data-depth="3"] { width: 0.55rem; }
+.post-toc__bar[data-passed="true"] { background: var(--ink-3); }
+.post-toc__bar[data-active="true"] { background: var(--ink); width: 1.15rem; }
+.post-toc__bar[data-active="true"][data-depth="3"] { width: 0.75rem; }
+.post-toc__rail:hover .post-toc__bar:not([data-active="true"]) {
+  background: color-mix(in srgb, var(--ink-3) 70%, var(--rule-2));
+}
+
+/* Playhead: where the page is, to the pixel */
+.post-toc__head-mark {
+  position: absolute;
+  right: -2px;
+  width: 3px;
+  height: 0.7rem;
+  margin-top: -0.35rem;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+  pointer-events: none;
+}
+.post-toc__scrub-label {
+  position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  right: calc(100% + 1.9rem);
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  width: max-content;
+  max-width: 17rem;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--sheet) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--rule-2);
+  border-left: 2px solid var(--accent);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(0.4rem, -50%);
+  transition: opacity 0.15s ease, transform 0.2s ease, visibility 0.15s;
+}
+.post-toc__scrub-num {
   font-family: var(--f-pixel);
   font-size: 0.6rem;
-  letter-spacing: 0.06em;
   color: var(--accent);
+}
+.post-toc__scrub-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--f-body);
+  font-size: 0.82rem;
+  color: var(--ink);
+}
+.post-toc__scrub-pct {
+  font-family: var(--f-mono);
+  font-size: 0.68rem;
+  color: var(--ink-3);
+}
+.post-toc[data-scrubbing] .post-toc__panel { transition-duration: 0.08s; }
+.post-toc[data-scrubbing] .post-toc__scrub-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
 }
 
 /* Contents sheet, with survey crop marks at its corners */
 .post-toc__panel {
   position: absolute;
   top: 50%;
-  right: 0;
+  right: 100%;
   width: 17.5rem;
   max-height: 72vh;
   overflow-y: auto;
@@ -1384,7 +1441,11 @@
   transform: translate(0.75rem, -50%);
   transition: opacity 0.22s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.22s;
   scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
 }
+.post-toc__panel::-webkit-scrollbar { width: 6px; }
+.post-toc__panel::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 3px; }
+.post-toc__panel::-webkit-scrollbar-track { background: transparent; }
 .post-toc__panel::before,
 .post-toc__panel::after {
   content: "";
@@ -1397,11 +1458,13 @@
 }
 .post-toc__panel::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
 .post-toc__panel::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
-.post-toc:hover .post-toc__panel,
-.post-toc:focus-within .post-toc__panel {
+.post-toc:not([data-scrubbing]):hover .post-toc__panel,
+.post-toc__rail:focus-visible + .post-toc__panel,
+.post-toc__panel:focus-within {
   opacity: 1;
   visibility: visible;
   transform: translate(0, -50%);
+  transition-delay: 0.12s;
 }
 
 .post-toc__head {
@@ -1424,8 +1487,9 @@
   transform: translateX(6px);
   transition: opacity 0.25s ease, transform 0.3s ease;
 }
-.post-toc:hover .post-toc__list li,
-.post-toc:focus-within .post-toc__list li {
+.post-toc:not([data-scrubbing]):hover .post-toc__list li,
+.post-toc__rail:focus-visible + .post-toc__panel .post-toc__list li,
+.post-toc__panel:focus-within .post-toc__list li {
   opacity: 1;
   transform: none;
   transition-delay: calc(var(--i) * 18ms + 40ms);
@@ -1481,8 +1545,18 @@
 .post-toc__link[data-active="true"] .post-toc__num { color: var(--accent); }
 .post-toc__link[data-active="true"] .post-toc__cur { opacity: 1; animation: navBlink 1.6s ease-in-out 0.4s infinite; }
 
+.post-toc__keys {
+  margin: 0.6rem 0.6rem 0;
+  padding-top: 0.55rem;
+  border-top: 1px dashed var(--rule-2);
+  font-family: var(--f-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .post-toc__panel, .post-toc__list li, .post-toc__fill, .post-toc__tick, .post-toc__rail { transition: none; }
+  .post-toc__panel, .post-toc__list li, .post-toc__bar, .post-toc__scrub-label { transition: none; }
   .post-toc__link[data-active="true"] .post-toc__cur { animation: none; }
 }
 
