@@ -1309,13 +1309,15 @@
   --toc-label-size: 1rem;
   --toc-edge: 2rem;         /* distance from the window edge */
   --toc-max-h: 70vh;
+  --toc-nav: 4.5rem;        /* site navbar height: the rail centres in the space below it */
+  --toc-air: 3rem;          /* clear space kept above and below the rail */
   /* Bar column, and the title column clamped to the space beside the text */
   --toc-bars: calc(var(--toc-bar) * 1.25 + 0.6rem);
   --toc-label-fit: max(0px, min(var(--toc-label), (100vw - 48rem) / 2 - var(--toc-edge) - var(--toc-bars) - 2.5rem));
   /* The sheet fills the same gutter, with a floor for narrow windows */
   --toc-sheet: max(11rem, min(21rem, (100vw - 48rem) / 2 - var(--toc-edge) - var(--toc-bars) - 1.25rem));
   position: fixed;
-  top: 50%;
+  top: calc(50% + var(--toc-nav) / 2);
   right: var(--toc-edge);
   transform: translateY(-50%);
   z-index: 30;
@@ -1346,7 +1348,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
-  margin-bottom: -0.25rem;
+  margin-bottom: 0.35rem;
   padding: 0.3rem 0.35rem;
   border: 1px solid transparent;
   background: none;
@@ -1382,7 +1384,12 @@
   position: relative;
   display: block;
   width: calc(var(--toc-bars) + var(--toc-label-fit));
-  height: min(var(--toc-max-h), calc(var(--n) * var(--toc-step) + 0.5rem));
+  /* Long outlines shrink to fit under the navbar, readout and % included */
+  height: min(
+    var(--toc-max-h),
+    100vh - var(--toc-nav) - 2 * var(--toc-air) - 5rem,
+    calc(var(--n) * var(--toc-step) + 0.5rem)
+  );
   border-right: 1px solid color-mix(in srgb, var(--rule-2) 60%, transparent);
 }
 .post-toc__fill {
@@ -1475,7 +1482,7 @@
   top: 50%;
   right: calc(var(--toc-bars) + 0.4rem);
   width: var(--toc-sheet);
-  max-height: 78vh;
+  max-height: min(78vh, 100vh - var(--toc-nav) - 2 * var(--toc-air));
   overflow-y: auto;
   padding: 1rem 0.5rem 0.75rem;
   background: color-mix(in srgb, var(--sheet) 92%, transparent);
