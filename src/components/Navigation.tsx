@@ -149,9 +149,10 @@ const Navigation = () => {
       <div className="flex h-full justify-between items-center gap-2 sm:gap-6">
         <div className="nav-micro flex items-baseline gap-1.5 sm:gap-2.5 font-mono tracking-[0.16em] font-medium whitespace-nowrap">
           <span className="wordmark text-foreground">
-            <b>NCA</b> <em>Ventures</em>
+            <b>nca.ink</b>
+            <i aria-hidden="true">//</i>
+            <em>Ventures</em>
           </span>
-          <span className="nav-year text-[var(--text-secondary)] hidden sm:inline">&copy;2026</span>
         </div>
 
         <ul onKeyDown={arrowNav} className="nav-items flex flex-nowrap min-w-0 gap-0 sm:gap-4 md:gap-7 items-center">
