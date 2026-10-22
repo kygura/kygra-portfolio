@@ -636,7 +636,8 @@ export function createDescriber({
 /**
  * The best preview the live site allows, or null when the deployment is gone:
  * the host does not resolve or refuses, or the page answers 404/410. A slow
- * site, or a 403/5xx (often bot protection), keeps its card with the fallback.
+ * site, or a 403/5xx (often bot protection against our fetch), is still
+ * framed: the visitor's browser can load what this request could not.
  */
 async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fetch): Promise<RepoPreview | null> {
   try {
@@ -646,12 +647,12 @@ async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fet
       signal: AbortSignal.timeout(5000),
     });
     if (response.status === 404 || response.status === 410) return null;
-    if (!response.ok) return fallback;
+    if (!response.ok) return { kind: "frame", src: liveUrl };
     if (!blocksFraming(response.headers)) return { kind: "frame", src: response.url || liveUrl };
     const image = findSocialImage(await response.text(), response.url || liveUrl);
     return image ? { kind: "image", src: image } : fallback;
   } catch (error) {
-    return error instanceof Error && error.name === "TimeoutError" ? fallback : null;
+    return error instanceof Error && error.name === "TimeoutError" ? { kind: "frame", src: liveUrl } : null;
   }
 }
 

@@ -705,6 +705,24 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.repo-window__live {
+  flex: none;
+  font-family: var(--f-pixel);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.repo-window__live::before {
+  content: "";
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.35rem;
+  background: currentColor;
+}
+.repo-window__live[data-on="true"] { color: var(--accent); }
+
 .repo-window__open {
   display: grid;
   place-items: center;
@@ -726,16 +744,21 @@
   overflow: hidden;
   background: var(--bg);
 }
-.repo-window__image {
+.repo-window__image,
+.repo-window__frame {
   position: absolute;
   top: 0;
   left: 0;
   border: 0;
+  transition: opacity 0.5s ease;
+}
+.repo-window__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: top;
 }
+.repo-window__image[data-hidden="true"] { opacity: 0; }
 .repo-window__fallback {
   position: absolute;
   inset: 0;
@@ -754,6 +777,14 @@
   overflow-wrap: anywhere;
   color: var(--ink-3);
 }
+.repo-window__frame {
+  transform-origin: 0 0;
+  pointer-events: none;
+  opacity: 0;
+  background: #fff;
+}
+.repo-window__frame[data-loaded="true"] { opacity: 1; }
+
 /* ── Code-only windows: the source as a survey plat, and a terminal ── */
 .repo-window__tabs { display: flex; flex: none; gap: 0.15rem; }
 .repo-window__tab {
@@ -1015,7 +1046,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .repo-card, .repo-skeleton, .code-map__group, .code-map__cell, .code-term__caret { animation: none; }
-  .repo-card__preview, .repo-window__image { transition: none; }
+  .repo-card__preview, .repo-window__frame, .repo-window__image { transition: none; }
 }
 
 /* ─────────────────────────────────────────────

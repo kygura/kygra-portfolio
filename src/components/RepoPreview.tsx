@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import CodeWindow from "@/components/CodeWindow";
 import { displayHost, type ShowcaseRepo } from "@/lib/showcase";
+
+// The frame lays the site out at a desktop width, then scales it down to
+// the card, so a phone shows the same composition as a monitor.
+const FRAME_WIDTH = 1280;
+const FRAME_HEIGHT = 800;
 
 type RepoPreviewProps = {
   repo: ShowcaseRepo;
@@ -9,23 +14,64 @@ type RepoPreviewProps = {
   terminal?: boolean;
 };
 
-/** A rendered screenshot of the deployment, for sites with no og:image of their own. */
-const screenshotOf = (url: string) => `https://image.thum.io/get/width/1200/crop/750/noanimate/${url}`;
-
 /**
- * A browser window onto the repo's deployment, linking out to it in a new
- * tab. The picture is the site's og:image when it has one, else a screenshot
- * of the page, then GitHub's card, then a drawn tile (private repos have no
- * card).
+ * A browser window onto the repo's deployment. Sites that allow framing load
+ * live once scrolled near, but inert: the window is a link that opens the
+ * deployment in a new tab. The rest show their og:image or GitHub's card, or a drawn tile
+ * when there is no image at all (private repos have no card), and link out.
+ * The card also sits under every frame until it finishes loading.
  */
 const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
   // Only code-only repos lack a live URL, and those take the code window.
   const liveUrl = repo.liveUrl ?? repo.url;
-  const ogImage = repo.preview.kind === "image" && repo.preview.src !== repo.card ? repo.preview.src : null;
-  const sources = [ogImage ?? screenshotOf(liveUrl), repo.card].filter((src): src is string => Boolean(src));
-  const [failed, setFailed] = useState(0);
-  const image = sources[failed];
-  const showTile = !image;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0);
+  const [near, setNear] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const frame = repo.preview.kind === "frame" ? repo.preview.src : null;
+  const image = repo.preview.kind === "image" ? repo.preview.src : repo.card;
+  const showTile = imageFailed || !image;
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el || !frame) return;
+
+    const resize = new ResizeObserver(([entry]) => setScale(entry.contentRect.width / FRAME_WIDTH));
+    resize.observe(el);
+
+    const visible = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setNear(true);
+          visible.disconnect();
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    visible.observe(el);
+
+    return () => {
+      resize.disconnect();
+      visible.disconnect();
+    };
+  }, [frame]);
+
+  const backdrop = showTile ? (
+    <div className="repo-window__fallback" aria-hidden="true">
+      <span>{repo.name}</span>
+    </div>
+  ) : (
+    <img
+      src={image}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      className="repo-window__image"
+      data-hidden={Boolean(frame) && loaded}
+      onError={() => setImageFailed(true)}
+    />
+  );
 
   return (
     <div className="repo-window">
@@ -36,6 +82,11 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
           <i />
         </span>
         <span className="repo-window__address">{displayHost(liveUrl)}</span>
+        {frame && (
+          <span className="repo-window__live" data-on={loaded} aria-hidden="true">
+            live
+          </span>
+        )}
         <a
           href={liveUrl}
           target="_blank"
@@ -47,36 +98,54 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
         </a>
       </div>
 
-      <div className="repo-window__viewport">
-        <a
-          href={liveUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="repo-window__link"
-          aria-label={`Open ${repo.name} live`}
-        >
-          {showTile ? (
-            <div className="repo-window__fallback" aria-hidden="true">
-              <span>{repo.name}</span>
-            </div>
-          ) : (
-            <img
-              key={image}
-              src={image}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="repo-window__image"
-              onError={() => setFailed((count) => count + 1)}
+      <div ref={viewportRef} className="repo-window__viewport">
+        {frame ? (
+          <>
+            {backdrop}
+            {near && scale > 0 && (
+              <iframe
+                src={frame}
+                title={`${repo.name} live preview`}
+                loading="lazy"
+                tabIndex={-1}
+                aria-hidden="true"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+                referrerPolicy="no-referrer"
+                className="repo-window__frame"
+                data-loaded={loaded}
+                onLoad={() => setLoaded(true)}
+                style={{
+                  width: FRAME_WIDTH,
+                  height: FRAME_HEIGHT,
+                  transform: `scale(${scale})`,
+                }}
+              />
+            )}
+            <a
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="repo-window__link"
+              aria-label={`Open ${repo.name} live`}
             />
-          )}
-        </a>
+          </>
+        ) : (
+          <a
+            href={liveUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="repo-window__link"
+            aria-label={`Open ${repo.name} live`}
+          >
+            {backdrop}
+          </a>
+        )}
       </div>
     </div>
   );
 };
 
-/** A link to the deployment when there is one; otherwise the source, as a map and a terminal. */
+/** The live site when there is one; otherwise the source, as a map and a terminal. */
 const RepoPreview = ({ repo, terminal = false }: RepoPreviewProps) =>
   repo.preview.kind === "map" ? (
     <CodeWindow repo={repo} map={repo.preview.map} terminal={terminal} />
