@@ -78,7 +78,7 @@ const Writings = () => {
 
               <Link to={`/writings/${post.slug}`} className="block no-underline text-foreground">
                 <header className="mb-4">
-                  <h2 className="text-3xl md:text-5xl font-display uppercase tracking-[-0.01em] text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
+                  <h2 className="text-xl md:text-3xl font-display uppercase tracking-[-0.01em] text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
                     {post.title}
                   </h2>
 
