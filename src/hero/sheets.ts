@@ -61,9 +61,8 @@ const ALL_SHEETS: SheetMeta[] = [
   },
   {
     id: "cliff",
-    enabled: false,
     name: "Cliffs",
-    aria: "Animated low-poly coast: a ruined stone city overgrown with trees on top of a sea cliff, a waterfall falling from the cliff face, a lighthouse and a broken bridge to a temple on a sea stack, above an open swell reaching to a low sun, with a drowned colossus head, a raised stone hand, a leaning tower and a line of arches standing in the water out to the horizon, and gulls circling.",
+    aria: "Animated low-poly mountain valley after Shadow of the Colossus and Hyper Light Drifter: layers of mist over a river, a pale stone tower on a mesa that climbs through the cloud ceiling with a magenta light at its crown, long arched bridges reaching it from the cliffs at different heights, one of them fallen in, a dead titan half-sunk in the valley floor, four seal pillars sending cyan beams into the clouds, birds circling the tower, a small red-cloaked drifter on the near bridge, and clear sky on the distant horizon.",
   },
 ];
 
