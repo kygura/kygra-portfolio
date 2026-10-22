@@ -17,12 +17,29 @@ type TocItem = {
   depth: 2 | 3;
   /** Running section number, h2s only: "01", "02"… */
   num?: string;
+  /** Roman section mark by position: "V", or "V.2" for a subsection */
+  mark: string;
 };
 
 type PostTocProps = {
   articleRef: RefObject<HTMLElement>;
   // Re-scan headings when the rendered post changes.
   contentKey: string;
+};
+
+const toRoman = (n: number) => {
+  const table: [number, string][] = [
+    [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"],
+    [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
+  ];
+  let out = "";
+  for (const [value, glyph] of table) {
+    while (n >= value) {
+      out += glyph;
+      n -= value;
+    }
+  }
+  return out;
 };
 
 const slugify = (text: string) =>
@@ -73,6 +90,8 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
 
     const seen = new Map<string, number>();
     let sections = 0;
+    let subsections = 0;
+    let sectionMark = "";
     const headings = Array.from(article.querySelectorAll<HTMLHeadingElement>("h2, h3"));
     const next = headings.map((heading) => {
       const text = heading.textContent?.trim() ?? "";
@@ -82,7 +101,17 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
       heading.id = count ? `${base}-${count}` : base;
       const depth = heading.tagName === "H3" ? 3 : 2;
       const num = depth === 2 ? String(++sections).padStart(2, "0") : undefined;
-      return { id: heading.id, text, depth, num } as TocItem;
+      // Numbered by position in every post; Post strips any numeral an
+      // author typed, so the page and the rail always agree.
+      let mark: string;
+      if (depth === 2) {
+        sectionMark = toRoman(sections);
+        subsections = 0;
+        mark = sectionMark;
+      } else {
+        mark = `${sectionMark || "0"}.${++subsections}`;
+      }
+      return { id: heading.id, text, depth, num, mark } as TocItem;
     });
 
     setItems(next);
@@ -366,12 +395,16 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
               "data-depth": item.depth,
               "data-active": i === activeIndex,
               "data-passed": i < activeIndex,
-              style: { top: `${barAt(i, items.length) * 100}%` },
             };
             return (
-              <span key={item.id}>
-                <span className="post-toc__label" title={item.text} {...state}>
-                  {item.text}
+              <span
+                key={item.id}
+                className="post-toc__row"
+                title={item.text}
+                style={{ top: `${barAt(i, items.length) * 100}%` }}
+              >
+                <span className="post-toc__label" {...state}>
+                  {item.mark}
                 </span>
                 <span className="post-toc__bar" {...state} />
               </span>
@@ -412,7 +445,7 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
               >
                 <span className="post-toc__cur" aria-hidden="true">&gt;</span>
                 <span className="post-toc__num" aria-hidden="true">
-                  {item.num ?? "\u2514"}
+                  {item.depth === 2 ? item.mark : "\u2514"}
                 </span>
                 <span className="post-toc__text">{item.text}</span>
               </a>

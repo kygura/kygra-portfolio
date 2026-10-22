@@ -28,6 +28,16 @@ const extractText = (node: React.ReactNode): string => {
   return "";
 };
 
+// Sections are numbered by position on the rail and in the contents sheet,
+// the same in every post, so an author's own leading numeral ("VIII. …")
+// is dropped from the heading rather than left to disagree with them.
+const LEADING_NUMERAL = /^[IVXLCDM]+[.:)]\s+/;
+const stripNumeral = (children: React.ReactNode) => {
+  const parts = React.Children.toArray(children);
+  if (typeof parts[0] === "string") parts[0] = parts[0].replace(LEADING_NUMERAL, "");
+  return parts;
+};
+
 type MarkdownImageProps = React.ComponentPropsWithoutRef<"img"> & {
   node?: unknown;
 };
@@ -134,9 +144,17 @@ const Post = () => {
           remarkPlugins={[remarkGfm]}
           components={{
             // The page title owns the only <h1>; a markdown h1 is a section.
-            h1({ node, className, ...props }: MarkdownHeadingProps) {
+            h1({ node, className, children, ...props }: MarkdownHeadingProps) {
               void node;
-              return <h2 {...props} className={["md-h1", className].filter(Boolean).join(" ")} />;
+              return (
+                <h2 {...props} className={["md-h1", className].filter(Boolean).join(" ")}>
+                  {stripNumeral(children)}
+                </h2>
+              );
+            },
+            h2({ node, children, ...props }: MarkdownHeadingProps) {
+              void node;
+              return <h2 {...props}>{stripNumeral(children)}</h2>;
             },
             pre({ children }) {
               // Fenced blocks arrive as <pre><code class="language-x">. The

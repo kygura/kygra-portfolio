@@ -1294,18 +1294,19 @@
    Notion-style bars, one per heading, over a hairline that fills with
    reading progress. The rail is a scrubber: drag it to move through the
    post, click a bar or title to jump to its heading,
-   or focus it and use the keys. Each bar carries its heading title. The
-   counter above toggles the contents sheet, which takes the titles' place
-   in the gutter (pixel-font numbers, the nav's blinking cursor) and so
-   never covers the text.
+   or focus it and use the keys. Beside the bars sits only the current
+   section's roman numeral (any other on hover). The counter above toggles
+   the contents sheet, which opens in the gutter beside the bars with the
+   full titles (numerals, the nav's blinking cursor) and so never covers
+   the text.
    ───────────────────────────────────────────── */
 /* Sizes are variables so the ?tune panel (TocTuner) can adjust them live. */
 .post-toc {
   --toc-bar: 1.9rem;        /* section bar length; subsections are 60% */
   --toc-bar-h: 3px;         /* bar thickness */
   --toc-step: 1.45rem;       /* vertical space per heading */
-  --toc-label: 20rem;       /* heading titles beside the bars; 0 hides them */
-  --toc-label-size: 0.84rem;
+  --toc-label: 5rem;        /* section numeral column beside the bars; 0 hides it */
+  --toc-label-size: 1rem;
   --toc-edge: 2rem;         /* distance from the window edge */
   --toc-max-h: 70vh;
   /* Bar column, and the title column clamped to the space beside the text */
@@ -1413,31 +1414,39 @@
   background: color-mix(in srgb, var(--ink-3) 70%, var(--rule-2));
 }
 
-/* Titles beside the bars, quiet until they are current */
+/* One row per heading: a hover target the height of its slot */
+.post-toc__row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--toc-step);
+  margin-top: calc(var(--toc-step) / -2);
+}
+.post-toc__row .post-toc__bar { top: 50%; }
+
+/* The current section's numeral beside its bar; others show on hover */
 .post-toc__label {
   position: absolute;
+  top: 50%;
   right: var(--toc-bars);
-  width: max(0px, calc(var(--toc-label-fit) - 0.6rem));
+  width: max(0px, calc(var(--toc-label-fit) - 0.4rem));
   overflow: hidden;
-  transform: translateY(-50%);
+  transform: translate(0.3rem, -50%);
   white-space: nowrap;
-  text-overflow: ellipsis;
   text-align: right;
   font-family: var(--f-body);
   font-size: var(--toc-label-size);
-  line-height: 1.2;
+  letter-spacing: 0.06em;
+  line-height: 1;
   color: var(--ink-3);
-  opacity: 0.6;
-  transition: color 0.2s, opacity 0.2s;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s;
 }
-.post-toc__label[data-depth="3"] { font-size: calc(var(--toc-label-size) * 0.9); opacity: 0.4; }
-.post-toc__label[data-passed="true"] { opacity: 0.8; }
-.post-toc__label[data-active="true"] { color: var(--ink); opacity: 1; }
-.post-toc__rail:hover .post-toc__label { opacity: 1; }
+.post-toc__label[data-depth="3"] { font-size: calc(var(--toc-label-size) * 0.8); }
+.post-toc__label[data-active="true"] { color: var(--ink); opacity: 1; transform: translate(0, -50%); }
+.post-toc__row:hover .post-toc__label:not([data-active="true"]) { opacity: 0.75; transform: translate(0, -50%); }
+.post-toc__row:hover .post-toc__bar:not([data-active="true"]) { background: var(--ink-2); }
 .post-toc[data-open] .post-toc__label { opacity: 0; pointer-events: none; }
-.post-toc__label:hover,
-.post-toc__label:hover + .post-toc__bar { color: var(--ink); }
-.post-toc__label:hover + .post-toc__bar:not([data-active="true"]) { background: var(--ink-2); }
 
 /* Playhead: where the page is, to the pixel */
 .post-toc__head-mark {
@@ -1543,14 +1552,14 @@
 
 .post-toc__link {
   display: grid;
-  grid-template-columns: 0.7rem 1.6rem 1fr;
+  grid-template-columns: 0.7rem 2.3rem 1fr;
   align-items: baseline;
   padding: 0.32rem 0.6rem 0.32rem 0.2rem;
   text-decoration: none;
   color: var(--ink-2);
   transition: color 0.15s, background-color 0.15s;
 }
-.post-toc__link[data-depth="3"] { grid-template-columns: 0.7rem 2.6rem 1fr; }
+.post-toc__link[data-depth="3"] { grid-template-columns: 0.7rem 3.3rem 1fr; }
 .post-toc__cur {
   font-family: var(--f-mono);
   font-size: 0.75rem;
