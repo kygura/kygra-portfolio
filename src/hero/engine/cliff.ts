@@ -66,13 +66,17 @@ void main(){
   // The crown's light leaking down where the tower goes through.
   float ring = exp(-max(r - 8.0, 0.0) * 0.04) * uGlow;
   c += uPink * ring * 0.7;
+  // Seen from above, the sunlit top: brighter and denser.
+  float above = step(vWP.y, cameraPosition.y);
+  c = mix(c, vec3(1.0, 0.98, 0.95), above * 0.5);
+  a = min(1.0, a * (1.0 + above * 0.35));
   gl_FragColor = vec4(c, clamp(a + ring * 0.45 * uAlpha, 0.0, 1.0));
 }`;
 
 export function buildCliff(kit: PsxKit): SceneDef {
   const { U, rnd } = kit;
   const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(52, 16 / 9, 0.5, 1500);
+  const cam = new THREE.PerspectiveCamera(52, 16 / 9, 0.5, 4000);
 
   const fogU = { value: new THREE.Color(P.fog) };
   const glowU = { value: 0.35 };
@@ -126,7 +130,7 @@ export function buildCliff(kit: PsxKit): SceneDef {
   const SUN = new THREE.Vector3(-280, 110, -760);
   const sunDir = new THREE.Vector3();
   const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(900, 24, 16),
+    new THREE.SphereGeometry(1400, 24, 16),
     new THREE.ShaderMaterial({
       side: THREE.BackSide,
       depthWrite: false,
@@ -139,6 +143,7 @@ export function buildCliff(kit: PsxKit): SceneDef {
     }),
   );
   sky.renderOrder = -1;
+  // Follows the camera, so pulling far back never leaves the dome.
   scene.add(sky);
   const sun = kit.sunDisc(scene, SUN.x, SUN.y, SUN.z, 20, "#fff7ea", "#ffd8c4");
 
@@ -149,18 +154,22 @@ export function buildCliff(kit: PsxKit): SceneDef {
   // Flat top, sheer sides.
   const mesa = (x: number, z: number, cx: number, cz: number, r: number, top: number) => top - Math.max(0, Math.hypot(x - cx, z - cz) - r) * 3.2;
   const wall = (d: number, side: number, z: number) =>
-    d <= 0 ? 0 : 240 * (1 - Math.exp(-d / 150)) * (0.78 + 0.32 * Math.sin(z * 0.011 + side * 1.7));
+    d <= 0 ? 0 :
+      250 * (1 - Math.exp(-d / 160)) * (0.66 + 0.24 * Math.sin(z * 0.011 + side * 1.7) + 0.18 * Math.sin(d * 0.009 - z * 0.004)) +
+      80 * Math.max(0, Math.sin(d * 0.017 + 1) * Math.sin(z * 0.014 + side)) * Math.min(1, d / 120);
   const groundH = (x: number, z: number) => {
     const n = noise(x, z), w = W(z), d = Math.abs(x) - w;
     let h = -30 + Math.pow(Math.min(1, Math.abs(x) / w), 2) * 10 + n * 0.12;
     if (d > 0) h += wall(d, Math.sign(x), z) + n * Math.min(1.4, d / 30);
-    h = Math.max(h, -30 + (-z - 430) * 0.9 + n, -30 + (z - 540) * 0.9 + n);
+    // Both ends close off with the same saturating ridges as the sides.
+    h = Math.max(h, -30 + wall(-z - 430, 1, x * 0.6) + n, -30 + wall(z - 540, -1, x * 0.6) + n);
     return Math.max(h, mesa(x, z, 0, 0, 30, 6), mesa(x, z, 96, 250, 34, 40));
   };
   {
-    const geo = new THREE.PlaneGeometry(1700, 1500, 150, 132);
+    // Wide enough to stay under the camera at full zoom-out.
+    const geo = new THREE.PlaneGeometry(2200, 2300, 180, 190);
     geo.rotateX(-Math.PI / 2);
-    geo.translate(0, 0, -250);
+    geo.translate(0, 0, 100);
     const p = geo.attributes.position, uv = geo.attributes.uv;
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), z = p.getZ(i), y = groundH(x, z);
@@ -170,7 +179,7 @@ export function buildCliff(kit: PsxKit): SceneDef {
     }
     kit.mesh(kit.facet(geo, 1.2), mRock, scene);
   }
-  kit.mesh(new THREE.PlaneGeometry(1700, 1500, 1, 1), mWater, scene, 0, -27, -250, -Math.PI / 2);
+  kit.mesh(new THREE.PlaneGeometry(2200, 2300, 1, 1), mWater, scene, 0, -27, 100, -Math.PI / 2);
 
   const b = kit.batcher();
   const box = (w: number, h: number, d: number, r = 0.1) => kit.facet(new THREE.BoxGeometry(w, h, d, 2, 2, 2), r);
@@ -422,6 +431,9 @@ export function buildCliff(kit: PsxKit): SceneDef {
   // Portrait crops the sides; aim a little higher so the ceiling and the crossing stay in frame.
   const pivotTall = new THREE.Vector3(0, 108, 0);
   const base = new THREE.Vector3(50, 28, 400);
+  const ZOOM_MIN = 0.45, FOG: [number, number] = [60, 950];
+  const fog: [number, number] = [...FOG];
+  const pivot = new THREE.Vector3();
   const tmp = new THREE.Vector3();
   const nearMid = near.at(0.5, new THREE.Vector3());
   let tNow = 0;
@@ -429,9 +441,9 @@ export function buildCliff(kit: PsxKit): SceneDef {
   return {
     scene,
     cam,
-    fog: [60, 950],
+    fog,
     fov: [52, 72],
-    limits: { pitch: [-0.22, 0.1], zoom: [0.85, 2.6], yaw: 0.3 },
+    limits: { pitch: [-0.35, 0.12], zoom: [ZOOM_MIN, 2.6], yaw: 0.55 },
     labels: [
       { name: "Spire", sub: "THROUGH THE VEIL", at: (o) => o.copy(PIERCE).setY(PIERCE.y + 14) },
       { name: "Bridge", sub: `${near.n} SPANS`, at: (o) => o.copy(nearMid).setY(nearMid.y + 8) },
@@ -478,13 +490,25 @@ export function buildCliff(kit: PsxKit): SceneDef {
       });
       birdGeo.attributes.position.needsUpdate = true;
 
+      // Zooming out cranes up as well as back: past the ceiling the valley becomes a sea of
+      // cloud with the tower standing out of it, and the aim rises with it so the clear horizon
+      // stays in frame. Fog recedes with the camera so it stays legible.
+      const lift = THREE.MathUtils.clamp((1 - view.zoom) / (1 - ZOOM_MIN), 0, 1);
       const ang = view.yaw + Math.sin(t * 0.03) * 0.05 + view.px * 0.2;
-      const pivot = cam.aspect < 1 ? pivotTall : pivotWide;
+      pivot.copy(cam.aspect < 1 ? pivotTall : pivotWide);
+      pivot.y += lift * 180;
       tmp.copy(base).applyAxisAngle(THREE.Object3D.DEFAULT_UP, ang);
+      tmp.y += lift * 60;
       cam.position.copy(pivot).add(tmp);
       cam.position.y -= view.py * 2;
       cam.lookAt(pivot);
       kit.orbit(cam, pivot);
+      // Keep clear of the ridges when turning or tilting toward them.
+      cam.position.y = Math.max(cam.position.y, groundH(cam.position.x, cam.position.z) + 14);
+      const k = Math.max(1, 1 / view.zoom);
+      fog[0] = FOG[0] * k;
+      fog[1] = FOG[1] * k;
+      sky.position.copy(cam.position);
 
       sunDir.copy(SUN).sub(cam.position).normalize();
       sun.lookAt(cam.position);
@@ -492,7 +516,7 @@ export function buildCliff(kit: PsxKit): SceneDef {
     readout: () => {
       const surge = pulse(tNow - surgeT, 5) > 0.05;
       return [
-        ["ALT", "1,180 m"],
+        ["ALT", `${Math.round((cam.position.y + 30) * 9.5).toLocaleString("en-US")} m`],
         ["MIST", `${Math.round(62 + 8 * Math.sin(tNow * 0.07))}%`],
         ["CEILING", "1,930 m"],
         ["BEARING", `${kit.pad(Math.round(kit.bearing(cam)), 3)}°`],
