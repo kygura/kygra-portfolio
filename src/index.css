@@ -1297,10 +1297,21 @@
    or focus it and use the keys. Resting on it opens the contents sheet
    beside it: pixel-font numbers, Literata titles, the nav's blinking cursor.
    ───────────────────────────────────────────── */
+/* Sizes are variables so the ?tune panel (TocTuner) can adjust them live. */
 .post-toc {
+  --toc-bar: 1.5rem;        /* section bar length; subsections are 60% */
+  --toc-bar-h: 3px;         /* bar thickness */
+  --toc-step: 1.2rem;       /* vertical space per heading */
+  --toc-label: 12rem;       /* heading titles beside the bars; 0 hides them */
+  --toc-label-size: 0.74rem;
+  --toc-edge: 2rem;         /* distance from the window edge */
+  --toc-max-h: 70vh;
+  /* Bar column, and the title column clamped to the space beside the text */
+  --toc-bars: calc(var(--toc-bar) * 1.25 + 0.6rem);
+  --toc-label-fit: max(0px, min(var(--toc-label), (100vw - 48rem) / 2 - var(--toc-edge) - var(--toc-bars) - 2.5rem));
   position: fixed;
   top: 50%;
-  right: clamp(1rem, 2vw, 2rem);
+  right: var(--toc-edge);
   transform: translateY(-50%);
   z-index: 30;
   display: none;
@@ -1325,7 +1336,7 @@
 
 .post-toc__readout {
   font-family: var(--f-pixel);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   letter-spacing: 0.06em;
   color: var(--accent);
 }
@@ -1334,8 +1345,8 @@
 .post-toc__track {
   position: relative;
   display: block;
-  width: 1.5rem;
-  height: min(60vh, calc(var(--n) * 0.85rem + 0.5rem));
+  width: calc(var(--toc-bars) + var(--toc-label-fit));
+  height: min(var(--toc-max-h), calc(var(--n) * var(--toc-step) + 0.5rem));
   border-right: 1px solid color-mix(in srgb, var(--rule-2) 60%, transparent);
 }
 .post-toc__fill {
@@ -1352,28 +1363,50 @@
 .post-toc__bar {
   position: absolute;
   right: 0.35rem;
-  height: 2px;
-  width: 0.95rem;
-  margin-top: -1px;
+  height: var(--toc-bar-h);
+  width: var(--toc-bar);
+  margin-top: calc(var(--toc-bar-h) / -2);
   border-radius: 2px;
   background: var(--rule-2);
   transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s;
 }
-.post-toc__bar[data-depth="3"] { width: 0.55rem; }
+.post-toc__bar[data-depth="3"] { width: calc(var(--toc-bar) * 0.6); }
 .post-toc__bar[data-passed="true"] { background: var(--ink-3); }
-.post-toc__bar[data-active="true"] { background: var(--ink); width: 1.15rem; }
-.post-toc__bar[data-active="true"][data-depth="3"] { width: 0.75rem; }
+.post-toc__bar[data-active="true"] { background: var(--ink); width: calc(var(--toc-bar) * 1.25); }
+.post-toc__bar[data-active="true"][data-depth="3"] { width: calc(var(--toc-bar) * 0.8); }
 .post-toc__rail:hover .post-toc__bar:not([data-active="true"]) {
   background: color-mix(in srgb, var(--ink-3) 70%, var(--rule-2));
 }
+
+/* Titles beside the bars, quiet until they are current */
+.post-toc__label {
+  position: absolute;
+  right: var(--toc-bars);
+  width: max(0px, calc(var(--toc-label-fit) - 0.6rem));
+  overflow: hidden;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: right;
+  font-family: var(--f-body);
+  font-size: var(--toc-label-size);
+  line-height: 1.2;
+  color: var(--ink-3);
+  opacity: 0.6;
+  transition: color 0.2s, opacity 0.2s;
+}
+.post-toc__label[data-depth="3"] { font-size: calc(var(--toc-label-size) * 0.9); opacity: 0.4; }
+.post-toc__label[data-passed="true"] { opacity: 0.8; }
+.post-toc__label[data-active="true"] { color: var(--ink); opacity: 1; }
+.post-toc__rail:hover .post-toc__label { opacity: 1; }
 
 /* Playhead: where the page is, to the pixel */
 .post-toc__head-mark {
   position: absolute;
   right: -2px;
   width: 3px;
-  height: 0.7rem;
-  margin-top: -0.35rem;
+  height: calc(var(--toc-step) * 0.6);
+  margin-top: calc(var(--toc-step) * -0.3);
   border-radius: 2px;
   background: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
@@ -1382,7 +1415,7 @@
 .post-toc__scrub-label {
   position: absolute;
   top: 50%;
-  right: calc(100% + 1.9rem);
+  right: calc(100% + var(--toc-bars) + var(--toc-label-fit) + 0.5rem);
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
@@ -2017,3 +2050,47 @@ kbd {
     animation: none !important;
   }
 }
+
+/* ─────────────────────────────────────────────
+   TOC TUNER — the ?tune sizing panel for the post rail
+   ───────────────────────────────────────────── */
+.toc-tuner {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 60;
+  width: 17rem;
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--sheet) 96%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--rule-2);
+  border-left: 2px solid var(--accent);
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  color: var(--ink-2);
+}
+.toc-tuner__head {
+  margin-bottom: 0.5rem;
+  font-family: var(--f-pixel);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.toc-tuner__row {
+  display: grid;
+  grid-template-columns: 6rem 1fr 3.4rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
+}
+.toc-tuner__row input { width: 100%; accent-color: var(--accent); }
+.toc-tuner__row output { text-align: right; color: var(--ink); }
+.toc-tuner__actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+.toc-tuner__actions button {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--rule-2);
+  color: var(--ink);
+  transition: border-color 0.15s, color 0.15s;
+}
+.toc-tuner__actions button:hover { border-color: var(--accent); color: var(--accent); }

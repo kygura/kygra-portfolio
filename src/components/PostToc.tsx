@@ -9,6 +9,7 @@ import {
   type PointerEvent,
   type RefObject,
 } from "react";
+import TocTuner from "./TocTuner";
 
 type TocItem = {
   id: string;
@@ -48,6 +49,7 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
   const [items, setItems] = useState<TocItem[]>([]);
   const [progress, setProgress] = useState(0);
   const [scrubbing, setScrubbing] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLSpanElement>(null);
   const press = useRef<{ y: number; moved: boolean; pointerId: number } | null>(null);
 
@@ -273,7 +275,7 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
   const pct = Math.round(progress * 100);
 
   return (
-    <nav className="post-toc" aria-label="On this page" data-scrubbing={scrubbing || undefined}>
+    <nav ref={navRef} className="post-toc" aria-label="On this page" data-scrubbing={scrubbing || undefined}>
       <div
         className="post-toc__rail"
         role="slider"
@@ -301,16 +303,22 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
           style={{ "--n": items.length } as CSSProperties}
         >
           <span className="post-toc__fill" style={{ transform: `scaleY(${progress})` }} />
-          {items.map((item, i) => (
-            <span
-              key={item.id}
-              className="post-toc__bar"
-              data-depth={item.depth}
-              data-active={i === activeIndex}
-              data-passed={i < activeIndex}
-              style={{ top: `${barAt(i, items.length) * 100}%` }}
-            />
-          ))}
+          {items.map((item, i) => {
+            const state = {
+              "data-depth": item.depth,
+              "data-active": i === activeIndex,
+              "data-passed": i < activeIndex,
+              style: { top: `${barAt(i, items.length) * 100}%` },
+            };
+            return (
+              <span key={item.id}>
+                <span className="post-toc__label" {...state}>
+                  {item.text}
+                </span>
+                <span className="post-toc__bar" {...state} />
+              </span>
+            );
+          })}
           <span className="post-toc__head-mark" style={{ top: `${progress * 100}%` }}>
             <span className="post-toc__scrub-label">
               {active.num && <span className="post-toc__scrub-num">{active.num}</span>}
@@ -350,6 +358,7 @@ const PostToc = ({ articleRef, contentKey }: PostTocProps) => {
           drag rail · ↑↓ scroll · [ ] section
         </p>
       </div>
+      <TocTuner target={navRef} />
     </nav>
   );
 };
