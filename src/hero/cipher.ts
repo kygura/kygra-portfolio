@@ -68,6 +68,10 @@ const ANY = UPPER + DIGIT + SYM;
  *  and the fade-out time (s) once the front has run off the far corner. A pulse travels
  *  until it has covered the whole sheet. */
 const SPEED = 520, BAND = 36, TAIL = 55, FADE = 1.6;
+/** How far behind the front the trailing glow still keeps a cell lit (glow > 0.04). */
+const TAIL_REACH = TAIL * Math.log(25);
+/** Pulses past this many drop the oldest, so click spam can't stack up the work. */
+const MAX_PULSES = 6;
 /** Reel timing: ms per extra stop, and the stagger between neighbouring letters. */
 const REEL_MS = 520, REEL_STAGGER = 70;
 /** Click surge on a word: delay between neighbouring letters and the pop length (s). */
@@ -156,6 +160,10 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
   let nextWord = 1;
   let lastSpawn = 0;
   const pulses: Pulse[] = [];
+  const addPulse = (p: Pulse) => {
+    pulses.push(p);
+    if (pulses.length > MAX_PULSES) pulses.shift();
+  };
 
   const ptr = { x: 0, y: 0, sx: 0, sy: 0, in: false, moved: false };
   let active = false, visible = true, raf = 0, last = performance.now();
@@ -309,9 +317,26 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       const r0 = Math.max(0, Math.floor((y - rad - oy) / ch)), r1 = Math.min(rows - 1, Math.ceil((y + rad - oy) / ch));
       for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) add(r * cols + c);
     };
+    /** Cells between two radii: a pulse only touches the band around its front. */
+    const ring = (x: number, y: number, rIn: number, rOut: number) => {
+      const r0 = Math.max(0, Math.floor((y - rOut - oy) / ch)), r1 = Math.min(rows - 1, Math.ceil((y + rOut - oy) / ch));
+      for (let r = r0; r <= r1; r++) {
+        const ry = Math.abs(oy + r * ch - y);
+        const out = Math.sqrt(Math.max(0, rOut * rOut - ry * ry)) + cw;
+        const c0 = Math.max(0, Math.floor((x - out - ox) / cw)), c1 = Math.min(cols - 1, Math.ceil((x + out - ox) / cw));
+        const inn = ry < rIn ? Math.sqrt(rIn * rIn - ry * ry) - cw : 0;
+        const h0 = inn > 0 ? Math.floor((x - inn - ox) / cw) : c1;
+        const h1 = inn > 0 ? Math.ceil((x + inn - ox) / cw) : c1;
+        for (let c = c0; c <= Math.min(c1, h0); c++) add(r * cols + c);
+        for (let c = Math.max(c0, h1); c <= c1; c++) add(r * cols + c);
+      }
+    };
     for (const i of live) add(i);
     if (hovering) box(ptr.sx, ptr.sy, R);
-    for (const p of pulses) box(p.x, p.y, Math.min(((now - p.t0) / 1000) * SPEED, p.reach) + BAND);
+    for (const p of pulses) {
+      const front = Math.min(((now - p.t0) / 1000) * SPEED, p.reach);
+      ring(p.x, p.y, front - TAIL_REACH, front + BAND);
+    }
 
     const decay = Math.exp(-dt * 2.6);
     const spring = 1 - Math.exp(-dt * 14);
@@ -336,7 +361,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       }
       for (const p of pulses) {
         const age = (now - p.t0) / 1000;
-        const ddx = cx - p.x, ddy = cy - p.y, d = Math.hypot(ddx, ddy) || 1;
+        const ddx = cx - p.x, ddy = cy - p.y, d = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
         // The front stops at the far corner; inside it the glow falls off behind the front.
         const front = Math.min(age * SPEED, p.reach);
         const k = d > front ? 1 - (d - front) / BAND : Math.exp(-(front - d) / TAIL);
@@ -356,11 +381,10 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       if (Math.abs(dx[i]) < 0.05) dx[i] = 0;
       if (Math.abs(dy[i]) < 0.05) dy[i] = 0;
       if (heat[i] < 0.02) heat[i] = 0;
+      // A cell going quiet needs no repaint: the quiet field already holds its
+      // resting glyph (reels repaint it when they land).
       if (heat[i] || glow[i] > 0.04 || dx[i] || dy[i] || reels[i] || owner[i]) next.push(i);
-      else {
-        glow[i] = 0;
-        paintQuiet(i);
-      }
+      else glow[i] = 0;
     }
     live = next;
   };
@@ -377,6 +401,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     for (const i of live) ctx.fillRect(ox + (i % cols) * cw - cw / 2, oy + ((i / cols) | 0) * ch - ch / 2, cw, ch);
 
     let fill = "";
+    const rolls: { reel: Reel; x: number; y: number; col: string; a: number }[] = [];
     for (const i of live) {
       const x = ox + (i % cols) * cw + dx[i], y = oy + ((i / cols) | 0) * ch + dy[i];
       let col = INK, a = base[i] + heat[i] * 0.75;
@@ -403,20 +428,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       }
 
       if (rolling) {
-        // The strip slides up through a one-cell window and eases onto its last stop.
-        const n = reel.strip.length - 1;
-        const pos = n * easeOut(Math.max(0, Math.min(1, (now - reel.t0) / (reel.t1 - reel.t0))));
-        const k = Math.floor(pos), frac = pos - k;
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x - cw / 2, y - ch / 2, cw, ch);
-        ctx.clip();
-        ctx.globalAlpha = a;
-        ctx.fillStyle = fill = col;
-        ctx.fillText(reel.strip[k], x, y - frac * ch);
-        if (k < n) ctx.fillText(reel.strip[k + 1], x, y + (1 - frac) * ch);
-        ctx.restore();
-        fill = "";
+        rolls.push({ reel, x, y, col, a });
         continue;
       }
 
@@ -444,6 +456,25 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
       ctx.globalAlpha = Math.min(1, a);
       if (fill !== col) ctx.fillStyle = fill = col;
       ctx.fillText(g, x, y);
+    }
+
+    // Reels share one clip (their one-cell windows) instead of a save/clip/restore each.
+    if (rolls.length) {
+      ctx.save();
+      ctx.beginPath();
+      for (const r of rolls) ctx.rect(r.x - cw / 2, r.y - ch / 2, cw, ch);
+      ctx.clip();
+      for (const { reel, x, y, col, a } of rolls) {
+        // The strip slides up through a one-cell window and eases onto its last stop.
+        const n = reel.strip.length - 1;
+        const pos = n * easeOut(Math.max(0, Math.min(1, (now - reel.t0) / (reel.t1 - reel.t0))));
+        const k = Math.floor(pos), frac = pos - k;
+        ctx.globalAlpha = a;
+        if (fill !== col) ctx.fillStyle = fill = col;
+        ctx.fillText(reel.strip[k], x, y - frac * ch);
+        if (k < n) ctx.fillText(reel.strip[k + 1], x, y + (1 - frac) * ch);
+      }
+      ctx.restore();
     }
     ctx.globalAlpha = 1;
   };
@@ -490,7 +521,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     if (reduced) return true;
     const x = ox + (w.start + (w.text.length - 1) / 2) * cw, y = oy + w.row * ch;
     const reach = Math.hypot(Math.max(x, cssW - x), Math.max(y, cssH - y)) + BAND;
-    pulses.push({ x, y, t0: now, reach: Math.min(reach, 520), life: Math.min(reach, 520) / SPEED + FADE });
+    addPulse({ x, y, t0: now, reach: Math.min(reach, 520), life: Math.min(reach, 520) / SPEED + FADE });
     return true;
   };
   /** A click on bare noise lights up a few words in a small radius around it. */
@@ -515,7 +546,7 @@ export function createCipherField(canvas: HTMLCanvasElement, opts: { accent: str
     if (!hitWord(t)) revealAround(t);
     if (!reduced) {
       const reach = Math.hypot(Math.max(ptr.x, cssW - ptr.x), Math.max(ptr.y, cssH - ptr.y)) + BAND;
-      pulses.push({ x: ptr.x, y: ptr.y, t0: performance.now(), reach, life: reach / SPEED + FADE });
+      addPulse({ x: ptr.x, y: ptr.y, t0: performance.now(), reach, life: reach / SPEED + FADE });
     }
     kick();
   };
