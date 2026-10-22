@@ -9,17 +9,23 @@ type RepoPreviewProps = {
   terminal?: boolean;
 };
 
+/** A rendered screenshot of the deployment, for sites with no og:image of their own. */
+const screenshotOf = (url: string) => `https://image.thum.io/get/width/1200/crop/750/noanimate/${url}`;
+
 /**
- * A browser window onto the repo's deployment: its og:image or GitHub's card
- * (or a drawn tile when there is no image at all, as private repos have no
- * card), linking out to the deployment in a new tab.
+ * A browser window onto the repo's deployment, linking out to it in a new
+ * tab. The picture is the site's og:image when it has one, else a screenshot
+ * of the page, then GitHub's card, then a drawn tile (private repos have no
+ * card).
  */
 const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
   // Only code-only repos lack a live URL, and those take the code window.
   const liveUrl = repo.liveUrl ?? repo.url;
-  const [imageFailed, setImageFailed] = useState(false);
-  const image = repo.preview.kind === "image" ? repo.preview.src : repo.card;
-  const showTile = imageFailed || !image;
+  const ogImage = repo.preview.kind === "image" && repo.preview.src !== repo.card ? repo.preview.src : null;
+  const sources = [ogImage ?? screenshotOf(liveUrl), repo.card].filter((src): src is string => Boolean(src));
+  const [failed, setFailed] = useState(0);
+  const image = sources[failed];
+  const showTile = !image;
 
   return (
     <div className="repo-window">
@@ -55,12 +61,13 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
             </div>
           ) : (
             <img
+              key={image}
               src={image}
               alt=""
               loading="lazy"
               decoding="async"
               className="repo-window__image"
-              onError={() => setImageFailed(true)}
+              onError={() => setFailed((count) => count + 1)}
             />
           )}
         </a>
