@@ -18,9 +18,10 @@ export interface Accent {
 
 export const ACCENTS: Accent[] = [
   { id: "lichen", name: "Lichen", hex: "#bcc77c", deep: "#5d7a3a", fog: "#3b4c4b", zen: "#0f171b" },
-  { id: "torch", name: "Amber", hex: "#eaa24c", deep: "#a24e1c", fog: "#4a453d", zen: "#15121a" },
-  { id: "astral", name: "Sky", hex: "#86d3dc", deep: "#2f6f9a", fog: "#33475a", zen: "#0b1222" },
-  { id: "madder", name: "Rose", hex: "#e5787f", deep: "#7e2638", fog: "#463a42", zen: "#140d14" },
+  // Amber, Sky and Rose also swap the ground, ink and surface texture (see index.css); fog and zenith follow the ground.
+  { id: "torch", name: "Amber", hex: "#eaa24c", deep: "#a24e1c", fog: "#4d4046", zen: "#130f16" },
+  { id: "astral", name: "Sky", hex: "#86d3dc", deep: "#2f6f9a", fog: "#2f4562", zen: "#08101e" },
+  { id: "madder", name: "Rose", hex: "#e5787f", deep: "#7e2638", fog: "#4d343c", zen: "#150b10" },
   // Graphite also neutralises the ground and ink (see index.css), so the whole sheet goes grayscale.
   { id: "mono", name: "Graphite", hex: "#d4d4d4", deep: "#6b6b6b", fog: "#3f3f3f", zen: "#0e0e0e" },
   // Manuscript swaps the whole sheet too: warm brown ground, paper ink, clay accent.
