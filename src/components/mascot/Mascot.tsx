@@ -27,7 +27,7 @@ const SLEEP_MS = 35_000;
 const PET_PX = 140;
 /** The head's centre within the canvas, for aiming the gaze. */
 const HEAD_X = 26 / GW;
-const HEAD_Y = 19 / GH;
+const HEAD_Y = 21 / GH;
 
 type Action = "wave" | "bloom" | "stretch";
 const ACTIONS: { kind: Action; ms: number }[] = [
