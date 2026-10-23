@@ -8,6 +8,7 @@ import CustomCursor from "./components/CustomCursor";
 import ScrollProgress from "./components/ScrollProgress";
 import TerminalHost from "./components/TerminalHost";
 import CommandHost from "./components/CommandHost";
+import CompanionHost from "./components/CompanionHost";
 import Keys from "./theme/Keys";
 
 // Toast viewports render nothing until something fires a toast, and only
@@ -40,6 +41,7 @@ const App = () => (
         <ScrollProgress />
         <TerminalHost />
         <CommandHost />
+        <CompanionHost />
         <Keys />
         <Suspense fallback={null}>
           <Routes>

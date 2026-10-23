@@ -1,7 +1,8 @@
 {
   "buildCommand": "bun run build",
   "functions": {
-    "api/github/terminal.ts": { "maxDuration": 60 }
+    "api/github/terminal.ts": { "maxDuration": 60 },
+    "api/companion/remark.ts": { "maxDuration": 30 }
   },
   "redirects": [
     {
