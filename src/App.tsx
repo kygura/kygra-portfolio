@@ -19,6 +19,9 @@ const Sonner = lazy(() =>
   import("@/components/ui/sonner").then((m) => ({ default: m.Toaster }))
 );
 
+// The golem is decoration; it can arrive after the page does.
+const MossGolem = lazy(() => import("./components/golem/MossGolem"));
+
 const Writings = lazy(() => import("./pages/Writings"));
 const Post = lazy(() => import("./pages/Post"));
 const Projects = lazy(() => import("./pages/Projects"));
@@ -41,6 +44,9 @@ const App = () => (
         <TerminalHost />
         <CommandHost />
         <Keys />
+        <Suspense fallback={null}>
+          <MossGolem />
+        </Suspense>
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />

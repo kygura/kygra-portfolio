@@ -2206,3 +2206,181 @@ kbd {
   transition: border-color 0.15s, color 0.15s;
 }
 .toc-tuner__actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   MOSS GOLEM — the site's resident, a Hyper Light Drifter–style
+   Titan in miniature; see components/golem.
+   ============================================================ */
+.golem {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  z-index: 60;
+  will-change: transform;
+  pointer-events: none;
+}
+.golem-body {
+  position: relative;
+  display: block;
+  pointer-events: auto;
+  line-height: 0;
+  cursor: pointer;
+}
+.golem-body canvas { display: block; image-rendering: pixelated; }
+.golem-body canvas:first-child { filter: drop-shadow(0 3px 0 rgba(18, 14, 34, 0.45)); }
+/* Bloom: the emissive pixels again, blurred and screened over the sprite. */
+.golem-body .golem-bloom {
+  position: absolute;
+  inset: 0;
+  filter: blur(4px) saturate(1.4);
+  mix-blend-mode: screen;
+  opacity: 0.75;
+  pointer-events: none;
+  animation: golem-pulse 2.4s ease-in-out infinite;
+}
+.golem[data-mode="happy"] .golem-bloom { opacity: 1; filter: blur(6px) saturate(1.6); animation: none; }
+.golem[data-mode="sleep"] .golem-bloom { opacity: 0.25; animation: none; }
+@keyframes golem-pulse { 50% { opacity: 0.45; } }
+.golem-body:focus-visible { outline: 1px dashed var(--accent); outline-offset: 2px; }
+
+.golem-companion {
+  position: absolute;
+  top: 2px;
+  right: -14px;
+  width: 10px;
+  height: 14px;
+  filter: drop-shadow(0 0 3px var(--accent)) drop-shadow(0 0 6px var(--accent));
+  animation: golem-hover 2.2s steps(8) infinite;
+  pointer-events: none;
+}
+.golem-companion svg { width: 100%; height: 100%; display: block; }
+.golem[data-facing="left"] .golem-companion { right: auto; left: -14px; }
+.golem[data-mode="happy"] .golem-companion { animation: golem-spin 0.5s steps(4) infinite; }
+.golem[data-mode="sleep"] .golem-companion { top: 30px; opacity: 0.55; filter: none; animation: none; }
+@keyframes golem-hover { 50% { transform: translateY(-6px); } }
+@keyframes golem-spin { 50% { transform: translateY(-8px) scaleX(-1); } }
+
+.golem-hide {
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  font-family: var(--f-pixel);
+  font-size: 10px;
+  line-height: 1;
+  color: var(--ink-2);
+  background: #120e22;
+  border: 1px solid var(--rule-2);
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+.golem:hover .golem-hide,
+.golem-hide:focus-visible { opacity: 1; }
+.golem-hide:hover { color: var(--accent); border-color: var(--accent); }
+@media (hover: none) { .golem-hide { opacity: 0.7; } }
+
+/* Speech: a dark terminal panel with notched corners, after HLD's UI. */
+.golem-bubble-wrap {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  pointer-events: none;
+}
+.golem-bubble {
+  position: relative;
+  width: max-content;
+  max-width: 190px;
+  transform: translateX(-24px);
+  padding: 7px 10px;
+  font-family: var(--f-pixel);
+  font-size: 10px;
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  color: #e6fff8;
+  background: #120e22;
+  box-shadow:
+    0 0 0 1px var(--accent),
+    0 0 12px -2px var(--accent),
+    4px 4px 0 1px rgba(18, 14, 34, 0.5);
+  clip-path: polygon(4px 0, calc(100% - 4px) 0, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 0 calc(100% - 4px), 0 4px);
+  animation: golem-pop 0.2s steps(3) both;
+}
+/* Pointer: a stepped pixel tail under the panel. */
+.golem-bubble-wrap::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: -6px;
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  clip-path: polygon(0 0, 100% 0, 100% 34%, 67% 34%, 67% 67%, 34% 67%, 34% 100%, 0 100%);
+}
+.golem-bubble-wrap:empty::after { display: none; }
+.golem-bubble-wrap.is-flipped .golem-bubble { transform: translateX(calc(-100% + 24px)); }
+.golem-bubble-wrap.is-flipped::after { left: 0; transform: scaleX(-1); }
+@keyframes golem-pop { from { opacity: 0; transform: translateX(-24px) translateY(4px); } }
+.golem-bubble-wrap.is-flipped .golem-bubble { animation-name: golem-pop-flipped; }
+@keyframes golem-pop-flipped { from { opacity: 0; transform: translateX(calc(-100% + 24px)) translateY(4px); } }
+
+.golem-particles { position: absolute; left: 50%; top: 18px; pointer-events: none; }
+.golem-p {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  animation: golem-float 1.6s steps(12) forwards;
+}
+.golem-p svg { width: 100%; height: 100%; display: block; }
+.golem-p-mote {
+  width: 3px;
+  height: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 6px 1px var(--accent);
+}
+.golem-p-z {
+  font-family: var(--f-pixel);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 6px var(--accent);
+  animation-duration: 1.8s;
+}
+@keyframes golem-float {
+  0% { opacity: 0; transform: translate(0, 0); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), -52px); }
+}
+
+.golem-pebble {
+  position: fixed;
+  right: 14px;
+  bottom: 10px;
+  z-index: 60;
+  width: 22px;
+  height: 14px;
+  padding: 0;
+  opacity: 0.75;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.golem-pebble span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #56737a;
+  border: 2px solid #120e22;
+  border-radius: 7px 9px 3px 3px;
+  box-shadow: inset 0 3px 0 #1f8a62, inset 3px 3px 0 #6edc84;
+}
+.golem-pebble:hover, .golem-pebble:focus-visible { opacity: 1; transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .golem-bubble, .golem-p, .golem-companion, .golem-bloom { animation: none !important; }
+  .golem-p { display: none; }
+}
+@media print { .golem, .golem-pebble { display: none; } }
