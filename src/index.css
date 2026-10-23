@@ -2210,11 +2210,15 @@ kbd {
 /* ─────────────────────────────────────────────
    TAPE DECK — the lofi player in the bottom-right corner
    (src/components/player). The golem has the bottom-left; the post rail is
-   centred on the right edge, well above this.
+   centred on the right edge, well above this. A portable tape recorder in
+   the sheet's own materials: hairline shell, recessed bays in --code, the
+   accent for lamps, the latched key and the cassette label.
    ───────────────────────────────────────────── */
 .deck {
   --deck-edge: clamp(0.75rem, 2vw, 1.5rem);
-  --deck-fab: 40px;
+  --deck-fab: 44px;
+  --deck-tape: color-mix(in srgb, var(--accent-deep) 45%, var(--bg));
+  --deck-shell: color-mix(in srgb, var(--ink) 7%, var(--sheet));
   position: fixed;
   right: var(--deck-edge);
   bottom: var(--deck-edge);
@@ -2222,45 +2226,45 @@ kbd {
   font-family: var(--f-mono);
   color: var(--ink-2);
 }
+
+/* ── Collapsed: a tiny cassette ── */
 .deck__fab {
   display: grid;
   place-items: center;
   width: var(--deck-fab);
-  height: var(--deck-fab);
+  height: calc(var(--deck-fab) - 8px);
   background: color-mix(in srgb, var(--sheet) 92%, transparent);
   backdrop-filter: blur(8px);
   border: 1px solid var(--rule-2);
   color: var(--ink-3);
-  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
+.deck__fab svg { width: 30px; height: 20px; overflow: visible; }
 .deck__fab:hover,
-.deck__fab[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
-.deck[data-live] .deck__fab { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 60%, var(--rule-2)); }
+.deck__fab[aria-expanded="true"],
+.deck[data-live] .deck__fab { border-color: var(--accent); color: var(--accent); }
 .deck__fab:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.fab__shell, .fab__foot { fill: none; stroke: currentColor; stroke-width: 1; }
+.fab__label { fill: currentColor; opacity: 0.18; }
+.fab__reel circle { fill: var(--bg); stroke: currentColor; stroke-width: 1; }
+.fab__reel path { stroke: currentColor; stroke-width: 0.9; }
+.deck[data-live] .fab__reel { animation: deckSpin 1.6s linear infinite; }
+@keyframes deckSpin { to { transform: rotate(-360deg); } }
 
-/* Four bars that sit low at rest and bounce while something plays. */
-.deck__meter { display: flex; align-items: flex-end; gap: 3px; height: 16px; }
-.deck__meter i { display: block; width: 3px; height: 4px; background: currentColor; }
-.deck__meter i:nth-child(2) { height: 8px; }
-.deck__meter i:nth-child(3) { height: 6px; }
-.deck[data-live] .deck__meter i { animation: deckLevel 0.9s steps(4, end) infinite alternate; }
-.deck[data-live] .deck__meter i:nth-child(2) { animation-duration: 0.7s; animation-delay: -0.3s; }
-.deck[data-live] .deck__meter i:nth-child(3) { animation-duration: 1.1s; animation-delay: -0.6s; }
-.deck[data-live] .deck__meter i:nth-child(4) { animation-duration: 0.8s; animation-delay: -0.2s; }
-@keyframes deckLevel { from { height: 3px; } to { height: 16px; } }
-
+/* ── Open: the recorder ── */
 /* Hidden, not unmounted, when closed, so a playing radio iframe keeps going. */
 .deck__panel {
   position: absolute;
   right: 0;
-  bottom: calc(var(--deck-fab) + 0.5rem);
-  width: min(17.5rem, calc(100vw - 2 * var(--deck-edge)));
-  padding: 0.75rem 0.85rem 0.7rem;
-  background: color-mix(in srgb, var(--sheet) 96%, transparent);
-  backdrop-filter: blur(8px);
+  bottom: calc(var(--deck-fab) - 8px + 0.5rem);
+  width: min(19rem, calc(100vw - 2 * var(--deck-edge)));
+  padding: 0.6rem 0.7rem 0.65rem;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, color-mix(in srgb, var(--ink) 2.5%, transparent) 3px 4px),
+    var(--deck-shell);
   border: 1px solid var(--rule-2);
-  border-right: 2px solid var(--accent);
-  font-size: 0.7rem;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 10%, transparent), inset 0 -3px 0 color-mix(in srgb, var(--bg) 60%, transparent);
+  font-size: 0.68rem;
   transform-origin: bottom right;
   transition: opacity 0.16s ease, transform 0.16s ease, visibility 0s linear 0.16s;
   opacity: 0;
@@ -2274,37 +2278,165 @@ kbd {
   transition: opacity 0.16s ease, transform 0.16s ease;
 }
 
-.deck__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.65rem; }
-.deck__eyebrow { font-family: var(--f-pixel); font-size: 0.62rem; letter-spacing: 0.08em; color: var(--accent); }
-.deck__tabs { display: flex; }
-.deck__tab {
-  padding: 0.15rem 0.5rem;
+/* Name plate and the source switch with its lamps. */
+.deck__plate { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.55rem; }
+.deck__brand { font-family: var(--f-pixel); font-size: 0.62rem; letter-spacing: 0.1em; color: var(--ink-2); }
+.deck__brand em { font-family: var(--f-body); font-size: 0.78rem; letter-spacing: 0; color: var(--accent); margin-left: 0.2rem; }
+.deck__source { display: flex; gap: 0.6rem; }
+.deck__source button {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   font-family: var(--f-pixel);
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border: 1px solid var(--rule-2);
   color: var(--ink-3);
 }
-.deck__tab + .deck__tab { border-left: 0; }
-.deck__tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.deck__tab:not([aria-selected="true"]):hover { color: var(--ink); }
+.deck__source button:hover { color: var(--ink); }
+.deck__source button[aria-selected="true"] { color: var(--ink); }
+.deck__lamp { width: 6px; height: 6px; background: var(--rule-2); border: 1px solid var(--bg); }
+.deck__source button[aria-selected="true"] .deck__lamp { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
 
 .deck__body[hidden] { display: none; }
-.deck__now { display: flex; flex-direction: column; gap: 0.1rem; margin-bottom: 0.6rem; min-width: 0; }
-.deck__title {
+
+/* Cassette bay: a recessed well the tape sits in. */
+.deck__bay {
+  padding: 0.55rem;
+  background: var(--code);
+  border: 1px solid var(--rule);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.deck__bay--empty { display: grid; place-items: center; min-height: 8.5rem; color: var(--ink-3); text-align: center; }
+
+.cassette {
+  position: relative;
+  padding: 0.45rem 0.6rem 0;
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+}
+.cassette__screw {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rule-2);
+  box-shadow: inset 1px 1px 0 var(--bg);
+}
+.cassette__screw[data-at="tl"] { top: 3px; left: 3px; }
+.cassette__screw[data-at="tr"] { top: 3px; right: 3px; }
+.cassette__screw[data-at="bl"] { bottom: 3px; left: 3px; }
+.cassette__screw[data-at="br"] { bottom: 3px; right: 3px; }
+
+/* The paper label, ruled like a J-card, with the side letter. */
+.cassette__label {
+  display: flex;
+  align-items: stretch;
+  gap: 0.45rem;
+  padding: 0.3rem 0.4rem 0.35rem;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 11px, color-mix(in srgb, var(--on-accent) 16%, transparent) 11px 12px),
+    var(--accent);
+  color: var(--on-accent);
+}
+.cassette__side {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  font-family: var(--f-pixel);
+  font-size: 0.8rem;
+  border-right: 1px solid color-mix(in srgb, var(--on-accent) 35%, transparent);
+}
+.cassette__text { display: flex; flex-direction: column; min-width: 0; }
+.cassette__title {
   font-family: var(--f-body);
   font-style: italic;
-  font-size: 0.95rem;
-  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.deck__artist { color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cassette__meta { font-size: 0.6rem; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.deck__bar { position: relative; height: 10px; cursor: pointer; outline: none; }
-.deck__bar::before { content: ""; position: absolute; inset: 4px 0; background: var(--rule-2); }
+/* Window onto the reels. */
+.cassette__window {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.4rem 0.6rem 0;
+  padding: 0.15rem 0.35rem;
+  height: 3.1rem;
+  background: color-mix(in srgb, var(--bg) 85%, black);
+  border: 1px solid var(--rule-2);
+  overflow: hidden;
+}
+.cassette__glass {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, color-mix(in srgb, var(--ink) 9%, transparent) 42%, transparent 52%);
+  pointer-events: none;
+}
+.reel { width: 3rem; height: 3rem; flex: none; }
+.reel__pack { fill: var(--deck-tape); }
+.reel__ring { fill: var(--ink-2); }
+.reel__tooth { fill: color-mix(in srgb, var(--bg) 85%, black); }
+.reel__core { fill: color-mix(in srgb, var(--bg) 85%, black); }
+.reel__hub { transform-origin: center; transform-box: fill-box; }
+.deck[data-live] .reel__hub { animation: deckSpin 2.2s linear infinite; }
+
+/* Notched foot with the two capstan holes. */
+.cassette__foot {
+  display: flex;
+  justify-content: center;
+  gap: 2.2rem;
+  margin: 0.35rem auto 0;
+  width: 62%;
+  height: 0.85rem;
+  padding-top: 0.25rem;
+  background: color-mix(in srgb, var(--ink) 5%, var(--bg-2));
+  clip-path: polygon(8% 0, 92% 0, 100% 100%, 0 100%);
+}
+.cassette__foot i { width: 6px; height: 6px; border-radius: 50%; background: var(--code); }
+
+/* Counter, VU and clock. */
+.deck__readout { display: flex; align-items: center; gap: 0.55rem; margin-top: 0.55rem; }
+.deck__counter { display: flex; gap: 1px; }
+.deck__counter span {
+  display: grid;
+  place-items: center;
+  width: 0.85rem;
+  height: 1.15rem;
+  font-family: var(--f-pixel);
+  font-size: 0.7rem;
+  color: var(--ink);
+  background: var(--code);
+  border-top: 1px solid var(--bg);
+  border-bottom: 1px solid var(--rule-2);
+}
+.deck__vu { display: flex; align-items: flex-end; gap: 2px; flex: 1; height: 0.9rem; }
+.deck__vu i { flex: 1; height: 100%; background: var(--rule); }
+.deck[data-live] .deck__vu i { animation: deckVu 0.5s steps(1, end) infinite; }
+.deck[data-live] .deck__vu i:nth-child(n + 8) { --vu-on: var(--danger); }
+.deck__vu i:nth-child(1) { animation-delay: -0.05s !important; }
+.deck__vu i:nth-child(2) { animation-delay: -0.1s !important; }
+.deck__vu i:nth-child(3) { animation-delay: -0.15s !important; animation-duration: 0.7s !important; }
+.deck__vu i:nth-child(4) { animation-delay: -0.2s !important; animation-duration: 0.6s !important; }
+.deck__vu i:nth-child(5) { animation-delay: -0.3s !important; animation-duration: 0.9s !important; }
+.deck__vu i:nth-child(6) { animation-delay: -0.35s !important; animation-duration: 0.8s !important; }
+.deck__vu i:nth-child(7) { animation-delay: -0.1s !important; animation-duration: 1.1s !important; }
+.deck__vu i:nth-child(8) { animation-delay: -0.4s !important; animation-duration: 1.3s !important; }
+.deck__vu i:nth-child(9) { animation-delay: -0.2s !important; animation-duration: 1.7s !important; }
+.deck__vu i:nth-child(10) { animation-delay: -0.6s !important; animation-duration: 2.3s !important; }
+@keyframes deckVu {
+  0%, 45% { background: var(--vu-on, var(--accent)); }
+  46%, 100% { background: var(--rule); }
+}
+.deck__time { font-variant-numeric: tabular-nums; color: var(--ink-3); white-space: nowrap; }
+
+.deck__bar { position: relative; height: 10px; margin-top: 0.3rem; cursor: pointer; outline: none; }
+.deck__bar::before { content: ""; position: absolute; inset: 4px 0; background: var(--rule); }
 .deck__bar span {
   position: absolute;
   inset: 4px 0;
@@ -2314,55 +2446,121 @@ kbd {
 }
 .deck__bar:focus-visible::before { box-shadow: 0 0 0 1px var(--accent); }
 
-.deck__row { display: flex; align-items: center; justify-content: space-between; margin-top: 0.35rem; }
-.deck__time { min-width: 2.4rem; font-variant-numeric: tabular-nums; color: var(--ink-3); }
-.deck__time:last-child { text-align: right; }
-.deck__controls { display: flex; align-items: center; gap: 0.35rem; }
-.deck__controls button {
-  display: grid;
-  place-items: center;
-  width: 1.9rem;
-  height: 1.7rem;
-  border: 1px solid transparent;
-  color: var(--ink-2);
-  font-size: 0.7rem;
-  letter-spacing: -0.12em;
-  transition: border-color 0.15s, color 0.15s;
-}
-.deck__controls button:hover { color: var(--accent); border-color: var(--rule-2); }
-.deck__controls .deck__play { width: 2.3rem; border-color: var(--accent); color: var(--accent); letter-spacing: 0; }
-.deck__controls .deck__play:hover { background: var(--accent); color: var(--on-accent); }
-
-.deck__vol { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.45rem; }
-.deck__vol span { font-family: var(--f-pixel); font-size: 0.55rem; letter-spacing: 0.08em; color: var(--ink-3); }
-.deck__vol input { flex: 1; accent-color: var(--accent); height: 2px; }
-
-.deck__credit { margin-top: 0.55rem; color: var(--ink-3); font-size: 0.62rem; }
-.deck__credit a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
-.deck__credit a:hover { color: var(--accent); }
-.deck__empty { padding: 0.6rem 0; color: var(--ink-3); }
-
-.deck__stations { display: flex; flex-direction: column; gap: 0.3rem; }
-.deck__stations button {
+/* Piano keys: raised blocks that sink when pressed; play latches. */
+.deck__keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; margin-top: 0.45rem; }
+.deck__keys button {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  padding: 0.35rem 0.5rem;
-  text-align: left;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.35rem 0 0.3rem;
+  background: var(--bg-2);
   border: 1px solid var(--rule-2);
-  transition: border-color 0.15s;
+  border-bottom-width: 4px;
+  color: var(--ink-2);
+  transition: transform 0.06s, border-bottom-width 0.06s, color 0.15s, background-color 0.15s;
 }
-.deck__stations button:hover { border-color: var(--ink-3); }
-.deck__stations button[aria-pressed="true"] { border-color: var(--accent); border-left-width: 2px; }
-.deck__stations button[aria-pressed="true"] .deck__artist { color: var(--accent); }
-.deck__embed { display: block; width: 100%; margin-top: 0.55rem; border: 0; background: var(--code); }
+.deck__keys button span { font-size: 0.72rem; letter-spacing: -0.12em; line-height: 1; }
+.deck__keys button small { font-family: var(--f-pixel); font-size: 0.48rem; letter-spacing: 0.08em; color: var(--ink-3); }
+.deck__keys button:hover { color: var(--ink); border-color: var(--ink-3); }
+.deck__keys button:active,
+.deck__keys button[aria-pressed="true"] {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  margin-bottom: 3px;
+  background: var(--code);
+}
+.deck__keys .deck__key--play[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.deck__keys .deck__key--play[aria-pressed="true"] small { color: var(--on-accent); }
+.deck__keys button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
+
+.deck__foot { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.5rem; }
+.deck__vol { display: flex; align-items: center; gap: 0.45rem; flex: 1; }
+.deck__vol span { font-family: var(--f-pixel); font-size: 0.5rem; letter-spacing: 0.08em; color: var(--ink-3); }
+.deck__vol input { flex: 1; min-width: 0; accent-color: var(--accent); height: 2px; }
+.deck__credit { color: var(--ink-3); font-size: 0.6rem; white-space: nowrap; }
+.deck__credit a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+.deck__credit a:hover { color: var(--accent); }
+.deck__note { display: block; margin-top: 0.5rem; white-space: normal; }
+
+/* ── Radio: a tuner dial and preset keys ── */
+.deck__dial {
+  position: relative;
+  height: 2.4rem;
+  background: var(--code);
+  border: 1px solid var(--rule);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.deck__scale {
+  position: absolute;
+  inset: 0.45rem 0.4rem auto;
+  height: 0.7rem;
+  background:
+    repeating-linear-gradient(90deg, var(--ink-3) 0 1px, transparent 1px 25%) 0 0 / 100% 100%,
+    repeating-linear-gradient(90deg, var(--rule-2) 0 1px, transparent 1px 5%) 0 100% / 100% 45% no-repeat;
+  opacity: 0.8;
+}
+.deck__mark {
+  position: absolute;
+  bottom: 0.25rem;
+  transform: translateX(-50%);
+  font-family: var(--f-pixel);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+.deck__needle {
+  position: absolute;
+  top: 0.2rem;
+  bottom: 0.2rem;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--danger);
+  opacity: 0.55;
+  transition: left 0.6s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.2s;
+}
+.deck__needle[data-on] { opacity: 1; box-shadow: 0 0 6px var(--danger); }
+
+.deck__presets { display: flex; flex-direction: column; gap: 3px; margin-top: 0.45rem; }
+.deck__presets button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  text-align: left;
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+  border-bottom-width: 3px;
+  transition: transform 0.06s, border-bottom-width 0.06s, border-color 0.15s;
+}
+.deck__presets button:hover { border-color: var(--ink-3); }
+.deck__presets button[aria-pressed="true"] { transform: translateY(2px); border-bottom-width: 1px; margin-bottom: 2px; border-color: var(--accent); background: var(--code); }
+.deck__preset-no {
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  font-family: var(--f-pixel);
+  font-size: 0.6rem;
+  border: 1px solid var(--rule-2);
+  color: var(--ink-3);
+}
+.deck__presets button[aria-pressed="true"] .deck__preset-no { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.deck__preset-text { display: flex; flex-direction: column; min-width: 0; }
+.deck__preset-name { font-family: var(--f-body); font-style: italic; font-size: 0.85rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck__preset-by { color: var(--ink-3); font-size: 0.6rem; }
+.deck__embed { display: block; width: 100%; margin-top: 0.5rem; border: 0; background: var(--code); }
 
 /* The hero strip's scroll cue would sit under the deck; it steps left. */
-.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 1rem); }
+.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 44px + 1rem); }
 
 @media (prefers-reduced-motion: reduce) {
-  .deck[data-live] .deck__meter i { animation: none; height: 10px; }
-  .deck__panel, .deck[data-open] .deck__panel { transition: none; }
+  .deck[data-live] .fab__reel,
+  .deck[data-live] .reel__hub,
+  .deck[data-live] .deck__vu i { animation: none; }
+  .deck__panel, .deck[data-open] .deck__panel, .deck__needle { transition: none; }
 }
 @media print {
   .deck { display: none; }
