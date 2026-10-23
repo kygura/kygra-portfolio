@@ -9,6 +9,7 @@ import ScrollProgress from "./components/ScrollProgress";
 import TerminalHost from "./components/TerminalHost";
 import CommandHost from "./components/CommandHost";
 import Keys from "./theme/Keys";
+import LofiPlayer from "./components/player/LofiPlayer";
 
 // Toast viewports render nothing until something fires a toast, and only
 // two lazily-routed pages ever do — no reason to ship them up front.
@@ -41,6 +42,7 @@ const App = () => (
         <TerminalHost />
         <CommandHost />
         <Keys />
+        <LofiPlayer />
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />
