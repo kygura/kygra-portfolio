@@ -1050,6 +1050,137 @@
 }
 
 /* ─────────────────────────────────────────────
+   WRITINGS INDEX — the software grid and windows, each post behind a
+   drawn plate seeded from its slug. The newest leads, full width.
+   ───────────────────────────────────────────── */
+.post-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+.post-filter button {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--rule-2);
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.post-filter button span { font-size: 0.62rem; color: var(--ink-3); transition: color 0.2s; }
+.post-filter button:hover,
+.post-filter button:focus-visible { border-color: var(--accent); color: var(--accent); }
+.post-filter button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.post-filter button[aria-pressed="true"] span { color: var(--on-accent); }
+
+.post-card__time {
+  flex: none;
+  font-family: var(--f-pixel);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.post-card__latest {
+  margin-left: 0.6rem;
+  padding: 0 0.35rem;
+  border: 1px solid var(--accent);
+}
+.post-card__title a { color: inherit; transition: color 0.2s; }
+.post-card__title a:hover,
+.post-card__title a:focus-visible { color: var(--accent); }
+.post-card:not(.repo-card--featured) .post-card__excerpt {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.post-plate {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 23px, var(--grid) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, var(--grid) 23px 24px),
+    var(--bg);
+  color: var(--ink-3);
+}
+.post-plate__svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.post-plate__figure {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.repo-card__preview:hover .post-plate__figure[data-spin="true"] { transform: rotate(24deg) scale(1.04); }
+.repo-card__preview:hover .post-plate__figure[data-spin="false"] { transform: translateY(-6px) scale(1.05); }
+.post-plate__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  animation: plateDraw 1.6s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+}
+.post-plate__line[data-dash] { stroke-dasharray: 0.008 0.012; animation: plateFade 1s ease backwards; }
+.post-plate__line[data-accent] { stroke: var(--accent); }
+.post-plate__dot { fill: currentColor; }
+.post-plate__mark { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
+@keyframes plateDraw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes plateFade {
+  from { opacity: 0; }
+}
+
+.post-plate__initial {
+  position: absolute;
+  left: clamp(0.9rem, 3vw, 1.5rem);
+  bottom: clamp(0.4rem, 1.5vw, 0.9rem);
+  font-family: var(--f-body);
+  font-size: clamp(4.5rem, 14vw, 7.5rem);
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--accent);
+  transition: color 0.4s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.repo-card--featured .post-plate__initial { font-size: clamp(5.5rem, 16vw, 11rem); }
+.repo-card__preview:hover .post-plate__initial { color: var(--accent); transform: translateY(-4px); }
+.post-plate__no,
+.post-plate__stamp {
+  position: absolute;
+  top: 0.7rem;
+  pointer-events: none;
+}
+.post-plate__no {
+  right: clamp(0.7rem, 2vw, 1rem);
+  font-family: var(--f-pixel);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+}
+/* Beside the top-left mark, clear of the initial and the bottom-right mark. */
+.post-plate__stamp {
+  left: 2.75rem;
+  font-family: var(--f-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-plate__line { animation: none; }
+  .post-plate__figure, .post-plate__initial { transition: none; }
+  .repo-card__preview:hover .post-plate__figure { transform: none; }
+}
+
+/* ─────────────────────────────────────────────
    RESPONSIVE
    ───────────────────────────────────────────── */
 @media (max-width: 960px) {
