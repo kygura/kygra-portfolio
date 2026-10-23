@@ -71,6 +71,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
               <div><dt><K k="G" /></dt><dd>Bottom of page</dd></div>
               <div><dt><K k="←" /> <K k="→" /></dt><dd>Move along the nav (when focused)</dd></div>
               <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next hero scene (home)</dd></div>
+              <div><dt><K k="r" /></dt><dd>Random essay (writings)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
               <div><dt><K k=":" /> <K k="⌘K" /></dt><dd>Commands</dd></div>
