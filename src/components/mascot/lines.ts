@@ -23,3 +23,19 @@ export const PESTERED = [
 
 /** Greeting on the first poke of a visit. */
 export const HELLO = "oh! a visitor. hello.";
+
+/** After a good petting. */
+export const PETTED = [
+  "...the moss likes that.",
+  "my core is humming. that's a good hum.",
+  "nobody has done that in a thousand years.",
+  "ok. you can stay.",
+  "I think I just grew a flower.",
+];
+
+/** Poked while asleep. */
+export const WOKEN = [
+  "huh? oh. I wasn't sleeping.",
+  "five more centuries...",
+  "I was dreaming about rain.",
+];

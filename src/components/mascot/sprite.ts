@@ -25,7 +25,9 @@ export const PALETTE: Record<string, string> = {
   y: "#c9d48a",
   v: "#121819",
   f: "#e5787f",
+  F: "#f6c1bd",
   e: "var(--accent)",
+  z: "color-mix(in srgb, var(--accent) 35%, #121819)",
   E: "#f6f8e4",
 };
 
@@ -34,6 +36,8 @@ type Part = { x: number; y: number; rows: string[] };
 const SPROUT: Part[] = [
   { x: 9, y: 0, rows: ["yM.My", ".MgM.", "..g.."] },
   { x: 9, y: 0, rows: [".yM.My", "..MgM", "..g.."] },
+  // In bloom, while being petted.
+  { x: 9, y: 0, rows: ["yMfMy", ".fFf.", "..g.."] },
 ];
 
 const HEAD: Part = {
@@ -56,13 +60,17 @@ const HEAD: Part = {
   ],
 };
 
-export type Eye = "open" | "blink" | "left" | "right" | "big" | "happy";
+export type Eye = "open" | "blink" | "left" | "right" | "up" | "upleft" | "upright" | "big" | "happy" | "sleep";
 
 const EYES: Record<Eye, Part> = {
   open: { x: 9, y: 9, rows: [".eEe.", "eEEEe", ".eEe."] },
   left: { x: 8, y: 9, rows: [".eEe.", "eEEEe", ".eEe."] },
   right: { x: 10, y: 9, rows: [".eEe.", "eEEEe", ".eEe."] },
+  up: { x: 9, y: 8, rows: [".eEe.", "eEEEe", ".eEe."] },
+  upleft: { x: 8, y: 8, rows: [".eEe.", "eEEEe", ".eEe."] },
+  upright: { x: 10, y: 8, rows: [".eEe.", "eEEEe", ".eEe."] },
   blink: { x: 9, y: 10, rows: ["eEEEe"] },
+  sleep: { x: 9, y: 11, rows: ["zzzzz"] },
   big: { x: 8, y: 8, rows: ["...e...", "..eEe..", ".eEEEe.", "..eEe..", "...e..."] },
   happy: { x: 9, y: 9, rows: [".eEe.", "eE.Ee", "e...e"] },
 };
@@ -112,7 +120,7 @@ const ARMS: Record<Arm, Part> = {
 export interface Pose {
   /** Head and sprout sink 1px on the down beat. */
   bob: 0 | 1;
-  sprout: 0 | 1;
+  sprout: 0 | 1 | 2;
   eye: Eye;
   arm: Arm;
 }
@@ -184,3 +192,8 @@ export function runePaths(): [string, string][] {
   });
   return toPaths(grid);
 }
+
+/** A small pixel heart for the petting effect, in its own 7x6 view. */
+export const HEART = toPaths(
+  [".ff.ff.", "fFfffff", "fffffff", ".fffff.", "..fff..", "...f..."].map((r) => r.split("")),
+);
