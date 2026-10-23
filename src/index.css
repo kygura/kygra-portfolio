@@ -2212,3 +2212,79 @@ kbd {
   transition: border-color 0.15s, color 0.15s;
 }
 .toc-tuner__actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Companion (src/components/Companion.tsx): Moss, bottom-right. Square
+   speech panel like the help sheet; the sprite bobs in two hard steps. ── */
+.companion {
+  position: fixed;
+  right: max(16px, calc(var(--page-gutter) * 0.5));
+  bottom: 16px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+.companion > * { pointer-events: auto; }
+.companion-bubble {
+  position: relative;
+  max-width: min(280px, calc(100vw - 32px));
+  padding: 0.6rem 0.75rem 0.5rem;
+  background: var(--bg-2);
+  border: 1px solid var(--rule-2);
+  border-left: 2px solid var(--accent);
+  font-family: var(--f-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--ink);
+  animation: companion-in 0.18s steps(3) both;
+}
+/* The tail: a square notch pointing down at the sprite. */
+.companion-bubble::after {
+  content: "";
+  position: absolute;
+  right: 18px;
+  bottom: -6px;
+  width: 8px;
+  height: 8px;
+  background: var(--bg-2);
+  border-right: 1px solid var(--rule-2);
+  border-bottom: 1px solid var(--rule-2);
+  transform: rotate(45deg);
+}
+.companion-bubble p { margin: 0; }
+.companion-hush {
+  display: block;
+  margin: 0.35rem 0 0 auto;
+  font-size: 0.65rem;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+}
+.companion-hush:hover, .companion-hush:focus-visible { color: var(--accent); }
+.companion-dots span { animation: companion-dot 1s steps(1) infinite; }
+.companion-dots span:nth-child(2) { animation-delay: 0.2s; }
+.companion-dots span:nth-child(3) { animation-delay: 0.4s; }
+.companion-sprite {
+  width: 48px;
+  height: 44px;
+  padding: 0;
+  background: none;
+  animation: companion-bob 1.6s steps(1) infinite;
+}
+.companion-sprite:focus-visible { outline: 1px solid var(--accent); outline-offset: 4px; }
+.companion-svg { width: 100%; height: 100%; display: block; }
+.companion-eyes { animation: companion-blink 4.8s steps(1) infinite; }
+.companion-svg.mood-sleepy { opacity: 0.7; }
+.companion-svg.mood-excited { animation: companion-hop 0.5s steps(2) 2; }
+@media (max-width: 640px) {
+  .companion-sprite { width: 36px; height: 33px; }
+}
+@keyframes companion-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes companion-hop { 50% { transform: translateY(-4px); } }
+@keyframes companion-blink { 0%, 95% { opacity: 1; } 96%, 98% { opacity: 0; } }
+@keyframes companion-dot { 0% { opacity: 0.2; } 50% { opacity: 1; } }
+@keyframes companion-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .companion-sprite, .companion-eyes, .companion-svg, .companion-bubble, .companion-dots span { animation: none; }
+}
