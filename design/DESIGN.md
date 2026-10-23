@@ -62,6 +62,15 @@ PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light
 
 Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
 
+## Writings
+
+`/writings` reads as a survey of terrain (`src/pages/Writings.tsx`, geometry in `src/lib/terrain.ts`, styles under WRITINGS ATLAS in `src/index.css`).
+
+- **Elevation profile**: one summit per essay, left to right in the order written; height is reading time. Two fainter ranges behind, contour bands clipped under the ridge, dates along the base. Each column is a link; hover or focus drops a dashed line to the base and fills the readout (number, date, length, title). `←` `→` move between summits. At rest the readout shows the latest essay.
+- **Plates**: a grid of hairline cells, newest first; the lead spans two columns (and two rows from 960px). Each plate carries a contour sigil seeded from the slug (more rings for longer essays), a `№` in chronological order, the date, excerpt, a reading-time meter and tags. Hover lights a pointer-following lamp, draws crop marks, turns the rings, and marks the same summit on the ridge (and the ridge marks its plate).
+- **Drift** button / `r`: skims a few summits and opens a random essay from the current filter. Tag filters dim the summits they exclude.
+- Reduced motion: no draw-in, pops, ring turning or skimming.
+
 ## Keyboard
 
 Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while typing in a field or with a modifier held. Code: `src/theme/Keys.tsx`, tables in `src/theme/keymap.ts`. Nav links carry their chord in `title`/`aria-keyshortcuts`; no visible hints were added to the bar (no room without changing it), and there is no status line.
@@ -76,6 +85,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
+| `r` | Random essay (writings; drifts across the ridge first) |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
 
