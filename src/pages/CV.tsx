@@ -1,91 +1,78 @@
 import {
-  Download, MapPin, Mail, Globe,
-  GitBranch, Link2, Phone
+  Download, MapPin, Mail, Globe, GitBranch
 } from "lucide-react";
 
 const CV = () => {
 
   const contact = {
-    location: "Malaga, Spain",
-    phone: "+34 658 50 37 43",
+    name: "Nicolás Cerrato Antón",
+    headline: "Software Engineer · Agentic Systems · Markets",
+    location: "Málaga, Spain",
     email: "ncerratoanton@gmail.com",
     website: "nca.ink",
     github: "github.com/kygura",
-    linkedin: "https://www.linkedin.com/in/nicolas-cerrato-anton-746bb1412/"
   };
 
-  const summary = "Software Engineer with a strong foundation in Computer Science and an international academic background (Spain/Germany). Focused on agentic systems, full-stack web development, algorithmic trading, and blockchain protocols. Builds production-grade tooling across TypeScript, Python, and Solidity — from LLM-powered trading cockpits and agent orchestrators to editorial AI and on-chain monetary systems. Trilingual professional (English, German, Spanish).";
+  // The PDF carries the formal summary; here it is written as a short, plainer intro.
+  const summary = "I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.";
 
   const education = [
     {
-      degree: "Bachelor of Science in Computer Engineering",
+      degree: "B.Sc. Computer Engineering",
       institution: "Universidad de Málaga",
-      period: "Oct 2022 – Oct 2024",
+      period: "2022 – 2024",
       description: "",
     },
     {
-      degree: "Bachelor of Science in Computer Engineering (First Cycle)",
+      degree: "B.Sc. Computer Engineering (First Cycle)",
       institution: "Albert-Ludwigs-Universität Freiburg",
-      period: "Sep 2020 – Jul 2022",
-      description: "Relevant Coursework: Machine Learning, Smart Contracts, System Programming.",
+      period: "2020 – 2022",
+      description: "Coursework: Machine Learning, Smart Contracts, System Programming.",
     },
     {
-      degree: "High School Diploma (Abitur Equivalent - Bilingual Education)",
+      degree: "Abitur — Bilingual Diploma",
       institution: "Deutsche Schule Las Palmas",
       period: "2006 – 2018",
       description: "",
     }
   ];
 
+  // Descriptions complement the PDF's bullet points rather than repeating them.
   const projects = [
     {
       title: "Agentic Systems",
-      tech: "TypeScript, Bun, WebSocket, SQLite",
-      points: [
-        "Designed multi-agent architectures with DAG-based scheduling, dependency resolution, cancellation propagation, and event-sourced audit trails.",
-        "Built deterministic execution layers that constrain LLM-generated intent — separating what the agent decides from what the system allows.",
-        "Implemented real-time dashboards and terminal UIs for monitoring agent state, live output, and historical replay."
-      ]
+      tech: "TypeScript · Bun · WebSocket · SQLite",
+      description: "Orchestrators for running many LLM agents at once without losing track of what any of them did. The recurring question is how much autonomy to grant: agents propose, the runtime decides, and every step stays inspectable after the fact.",
     },
     {
       title: "AI Integration & LLM Tooling",
-      tech: "OpenAI API, Anthropic API, FastAPI, Python",
-      points: [
-        "Integrated streaming LLM responses with structured output parsing across OpenAI and Anthropic models.",
-        "Built embedding pipelines for semantic search and automatic relationship inference over user-generated content.",
-        "Developed editorial and rewriting workflows with inline diff rendering and interactive acceptance flows."
-      ]
+      tech: "OpenAI · Anthropic · FastAPI · Python",
+      description: "Product features built on top of language models: writing assistants, semantic search, and tools that surface connections between notes. The focus is on making model output feel native to the interface, so suggestions can be reviewed, accepted, or discarded.",
     },
     {
       title: "Full-Stack Web Applications",
-      tech: "React, Hono, Next.js, Tailwind CSS",
-      points: [
-        "Built production-grade SPAs and full-stack applications with real-time data, complex state management, and rich interactive UIs.",
-        "Designed and implemented REST and WebSocket APIs with typed contracts shared across monorepo packages."
-      ]
+      tech: "React · Hono · Next.js · Tailwind",
+      description: "End-to-end products, from data layer to interface, including trading cockpits, maps, and graph-based tools. Shared types across the stack keep client and server honest as the codebase grows.",
     },
     {
       title: "Blockchain & Protocol Design",
-      tech: "Solidity, Smart Contracts",
-      points: [
-        "Designed on-chain monetary mechanisms with supply-sensitive stability and tranche-based risk exposure.",
-        "Approached protocol design as a systems engineering problem: incentive alignment, edge-case resilience, and deterministic behavior under adversarial conditions."
-      ]
+      tech: "Solidity · Smart Contracts",
+      description: "Research and implementation of monetary primitives on-chain, in the algorithmic stablecoin space. Interested in mechanism design more than tokens: what a protocol should guarantee, and how it behaves when participants stop cooperating.",
     }
   ];
 
   const languages = [
     { name: "Spanish", proficiency: "Native" },
     { name: "German", proficiency: "Native / Bilingual" },
-    { name: "English", proficiency: "C2 / Proficient (Cambridge Certificate)" },
+    { name: "English", proficiency: "C2 · Cambridge Certificate" },
   ];
 
   const skills = {
     "Languages": ["TypeScript", "Python", "Go", "C", "JavaScript", "Solidity"],
     "Backend": ["Hono", "FastAPI", "Node.js", "Express", "SQLite", "WebSocket"],
-    "Frontend": ["React", "Next.js", "Tailwind CSS", "React Flow", "MapLibre GL JS"],
+    "Frontend": ["React", "Next.js", "Tailwind", "React Flow", "MapLibre GL"],
     "AI / Agents": ["OpenAI API", "Anthropic API", "LLM Agents", "ReAct", "Embeddings"],
-    "Blockchain": ["Solidity", "Smart Contracts", "Algorithmic Stablecoins"],
+    "Blockchain": ["Solidity", "Smart Contracts", "Algo Stablecoins"],
     "Tools": ["Bun", "Git", "Docker", "Linux", "Bash", "Vercel"],
   };
 
@@ -109,6 +96,10 @@ const CV = () => {
           <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
             Curriculum Vitae
           </h1>
+          <p className="text-xl font-display mb-1">{contact.name}</p>
+          <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-muted-foreground mb-6">
+            {contact.headline}
+          </p>
           <div className="text-lg text-muted-foreground space-y-2">
             <p className="flex items-center gap-2">
               <MapPin className="w-4 h-4" /> {contact.location}
@@ -121,11 +112,8 @@ const CV = () => {
                 <Globe className="w-4 h-4" /> {contact.website}
               </a>
               <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <GitBranch className="w-4 h-4" /> github.com/kygura
+                <GitBranch className="w-4 h-4" /> {contact.github}
               </a>
-              {/* <a href={`https://${contact.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Link2 className="w-4 h-4" /> ${contact.linkedin.replace('https://', '')}
-              </a> */}
             </div>
           </div>
         </div>
@@ -139,7 +127,7 @@ const CV = () => {
       </div>
 
       <section className="mb-12">
-        <h2 className="text-2xl font-display font-light mb-4 text-foreground/90">Professional Summary</h2>
+        <h2 className="text-2xl font-display font-light mb-4 text-foreground/90">About</h2>
         <p className="text-muted-foreground leading-relaxed">
           {summary}
         </p>
@@ -156,11 +144,7 @@ const CV = () => {
                   {project.tech}
                 </span>
               </div>
-              <ul className="list-disc list-outside ml-4 text-muted-foreground space-y-1">
-                {project.points.map((point, i) => (
-                  <li key={i}>{point}</li>
-                ))}
-              </ul>
+              <p className="text-muted-foreground leading-relaxed">{project.description}</p>
             </div>
           ))}
         </div>
