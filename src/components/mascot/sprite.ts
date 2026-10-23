@@ -12,7 +12,7 @@ export const H = 28;
 export const VIEW_W = W + 2;
 export const VIEW_H = H + 2;
 
-/** Palette. `e` (eye, rune) follows the site accent so a theme switch repaints it. */
+/** Palette. `e` (eye, rune) and `a` (hearts) follow the site accent so a theme switch repaints them. */
 export const PALETTE: Record<string, string> = {
   o: "#0b100f",
   d: "#46514f",
@@ -28,6 +28,8 @@ export const PALETTE: Record<string, string> = {
   F: "#f6c1bd",
   e: "var(--accent)",
   z: "color-mix(in srgb, var(--accent) 35%, #121819)",
+  a: "var(--accent)",
+  A: "color-mix(in srgb, var(--accent) 45%, #ffffff)",
   E: "#f6f8e4",
 };
 
@@ -193,7 +195,7 @@ export function runePaths(): [string, string][] {
   return toPaths(grid);
 }
 
-/** A small pixel heart for the petting effect, in its own 7x6 view. */
+/** A small pixel heart for the petting effect, in its own 7x6 view, in the accent. */
 export const HEART = toPaths(
-  [".ff.ff.", "fFfffff", "fffffff", ".fffff.", "..fff..", "...f..."].map((r) => r.split("")),
+  [".aa.aa.", "aAaaaaa", "aaaaaaa", ".aaaaa.", "..aaa..", "...a..."].map((r) => r.split("")),
 );
