@@ -1,19 +1,40 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { Clock } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
 import { resolvePostTags } from "../lib/postTagFallbacks";
+
+// One tick per minute of reading, capped so long posts don't run off the ruler.
+const MAX_TICKS = 12;
+
+const pad = (n: number) => String(n).padStart(2, "0");
+
+const formatDate = (iso: string) => {
+  const date = new Date(iso);
+  if (!iso || Number.isNaN(date.getTime())) return null;
+  return date
+    .toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+    .toUpperCase();
+};
 
 const Writings = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const { posts, loading, error } = useMarkdownPosts();
 
-  const allTags = Array.from(new Set(posts.flatMap((post) => resolvePostTags(post))));
+  const tagCounts = new Map<string, number>();
+  for (const post of posts) {
+    for (const tag of resolvePostTags(post)) tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  }
+  const allTags = Array.from(tagCounts.keys());
 
+  // Numbers follow the full list (oldest = 01) so they stay put while filtering.
+  const numbered = posts.map((post, i) => ({ post, number: posts.length - i }));
   const filteredPosts = selectedTag
-    ? posts.filter((post) => resolvePostTags(post).includes(selectedTag))
-    : posts;
+    ? numbered.filter(({ post }) => resolvePostTags(post).includes(selectedTag))
+    : numbered;
+
+  const totalMinutes = posts.reduce((sum, post) => sum + post.readTime, 0);
 
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
@@ -25,9 +46,16 @@ const Writings = () => {
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
           Thoughts on the arts, engineering, the esoteric and the existential.
         </p>
+        {posts.length > 0 && (
+          <p className="writ-stats">
+            <span><b>{pad(posts.length)}</b> entries</span>
+            <span><b>{totalMinutes}</b> min of reading</span>
+            <span><b>{pad(allTags.length)}</b> subjects</span>
+          </p>
+        )}
       </div>
 
-      <div className="mb-10 sm:mb-16 flex flex-wrap gap-2 sm:gap-3">
+      <div className="mb-10 sm:mb-14 flex flex-wrap gap-2 sm:gap-3">
         <button
           onClick={() => setSelectedTag(null)}
           className={`font-mono text-[11px] tracking-[0.16em] px-3 py-1 border transition-colors uppercase ${
@@ -36,7 +64,7 @@ const Writings = () => {
               : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
           }`}
         >
-          ALL
+          ALL<sup className="writ-count">{posts.length}</sup>
         </button>
         {allTags.map((tag) => (
           <button
@@ -48,7 +76,7 @@ const Writings = () => {
                 : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
             }`}
           >
-            {tag}
+            {tag}<sup className="writ-count">{tagCounts.get(tag)}</sup>
           </button>
         ))}
       </div>
@@ -65,56 +93,54 @@ const Writings = () => {
         </div>
       )}
 
-      <div className="space-y-10 sm:space-y-16">
-        {filteredPosts.map((post, index) => {
+      <ol className="writ-list" key={selectedTag ?? "all"}>
+        {filteredPosts.map(({ post, number }, index) => {
+          const tags = resolvePostTags(post).slice(0, 3);
+          const date = formatDate(post.date);
+          const ticks = Math.min(post.readTime, MAX_TICKS);
+
           return (
-            <article
+            <li
               key={post.slug}
-              className="relative group border-b border-dashed border-muted pb-8 sm:pb-12 last:border-0 pl-3 sm:pl-4 transition-colors duration-300 hover:bg-accent/[0.04]"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="writ-entry"
+              style={{ "--i": index } as CSSProperties}
             >
-              {/* left border sweep */}
-              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent origin-bottom scale-y-0 group-hover:scale-y-100 transition-transform duration-300 ease-&lsqb;cubic-bezier(0.4,0,0.2,1)&rsqb" />
+              <Link to={`/writings/${post.slug}`} className="writ-entry__link">
+                <span className="writ-entry__no" aria-hidden="true">{pad(number)}</span>
 
-              <Link to={`/writings/${post.slug}`} className="block no-underline text-foreground">
-                <header className="mb-4">
-                  <h2 className="text-xl md:text-3xl font-display uppercase tracking-[-0.01em] text-foreground group-hover:text-accent transition-colors duration-300 leading-[0.9] mb-4">
-                    {post.title}
-                  </h2>
-
-                  <p className="text-[1.05rem] text-foreground leading-[1.75] max-w-3xl">
-                    {post.excerpt}
+                <div className="writ-entry__body">
+                  <p className="writ-entry__kicker">
+                    {date && <time dateTime={post.date}>{date}</time>}
+                    {tags.length > 0 && <span>{tags.join(" / ")}</span>}
                   </p>
-                </header>
+                  <h2 className="writ-entry__title">{post.title}</h2>
+                  {post.excerpt && <p className="writ-entry__excerpt">{post.excerpt}</p>}
+                </div>
 
-                <div className="mt-5 sm:mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 sm:gap-6 text-[0.7rem] text-muted-foreground uppercase tracking-widest font-bold">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-foreground/50" />
-                    <span>{post.readTime} min read</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {resolvePostTags(post).slice(0, 3).map(tag => (
-                      <span
-                        key={tag}
-                        className="border border-foreground/30 px-2 py-0.5 text-[0.65rem] tracking-[0.1em] transition-colors duration-300 group-hover:border-accent/50 group-hover:text-accent"
-                      >
-                        {tag}
-                      </span>
+                <div className="writ-entry__aside">
+                  <span className="writ-entry__ruler" aria-hidden="true">
+                    {Array.from({ length: MAX_TICKS }, (_, t) => (
+                      <i
+                        key={t}
+                        className={t < ticks ? "is-on" : undefined}
+                        style={{ "--t": t * 30 } as CSSProperties}
+                      />
                     ))}
-                  </div>
+                  </span>
+                  <span className="writ-entry__time">{post.readTime} min</span>
+                  <ArrowUpRight className="writ-entry__arrow" aria-hidden="true" />
                 </div>
               </Link>
-            </article>
+            </li>
           );
         })}
+      </ol>
 
-        {!loading && !error && filteredPosts.length === 0 && (
-          <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
-            No writings found.
-          </div>
-        )}
-      </div>
+      {!loading && !error && filteredPosts.length === 0 && (
+        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+          No writings found.
+        </div>
+      )}
     </div>
   );
 };
