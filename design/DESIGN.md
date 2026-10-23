@@ -83,6 +83,12 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 
 `:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 1024px a `:` button in the nav opens it (`openCommands` in `src/theme/keymap.ts`), for touch screens that can't press `:`.
 
+## Writings
+
+`/writings` is a card catalogue (`src/pages/Writings.tsx`, `.cabinet` / `.index-card` in `src/index.css`). Folder tabs across the top, one per tag (from `resolvePostTags`) with its count, most-used first; the open tab joins the drawer below. The drawer front carries a label plate with the tag name, a card and minutes total, and a Newest / Oldest / Shortest sort. The open tag lives in `?tag=`, so a drawer can be linked.
+
+Each post is an index card: accent top rule, catalogue number (`№ 001` is the oldest post, fixed whatever the filter or sort), a tilted date stamp, title, a four-line excerpt on faint ruled lines, "See" cross-references that open that tag's drawer, read time as pips, and a punched hole at the foot. Cards file in with a short stagger on every drawer or sort change (still under reduced motion).
+
 ## Also fixed
 
 Post markdown: fenced code is detected from its `<pre>` (react-markdown no longer passes `inline`, so every inline code span rendered as a block); a markdown `h1` renders as `h2` under the page title; the hast `node` prop is no longer forwarded to the DOM. Code blocks use a token-driven Prism theme (comments ink-3, keywords accent, literals ink-2). Footer quote keys ignore typing and claimed chord keys.
