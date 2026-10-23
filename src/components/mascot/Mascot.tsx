@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { useLocation } from "react-router-dom";
 import { Arm, Eye, PALETTE, VIEW_H, VIEW_W, frame, runePaths } from "./sprite";
 import { HELLO, LINES, PESTERED } from "./lines";
 
@@ -27,44 +26,6 @@ function useDocumentVisible() {
   return visible;
 }
 
-/**
- * On the home page the hero's bottom strip (scene tabs, scroll cue) sits
- * where the golem stands, so it climbs onto the strip's hairline and comes
- * back down as the strip scrolls away.
- */
-function useStripLift() {
-  const { pathname } = useLocation();
-  const [lift, setLift] = useState(0);
-  useEffect(() => {
-    setLift(0);
-    if (pathname !== "/") return;
-    let raf = 0;
-    const measure = () => {
-      raf = 0;
-      const strip = document.querySelector<HTMLElement>(".hero__strip");
-      if (!strip) return setLift(0);
-      const h = strip.offsetHeight;
-      const below = strip.getBoundingClientRect().bottom - (window.innerHeight - h);
-      setLift(Math.round(Math.min(h, Math.max(0, below))));
-    };
-    const queue = () => {
-      if (!raf) raf = window.requestAnimationFrame(measure);
-    };
-    measure();
-    // The strip mounts with the lazily-loaded hero; check again once it has.
-    const late = window.setTimeout(queue, 600);
-    window.addEventListener("scroll", queue, { passive: true });
-    window.addEventListener("resize", queue);
-    return () => {
-      window.cancelAnimationFrame(raf);
-      window.clearTimeout(late);
-      window.removeEventListener("scroll", queue);
-      window.removeEventListener("resize", queue);
-    };
-  }, [pathname]);
-  return lift;
-}
-
 /** Hands out lines in a shuffled order, refilling once every line was said. */
 function useLineBag() {
   const bag = useRef<string[]>([]);
@@ -80,7 +41,6 @@ export default function Mascot() {
   const still = Boolean(useReducedMotion());
   const visible = useDocumentVisible();
   const nextLine = useLineBag();
-  const lift = useStripLift();
 
   const [beat, setBeat] = useState(0);
   const [idleEye, setIdleEye] = useState<Eye>("open");
@@ -175,11 +135,7 @@ export default function Mascot() {
   });
 
   return (
-    <div
-      className="golem print:hidden"
-      data-still={still || undefined}
-      style={lift ? { bottom: `max(var(--golem-floor), ${lift}px)` } : undefined}
-    >
+    <div className="golem print:hidden" data-still={still || undefined}>
       {line && (
         <div className="golem__bubble" aria-hidden="true">
           {line.slice(0, shown)}

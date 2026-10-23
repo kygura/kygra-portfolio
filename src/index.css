@@ -2209,10 +2209,9 @@ kbd {
 
 /* Moss golem — the mascot in the bottom-right corner (src/components/mascot). */
 .golem {
-  --golem-floor: clamp(0.75rem, 2vw, 1.25rem);
   position: fixed;
   right: clamp(0.75rem, 2vw, 1.5rem);
-  bottom: var(--golem-floor);
+  bottom: clamp(0.75rem, 2vw, 1.25rem);
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -2235,6 +2234,12 @@ kbd {
   .golem__sprite { width: 84px; }
   .golem__body[data-hop] { transform: translateY(-9px); }
 }
+/* The hero strip's scroll cue would sit under the golem; it steps left to make room. */
+.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 56px + 1rem); }
+@media (min-width: 640px) {
+  .hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 84px + 1.25rem); }
+}
+@media print { .hero__strip { padding-right: var(--hero-gutter); } }
 .golem__shadow { fill: rgba(0, 0, 0, 0.35); }
 .golem__glow { filter: drop-shadow(0 0 0.8px var(--accent)); }
 .golem__rune { animation: golem-rune 3.2s steps(6) infinite; }
