@@ -9,7 +9,7 @@ const CV = () => {
     headline: "Software Engineer · Agentic Systems · Markets",
     location: "Málaga, Spain",
     email: "ncerratoanton@gmail.com",
-    website: "kygra.xyz",
+    website: "nca.ink",
     github: "github.com/kygura",
   };
 
