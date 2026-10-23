@@ -1,17 +1,15 @@
 /**
- * The moss golem's renderer: a rough-hewn standing stone that woke up. One
- * weathered monolith for head and body, a single glowing crack of an eye, a
- * rune notched below it, two boulder fists floating at its sides (in the
- * manner of Hyper Light Drifter's titans), stubby legs, and a moss cap with
- * a sprout, drips and pink blossoms.
+ * The moss golem's renderer: a standing stone that woke up. One monolith
+ * for head and body, a single glowing slit of an eye, a rune below it, two
+ * block fists floating at its sides (in the manner of Hyper Light Drifter's
+ * titans), stubby legs, and a moss cap with a sprout, drips and a blossom.
  *
- * It is drawn on a small grid and shown with big pixels, and the finish is
- * deliberately rough: every edge is jittered by stable per-pixel noise (in
- * each part's own coordinates, so edges don't crawl as parts move), the
- * stone is speckled rather than smoothly shaded, cracks are cut into it, the
- * moss grows in uneven clumps and the outline is chipped in places. Motion
- * (breathing, the floating fists, the hop, the wave, the gaze) is in whole
- * pixels. The host scales the canvas up with nearest-neighbour.
+ * It is drawn on a small grid and shown with big pixels, in a sharp,
+ * minimal style: hard chamfered edges, flat two-tone shading (a lit face
+ * and a shadow face, with a single highlight edge), a stepped moss cap and
+ * a clean outline. Motion (breathing, the floating fists, the hop, the wave,
+ * the gaze) is in whole pixels. The host scales the canvas up with
+ * nearest-neighbour.
  */
 
 export const GW = 30;
@@ -79,18 +77,12 @@ const BODY = 2;
 
 /** Moss drips down the body from the cap: [column offset from the body's centre, length]. */
 const DRIPS: [number, number][] = [
-  [-6, 3],
-  [-2, 1],
-  [5, 5],
-  [7, 2],
+  [-5, 2],
+  [5, 4],
 ];
 
-const BODY_CRACKS: [number, number][][] = [
-  [[-4, 3], [-3, 5], [-4, 7], [-4, 8]],
-  [[3, 8], [4, 10], [3, 12], [4, 13]],
-  [[-6, 12], [-5, 14]],
-  [[1, 15], [2, 17]],
-];
+/** One clean seam across the stone, for a little character. */
+const BODY_CRACKS: [number, number][][] = [[[3, 14], [5, 16]]];
 
 export interface Pose {
   asleep: boolean;
@@ -162,8 +154,13 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
     lx >= 0 && lx < w && ly >= 0 && ly < h
       ? Math.max(Math.abs(lx + 0.5 - w / 2) / (w / 2), Math.abs(ly + 0.5 - h / 2) / (h / 2))
       : 9;
-  const blob = (rx: number, ry: number) => (lx: number, ly: number) =>
-    Math.sqrt(Math.sqrt(((lx + 0.5) / rx) ** 4 + ((ly + 0.5) / ry) ** 4));
+  /** A square block centred on the anchor with its corner pixels cut. */
+  const blob = (rx: number, ry: number) => (lx: number, ly: number) => {
+    const dx = Math.abs(lx + 0.5) / rx;
+    const dy = Math.abs(ly + 0.5) / ry;
+    const corner = Math.abs(lx + 0.5) + Math.abs(ly + 0.5) > rx + ry - 1.2;
+    return corner ? 9 : Math.max(dx, dy);
+  };
 
   function build(b: number, j: number, wave: 0 | 1 | null) {
     parts.length = 0;
@@ -171,8 +168,8 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
     const float = (phase: number) => (still ? 0 : Math.round(Math.sin(t * 0.12 + phase)));
     const add = (p: Omit<Part, "seed">) => parts.push({ ...p, seed: parts.length * 31 + 7 });
     // 0,1 legs: stubby blocks, mostly hidden behind the stone
-    add({ metric: rect(4, 5), ax: 10, ay: 25 + Y, rx: 2, ry: 2.5, reach: [0, 0, 4, 5], moss: [0, 0], dim: 0.3, rough: 0.3 });
-    add({ metric: rect(4, 5), ax: 17, ay: 25 + Y, rx: 2, ry: 2.5, reach: [0, 0, 4, 5], moss: [0, 0], dim: 0.35, rough: 0.3 });
+    add({ metric: rect(4, 5), ax: 10, ay: 25 + Y, rx: 2, ry: 2.5, reach: [0, 0, 4, 5], moss: [0, 0], dim: 0.3, rough: 0 });
+    add({ metric: rect(4, 5), ax: 17, ay: 25 + Y, rx: 2, ry: 2.5, reach: [0, 0, 4, 5], moss: [0, 0], dim: 0.35, rough: 0 });
     // 2 body: one monolith, narrower at the top, with rounded shoulders
     bodyX = 15;
     bodyY = 7 + Y + b;
@@ -180,8 +177,9 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
     add({
       metric: (lx, ly) => {
         if (ly < 0 || ly >= H) return 9;
-        let hw = 6.5 + (2.5 * (ly + 0.5)) / H;
-        if (ly < 3) hw -= (3 - ly) * 1.15;
+        // straight sides, flaring by a pixel at the base, with a two-step chamfer at the top
+        let hw = ly >= H - 4 ? 8.5 : 7.5;
+        if (ly < 2) hw -= 2 - ly;
         return Math.abs(lx + 0.5) / hw;
       },
       ax: bodyX,
@@ -189,20 +187,20 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
       rx: 8,
       ry: H / 2,
       reach: [-10, 0, 10, H],
-      moss: [1, 4],
-      mossTo: 4,
+      moss: [2, 3],
+      mossTo: 2,
       dim: 0,
-      rough: 0.42,
+      rough: 0,
       cracks: BODY_CRACKS,
     });
     // 3,4 floating boulder fists; the right one can rise and wave
     const fl = float(0);
-    add({ metric: blob(2.7, 2.4), ax: 3, ay: 21 + Y + fl, rx: 2.7, ry: 2.4, reach: [-3, -3, 3, 3], moss: [0, 1], dim: 0.05, rough: 0.5 });
+    add({ metric: blob(2.7, 2.4), ax: 3, ay: 21 + Y + fl, rx: 2.7, ry: 2.4, reach: [-3, -3, 3, 3], moss: [1, 1], dim: 0.05, rough: 0 });
     if (wave === null) {
       const fr = float(2.1);
-      add({ metric: blob(2.7, 2.4), ax: 27, ay: 21 + Y + fr, rx: 2.7, ry: 2.4, reach: [-3, -3, 3, 3], moss: [0, 1], dim: 0.15, rough: 0.5 });
+      add({ metric: blob(2.7, 2.4), ax: 27, ay: 21 + Y + fr, rx: 2.7, ry: 2.4, reach: [-3, -3, 3, 3], moss: [1, 1], dim: 0.15, rough: 0 });
     } else {
-      add({ metric: blob(2.6, 2.4), ax: wave ? 27 : 26, ay: 9 + Y + b, rx: 2.6, ry: 2.4, reach: [-3, -3, 3, 3], moss: [0, 1], dim: 0, rough: 0.5 });
+      add({ metric: blob(2.6, 2.4), ax: wave ? 27 : 26, ay: 9 + Y + b, rx: 2.6, ry: 2.4, reach: [-3, -3, 3, 3], moss: [1, 1], dim: 0, rough: 0 });
     }
   }
 
@@ -239,7 +237,8 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
       if (part.moss[1] === 0 || (y > 0 && id[p - GW] >= i)) continue;
       if (part.mossTo !== undefined && y - part.ay > part.mossTo) continue;
       const [lo, hi] = part.moss;
-      const d = lo + Math.floor(noise(x - part.ax, 0, part.seed + 2) * (hi - lo + 1));
+      // stepped, not ragged: depth changes only every few columns
+      const d = lo + Math.floor(noise(Math.floor((x - part.ax + 20) / 3), 0, part.seed + 2) * (hi - lo + 1));
       for (let k = 0; k < d; k++) {
         const q = p + k * GW;
         if (q < GW * GH && id[q] === i && !mossK[q]) mossK[q] = k + 1;
@@ -254,22 +253,19 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
       const y = (p - x) / GW;
       const lx = x - part.ax;
       const ly = y - part.ay;
-      const n = noise(lx, ly, part.seed + 3);
-      // coarse 2x2 grain under the fine speckle, so the stone reads as chunks rather than static
-      const g = noise(Math.floor(lx / 2), Math.floor(ly / 2), part.seed + 5);
       if (mossK[p]) {
-        const tone = 3 - (mossK[p] - 1) - (n > 0.7 ? 1 : 0) + (n < 0.12 ? 1 : 0);
-        col[p] = MOSS[Math.max(0, Math.min(3, tone))];
+        const below = p + GW < GW * GH && id[p + GW] === i && !mossK[p + GW];
+        col[p] = MOSS[mossK[p] === 1 ? 3 : below ? 1 : 2];
         continue;
       }
       const nx = (lx + 0.5 - (part.reach[0] + part.reach[2]) / 2) / part.rx;
       const ny = (ly + 0.5 - (part.reach[1] + part.reach[3]) / 2) / part.ry;
-      let lit = 0.25 - 0.5 * nx - 0.6 * ny - part.dim + (g - 0.5) * 0.5 + (n - 0.5) * 0.25;
-      if ((y > 0 && id[p - GW] > i) || (y > 1 && id[p - 2 * GW] > i)) lit -= 0.6;
-      const tone = lit > 0.55 ? 3 : lit > 0.05 ? 2 : lit > -0.45 ? 1 : 0;
+      // flat: a lit face and a shadow face, split a little right of centre
+      let tone = nx > 0.3 + part.dim ? 1 : 2;
+      // a single highlight edge on the lit side
+      if (x > 0 && id[p - 1] !== i && nx < 0) tone = 3;
+      if ((y > 0 && id[p - GW] > i) || (y > 1 && id[p - 2 * GW] > i)) tone = 0;
       col[p] = STONE[tone];
-      // stray moss specks on the lit stone
-      if (n > 0.965 && tone >= 2) col[p] = MOSS[1];
     }
     // cracks cut into the stone
     parts.forEach((part, i) => {
@@ -298,8 +294,7 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
         (x < GW - 1 && id[p + 1] >= 0) ||
         (p >= GW && id[p - GW] >= 0) ||
         (p + GW < GW * GH && id[p + GW] >= 0);
-      // chipped: a few gaps where the stone meets the air
-      if (touches && noise(x, y, 99) < 0.92) col[p] = OUT;
+      if (touches) col[p] = OUT;
     }
   }
 
