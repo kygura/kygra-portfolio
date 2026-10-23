@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useReducedMotion } from "framer-motion";
-import { Arm, Eye, HEART, PALETTE, VIEW_H, VIEW_W, frame, runePaths } from "./sprite";
+import { ACCENTS, useAccent } from "@/theme/accent";
+import { GH, GW, createGolem } from "./golem";
+import type { Golem, Pose } from "./golem";
+import { HEART, HEART_FILL } from "./heart";
 import { HELLO, LINES, PESTERED, PETTED, WOKEN } from "./lines";
 
 /**
- * The moss golem in the bottom-left corner. It idles on a slow beat (head
- * bob, swaying sprout, blinks, the odd wave, stretch or bloom), follows the
- * cursor with its eye, and dozes off when left alone. A click makes it hop,
- * wave and type out a line in a speech bubble; stroking it pets it (the
- * sprout blooms and hearts float up). Under reduced motion it stands still
- * and lines appear whole.
+ * The moss golem in the bottom-left corner. It breathes, blinks and glances
+ * around, sheds spores, follows the cursor with its eye, now and then waves,
+ * stretches or blooms on its own, and dozes off when left alone. A click
+ * makes it hop, wave and type out a line in a speech bubble; stroking it
+ * pets it (blossoms open, leaves fly and hearts float up). Under reduced
+ * motion it stands still and lines appear whole. The art is drawn by
+ * `golem.ts` onto a small canvas, scaled up with nearest-neighbour.
  */
 
-const BEAT_MS = 520;
+const TICK_MS = 1000 / 12;
 const TYPE_MS = 28;
 const WAVE_MS = 170;
 /** Left alone this long (no petting, poking or cursor nearby), it falls asleep. */
@@ -21,7 +25,9 @@ const SLEEP_MS = 35_000;
 /** Pointer travel over the golem, within one stroke, that counts as petting
  *  (more than one pass across it, so a cursor just passing by doesn't). */
 const PET_PX = 140;
-const RUNE = runePaths();
+/** The head's centre within the canvas, for aiming the gaze. */
+const HEAD_X = 26 / GW;
+const HEAD_Y = 19 / GH;
 
 type Action = "wave" | "bloom" | "stretch";
 const ACTIONS: { kind: Action; ms: number }[] = [
@@ -57,23 +63,24 @@ function useLineBag() {
 export default function Mascot() {
   const still = Boolean(useReducedMotion());
   const visible = useDocumentVisible();
+  const accent = useAccent();
   const nextLine = useLineBag();
 
-  const [beat, setBeat] = useState(0);
-  const [idleEye, setIdleEye] = useState<Eye>("open");
-  const [gaze, setGaze] = useState<Eye | null>(null);
+  const [gaze, setGaze] = useState<{ x: -1 | 0 | 1; up: boolean } | null>(null);
   const [line, setLine] = useState<string | null>(null);
   const [shown, setShown] = useState(0);
   const [happy, setHappy] = useState(false);
-  const [hop, setHop] = useState(false);
   const [shake, setShake] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
-  const [wavePhase, setWavePhase] = useState(false);
+  const [wavePhase, setWavePhase] = useState<0 | 1>(0);
   const [asleep, setAsleep] = useState(false);
   const [petting, setPetting] = useState(false);
+  const [bloom, setBloom] = useState(0);
   const [hearts, setHearts] = useState<{ id: number; dx: number; big: boolean }[]>([]);
 
-  const bodyRef = useRef<HTMLButtonElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const golem = useRef<Golem | null>(null);
+  const pose = useRef<Pose | null>(null);
   const pokes = useRef<number[]>([]);
   const greeted = useRef(false);
   const timers = useRef<number[]>([]);
@@ -90,6 +97,16 @@ export default function Mascot() {
   const typing = line !== null && shown < line.length;
   const waving = !still && (typing || action === "wave");
 
+  pose.current = {
+    asleep,
+    lookX: action === "stretch" ? 0 : gaze?.x ?? null,
+    lookUp: action === "stretch" || Boolean(gaze?.up),
+    happy: petting || happy,
+    flare: typing,
+    wave: waving ? wavePhase : null,
+    bloom: Math.max(bloom, action === "bloom" ? 3 : 0),
+  };
+
   const say = useCallback(
     (text: string) => {
       setHappy(false);
@@ -99,48 +116,51 @@ export default function Mascot() {
     [still],
   );
 
-  const doHop = useCallback(() => {
-    if (still) return;
-    setHop(true);
-    later(() => setHop(false), 170);
-  }, [still, later]);
-
   const touch = () => {
     lastSeen.current = Date.now();
   };
 
-  // Idle beat: drives the bob and the sprout.
+  // The renderer, and its clock.
   useEffect(() => {
-    if (still || !visible) return;
-    const id = window.setInterval(() => setBeat((b) => b + 1), BEAT_MS);
-    return () => window.clearInterval(id);
-  }, [still, visible]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const g = createGolem(canvas, { still });
+    golem.current = g;
+    g.setAccent(ACCENTS[accent].hex);
+    if (pose.current) g.draw(pose.current);
+    return () => {
+      golem.current = null;
+    };
+    // The accent is applied by its own effect below; only `still` rebuilds the renderer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [still]);
 
-  // Arm waving runs faster than the beat.
+  useEffect(() => {
+    golem.current?.setAccent(ACCENTS[accent].hex);
+  }, [accent]);
+
+  useEffect(() => {
+    if (!visible || still) return;
+    const id = window.setInterval(() => {
+      const g = golem.current;
+      if (!g || !pose.current) return;
+      g.tick();
+      g.draw(pose.current);
+    }, TICK_MS);
+    return () => window.clearInterval(id);
+  }, [visible, still]);
+
+  // Without the clock (reduced motion), redraw whenever the pose changes.
+  useEffect(() => {
+    if (still && golem.current && pose.current) golem.current.draw(pose.current);
+  });
+
+  // Arm waving swaps the fist side faster than the clock's natural pace.
   useEffect(() => {
     if (!waving) return;
-    const id = window.setInterval(() => setWavePhase((w) => !w), WAVE_MS);
+    const id = window.setInterval(() => setWavePhase((w) => (w ? 0 : 1)), WAVE_MS);
     return () => window.clearInterval(id);
   }, [waving]);
-
-  // Blinks and glances, at random intervals.
-  useEffect(() => {
-    if (!visible) return;
-    let t: number;
-    const schedule = () => {
-      t = window.setTimeout(() => {
-        const roll = Math.random();
-        const look: Eye = roll < 0.65 ? "blink" : roll < 0.83 ? "left" : "right";
-        setIdleEye(look);
-        t = window.setTimeout(() => {
-          setIdleEye("open");
-          schedule();
-        }, look === "blink" ? 140 : rand(600, 1100));
-      }, rand(1800, 4600));
-    };
-    schedule();
-    return () => window.clearTimeout(t);
-  }, [visible]);
 
   // Now and then, a small idle action of its own.
   useEffect(() => {
@@ -150,7 +170,8 @@ export default function Mascot() {
       t = window.setTimeout(() => {
         const next = pick(ACTIONS);
         setAction(next.kind);
-        if (next.kind === "stretch") doHop();
+        if (next.kind === "stretch") golem.current?.hop();
+        if (next.kind === "bloom") golem.current?.rustle();
         t = window.setTimeout(() => {
           setAction(null);
           schedule();
@@ -162,7 +183,14 @@ export default function Mascot() {
       window.clearTimeout(t);
       setAction(null);
     };
-  }, [still, visible, asleep, doHop]);
+  }, [still, visible, asleep]);
+
+  // Blossoms from petting close again one by one.
+  useEffect(() => {
+    if (petting || bloom === 0) return;
+    const id = window.setTimeout(() => setBloom((b) => Math.max(0, b - 1)), 4000);
+    return () => window.clearTimeout(id);
+  }, [petting, bloom]);
 
   // The eye follows the cursor when it is near; a cursor nearby also keeps it awake.
   useEffect(() => {
@@ -171,21 +199,17 @@ export default function Mascot() {
     let y = 0;
     const update = () => {
       raf = 0;
-      const el = bodyRef.current;
+      const el = canvasRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      const dx = x - (r.left + r.width / 2);
-      const dy = y - (r.top + r.height * 0.35);
+      const dx = x - (r.left + r.width * HEAD_X);
+      const dy = y - (r.top + r.height * HEAD_Y);
       const far = Math.hypot(dx, dy);
       if (far < 220) lastSeen.current = Date.now();
-      let next: Eye | null = null;
-      if (far < 700 && far > 40) {
-        const up = dy < -60 && Math.abs(dy) > Math.abs(dx) * 0.5;
-        if (up) next = dx < -60 ? "upleft" : dx > 60 ? "upright" : "up";
-        else if (dx < -30) next = "left";
-        else if (dx > 30) next = "right";
-      }
-      setGaze(next);
+      if (far > 700 || far < 24) return setGaze(null);
+      const lx = dx < -30 ? -1 : dx > 30 ? 1 : 0;
+      const up = dy < -50 && Math.abs(dy) > Math.abs(dx) * 0.4;
+      setGaze((g) => (g && g.x === lx && g.up === up ? g : { x: lx, up }));
     };
     const onMove = (e: PointerEvent) => {
       x = e.clientX;
@@ -259,7 +283,7 @@ export default function Mascot() {
       text = nextLine();
     }
     say(text);
-    doHop();
+    golem.current?.hop();
   };
 
   const spawnHeart = () => {
@@ -281,10 +305,13 @@ export default function Mascot() {
     if (!petting) {
       setPetting(true);
       setAsleep(false);
+      golem.current?.hop();
+      golem.current?.rustle();
     }
     if (!still && now - s.heart > 230) {
       s.heart = now;
       spawnHeart();
+      setBloom((b) => Math.min(5, b + 1));
     }
     window.clearTimeout(petEnd.current);
     petEnd.current = window.setTimeout(() => {
@@ -295,29 +322,8 @@ export default function Mascot() {
     }, 650);
   };
 
-  let eye: Eye;
-  if (typing) eye = "big";
-  else if (asleep) eye = "sleep";
-  else if (petting || happy) eye = "happy";
-  else if (action === "stretch") eye = "up";
-  else if (idleEye === "blink") eye = "blink";
-  else eye = gaze ?? idleEye;
-
-  const arm: Arm = waving ? (wavePhase ? "up" : "wave") : "down";
-  const sprout = petting || action === "bloom" ? 2 : still ? 0 : ((Math.floor((beat + 1) / 3) % 2) as 0 | 1);
-  const paths = frame({
-    bob: still ? 0 : ((Math.floor(beat / (asleep ? 3 : 2)) % 2) as 0 | 1),
-    sprout,
-    eye,
-    arm,
-  });
-
   return (
-    <div
-      className="golem print:hidden"
-      data-still={still || undefined}
-      data-asleep={asleep || undefined}
-    >
+    <div className="golem print:hidden">
       {line && (
         <div className="golem__bubble" aria-hidden="true">
           {line.slice(0, shown)}
@@ -328,10 +334,8 @@ export default function Mascot() {
         {line ?? ""}
       </span>
       <button
-        ref={bodyRef}
         type="button"
         className="golem__body"
-        data-hop={hop || undefined}
         data-shake={shake || undefined}
         onClick={poke}
         onPointerMove={onStroke}
@@ -341,19 +345,6 @@ export default function Mascot() {
         }}
         aria-label="Moss golem. Click to hear it speak, or stroke it to pet it."
       >
-        {!asleep && (
-          <>
-            <span className="golem__spore" aria-hidden="true" />
-            <span className="golem__spore golem__spore--late" aria-hidden="true" />
-          </>
-        )}
-        {asleep && !still && (
-          <span className="golem__zzz" aria-hidden="true">
-            <span>z</span>
-            <span>z</span>
-            <span>Z</span>
-          </span>
-        )}
         {hearts.map((h) => (
           <svg
             key={h.id}
@@ -365,26 +356,11 @@ export default function Mascot() {
             style={{ "--dx": `${h.dx}px` } as CSSProperties}
           >
             {HEART.map(([c, d]) => (
-              <path key={c} d={d} style={{ fill: PALETTE[c] }} />
+              <path key={c} d={d} style={{ fill: HEART_FILL[c] }} />
             ))}
           </svg>
         ))}
-        <svg
-          viewBox={`0 0 ${VIEW_W} ${VIEW_H + 1}`}
-          shapeRendering="crispEdges"
-          aria-hidden="true"
-          className="golem__sprite"
-        >
-          <rect x={6} y={VIEW_H} width={VIEW_W - 12} height={1} className="golem__shadow" />
-          {paths.map(([c, d]) => (
-            <path key={c} d={d} style={{ fill: PALETTE[c] }} className={c === "e" ? "golem__glow" : undefined} />
-          ))}
-          <g className="golem__rune">
-            {RUNE.map(([c, d]) => (
-              <path key={c} d={d} style={{ fill: PALETTE[c] }} />
-            ))}
-          </g>
-        </svg>
+        <canvas ref={canvasRef} width={GW} height={GH} aria-hidden="true" className="golem__sprite" />
       </button>
     </div>
   );

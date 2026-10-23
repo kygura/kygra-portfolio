@@ -2207,11 +2207,11 @@ kbd {
 }
 .toc-tuner__actions button:hover { border-color: var(--accent); color: var(--accent); }
 
-/* Moss golem — the mascot in the bottom-right corner (src/components/mascot). */
+/* Moss golem — the mascot in the bottom-left corner (src/components/mascot). */
 .golem {
   position: fixed;
   left: clamp(0.75rem, 2vw, 1.5rem);
-  bottom: clamp(0.75rem, 2vw, 1.25rem);
+  bottom: clamp(0.5rem, 1.5vw, 1rem);
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -2226,38 +2226,30 @@ kbd {
   background: none;
   border: 0;
   cursor: pointer;
+  touch-action: none;
 }
 .golem__body:focus-visible { outline: 1px dashed var(--accent); outline-offset: 4px; }
-.golem__body[data-hop] { transform: translateY(-6px); }
-.golem__body { touch-action: none; }
 .golem__body[data-shake] { animation: golem-shake 0.5s steps(1) both; }
 @keyframes golem-shake {
   0%, 40%, 80% { transform: translateX(-3px); }
   20%, 60% { transform: translateX(3px); }
   100% { transform: none; }
 }
-.golem__sprite { display: block; width: 56px; height: auto; image-rendering: pixelated; }
+/* 52x46 buffer: 1.5x on phones, 2x from 640px. */
+.golem__sprite { display: block; width: 78px; height: auto; image-rendering: pixelated; }
 @media (min-width: 640px) {
-  .golem__sprite { width: 84px; }
-  .golem__body[data-hop] { transform: translateY(-9px); }
+  .golem__sprite { width: 104px; }
 }
 /* The hero strip's scene tabs would sit under the golem; they step right to make room. */
-.hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 56px + 1rem); }
+.hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 78px + 1rem); }
 @media (min-width: 640px) {
-  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 84px + 1.25rem); }
+  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 104px + 1.25rem); }
 }
 @media print { .hero__strip { padding-left: var(--hero-gutter); } }
-.golem__shadow { fill: rgba(0, 0, 0, 0.35); }
-.golem__glow { filter: drop-shadow(0 0 0.8px var(--accent)); }
-.golem__rune { animation: golem-rune 3.2s steps(6) infinite; }
-@keyframes golem-rune {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 1; }
-}
 .golem__bubble {
   position: relative;
   max-width: min(15rem, calc(100vw - 2rem));
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
   margin-left: 0.25rem;
   padding: 0.5rem 0.7rem;
   background: var(--sheet);
@@ -2273,7 +2265,7 @@ kbd {
 .golem__bubble::after {
   content: "";
   position: absolute;
-  left: 1.75rem;
+  left: 2.6rem;
   bottom: -5px;
   width: 8px;
   height: 8px;
@@ -2283,28 +2275,11 @@ kbd {
   transform: rotate(45deg);
 }
 .golem__ghost { visibility: hidden; }
-/* Two accent spores drift up off the moss. */
-.golem__spore {
-  position: absolute;
-  left: 38%;
-  top: 6%;
-  width: 3px;
-  height: 3px;
-  background: var(--accent);
-  opacity: 0;
-  animation: golem-spore 5.5s steps(14) infinite;
-}
-.golem__spore--late { left: 62%; animation-delay: 2.7s; animation-duration: 6.5s; }
-@keyframes golem-spore {
-  0% { transform: translate(0, 0); opacity: 0; }
-  15% { opacity: 0.9; }
-  100% { transform: translate(-8px, -34px); opacity: 0; }
-}
-/* Petting: pixel hearts float up off its head. */
+/* Petting: pixel hearts in the accent float up off its head. */
 .golem__heart {
   position: absolute;
   left: calc(50% - 7px + var(--dx, 0px));
-  top: 4%;
+  top: 18%;
   width: 14px;
   height: auto;
   pointer-events: none;
@@ -2314,37 +2289,5 @@ kbd {
 @keyframes golem-heart {
   0% { transform: translate(0, 4px); opacity: 0; }
   15% { opacity: 1; }
-  100% { transform: translate(calc(var(--dx, 0px) * 0.5), -38px); opacity: 0; }
-}
-/* Asleep: a dimmed rune and z's drifting up. */
-.golem[data-asleep] .golem__rune { animation: none; opacity: 0.2; }
-.golem__zzz {
-  position: absolute;
-  right: 4px;
-  top: -2px;
-  pointer-events: none;
-  font-family: var(--f-pixel);
-  color: var(--ink-2);
-  line-height: 1;
-}
-.golem__zzz span {
-  position: absolute;
-  right: 0;
-  top: 0;
-  opacity: 0;
-  animation: golem-zzz 3s steps(10) infinite;
-}
-.golem__zzz span:nth-child(1) { font-size: 9px; }
-.golem__zzz span:nth-child(2) { font-size: 11px; animation-delay: 1s; }
-.golem__zzz span:nth-child(3) { font-size: 13px; animation-delay: 2s; }
-@keyframes golem-zzz {
-  0% { transform: translate(0, 0); opacity: 0; }
-  20% { opacity: 0.9; }
-  100% { transform: translate(14px, -26px); opacity: 0; }
-}
-.golem[data-still] .golem__rune { animation: none; opacity: 0.8; }
-.golem[data-still] .golem__spore { display: none; }
-@media (prefers-reduced-motion: reduce) {
-  .golem__rune, .golem__spore { animation: none; }
-  .golem__spore { display: none; }
+  100% { transform: translate(calc(var(--dx, 0px) * 0.5), -44px); opacity: 0; }
 }
