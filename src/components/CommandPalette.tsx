@@ -10,7 +10,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import { useMarkdownPosts } from "@/hooks/useMarkdownPosts";
 import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
-import { CHORDS, PAGES } from "@/theme/keymap";
+import { CHORDS, PAGES, toggleGolem } from "@/theme/keymap";
 
 const pressKey = (key: string) =>
   document.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
@@ -173,6 +173,14 @@ export default function CommandPalette({
 
               <Command.Group heading="Open">
                 <Item value="open terminal" onSelect={() => run(() => pressKey("`"))} keys={["`"]}>Terminal</Item>
+                <Item
+                  value="open golem mascot"
+                  keywords={["mossback", "pet", "tuck", "summon"]}
+                  onSelect={() => run(toggleGolem)}
+                  keys={["m"]}
+                >
+                  Summon / tuck the golem
+                </Item>
                 <Item value="open keyboard shortcuts help" onSelect={() => run(() => pressKey("?"))} keys={["?"]}>
                   Keyboard shortcuts
                 </Item>

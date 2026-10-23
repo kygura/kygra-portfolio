@@ -8,7 +8,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ACCENTS, setAccent, useAccent } from "./accent";
-import { CHORDS, PAGES, isTyping } from "./keymap";
+import { CHORDS, PAGES, isTyping, toggleGolem } from "./keymap";
 
 const K = ({ k }: { k: string }) => <kbd>{k}</kbd>;
 
@@ -72,6 +72,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
               <div><dt><K k="←" /> <K k="→" /></dt><dd>Move along the nav (when focused)</dd></div>
               <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next hero scene (home)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
+              <div><dt><K k="m" /></dt><dd>Summon / tuck the golem</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
               <div><dt><K k=":" /> <K k="⌘K" /></dt><dd>Commands</dd></div>
               <div><dt><K k="?" /></dt><dd>This sheet</dd></div>
@@ -142,6 +143,9 @@ export default function Keys() {
         case "j":
         case "k":
           window.scrollBy({ top: e.key === "j" ? 140 : -140 });
+          return;
+        case "m":
+          toggleGolem();
           return;
         case "G":
           window.scrollTo({ top: document.documentElement.scrollHeight });

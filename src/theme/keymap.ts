@@ -24,3 +24,8 @@ export const COMMANDS_EVENT = "nca:commands";
 
 /** Opens the palette from a control (the nav button) rather than a key. */
 export const openCommands = () => window.dispatchEvent(new Event(COMMANDS_EVENT));
+
+/** Event the mascot listens for; `m` and the palette use it to tuck or summon it. */
+export const GOLEM_EVENT = "nca:golem";
+
+export const toggleGolem = () => window.dispatchEvent(new Event(GOLEM_EVENT));
