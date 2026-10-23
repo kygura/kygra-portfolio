@@ -73,6 +73,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
               <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next hero scene (home)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
+              <div><dt><K k="m" /></dt><dd>Show / hide Theo</dd></div>
               <div><dt><K k=":" /> <K k="⌘K" /></dt><dd>Commands</dd></div>
               <div><dt><K k="?" /></dt><dd>This sheet</dd></div>
               <div><dt><K k="Esc" /></dt><dd>Close, leave a field</dd></div>

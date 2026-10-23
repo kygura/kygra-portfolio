@@ -33,6 +33,8 @@ export const SHEET_KEY = "nca-sheet-v2";
 /** Pre-reorder key: its index counted Cipher last, so it maps to the new order by shifting. */
 const LEGACY_SHEET_KEY = "nca-sheet";
 export const EGGS_KEY = "nca-eggs";
+/** "off" when the visitor has hidden Theo, the companion. */
+export const COMPANION_KEY = "nca-companion";
 
 export function readStored(key: string): string | null {
   try {

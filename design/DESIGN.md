@@ -76,12 +76,17 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
+| `m` | Show / hide Theo, the companion |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
 
 ## Command palette
 
 `:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 1024px a `:` button in the nav opens it (`openCommands` in `src/theme/keymap.ts`), for touch screens that can't press `:`.
+
+## Companion
+
+Theo (`src/components/Companion.tsx`, styles at the end of `src/index.css`): a 16×19 pixel theodolite on a tripod, fixed in the bottom-right corner. Drawn as square SVG cells in `--ink`, `--sheet`, `--accent`, `--code` and `--ink-3`, so every theme recolours it. The lens follows the pointer (glances around on touch), blinks, shuffles a few steps along the corner now and then, and dozes with Silkscreen `z`s after a minute without input. A click logs a field note in a hairline readout (`THEO` tag in Silkscreen, Fragment Mono line, accent left rule); five quick clicks spin it. It also logs theme and page changes. On `/` it stays out of sight until the hero strip scrolls away, so it never covers the scene tabs. `m` or the palette's "Show / hide Theo" toggles it, stored in `localStorage["nca-companion"]`. Reduced motion: no walking, hopping or `z`s. Hidden in print.
 
 ## Also fixed
 

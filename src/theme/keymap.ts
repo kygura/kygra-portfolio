@@ -24,3 +24,8 @@ export const COMMANDS_EVENT = "nca:commands";
 
 /** Opens the palette from a control (the nav button) rather than a key. */
 export const openCommands = () => window.dispatchEvent(new Event(COMMANDS_EVENT));
+
+/** Event the companion listens for; lets the palette show or hide it. */
+export const COMPANION_EVENT = "nca:companion";
+
+export const toggleCompanion = () => window.dispatchEvent(new Event(COMPANION_EVENT));
