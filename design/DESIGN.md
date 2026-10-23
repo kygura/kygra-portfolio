@@ -86,3 +86,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 ## Also fixed
 
 Post markdown: fenced code is detected from its `<pre>` (react-markdown no longer passes `inline`, so every inline code span rendered as a block); a markdown `h1` renders as `h2` under the page title; the hast `node` prop is no longer forwarded to the DOM. Code blocks use a token-driven Prism theme (comments ink-3, keywords accent, literals ink-2). Footer quote keys ignore typing and claimed chord keys.
+
+## Mascot
+
+A small moss golem stands in the bottom-right corner of every page (`src/components/mascot/`): a pocket Titan after Hyper Light Drifter, with a stone shell, one glowing eye in a dark visor, and moss and a sprout grown over its crown. The sprite is pixel grids in `sprite.ts` drawn as crisp SVG at 3px per pixel (2px under 640px); the outline is generated, and the eye and chest rune use `--accent`, so a theme switch repaints them. It idles on a slow beat (head bob, sprout sway, blinks, glances, a pulsing rune, two drifting spores). A click makes it hop, wave and type a line from `lines.ts` into a hairline speech bubble (a greeting first, a shuffled bag after, a grumble when poked four times in three seconds). On `/` it climbs onto the hero strip's hairline so it clears the scroll cue, and steps back down as the strip scrolls away. Reduced motion stills it and shows lines whole; it sits under overlays (`z-index: 40`) and is hidden in print.
