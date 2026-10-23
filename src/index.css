@@ -2206,3 +2206,89 @@ kbd {
   transition: border-color 0.15s, color 0.15s;
 }
 .toc-tuner__actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─────────────────────────────────────────────
+   GOLEM — Mossback, the pixel-art pet on the bottom-left edge
+   (src/components/Golem.tsx, sprite in src/mascot/golem.ts)
+   ───────────────────────────────────────────── */
+.golem {
+  position: fixed;
+  left: max(8px, env(safe-area-inset-left));
+  bottom: 0;
+  z-index: 60;
+  width: 104px;
+  height: 112px;
+  pointer-events: none;
+  /* rises out of / sinks into the screen edge in whole steps, like a sprite */
+  transform: translateY(105%);
+  transition: transform 0.64s steps(8, end);
+}
+.golem[data-shown] { transform: none; }
+.golem__body {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+}
+.golem:not([data-shown]) .golem__body,
+.golem:not([data-shown]) .golem__tuck { pointer-events: none; }
+.golem__body:focus-visible { outline: 1px dashed var(--accent); outline-offset: -4px; }
+.golem__canvas {
+  display: block;
+  width: 104px;
+  height: 112px;
+  image-rendering: pixelated;
+}
+.golem__tag {
+  position: absolute;
+  left: calc(100% - 6px);
+  bottom: 44px;
+  padding: 3px 7px 2px;
+  font: 10px/1 var(--f-pixel);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ink-2);
+  background: var(--code);
+  border: 1px solid var(--accent);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s steps(3, end), transform 0.15s steps(3, end);
+  pointer-events: none;
+}
+.golem__tag em { font-style: normal; color: var(--accent); }
+.golem__body:hover .golem__tag,
+.golem__body:focus-visible .golem__tag { opacity: 1; transform: none; }
+.golem__tuck {
+  position: absolute;
+  top: 18px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font: 12px/1 var(--f-mono);
+  color: var(--ink-3);
+  background: var(--code);
+  border: 1px solid var(--rule-2);
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity 0.15s;
+}
+.golem__tuck:hover { color: var(--ink); border-color: var(--accent); }
+.golem:hover .golem__tuck,
+.golem:focus-within .golem__tuck { opacity: 1; }
+@media (hover: none) {
+  .golem__tuck { opacity: 0.7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .golem, .golem__tag { transition: none; }
+}
+@media print {
+  .golem { display: none; }
+}

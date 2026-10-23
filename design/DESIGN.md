@@ -32,7 +32,7 @@ The surface texture is two tokens, `--tex` and `--tex-size`, which `body` reads;
 
 - **Literata** (opsz 7–72, 400/600, italic 400): body and every heading that used Instrument Serif or Newsreader (Tailwind `font-display`/`font-serif`/`font-body`/`font-sans` all map to it). Post body 19px / 1.68 with a 66ch cap; 17px under 560px.
 - **Fragment Mono**: code, data, nav links, buttons, terminal, labels (`font-mono`).
-- **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings, and the "NCA" of the wordmark. Nowhere else.
+- **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings, the golem's name tag, and the "NCA" of the wordmark. Nowhere else.
 
 Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 800px the bar keeps only "NCA" (and from 640px to 1023px drops "©2026" and tightens link tracking) so the links fit unscrolled at every width. The space between links grows with the bar (from about 12px on a phone to 48px on a wide screen), sized per range from the room left once all four fit. Under 1024px the six accent squares fold into one swatch that opens the themes as a vertical list, and a `:` button beside it opens the command palette for touch screens.
 
@@ -76,8 +76,15 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
+| `m` | Summon / tuck the golem |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
+
+## Golem
+
+Mossback (`src/components/Golem.tsx`, sprite in `src/mascot/golem.ts`): a site pet standing on the bottom-left edge of the viewport, after the dead titans of Hyper Light Drifter. It is a hulking stone body lit from above in hard two-tone bands, a small head sunk between domed pauldrons, knuckles on the ground, one glowing eye slit, and the moss, vines, pink blossoms and a sapling that grew over it while it slept. There is no bitmap: each frame is rasterised from a few shapes into a 52×56 buffer, shaded per part with a checker dither at the band edges, mossed along every upward-facing edge, outlined, and scaled 2× with nearest-neighbour. It runs at 12 fps, only while shown and the tab is visible. The renderer is a dynamic import.
+
+It breathes (the head lags the chest), blinks, glances toward the cursor and drifts spores. After 45 s without input it sleeps (dim eye, drooping head, rising z's), and any input wakes it with an eye flare. Clicking pets it: a hop, a heart in the accent, falling leaves, and another blossom opens. The pet count persists in `localStorage["nca-golem-pets"]` and shows in its name tag on hover. The eye and chest rune take the site accent. `m`, the palette entry or the × beside it sinks it into the screen edge and brings it back (`localStorage["nca-golem"]`). On `/` it stays hidden until the hero has scrolled away. Under reduced motion it renders one still frame and shows the happy frame on a pet.
 
 ## Command palette
 
