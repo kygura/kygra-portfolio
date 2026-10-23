@@ -154,8 +154,6 @@ export default function LofiPlayer() {
 
   const live = playing || station !== null;
   const progress = duration > 0 ? time / duration : 0;
-  const counter = String(Math.floor(time) % 1000).padStart(3, "0");
-  const stationAt = station ? STATIONS.findIndex((s) => s.id === station.id) : -1;
 
   const seekBy = (dt: number) => {
     const audio = audioRef.current;
@@ -177,57 +175,38 @@ export default function LofiPlayer() {
 
       {/* Kept mounted while closed so a radio iframe keeps playing. */}
       <div ref={panelRef} className="deck__panel" role="dialog" aria-label="Music player">
-        <div className="deck__plate">
-          <span className="deck__brand">
-            NCA <em>Tape Deck</em>
-          </span>
-          <div className="deck__source" role="tablist" aria-label="Source">
-            {(["tapes", "radio"] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={mode === m}
-                onClick={() => setMode(m)}
-              >
-                <span className="deck__lamp" aria-hidden="true" />
-                {m}
-              </button>
-            ))}
-          </div>
+        <div className="deck__source" role="tablist" aria-label="Source">
+          {(["tapes", "radio"] as const).map((m) => (
+            <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
+              {m}
+            </button>
+          ))}
         </div>
 
         {mode === "tapes" && (
           <div className="deck__body">
             {track ? (
               <>
-                <div className="deck__bay">
-                  <Cassette
-                    title={track.title}
-                    meta={`${track.artist} · ${track.license}`}
-                    side={String.fromCharCode(65 + ((index % tracks.length) % 2))}
-                    progress={progress}
-                  />
-                </div>
+                <Cassette progress={progress} />
 
-                <div className="deck__readout">
-                  <span className="deck__counter" aria-label={`Elapsed ${clock(time)}`}>
-                    {counter.split("").map((d, i) => (
-                      <span key={i}>{d}</span>
-                    ))}
+                <p className="deck__now">
+                  <span className="deck__title">{track.title}</span>
+                  <span className="deck__meta">
+                    {track.artist}, {track.license}
+                    {track.source && (
+                      <>
+                        {" · "}
+                        <a href={track.source} target="_blank" rel="noreferrer">
+                          source
+                        </a>
+                      </>
+                    )}
                   </span>
-                  <span className="deck__vu" aria-hidden="true">
-                    {Array.from({ length: 10 }, (_, i) => (
-                      <i key={i} />
-                    ))}
-                  </span>
-                  <span className="deck__time">
-                    {clock(time)} / {clock(duration)}
-                  </span>
-                </div>
+                </p>
 
+                {/* The seek line is a road; the square is how far along it you are. */}
                 <div
-                  className="deck__bar"
+                  className="deck__road"
                   role="slider"
                   tabIndex={0}
                   aria-label="Seek"
@@ -248,44 +227,34 @@ export default function LofiPlayer() {
                     e.preventDefault();
                   }}
                 >
-                  <span style={{ transform: `scaleX(${progress})` }} />
+                  <span style={{ left: `${progress * 100}%` }} />
+                </div>
+                <div className="deck__clock">
+                  <span>{clock(time)}</span>
+                  <span>
+                    {(index % tracks.length) + 1} / {tracks.length}
+                  </span>
+                  <span>{clock(duration)}</span>
                 </div>
 
-                {/* Piano keys: play latches down while the tape runs. */}
                 <div className="deck__keys">
                   <button type="button" onClick={() => go(-1)} aria-label="Previous tape">
-                    <span aria-hidden="true">◂◂</span>
-                    <small>REW</small>
+                    rew
                   </button>
                   <button
                     type="button"
-                    className="deck__key--play"
                     aria-pressed={playing}
-                    onClick={() => !playing && void play()}
-                    aria-label="Play"
+                    onClick={toggle}
+                    aria-label={playing ? "Pause" : "Play"}
                     aria-keyshortcuts="m"
                   >
-                    <span aria-hidden="true">▶</span>
-                    <small>PLAY</small>
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={!playing && time > 0}
-                    onClick={() => audioRef.current?.pause()}
-                    aria-label="Pause"
-                  >
-                    <span aria-hidden="true">❚❚</span>
-                    <small>PAUSE</small>
+                    {playing ? "pause" : "play"}
                   </button>
                   <button type="button" onClick={() => go(1)} aria-label="Next tape">
-                    <span aria-hidden="true">▸▸</span>
-                    <small>FF</small>
+                    ff
                   </button>
-                </div>
-
-                <div className="deck__foot">
                   <label className="deck__vol">
-                    <span>VOL</span>
+                    <span className="sr-only">Volume</span>
                     <input
                       type="range"
                       min={0}
@@ -295,47 +264,19 @@ export default function LofiPlayer() {
                       onChange={(e) => setVolume(Number(e.target.value))}
                     />
                   </label>
-                  <span className="deck__credit">
-                    {(index % tracks.length) + 1}/{tracks.length}
-                    {track.source && (
-                      <>
-                        {" · "}
-                        <a href={track.source} target="_blank" rel="noreferrer">
-                          source
-                        </a>
-                      </>
-                    )}
-                  </span>
                 </div>
               </>
             ) : (
-              <div className="deck__bay deck__bay--empty">
-                <p>{failed || playlist ? "No tapes on the shelf yet. Try the radio." : "Loading tapes…"}</p>
-              </div>
+              <p className="deck__empty">
+                {failed || playlist ? "The shelf is empty. Try the radio." : <>Loading tapes<span className="deck__dots" /></>}
+              </p>
             )}
           </div>
         )}
 
         <div className="deck__body" hidden={mode !== "radio"}>
-          {/* Tuner dial: the needle slides to the station that's on. */}
-          <div className="deck__dial" aria-hidden="true">
-            <span className="deck__scale" />
-            {STATIONS.map((s, i) => (
-              <span
-                key={s.id}
-                className="deck__mark"
-                style={{ left: `${((i + 0.5) / STATIONS.length) * 100}%` }}
-              >
-                {s.kind === "youtube" ? "YT" : "SP"}
-              </span>
-            ))}
-            <span
-              className="deck__needle"
-              data-on={stationAt >= 0 || undefined}
-              style={{ left: `${stationAt >= 0 ? ((stationAt + 0.5) / STATIONS.length) * 100 : 4}%` }}
-            />
-          </div>
-          <ul className="deck__presets">
+          {/* Stations read as a list of dialogue choices. */}
+          <ol className="deck__choices">
             {STATIONS.map((s, i) => (
               <li key={s.id}>
                 <button
@@ -343,15 +284,15 @@ export default function LofiPlayer() {
                   aria-pressed={station?.id === s.id}
                   onClick={() => (station?.id === s.id ? setStation(null) : tuneIn(s))}
                 >
-                  <span className="deck__preset-no">{i + 1}</span>
-                  <span className="deck__preset-text">
-                    <span className="deck__preset-name">{s.name}</span>
-                    <span className="deck__preset-by">{s.by}</span>
+                  <span className="deck__choice-no">{i + 1}.</span>
+                  <span>
+                    {s.name}
+                    <span className="deck__meta">{s.by}</span>
                   </span>
                 </button>
               </li>
             ))}
-          </ul>
+          </ol>
           {station ? (
             <iframe
               key={station.id}
@@ -363,7 +304,7 @@ export default function LofiPlayer() {
               loading="lazy"
             />
           ) : (
-            <p className="deck__credit deck__note">Tuning in loads that service's own player.</p>
+            <p className="deck__meta deck__note">Tuning in loads that service's own player.</p>
           )}
         </div>
       </div>
@@ -380,16 +321,16 @@ export default function LofiPlayer() {
         {/* A tiny cassette whose reels turn while anything plays. */}
         <svg viewBox="0 0 28 18" aria-hidden="true">
           <rect className="fab__shell" x="0.5" y="0.5" width="27" height="17" />
-          <rect className="fab__label" x="3" y="3" width="22" height="8" />
-          <g className="fab__reel" style={{ transformOrigin: "9px 7px" }}>
-            <circle cx="9" cy="7" r="2.4" />
-            <path d="M9 4.6v4.8M6.6 7h4.8" />
+          <rect className="fab__window" x="5" y="4" width="18" height="6" />
+          <g className="fab__reel" style={{ transformOrigin: "9.5px 7px" }}>
+            <circle cx="9.5" cy="7" r="2" />
+            <path d="M9.5 5v4" />
           </g>
-          <g className="fab__reel" style={{ transformOrigin: "19px 7px" }}>
-            <circle cx="19" cy="7" r="2.4" />
-            <path d="M19 4.6v4.8M16.6 7h4.8" />
+          <g className="fab__reel" style={{ transformOrigin: "18.5px 7px" }}>
+            <circle cx="18.5" cy="7" r="2" />
+            <path d="M18.5 5v4" />
           </g>
-          <path className="fab__foot" d="M6 17.5 8 13.5h12l2 4" />
+          <path className="fab__shell" d="M7 17.5 8.5 14h11l1.5 3.5" />
         </svg>
       </button>
     </div>
