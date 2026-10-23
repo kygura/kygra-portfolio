@@ -1,51 +1,21 @@
 /**
- * The moss golem's renderer: a pocket Titan in the Hyper Light Drifter
- * mould. A big rounded stone head with one diamond eye glowing in a dark
- * visor, a sprout and a thick moss cap on top, a small body carrying a
- * rune, and long thin arms hanging free; vines and pink blossoms grew over
- * it while it slept.
+ * The moss golem's renderer: a rough-hewn standing stone that woke up. One
+ * weathered monolith for head and body, a single glowing crack of an eye, a
+ * rune notched below it, two boulder fists floating at its sides (in the
+ * manner of Hyper Light Drifter's titans), stubby legs, and a moss cap with
+ * a sprout, drips and pink blossoms.
  *
- * Nothing here is a bitmap. Each frame the body is rasterised from a few
- * shapes into a GW×GH buffer, shaded per part from a top-left light (with a
- * checker dither at the band edges), mossed along every upward-facing edge,
- * outlined, then decorated (sprout, vines, blossoms, rune, visor and eye,
- * particles). Breathing, the hop, the wave and the gaze are integer offsets
- * on those shapes, so motion stays on the pixel grid. The host scales the
- * canvas up with nearest-neighbour.
+ * It is drawn on a small grid and shown with big pixels, and the finish is
+ * deliberately rough: every edge is jittered by stable per-pixel noise (in
+ * each part's own coordinates, so edges don't crawl as parts move), the
+ * stone is speckled rather than smoothly shaded, cracks are cut into it, the
+ * moss grows in uneven clumps and the outline is chipped in places. Motion
+ * (breathing, the floating fists, the hop, the wave, the gaze) is in whole
+ * pixels. The host scales the canvas up with nearest-neighbour.
  */
 
-export const GW = 52;
-export const GH = 59;
-/** Vertical offset of the whole figure in the buffer (trims empty rows above). */
-const BASE = 4;
-
-type Shape =
-  | { k: "ell" | "sup"; cx: number; cy: number; rx: number; ry: number }
-  | { k: "rect"; x0: number; y0: number; x1: number; y1: number };
-
-interface Part {
-  shapes: Shape[];
-  /** shading frame: normals are taken relative to this box */
-  cx: number;
-  cy: number;
-  rx: number;
-  ry: number;
-  /** moss depth range on upward-facing edges (0,0 = bare) */
-  moss: [number, number];
-  /** pushes the whole part toward shadow */
-  dim: number;
-  seed: number;
-}
-
-interface Particle {
-  kind: "spore" | "z" | "leaf" | "dust";
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  max: number;
-}
+export const GW = 30;
+export const GH = 32;
 
 type RGB = [number, number, number];
 
@@ -62,10 +32,10 @@ const mix = (a: RGB, b: RGB, t: number): RGB => [
 const px = (c: RGB, a = 1) => ((Math.round(a * 255) << 24) | (c[2] << 16) | (c[1] << 8) | c[0]) >>> 0;
 
 const OUT = px(hex("#0a0f10"));
-const CONTACT = px(hex("#131b1d"));
-const STONE = ["#223033", "#3a4c4e", "#5f7571", "#97ab95"].map((h) => px(hex(h)));
-const MOSS = ["#26452a", "#3d6a33", "#68983d", "#a5c659"].map((h) => px(hex(h)));
-const VISOR = hex("#0d1416");
+const CRACK = px(hex("#141c1e"));
+const STONE = ["#273436", "#43554f", "#6a7d70", "#a3b29a"].map((h) => px(hex(h)));
+const MOSS = ["#2a4a2a", "#44712f", "#71a03b", "#b1cf5e"].map((h) => px(hex(h)));
+const SOCKET = px(hex("#0c1213"));
 const PETAL = px(hex("#e8579c"));
 const PETAL_HI = px(hex("#ffb0d4"));
 const SPORE = hex("#dceba4");
@@ -73,53 +43,66 @@ const INK = hex("#c9d0bf");
 const DUST = hex("#728778");
 const WHITE: RGB = [255, 255, 255];
 
-const ZED = ["XXXX", "..X.", ".X..", "XXXX"];
+const ZED = ["XXX", "..X", ".X.", "X..", "XXX"];
 
-/** Stable per-column noise, so the moss line doesn't crawl between frames. */
 const hash = (x: number, s: number) => {
   let h = (x * 374761393 + s * 668265263) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 };
+/** Stable noise for a pixel in a part's own coordinates. */
+const noise = (x: number, y: number, s: number) => hash(x * 92821 + y * 68917, s);
 
-const inside = (s: Shape, x: number, y: number) => {
-  if (s.k === "rect") return x >= s.x0 && x <= s.x1 && y >= s.y0 && y <= s.y1;
-  const dx = (x + 0.5 - s.cx) / s.rx;
-  const dy = (y + 0.5 - s.cy) / s.ry;
-  return s.k === "ell" ? dx * dx + dy * dy <= 1 : dx ** 4 + dy ** 4 <= 1;
-};
-
-const bounds = (s: Shape) =>
-  s.k === "rect"
-    ? [s.x0, s.y0, s.x1, s.y1]
-    : [Math.floor(s.cx - s.rx), Math.floor(s.cy - s.ry), Math.ceil(s.cx + s.rx), Math.ceil(s.cy + s.ry)];
+interface Part {
+  /** Edge metric for a part-local integer pixel: inside when ≤ 1 (before roughening). */
+  metric: (lx: number, ly: number) => number;
+  /** integer anchor of the part's own coordinates */
+  ax: number;
+  ay: number;
+  /** half extents, for the shading normal */
+  rx: number;
+  ry: number;
+  /** part-local box scanned around the anchor: x0, y0, x1, y1 */
+  reach: [number, number, number, number];
+  moss: [number, number];
+  /** moss grows only on edges up to this part-local row (the cap, not the flanks) */
+  mossTo?: number;
+  dim: number;
+  rough: number;
+  seed: number;
+  /** cracks: polylines in part coordinates */
+  cracks?: [number, number][][];
+}
 
 // Part indices double as depth: a higher index sits in front.
-const TORSO = 6;
-const SHOULDER_L = 7;
-const SHOULDER_R = 8;
-const HEAD = 10;
+const BODY = 2;
 
-/** Vines hang from the underside of these parts: [part, column, length]. */
-const VINES: [number, number, number][] = [
-  [HEAD, 14, 5],
-  [HEAD, 38, 7],
-  [SHOULDER_L, 9, 4],
-  [SHOULDER_R, 43, 3],
-  [TORSO, 20, 2],
+/** Moss drips down the body from the cap: [column offset from the body's centre, length]. */
+const DRIPS: [number, number][] = [
+  [-6, 3],
+  [-2, 1],
+  [5, 5],
+  [7, 2],
 ];
 
-/** What the host wants shown this frame. */
+const BODY_CRACKS: [number, number][][] = [
+  [[-4, 3], [-3, 5], [-4, 7], [-4, 8]],
+  [[3, 8], [4, 10], [3, 12], [4, 13]],
+  [[-6, 12], [-5, 14]],
+  [[1, 15], [2, 17]],
+];
+
 export interface Pose {
   asleep: boolean;
   /** -1 left, 0 ahead, 1 right; null lets it glance around on its own */
   lookX: -1 | 0 | 1 | null;
+  /** kept for the host's sake; this face has no room to look up */
   lookUp: boolean;
   /** squinting arc */
   happy: boolean;
   /** wide, bright eye (while it talks) */
   flare: boolean;
-  /** right arm raised, fist to one side or the other; null = resting */
+  /** right fist raised, to one side or the other; null = floating at its side */
   wave: 0 | 1 | null;
   /** extra blossoms open on the moss, 0–5 */
   bloom: number;
@@ -130,9 +113,19 @@ export interface Golem {
   tick(): void;
   draw(pose: Pose): void;
   hop(): void;
-  /** a burst of leaves off the pauldrons */
+  /** a burst of leaves off the moss cap */
   rustle(): void;
   setAccent(hex: string): void;
+}
+
+interface Particle {
+  kind: "spore" | "z" | "leaf" | "dust";
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  max: number;
 }
 
 export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean } = {}): Golem {
@@ -143,7 +136,6 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
   const col = img ? new Uint32Array(img.data.buffer) : new Uint32Array(GW * GH);
   const id = new Int8Array(GW * GH);
   const mossK = new Uint8Array(GW * GH);
-  const fixed = new Uint32Array(GW * GH);
   const still = !!opts.still;
 
   let accent = hex("#bcc77c");
@@ -155,56 +147,79 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
   let blinkUntil = -1;
   let hopAt = -1;
   let mossTops: number[] = [];
+  let bodyX = 15;
+  let bodyY = 7;
   const parts: Part[] = [];
   const particles: Particle[] = [];
 
   const spawn = (p: Omit<Particle, "max">) => {
-    if (!still && particles.length < 40) particles.push({ ...p, max: p.life });
+    if (!still && particles.length < 30) particles.push({ ...p, max: p.life });
   };
 
-  const HOP = [-1, -2, -3, -3, -2, -1, 0];
+  const HOP = [-1, -2, -2, -1, 0];
 
-  function build(b: number, hb: number, j: number, wave: 0 | 1 | null) {
-    const Y = BASE + j;
+  const rect = (w: number, h: number) => (lx: number, ly: number) =>
+    lx >= 0 && lx < w && ly >= 0 && ly < h
+      ? Math.max(Math.abs(lx + 0.5 - w / 2) / (w / 2), Math.abs(ly + 0.5 - h / 2) / (h / 2))
+      : 9;
+  const blob = (rx: number, ry: number) => (lx: number, ly: number) =>
+    Math.sqrt(Math.sqrt(((lx + 0.5) / rx) ** 4 + ((ly + 0.5) / ry) ** 4));
+
+  function build(b: number, j: number, wave: 0 | 1 | null) {
     parts.length = 0;
-    const part = (shapes: Shape[], box: [number, number, number, number], moss: [number, number], dim = 0) =>
-      parts.push({ shapes, cx: box[0], cy: box[1], rx: box[2], ry: box[3], moss, dim, seed: parts.length * 31 + 7 });
-    // 0,1 legs: stubby, with flat feet, mostly behind the torso
-    part([{ k: "rect", x0: 18, y0: 45 + Y, x1: 21, y1: 50 + Y }, { k: "rect", x0: 16, y0: 49 + Y, x1: 22, y1: 51 + Y }], [19, 48 + Y, 4, 4], [0, 1], 0.3);
-    part([{ k: "rect", x0: 31, y0: 45 + Y, x1: 34, y1: 50 + Y }, { k: "rect", x0: 30, y0: 49 + Y, x1: 36, y1: 51 + Y }], [33, 48 + Y, 4, 4], [0, 1], 0.3);
-    // 2,3 long thin arms hanging free of the body; the right one can wave
-    part([{ k: "ell", cx: 8, cy: 39 + Y + b, rx: 2.8, ry: 9 }], [8, 39 + Y, 2.8, 9], [0, 1], 0.1);
-    if (wave === null) part([{ k: "ell", cx: 44, cy: 39 + Y + b, rx: 2.8, ry: 9 }], [44, 39 + Y, 2.8, 9], [0, 1], 0.2);
-    else part([{ k: "ell", cx: 46.5, cy: 23 + Y + b, rx: 2.6, ry: 8 }], [46.5, 23 + Y, 2.6, 8], [0, 1], 0.05);
-    // 4,5 hands, near the ground
-    part([{ k: "sup", cx: 8, cy: 48.5 + Y + b, rx: 3.6, ry: 2.8 }], [8, 48.5 + Y, 3.6, 2.8], [0, 1]);
-    if (wave === null) part([{ k: "sup", cx: 44, cy: 48.5 + Y + b, rx: 3.6, ry: 2.8 }], [44, 48.5 + Y, 3.6, 2.8], [0, 1], 0.1);
-    else {
-      const hx = wave ? 47.5 : 45.5;
-      part([{ k: "sup", cx: hx, cy: 13 + Y + b, rx: 3.4, ry: 3 }], [hx, 13 + Y + b, 3.4, 3], [1, 2]);
+    const Y = j;
+    const float = (phase: number) => (still ? 0 : Math.round(Math.sin(t * 0.12 + phase)));
+    const add = (p: Omit<Part, "seed">) => parts.push({ ...p, seed: parts.length * 31 + 7 });
+    // 0,1 legs: stubby blocks, mostly hidden behind the stone
+    add({ metric: rect(4, 5), ax: 10, ay: 25 + Y, rx: 2, ry: 2.5, reach: [0, 0, 4, 5], moss: [0, 0], dim: 0.3, rough: 0.3 });
+    add({ metric: rect(4, 5), ax: 17, ay: 25 + Y, rx: 2, ry: 2.5, reach: [0, 0, 4, 5], moss: [0, 0], dim: 0.35, rough: 0.3 });
+    // 2 body: one monolith, narrower at the top, with rounded shoulders
+    bodyX = 15;
+    bodyY = 7 + Y + b;
+    const H = 19;
+    add({
+      metric: (lx, ly) => {
+        if (ly < 0 || ly >= H) return 9;
+        let hw = 6.5 + (2.5 * (ly + 0.5)) / H;
+        if (ly < 3) hw -= (3 - ly) * 1.15;
+        return Math.abs(lx + 0.5) / hw;
+      },
+      ax: bodyX,
+      ay: bodyY,
+      rx: 8,
+      ry: H / 2,
+      reach: [-10, 0, 10, H],
+      moss: [1, 4],
+      mossTo: 4,
+      dim: 0,
+      rough: 0.42,
+      cracks: BODY_CRACKS,
+    });
+    // 3,4 floating boulder fists; the right one can rise and wave
+    const fl = float(0);
+    add({ metric: blob(2.7, 2.4), ax: 3, ay: 21 + Y + fl, rx: 2.7, ry: 2.4, reach: [-3, -3, 3, 3], moss: [0, 1], dim: 0.05, rough: 0.5 });
+    if (wave === null) {
+      const fr = float(2.1);
+      add({ metric: blob(2.7, 2.4), ax: 27, ay: 21 + Y + fr, rx: 2.7, ry: 2.4, reach: [-3, -3, 3, 3], moss: [0, 1], dim: 0.15, rough: 0.5 });
+    } else {
+      add({ metric: blob(2.6, 2.4), ax: wave ? 27 : 26, ay: 9 + Y + b, rx: 2.6, ry: 2.4, reach: [-3, -3, 3, 3], moss: [0, 1], dim: 0, rough: 0.5 });
     }
-    // 6 torso: a rounded box carrying the rune
-    part([{ k: "sup", cx: 26, cy: 38 + Y + b, rx: 11.5, ry: 9 }], [26, 38 + Y + b, 11.5, 9], [1, 1], 0.05);
-    // 7,8 small pauldrons where the arms meet the body, mossed over
-    part([{ k: "ell", cx: 11.5, cy: 31 + Y + b, rx: 5, ry: 3.5 }], [11.5, 31 + Y + b, 5, 3.5], [1, 3]);
-    part([{ k: "ell", cx: 40.5, cy: 31 + Y + b, rx: 5, ry: 3.5 }], [40.5, 31 + Y + b, 5, 3.5], [1, 3], 0.1);
-    // 9 neck
-    part([{ k: "rect", x0: 22, y0: 26 + Y + b, x1: 30, y1: 30 + Y + b }], [26, 28 + Y, 5, 3], [0, 0], 0.35);
-    // 10 head: big and rounded, with a thick moss cap
-    part([{ k: "sup", cx: 26, cy: 16 + Y + hb, rx: 15, ry: 11.5 }], [26, 16 + Y + hb, 15, 11.5], [2, 6]);
   }
 
   function raster() {
     id.fill(-1);
     mossK.fill(0);
-    fixed.fill(0);
     col.fill(0);
     parts.forEach((p, i) => {
-      for (const s of p.shapes) {
-        const [x0, y0, x1, y1] = bounds(s);
-        for (let y = Math.max(0, y0); y <= Math.min(GH - 1, y1); y++)
-          for (let x = Math.max(0, x0); x <= Math.min(GW - 1, x1); x++) if (inside(s, x, y)) id[y * GW + x] = i;
-      }
+      const [x0, y0, x1, y1] = p.reach;
+      for (let ly = y0 - 1; ly <= y1; ly++)
+        for (let lx = x0 - 1; lx <= x1; lx++) {
+          const x = p.ax + lx;
+          const y = p.ay + ly;
+          if (x < 0 || x >= GW || y < 0 || y >= GH) continue;
+          const jitter = (noise(lx, ly, p.seed) - 0.5) * p.rough;
+          if (p.metric(lx, ly) <= 1 + jitter) id[y * GW + x] = i;
+        }
     });
   }
 
@@ -212,106 +227,79 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
     for (let y = 0; y < GH; y++) if (id[y * GW + x] === part) return y;
     return -1;
   };
-  const bottomOf = (part: number, x: number) => {
-    for (let y = GH - 1; y >= 0; y--) if (id[y * GW + x] === part) return y;
-    return -1;
-  };
-
-  function sprout(bloom: number) {
-    // A two-leaf sprout growing out of the moss cap; it flowers when petted.
-    const top = topOf(HEAD, 26);
-    if (top < 7) return;
-    const sway = still ? 0 : Math.round(Math.sin(t * 0.09) * 0.8);
-    const set = (x: number, y: number, c: number) => {
-      if (x < 0 || x >= GW || y < 0 || y >= GH) return;
-      id[y * GW + x] = HEAD;
-      fixed[y * GW + x] = c;
-    };
-    set(26, top - 1, MOSS[0]);
-    set(26, top - 2, MOSS[1]);
-    set(26 + (sway > 0 ? 1 : sway < 0 ? -1 : 0), top - 3, MOSS[1]);
-    const cx = 26 + sway;
-    const leaf: [number, number, number][] = [
-      [1, -4, 2], [2, -4, 2], [2, -5, 3], [3, -5, 3], [3, -6, 3], [4, -6, 3], [4, -5, 2],
-    ];
-    for (const [dx, dy, tone] of leaf) {
-      set(cx + dx, top + dy, MOSS[tone]);
-      set(cx - dx, top + dy, MOSS[Math.max(1, tone - 1)]);
-    }
-    if (bloom > 0) {
-      set(cx, top - 4, PETAL);
-      set(cx - 1, top - 5, PETAL);
-      set(cx + 1, top - 5, PETAL);
-      set(cx, top - 5, PETAL_HI);
-      set(cx, top - 6, PETAL);
-    }
-  }
 
   function shade() {
-    for (let y = 0; y < GH; y++)
-      for (let x = 0; x < GW; x++) {
-        const p = y * GW + x;
-        const i = id[p];
-        if (i < 0) continue;
-        const part = parts[i];
-        // moss: every pixel whose upper neighbour is empty or behind it
-        if (part.moss[1] > 0 && (y === 0 || id[p - GW] < i)) {
-          const [lo, hi] = part.moss;
-          const d = lo + Math.floor(hash(x, part.seed) * (hi - lo + 1));
-          for (let k = 0; k < d; k++) {
-            const q = p + k * GW;
-            if (q < GW * GH && id[q] === i && !mossK[q]) mossK[q] = k + 1;
-          }
-          if (d > 0 && y > 0 && id[p - GW] === -1 && hash(x, part.seed + 5) > 0.64) {
-            id[p - GW] = i;
-            mossK[p - GW] = 1;
-          }
-          mossTops.push(p);
-        }
-      }
+    // moss: clumps of uneven depth on every upward-facing edge
     for (let p = 0; p < GW * GH; p++) {
       const i = id[p];
       if (i < 0) continue;
+      const part = parts[i];
       const x = p % GW;
       const y = (p - x) / GW;
-      const part = parts[i];
-      const nx = Math.max(-1, Math.min(1, (x + 0.5 - part.cx) / part.rx));
-      const ny = Math.max(-1, Math.min(1, (y + 0.5 - part.cy) / part.ry));
-      if (fixed[p]) {
-        col[p] = fixed[p];
-        continue;
+      if (part.moss[1] === 0 || (y > 0 && id[p - GW] >= i)) continue;
+      if (part.mossTo !== undefined && y - part.ay > part.mossTo) continue;
+      const [lo, hi] = part.moss;
+      const d = lo + Math.floor(noise(x - part.ax, 0, part.seed + 2) * (hi - lo + 1));
+      for (let k = 0; k < d; k++) {
+        const q = p + k * GW;
+        if (q < GW * GH && id[q] === i && !mossK[q]) mossK[q] = k + 1;
       }
+      mossTops.push(p);
+    }
+    for (let p = 0; p < GW * GH; p++) {
+      const i = id[p];
+      if (i < 0) continue;
+      const part = parts[i];
+      const x = p % GW;
+      const y = (p - x) / GW;
+      const lx = x - part.ax;
+      const ly = y - part.ay;
+      const n = noise(lx, ly, part.seed + 3);
+      // coarse 2x2 grain under the fine speckle, so the stone reads as chunks rather than static
+      const g = noise(Math.floor(lx / 2), Math.floor(ly / 2), part.seed + 5);
       if (mossK[p]) {
-        const k = mossK[p];
-        const d = part.moss[0] + Math.floor(hash(x, part.seed) * (part.moss[1] - part.moss[0] + 1));
-        let tone = 3 - (k - 1) - (nx > 0.35 ? 1 : 0) - (k === d && k > 1 ? 1 : 0);
-        if (k === 1 && hash(x, part.seed + 11) > 0.8) tone = 3;
+        const tone = 3 - (mossK[p] - 1) - (n > 0.7 ? 1 : 0) + (n < 0.12 ? 1 : 0);
         col[p] = MOSS[Math.max(0, Math.min(3, tone))];
         continue;
       }
-      let lit = 0.15 - 0.35 * nx - 0.95 * ny - part.dim;
-      // cast shadow under anything in front
-      if ((y > 0 && id[p - GW] > i) || (y > 1 && id[p - 2 * GW] > i)) lit -= 0.5;
-      lit += (x + y) & 1 ? 0.04 : -0.04;
-      const tone = lit > 0.5 ? 3 : lit > 0 ? 2 : lit > -0.45 ? 1 : 0;
-      // weathering: sparse dark chips in the stone
-      col[p] = hash(x * 7 + y, i * 13) > 0.985 ? STONE[Math.max(0, tone - 1)] : STONE[tone];
-      // contact line where this part overlaps one behind it
-      for (const q of [p - 1, p + 1, p - GW, p + GW]) {
-        if (q >= 0 && q < GW * GH && id[q] >= 0 && id[q] < i && !mossK[p]) {
-          col[p] = CONTACT;
-          break;
-        }
-      }
+      const nx = (lx + 0.5 - (part.reach[0] + part.reach[2]) / 2) / part.rx;
+      const ny = (ly + 0.5 - (part.reach[1] + part.reach[3]) / 2) / part.ry;
+      let lit = 0.25 - 0.5 * nx - 0.6 * ny - part.dim + (g - 0.5) * 0.5 + (n - 0.5) * 0.25;
+      if ((y > 0 && id[p - GW] > i) || (y > 1 && id[p - 2 * GW] > i)) lit -= 0.6;
+      const tone = lit > 0.55 ? 3 : lit > 0.05 ? 2 : lit > -0.45 ? 1 : 0;
+      col[p] = STONE[tone];
+      // stray moss specks on the lit stone
+      if (n > 0.965 && tone >= 2) col[p] = MOSS[1];
     }
+    // cracks cut into the stone
+    parts.forEach((part, i) => {
+      for (const line of part.cracks ?? [])
+        for (let s = 0; s < line.length - 1; s++) {
+          const [ax, ay] = line[s];
+          const [bx, by] = line[s + 1];
+          const steps = Math.max(Math.abs(bx - ax), Math.abs(by - ay));
+          for (let k = 0; k <= steps; k++) {
+            const x = part.ax + Math.round(ax + ((bx - ax) * k) / steps);
+            const y = part.ay + Math.round(ay + ((by - ay) * k) / steps);
+            const p = y * GW + x;
+            if (x >= 0 && x < GW && y >= 0 && y < GH && id[p] === i && !mossK[p]) col[p] = CRACK;
+          }
+        }
+    });
   }
 
   function outline() {
     for (let p = 0; p < GW * GH; p++) {
       if (id[p] >= 0) continue;
       const x = p % GW;
-      if ((x > 0 && id[p - 1] >= 0) || (x < GW - 1 && id[p + 1] >= 0) || (p >= GW && id[p - GW] >= 0) || (p + GW < GW * GH && id[p + GW] >= 0))
-        col[p] = OUT;
+      const y = (p - x) / GW;
+      const touches =
+        (x > 0 && id[p - 1] >= 0) ||
+        (x < GW - 1 && id[p + 1] >= 0) ||
+        (p >= GW && id[p - GW] >= 0) ||
+        (p + GW < GW * GH && id[p + GW] >= 0);
+      // chipped: a few gaps where the stone meets the air
+      if (touches && noise(x, y, 99) < 0.92) col[p] = OUT;
     }
   }
 
@@ -321,7 +309,6 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
     if (x < 0 || x >= GW || y < 0 || y >= GH) return;
     const p = y * GW + x;
     if (a < 1 && col[p] >>> 24) {
-      // blend onto what's there
       const d = col[p];
       const base: RGB = [d & 255, (d >> 8) & 255, (d >> 16) & 255];
       col[p] = px(mix(base, c, a));
@@ -330,100 +317,114 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
 
   function shadow(j: number) {
     const s = -j;
-    const gy = 52 + BASE;
     for (const [y, x0, x1] of [
-      [gy, 5 + s, 47 - s],
-      [gy + 1, 11 + s, 41 - s],
-    ]) {
-      if (y >= GH) continue;
+      [30, 5 + s, 24 - s],
+      [31, 8 + s, 21 - s],
+    ])
       for (let x = x0; x <= x1; x++) if (!(col[y * GW + x] >>> 24)) col[y * GW + x] = px([4, 8, 9], 0.45);
+  }
+
+  function drips() {
+    for (const [dx, len] of DRIPS) {
+      const x = bodyX + dx;
+      let y = -1;
+      for (let yy = 0; yy < GH; yy++)
+        if (id[yy * GW + x] === BODY && mossK[yy * GW + x]) y = yy;
+        else if (y >= 0) break;
+      if (y < 0) continue;
+      for (let k = 1; k <= len; k++) {
+        const p = (y + k) * GW + x;
+        if (y + k >= GH || id[p] !== BODY) break;
+        col[p] = MOSS[k === len ? 2 : 1];
+      }
     }
   }
 
-  function vines(wave: 0 | 1 | null) {
-    for (const [part, x, len] of VINES) {
-      const y0 = bottomOf(part, x);
-      if (y0 < 0) continue;
-      // a raised arm leaves the right pauldron's vines swinging free
-      const swing = wave !== null && part === SHOULDER_R ? 1.6 : 0.9;
-      for (let k = 1; k <= len; k++) {
-        const sway = still ? 0 : Math.round(Math.sin(t * 0.13 + x) * swing * (k / len));
-        const vx = x + sway;
-        const vy = y0 + k;
-        if (vy >= GH || vx < 0 || vx >= GW) continue;
-        col[vy * GW + vx] = MOSS[k === len ? 2 : 1];
-        if (k % 3 === 1 && k < len) {
-          const lx = vx + (x % 2 ? 1 : -1);
-          if (lx >= 0 && lx < GW) col[vy * GW + lx] = MOSS[2];
-        }
-      }
+  function sprout(bloom: number) {
+    const top = topOf(BODY, bodyX);
+    if (top < 4) return;
+    const sway = still ? 0 : Math.round(Math.sin(t * 0.1));
+    const set = (x: number, y: number, c: number) => {
+      if (x >= 0 && x < GW && y >= 0 && y < GH) col[y * GW + x] = c;
+    };
+    set(bodyX, top - 1, MOSS[1]);
+    set(bodyX + (sway > 0 ? 1 : 0), top - 2, MOSS[1]);
+    const cx = bodyX + sway;
+    set(cx - 1, top - 3, MOSS[2]);
+    set(cx - 2, top - 3, MOSS[3]);
+    set(cx - 2, top - 4, MOSS[3]);
+    set(cx + 1, top - 3, MOSS[2]);
+    set(cx + 2, top - 4, MOSS[3]);
+    if (bloom > 0) {
+      set(cx, top - 3, PETAL);
+      set(cx, top - 4, PETAL_HI);
     }
   }
 
   function flowers(bloom: number) {
-    // Hyper-light pink blossoms on the moss; petting opens more of them.
-    const spots = [18, 34, 11, 41, 30, 21, 38];
-    const n = Math.min(spots.length, 2 + bloom);
+    const spots = [-5, 4, -7, 7, -2, 2];
+    const n = Math.min(spots.length, 1 + bloom);
     for (let f = 0; f < n; f++) {
-      const x = spots[f];
-      let top = -1;
-      for (let y = 0; y < GH; y++) {
-        const i = id[y * GW + x];
-        if (i >= 0 && mossK[y * GW + x]) {
-          top = y;
-          break;
-        }
-      }
+      const x = bodyX + spots[f];
+      const top = topOf(BODY, x);
       if (top < 1) continue;
-      col[(top - 1) * GW + x] = PETAL;
-      if (f % 2 === 0 && top > 1) col[(top - 2) * GW + x] = PETAL_HI;
+      col[(top - 1) * GW + x] = f % 2 ? PETAL_HI : PETAL;
     }
   }
 
-  function face(hb: number, j: number, pose: Pose) {
-    const Y = BASE + j;
-    // the dark visor: a rounded slot across the face
-    const vy = 16.5 + Y + hb;
-    for (let y = Math.floor(vy - 6); y <= Math.ceil(vy + 6); y++)
-      for (let x = 15; x <= 37; x++) {
-        const p = y * GW + x;
-        if (y < 0 || y >= GH || id[p] !== HEAD || mossK[p] || fixed[p]) continue;
-        if (inside({ k: "sup", cx: 26, cy: vy, rx: 10.5, ry: 6 }, x, y)) col[p] = px(VISOR);
+  function face(pose: Pose) {
+    const ey = bodyY + 5;
+    const look = asleep || pose.flare ? 0 : pose.lookX ?? idleLook;
+    // a rough socket cut into the stone
+    for (let dy = -1; dy <= 1; dy++)
+      for (let dx = -3; dx <= 3; dx++) {
+        if (Math.abs(dx) === 3 && dy !== 0) continue;
+        const p = (ey + dy) * GW + bodyX + dx;
+        if (id[p] === BODY && !mossK[p]) col[p] = SOCKET;
       }
-    const look = asleep ? 0 : pose.lookX ?? idleLook;
-    const cx = 26 + look * 4;
-    const cy = Math.round(vy) + (pose.lookUp && !asleep ? -2 : 0);
-    const hot = mix(accent, WHITE, 0.5);
+    const ex = bodyX + look;
+    // the socket is only three rows tall, so looking up stays a horizontal glance
+    const y = ey;
+    const hot = mix(accent, WHITE, 0.7);
     if (asleep) {
-      for (let dx = -2; dx <= 2; dx++) put(cx + dx, cy + 1, accent, 0.35);
+      put(ex, ey, accent, 0.35);
       return;
     }
     if (pose.happy) {
-      for (const [dx, dy] of [[-3, 1], [-3, 0], [-2, -1], [-1, -2], [0, -2], [1, -2], [2, -1], [3, 0], [3, 1]]) put(cx + dx, cy + dy, hot);
+      put(ex - 1, y, hot);
+      put(ex, y - 1, hot);
+      put(ex + 1, y, hot);
       return;
     }
     if (t <= blinkUntil && !pose.flare) {
-      for (let dx = -3; dx <= 3; dx++) put(cx + dx, cy, accent, Math.abs(dx) === 3 ? 0.4 : 0.9);
+      for (let dx = -1; dx <= 1; dx++) put(ex + dx, y, accent, 0.3);
       return;
     }
-    // a diamond eye: halo, ring, hot core (bigger while it talks)
-    const r = pose.flare ? 3 : 2;
-    for (let dy = -r - 1; dy <= r + 1; dy++)
-      for (let dx = -r - 1; dx <= r + 1; dx++) {
-        const d = Math.abs(dx) + Math.abs(dy);
-        if (d === r + 1) put(cx + dx, cy + dy, accent, pose.flare ? 0.45 : 0.25);
-        else if (d <= r - 1) put(cx + dx, cy + dy, hot);
-        else if (d <= r) put(cx + dx, cy + dy, accent);
+    if (pose.flare) {
+      for (let dx = -1; dx <= 1; dx++) {
+        put(ex + dx, y - 1, accent, 0.4);
+        put(ex + dx, y + 1, accent, 0.4);
       }
+      put(ex - 2, y, accent);
+      put(ex + 2, y, accent);
+      for (let dx = -1; dx <= 1; dx++) put(ex + dx, y, hot);
+      return;
+    }
+    put(ex, y - 1, accent, 0.35);
+    put(ex, y + 1, accent, 0.35);
+    put(ex - 2, y, accent, 0.5);
+    put(ex + 2, y, accent, 0.5);
+    put(ex - 1, y, accent);
+    put(ex + 1, y, accent);
+    put(ex, y, hot);
   }
 
-  function rune(b: number, j: number, happy: boolean) {
-    const cx = 26;
-    const cy = 38 + BASE + j + b;
+  function rune(happy: boolean) {
+    const cx = bodyX;
+    const cy = bodyY + 12;
     const pulse = still ? 0.7 : 0.45 + 0.35 * Math.sin(t * 0.18) + (happy ? 0.3 : 0) - (asleep ? 0.3 : 0);
     const a = Math.max(0.15, Math.min(1, pulse));
-    for (const [dx, dy] of [[0, -2], [-2, 0], [2, 0], [0, 2]]) put(cx + dx, cy + dy, accent, a * 0.75);
-    for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) put(cx + dx, cy + dy, accent, a * 0.35);
+    for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) put(cx + dx, cy + dy, accent, a * 0.6);
     put(cx, cy, mix(accent, WHITE, 0.4), a);
   }
 
@@ -431,7 +432,7 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
     for (const q of particles) {
       const fade = Math.min(1, q.life / Math.min(10, q.max));
       if (q.kind === "spore") put(q.x, q.y, SPORE, (0.5 + 0.5 * Math.sin(q.life * 0.7)) * fade);
-      else if (q.kind === "leaf") put(q.x, q.y, [104, 152, 61], fade);
+      else if (q.kind === "leaf") put(q.x, q.y, [113, 160, 59], fade);
       else if (q.kind === "dust") put(q.x, q.y, DUST, 0.7 * fade);
       else ZED.forEach((row, gy) => [...row].forEach((ch, gx) => ch === "X" && put(q.x + gx, q.y + gy, INK, fade * 0.75)));
     }
@@ -444,7 +445,7 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
         hopAt++;
         if (hopAt === HOP.length) {
           hopAt = -1;
-          for (const s of [-1, 1]) spawn({ kind: "dust", x: 26 + s * 18, y: 51 + BASE, vx: s * 0.35, vy: -0.15, life: 8 });
+          for (const s of [-1, 1]) spawn({ kind: "dust", x: 15 + s * 9, y: 29, vx: s * 0.3, vy: -0.12, life: 7 });
         }
       }
       if (!asleep) {
@@ -456,20 +457,27 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
           idleLook = Math.random() < 0.5 ? 0 : Math.random() < 0.5 ? -1 : 1;
           nextGlance = t + 30 + Math.floor(Math.random() * 70);
         }
-        if (Math.random() < 0.05 && mossTops.length) {
+        if (Math.random() < 0.04 && mossTops.length) {
           const p = mossTops[Math.floor(Math.random() * mossTops.length)];
-          spawn({ kind: "spore", x: p % GW, y: Math.floor(p / GW) - 1, vx: (Math.random() - 0.5) * 0.12, vy: -0.12 - Math.random() * 0.1, life: 40 + Math.floor(Math.random() * 30) });
+          spawn({
+            kind: "spore",
+            x: p % GW,
+            y: Math.floor(p / GW) - 1,
+            vx: (Math.random() - 0.5) * 0.1,
+            vy: -0.08 - Math.random() * 0.06,
+            life: 36 + Math.floor(Math.random() * 24),
+          });
         }
       } else if (t % 30 === 0) {
-        spawn({ kind: "z", x: 36, y: 6, vx: 0.12, vy: -0.22, life: 44 });
+        spawn({ kind: "z", x: 21, y: 4, vx: 0.08, vy: -0.14, life: 34 });
       }
       for (let k = particles.length - 1; k >= 0; k--) {
         const q = particles[k];
         q.x += q.vx;
         q.y += q.vy;
         if (q.kind === "leaf") {
-          q.vy = Math.min(0.35, q.vy + 0.03);
-          q.vx *= 0.96;
+          q.vy = Math.min(0.25, q.vy + 0.025);
+          q.vx *= 0.95;
         }
         if (--q.life <= 0 || q.y < -4 || q.y > GH) particles.splice(k, 1);
       }
@@ -482,21 +490,19 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
         if (!asleep) nextBlink = t + 20;
       }
       const period = asleep ? 48 : 30;
-      const b = still ? 0 : t % period < period / 2 ? 0 : -1;
-      // the head lags the chest by a few frames, and droops in sleep
-      const hb = (still ? 0 : (t + 4) % period < period / 2 ? 0 : -1) + (asleep ? 1 : 0);
+      const b = still ? 0 : (t % period < period / 2 ? 0 : 1) + (asleep ? 1 : 0);
       const j = hopAt >= 0 && hopAt < HOP.length ? HOP[hopAt] : 0;
       mossTops = [];
-      build(b, hb, j, pose.wave);
+      build(b, j, pose.wave);
       raster();
-      sprout(pose.bloom);
       shade();
       outline();
       shadow(j);
-      vines(pose.wave);
+      drips();
+      sprout(pose.bloom);
       flowers(pose.bloom);
-      rune(b, j, pose.happy);
-      face(hb, j, pose);
+      rune(pose.happy);
+      face(pose);
       drawParticles();
       ctx.putImageData(img, 0, 0);
     },
@@ -504,9 +510,16 @@ export function createGolem(canvas: HTMLCanvasElement, opts: { still?: boolean }
       if (!still && hopAt < 0) hopAt = 0;
     },
     rustle() {
-      for (let k = 0; k < 6; k++) {
+      for (let k = 0; k < 5; k++) {
         const s = k % 2 ? 1 : -1;
-        spawn({ kind: "leaf", x: 26 + s * (6 + Math.random() * 8), y: 10, vx: s * (0.2 + Math.random() * 0.3), vy: -0.4 - Math.random() * 0.3, life: 26 });
+        spawn({
+          kind: "leaf",
+          x: 15 + s * (3 + Math.random() * 5),
+          y: 6,
+          vx: s * (0.15 + Math.random() * 0.2),
+          vy: -0.3 - Math.random() * 0.2,
+          life: 22,
+        });
       }
     },
     setAccent(h: string) {

@@ -26,8 +26,8 @@ const SLEEP_MS = 35_000;
  *  (more than one pass across it, so a cursor just passing by doesn't). */
 const PET_PX = 140;
 /** The head's centre within the canvas, for aiming the gaze. */
-const HEAD_X = 26 / GW;
-const HEAD_Y = 21 / GH;
+const HEAD_X = 15 / GW;
+const HEAD_Y = 12 / GH;
 
 type Action = "wave" | "bloom" | "stretch";
 const ACTIONS: { kind: Action; ms: number }[] = [

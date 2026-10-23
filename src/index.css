@@ -2235,15 +2235,15 @@ kbd {
   20%, 60% { transform: translateX(3px); }
   100% { transform: none; }
 }
-/* 52x59 buffer: 1.5x on phones, 2x from 640px. */
-.golem__sprite { display: block; width: 78px; height: auto; image-rendering: pixelated; }
+/* 30x32 buffer, big pixels: 3x on phones, 4x from 640px. */
+.golem__sprite { display: block; width: 90px; height: auto; image-rendering: pixelated; }
 @media (min-width: 640px) {
-  .golem__sprite { width: 104px; }
+  .golem__sprite { width: 120px; }
 }
 /* The hero strip's scene tabs would sit under the golem; they step right to make room. */
-.hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 78px + 1rem); }
+.hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 90px + 1rem); }
 @media (min-width: 640px) {
-  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 104px + 1.25rem); }
+  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 120px + 1.25rem); }
 }
 @media print { .hero__strip { padding-left: var(--hero-gutter); } }
 .golem__bubble {
@@ -2279,7 +2279,7 @@ kbd {
 .golem__heart {
   position: absolute;
   left: calc(50% - 7px + var(--dx, 0px));
-  top: 6%;
+  top: 4%;
   width: 14px;
   height: auto;
   pointer-events: none;
