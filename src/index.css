@@ -134,13 +134,8 @@
   --on-accent: #08171b;
   --accent-h: 186 55% 69%;
   --on-accent-h: 193 54% 7%;
-  /* Drafting paper: a fine 24px grid with a heavier line every 120px. */
-  --tex:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
-    linear-gradient(rgba(134, 211, 220, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(134, 211, 220, 0.045) 1px, transparent 1px);
-  --tex-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px;
+  --tex: none;
+  --tex-size: auto;
 
   --background: 219 55% 9%;
   --foreground: 205 52% 89%;
@@ -181,9 +176,8 @@
   --on-accent: #1f0a0d;
   --accent-h: 356 68% 68%;
   --on-accent-h: 351 51% 8%;
-  /* Dotted lattice: a pinprick at each 32px crossing, no lines. */
-  --tex: radial-gradient(circle at 1px 1px, var(--grid) 1px, transparent 1.5px);
-  --tex-size: 32px 32px;
+  --tex: none;
+  --tex-size: auto;
 
   --background: 342 27% 8%;
   --foreground: 7 38% 91%;
