@@ -50,7 +50,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "rift",
     name: "Rift",
-    aria: "Animated low-poly mountain valley wasteland at dusk: steep walls crowned with spires in silhouette, blades as tall as the walls jutting out of them and leaning over the floor, a colossal shard wedged from wall to wall with glowing seams, a river of broken glass down the dry floor, falling ash, hanging stone and upside-down islands against an ember sky, the sun low in the notch at the far end.",
+    aria: "Animated low-poly forested mountain valley wasteland at dusk: conifers and dead snags filling the floor and climbing the walls to a treeline, spires crowning the ridges and rising out of the canopy, blades as tall as the walls jutting out of them and leaning over the trees, a colossal shard wedged from wall to wall with glowing seams, a river of broken glass down a clearing, mist in the trees, falling ash, hanging stone and upside-down islands against an ember sky, the sun low in the notch at the far end.",
   },
   {
     id: "frost",

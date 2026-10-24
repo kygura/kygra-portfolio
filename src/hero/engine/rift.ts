@@ -1,16 +1,19 @@
-/** Sheet · Rift: the wasteland in a mountain valley at the end of the day.
- *  Steep walls close in on a dry floor; spires crown every ridge in
- *  silhouette, blades as tall as the walls jut out of them and lean in over
- *  the valley, and a colossal shard lies wedged from wall to wall. Down the
- *  middle runs a river of broken glass. Ash drifts down, stone hangs in the
- *  gap, islands float upside down against an ember sky, and the sun sits in
- *  the notch at the valley's far end.
+/** Sheet · Rift: the wasteland in a forested mountain valley at the end of
+ *  the day. Conifers fill the floor and climb the walls to a treeline, with
+ *  dead snags standing grey among them; spires crown every ridge in
+ *  silhouette and rise out of the canopy, blades as tall as the walls jut out
+ *  of them and lean in over the trees, and a colossal shard lies wedged from
+ *  wall to wall. Down a clearing in the middle runs a river of broken glass.
+ *  Ash drifts down, mist lies in the trees, stone hangs in the gap, islands
+ *  float upside down against an ember sky, and the sun sits in the notch at
+ *  the valley's far end.
  *
  *  The palette is fixed (slate violet rock, ember dusk); only the seams, the
  *  glints in the glass river and the ash take the site accent.
  *  Tap the wedged shard to wake its seams, the glass river to light it, the
  *  sun to flare it. */
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { pulse, type PsxKit, type SceneDef } from "./psx";
 import { createWaste } from "./wasteland";
 
@@ -62,6 +65,9 @@ export function buildRift(kit: PsxKit): SceneDef {
   const mSeam = own(kit.psx({ map: tex.tPlain, tint: "#000000", emit: 1, fogAmt: 0.3 }));
   const mCore = own(kit.psx({ map: tex.tPlain, tint: "#000000", emit: 1, fogAmt: 0.25 }));
   const mRiver = own(kit.psx({ map: tex.tPlain, tint: "#000000", emit: 0.6, fogAmt: 0.4 }));
+  const mBark = own(kit.psx({ map: tex.tBark, tint: "#7a6662", ...lit }));
+  const mSnag = own(kit.psx({ map: tex.tBark, tint: "#a6989a", ...lit }));
+  const mPine = ["#5e7c66", "#4a6656", "#6c8064"].map((tint) => own(kit.psx({ map: tex.tLeaf, tint, uv: 1.5, ...lit })));
   const W = createWaste(kit, { debris: mDebris, rust: mRust, seam: mSeam });
   const { between } = W;
 
@@ -80,7 +86,7 @@ export function buildRift(kit: PsxKit): SceneDef {
   scene.add(sky);
   const sun = kit.sunDisc(scene, SUN.x, SUN.y, SUN.z, 34, P.sun, P.glow);
 
-  /* ---- the valley: a dry floor between two walls that run away from the eye ---- */
+  /* ---- the valley: a floor between two walls that run away from the eye ---- */
   const Wv = (z: number) => 52 + 12 * Math.sin(z * 0.012 + 1) + 5 * Math.sin(z * 0.031);
   const noise = (x: number, z: number) =>
     10 * Math.sin(x * 0.03 + z * 0.017) * Math.cos(z * 0.021 - x * 0.011) + 4 * Math.sin(x * 0.07 - z * 0.05) + 1.5 * Math.sin(x * 0.19 + z * 0.13);
@@ -106,6 +112,48 @@ export function buildRift(kit: PsxKit): SceneDef {
     kit.mesh(facet(geo, 1), mRock, scene);
   }
 
+  /* ---- the forest: conifers on the floor and up the walls, thinning out to a treeline,
+     dead snags among them, a clearing down the middle for the river ---- */
+  const riverX = (z: number) => 6 * Math.sin(z * 0.02);
+  {
+    const fb = W.batch();
+    const trunk = facet(new THREE.CylinderGeometry(0.22, 0.4, 4, 5, 1, true).translate(0, 2, 0));
+    const crown = facet(
+      mergeGeometries([
+        new THREE.ConeGeometry(2.6, 5, 6, 1, true).translate(0, 5, 0),
+        new THREE.ConeGeometry(2.0, 4.2, 6, 1, true).translate(0, 7.6, 0),
+        new THREE.ConeGeometry(1.3, 3.6, 6, 1, true).translate(0, 10, 0),
+      ])!,
+      0.25,
+    );
+    const snag = facet(
+      mergeGeometries([
+        new THREE.CylinderGeometry(0.12, 0.32, 10, 5, 1, true).translate(0, 5, 0),
+        new THREE.CylinderGeometry(0.03, 0.09, 3, 4, 1, true).translate(0, 1.5, 0).rotateZ(0.9).translate(0, 6.5, 0),
+        new THREE.CylinderGeometry(0.03, 0.08, 2.4, 4, 1, true).translate(0, 1.2, 0).rotateZ(-1.1).translate(0, 7.8, 0),
+        new THREE.CylinderGeometry(0.03, 0.07, 2, 4, 1, true).translate(0, 1, 0).rotateX(0.9).translate(0, 8.6, 0),
+      ])!,
+    );
+    const STEP = 6;
+    for (let z = 40; z > -820; z -= STEP) {
+      for (let gx = -170; gx < 170; gx += STEP) {
+        const x = gx + (rnd() - 0.5) * STEP, zz = z + (rnd() - 0.5) * STEP, y = groundH(x, zz);
+        const clear = Math.abs(x - riverX(zz)) - (5 + -zz * 0.006);
+        // Dense on the floor, thinning with height up the walls; none in the river's clearing.
+        const p = (Math.abs(x) < Wv(zz) ? 0.62 : 0.5) * THREE.MathUtils.smoothstep(150 - y, 0, 70) * THREE.MathUtils.smoothstep(clear, 0, 6);
+        if (rnd() > p) continue;
+        const s = between(0.8, 1.7) * (y > 90 ? 0.75 : 1), ry = rnd() * 6.28;
+        if (rnd() < 0.08) {
+          fb.add(snag, mSnag, x, y - 0.4, zz, (rnd() - 0.5) * 0.12, ry, (rnd() - 0.5) * 0.12, s * 1.3);
+        } else {
+          fb.add(trunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
+          fb.add(crown, mPine[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s);
+        }
+      }
+    }
+    fb.flush(scene);
+  }
+
   const b = W.batch();
   const side = () => (rnd() > 0.5 ? 1 : -1);
   // Spires crowning the slopes and ridges, in silhouette against the dusk.
@@ -118,13 +166,13 @@ export function buildRift(kit: PsxKit): SceneDef {
     const s = side(), z = between(-760, -60), x = s * (Wv(z) + between(10, 40)), h = between(30, 80), w = h * between(0.1, 0.16);
     b.add(W.blade(w, h, w * 0.3, Math.min(h * 0.4, w * 2)), mBlade, x, groundH(x, z) - 6, z, between(-0.15, 0.15), between(-0.3, 0.3), s * between(0.45, 0.95));
   }
-  // On the floor: broken stacks and obelisks, and the wreckage between them.
-  for (let i = 0; i < 16; i++) {
+  // On the floor: towers rising out of the canopy, and wreckage in the clearing and under the trees.
+  for (let i = 0; i < 20; i++) {
     const z = between(-700, -110), x = (rnd() - 0.5) * 1.4 * Wv(z);
-    if (Math.abs(x - 6 * Math.sin(z * 0.02)) < 4) continue;
-    W.spire(b, x, groundH(x, z) - 1, z, between(8, 30), [mSpire, mDark], true);
+    if (Math.abs(x - riverX(z)) < 8) continue;
+    W.spire(b, x, groundH(x, z) - 1, z, between(26, 64), [mSpire, mDark], true);
   }
-  for (let i = 0; i < 70; i++) {
+  for (let i = 0; i < 50; i++) {
     const z = between(-640, 34), x = (rnd() - 0.5) * 1.6 * Wv(z);
     W.junk(b, x, groundH(x, z), z, between(0.5, 2));
   }
@@ -135,7 +183,7 @@ export function buildRift(kit: PsxKit): SceneDef {
   {
     const rb = W.batch();
     for (let i = 0; i < 240; i++) {
-      const z = between(-820, 44), x = 6 * Math.sin(z * 0.02) + (rnd() - 0.5) * (3 + -z * 0.004);
+      const z = between(-820, 44), x = riverX(z) + (rnd() - 0.5) * (3 + -z * 0.004);
       rb.add(W.shard(between(0.25, 0.7), between(0.8, 3.6), 3), i % 7 ? mGlass : mRiver, x, groundH(x, z) - 0.2, z, (rnd() - 0.5) * 1.6, 0, (rnd() - 0.5) * 1.6);
     }
     rb.flush(scene);
@@ -158,11 +206,11 @@ export function buildRift(kit: PsxKit): SceneDef {
 
   const hang = W.hanging(scene, 24, [mDebris, mDark, mRust], (s) => {
     const z = between(-300, -20);
-    return [(rnd() - 0.5) * 1.6 * Wv(z), between(10, 42) + s, z];
+    return [(rnd() - 0.5) * 1.6 * Wv(z), between(26, 56) + s, z];
   });
 
-  // Mist pooled on the floor.
-  for (const [y, o] of [[3.5, 0.22], [1.6, 0.16]]) {
+  // Mist lying in the trees.
+  for (const [y, o] of [[9, 0.2], [5, 0.16]]) {
     const m = kit.mesh(
       new THREE.PlaneGeometry(500, 1400).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({ color: P.mist, transparent: true, opacity: o, depthWrite: false }),
@@ -192,11 +240,11 @@ export function buildRift(kit: PsxKit): SceneDef {
     limits: { pitch: [-0.3, 0.5], zoom: [0.8, 2.8], yaw: 0.7 },
     labels: [
       { name: "Wedge", sub: "WALL TO WALL", at: (v) => { v.set(0, WY + 14, WZ); } },
-      { name: "River", sub: "GLASS, DRY", at: (v) => { v.set(0, 4, -90); } },
+      { name: "River", sub: "GLASS, IN A CLEARING", at: (v) => { v.set(0, 4, -90); } },
     ],
     eggs: [
       { id: "rift-wedge", r: 60, at: (v) => { v.set(0, WY, WZ); }, fire: (t) => { wedgeT = t; } },
-      { id: "rift-river", r: 40, at: (v) => { v.set(6 * Math.sin(-60 * 0.02), 1, -60); }, fire: (t) => { riverT = t; } },
+      { id: "rift-river", r: 40, at: (v) => { v.set(riverX(-60), 1, -60); }, fire: (t) => { riverT = t; } },
       { id: "rift-sun", r: 46, at: (v) => { v.copy(SUN); }, fire: (t) => { sunT = t; } },
     ],
     moteMat,
@@ -218,10 +266,10 @@ export function buildRift(kit: PsxKit): SceneDef {
       }
       ashGeo.attributes.position.needsUpdate = true;
 
-      // Standing on the floor, looking down the valley toward the notch.
+      // Above the canopy, looking down the valley toward the notch.
       const x = Math.sin(t * 0.03) * 4 + view.px * 2, z = 64 + Math.sin(t * 0.02) * 6;
-      cam.position.set(x, groundH(x, z) + 16 - view.py * 0.5, z);
-      cam.lookAt(view.px * 8 + Math.sin(t * 0.025) * 6, 34 - view.py * 6, -400);
+      cam.position.set(x, groundH(x, z) + 40 - view.py * 0.5, z);
+      cam.lookAt(view.px * 8 + Math.sin(t * 0.025) * 6, 30 - view.py * 6, -400);
       kit.look(cam);
       sky.position.copy(cam.position);
       sunDir.copy(SUN).sub(cam.position).normalize();
