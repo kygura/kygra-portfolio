@@ -1978,6 +1978,8 @@ kbd {
 @media (max-width: 1100px) { .hero__orbit-hint { display: none; } }
 @media (max-width: 480px) {
   .hero__sheet-keys { display: none; }
+  /* Thirteen scenes have to fit a phone's width. */
+  .hero__sheet { padding: 1px 4px; letter-spacing: 0.04em; }
 }
 
 /* Easter-egg readout: a hairline caption that rides just above the strip. */

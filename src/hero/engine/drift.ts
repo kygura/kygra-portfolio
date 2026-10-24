@@ -1,20 +1,20 @@
-/** Sheet · Drift: a train seen side-on, running over an open sea on rails a
- *  hand's breadth under the surface. The sea is a still mirror: everything
- *  above the waterline is drawn a second time, flipped through it, under a thin
- *  murk with slow ripple streaks. Sharp towers stand in it at every distance
- *  (shards, splayed clusters, slant-cut blades, broken stacks, obelisks), with
- *  half-sunk debris at their feet, rings, door frames and stairs to nowhere,
- *  and pieces of stone hanging in the air. Far out, islands float upside down
- *  under a low sun that never sets.
+/** Sheet · Drift: a dream, seen side-on. Far out on a still sea, a long train
+ *  crosses the horizon on rails a hand's breadth under the surface. The sea is
+ *  a mirror: everything above the waterline is drawn a second time, flipped
+ *  through it, under a thin murk with slow ripple streaks. Sharp towers stand
+ *  in it at every distance (shards, splayed clusters, slant-cut blades, broken
+ *  stacks, obelisks), with half-sunk debris at their feet, rings, door frames
+ *  and stairs to nowhere, and stone hanging in the air. Beyond the line,
+ *  islands float upside down under a low sun that never sets.
  *
- *  The camera rides alongside, so the train holds still in frame and the world
- *  slides past it. The palette is fixed (dusk lilac and peach); only the seams
- *  in the towers and the drifting motes take the site accent.
+ *  The palette is fixed (dusk lilac and peach); only the seams in the towers
+ *  and the drifting motes take the site accent.
  *  Tap the cab to sound the horn, a middle car to put its lights out, the tail
  *  lamp to swing it, the sun to flare it. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { pulse, type PsxKit, type SceneDef } from "./psx";
+import { createWaste, type WasteBatch } from "./wasteland";
 
 const P = {
   zen: "#2c3566",
@@ -29,8 +29,9 @@ const P = {
   tail: "#ff5c4c",
 };
 
-/** Train speed, m/s. The world moves past at this rate; the train and camera stay put. */
-const V = 6;
+/** Train speed, m/s, and the line it runs on, far out from the eye. */
+const V = 8;
+const TZ = -140;
 
 const NOISE = `
 float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
@@ -61,18 +62,18 @@ const SEA_V = `
 varying vec3 vWP; varying float vDepth;
 void main(){ vec4 wp = modelMatrix * vec4(position, 1.0); vWP = wp.xyz; vec4 mv = viewMatrix * wp; gl_Position = projectionMatrix * mv; vDepth = -mv.z; }`;
 const SEA_F = `
-uniform float uTime; uniform float uScroll; uniform vec3 uDeep; uniform vec3 uFog; uniform vec3 uFoam; uniform vec3 uLamp; uniform vec3 uGlow;
-uniform float uFogNear; uniform float uFogFar; uniform vec2 uTrain; uniform vec3 uHorn; uniform vec2 uSunXZ; uniform float uLampAmt;
+uniform float uTime; uniform vec3 uDeep; uniform vec3 uFog; uniform vec3 uFoam; uniform vec3 uLamp; uniform vec3 uGlow;
+uniform float uFogNear; uniform float uFogFar; uniform vec3 uTrain; uniform vec3 uHorn; uniform vec2 uSunXZ; uniform float uLampAmt;
 varying vec3 vWP; varying float vDepth;
 ${NOISE}
 void main(){
-  vec2 w = vec2(vWP.x + uScroll, vWP.z);
+  vec2 w = vWP.xz + vec2(uTime * 0.6, 0.0);
   float fg = smoothstep(uFogNear, uFogFar, vDepth);
   vec3 c = mix(uDeep, uFog, fg);
   float a = mix(0.46, 1.0, fg);
-  float nearK = 1.0 - smoothstep(25.0, 140.0, vDepth);
+  float nearK = 1.0 - smoothstep(25.0, 160.0, vDepth);
 
-  // Ripple streaks: lines along the track, wobbling as a slow swell passes under them.
+  // Ripple streaks: long lines across the view, wobbling as a slow swell passes under them.
   float wob = vn(vec2(w.x * 0.04, w.y * 0.25) + uTime * 0.04) * 2.2;
   float band = fract(w.y * 0.42 + wob + sin(w.x * 0.07 + uTime * 0.35) * 0.12);
   float streak = smoothstep(0.07, 0.0, abs(band - 0.5)) * (0.35 + 0.65 * vn(w * vec2(0.18, 1.0) + uTime * 0.08)) * nearK;
@@ -88,8 +89,9 @@ void main(){
   a = max(a, col * spark * 0.8);
 
   // The train: churn along both sides, a widening V and a trail behind the last car.
-  float side = abs(vWP.z), behind = uTrain.x - vWP.x;
-  float churn = smoothstep(0.35, 0.75, vn(w * vec2(0.9, 2.6) + vec2(0.0, uTime * 0.7)));
+  float side = abs(vWP.z - uTrain.z), behind = uTrain.x - vWP.x;
+  vec2 tw = vec2(vWP.x - uTrain.x, vWP.z);
+  float churn = smoothstep(0.35, 0.75, vn(tw * vec2(0.9, 2.6) + vec2(uTime * 4.0, uTime * 0.7)));
   float hull = step(uTrain.x, vWP.x) * step(vWP.x, uTrain.y + 0.8) * smoothstep(2.5, 1.35, side);
   float arm = step(0.0, behind) * smoothstep(0.45 + behind * 0.03, 0.0, abs(side - 1.4 - behind * 0.3)) * exp(-behind * 0.03);
   float trail = step(0.0, behind) * smoothstep(1.6, 0.3, side) * exp(-behind * 0.05);
@@ -106,7 +108,7 @@ void main(){
   // Horn: rings running out over the water from the cab.
   if (uHorn.z > 0.0 && uHorn.z < 4.0) {
     float r = length(vWP.xz - uHorn.xy), k = 1.0 - uHorn.z / 4.0;
-    float ring = smoothstep(0.7, 0.0, abs(r - uHorn.z * 11.0)) + smoothstep(0.7, 0.0, abs(r - (uHorn.z - 0.6) * 11.0)) * step(0.6, uHorn.z);
+    float ring = smoothstep(1.2, 0.0, abs(r - uHorn.z * 16.0)) + smoothstep(1.2, 0.0, abs(r - (uHorn.z - 0.6) * 16.0)) * step(0.6, uHorn.z);
     c = mix(c, uFoam, ring * k * 0.7);
     a = max(a, ring * k * 0.7);
   }
@@ -114,9 +116,9 @@ void main(){
 }`;
 
 export function buildDrift(kit: PsxKit): SceneDef {
-  const { U, rnd, facet, wallUV, tex, view } = kit;
+  const { U, rnd, facet, tex, view } = kit;
   const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(44, 16 / 9, 0.3, 3200);
+  const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3200);
   const fog: [number, number] = [30, 420];
 
   const fogU = { value: new THREE.Color(P.fog) };
@@ -152,6 +154,9 @@ export function buildDrift(kit: PsxKit): SceneDef {
   const additive = (color: string, opacity: number) =>
     new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
 
+  const W = createWaste(kit, { debris: mDebris, rust: mRust, seam: mSeam });
+  const { between, box } = W;
+
   /* ---- sky: its own dome, wide enough for the horizon spires, following the camera ---- */
   const SUN = new THREE.Vector3(330, 64, -1280);
   const sunDir = new THREE.Vector3();
@@ -171,189 +176,42 @@ export function buildDrift(kit: PsxKit): SceneDef {
   scene.add(above);
   const sun = kit.sunDisc(above, SUN.x, SUN.y, SUN.z, 38, P.sun, P.sunGlow);
 
-  /* ---- batching, cut at the waterline: anything under it would come back up through the mirror ---- */
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler(), pv = new THREE.Vector3(), sv = new THREE.Vector3();
-  const batch = () => {
-    const lists = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    return {
-      add(geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) {
-        const g = geo.clone().applyMatrix4(m4.compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s)));
-        const p = g.attributes.position;
-        for (let i = 0; i < p.count; i++) if (p.getY(i) < 0) p.setY(i, 0);
-        const l = lists.get(mat) ?? [];
-        l.push(g);
-        lists.set(mat, l);
-      },
-      flush(parent: THREE.Object3D) {
-        const out: THREE.Mesh[] = [];
-        for (const [mat, l] of lists) {
-          const g = mergeGeometries(l);
-          if (g) out.push(kit.mesh(g, mat, parent));
-        }
-        lists.clear();
-        return out;
-      },
-    };
-  };
-  type Batch = ReturnType<typeof batch>;
+  /* ---- the sea of spires, cut at the waterline ---- */
+  {
+    const b = W.batch(0);
+    const sx = (half: number) => (rnd() - 0.5) * 2 * half;
+    // Near: debris low in the water at the eye's feet.
+    for (let i = 0; i < 10; i++) W.junk(b, sx(30), 0, between(-2, 20), between(0.3, 0.7));
+    // Between the eye and the line: a few towers the train passes behind, and wreckage.
+    for (let i = 0; i < 12; i++) W.spire(b, sx(130), 0, between(-24, -112), between(5, 24), [mSpire, mSpire2], true);
+    for (let i = 0; i < 26; i++) W.junk(b, sx(130), 0, between(-6, -125), between(0.6, 1.8));
+    // Beyond the line: a denser stand, low cloud between, small islands overhead.
+    for (let i = 0; i < 42; i++) W.spire(b, sx(430), 0, between(-170, -330), between(18, 90), [mSpire, mSpire2, mGlass], true);
+    for (let i = 0; i < 6; i++) b.add(W.cloud(between(30, 60)), mCloud, sx(400), between(8, 26), between(-200, -340));
+    for (let i = 0; i < 5; i++) b.add(W.island(between(4, 9)), mSpire, sx(380), between(30, 80), between(-180, -300), 0, rnd() * 3, 0);
+    // Horizon: tall hazed silhouettes, the high cloud and the big islands.
+    for (let i = 0; i < 40; i++) W.spire(b, sx(960), 0, between(-420, -700), between(50, 200), [mFar], false);
+    for (let i = 0; i < 12; i++) b.add(W.cloud(between(60, 160)), mCloud, sx(960), between(50, 200), between(-440, -700));
+    for (let i = 0; i < 6; i++) b.add(W.island(between(14, 38)), mFar, sx(900), between(90, 240), between(-380, -620), 0, rnd() * 3, 0);
+    b.flush(above);
+  }
+  const hang = W.hanging(above, 22, [mDebris, mSpire2, mRust], (s) => [(rnd() - 0.5) * 180, between(1.6, 10) + s, between(-10, -120)]);
 
-  /* ---- shapes: towers stand on y = 0, debris is cut by the batch ---- */
-  const up = (g: THREE.BufferGeometry, h: number) => g.translate(0, h / 2, 0);
-  const box = (w: number, h: number, d: number) => wallUV(facet(new THREE.BoxGeometry(w, h, d)), 1 / 3);
-  const shard = (r: number, h: number, n = 4) => wallUV(facet(up(new THREE.ConeGeometry(r, h, n, 2), h), r * 0.1), 1 / 7).rotateY(rnd() * 3);
-  // A thin slab with its top cut on a slant, so one corner runs up to a blade edge.
-  const blade = (w: number, h: number, d: number, cut: number) => {
-    const g = up(new THREE.BoxGeometry(w, h, d), h);
-    const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) if (p.getY(i) > h - 1e-3) p.setY(i, h + (p.getX(i) / (w / 2)) * cut);
-    return wallUV(facet(g), 1 / 7);
-  };
-  // Jagged top hashed from position, so the faces that share an edge break the same way.
-  const jag = (x: number, z: number) => {
-    const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
-    return s - Math.floor(s);
-  };
-  const broken = (w: number, h: number, d: number) => {
-    const g = up(new THREE.BoxGeometry(w, h, d, 3, 1, 3), h);
-    const p = g.attributes.position;
-    for (let i = 0; i < p.count; i++) if (p.getY(i) > h - 1e-3) p.setY(i, h - jag(p.getX(i), p.getZ(i)) * h * 0.32);
-    return wallUV(facet(g), 1 / 7);
-  };
-  const obelisk = (w: number, h: number) => {
-    const top = w * 0.3;
-    return mergeGeometries([
-      wallUV(facet(up(new THREE.CylinderGeometry(top, w * 0.5, h, 4).rotateY(Math.PI / 4), h)), 1 / 7),
-      facet(new THREE.ConeGeometry(top, w * 1.6, 4).rotateY(Math.PI / 4).translate(0, h + w * 0.8, 0)),
-    ])!;
-  };
-  // An upside-down island: a stone cone hanging point down, a needle standing on its flat top.
-  const island = (r: number) =>
-    mergeGeometries([
-      facet(new THREE.ConeGeometry(r, r * 2.6, 5, 2).rotateX(Math.PI), r * 0.12),
-      facet(up(new THREE.ConeGeometry(r * 0.14, r * 1.5, 4), r * 1.5).translate(r * 0.2, r * 1.3, 0)),
-    ])!;
-  const cloud = (w: number) => facet(new THREE.IcosahedronGeometry(1, 0).scale(w, w * 0.11, w * 0.3), w * 0.04);
-
-  const cluster = (b: Batch, m: THREE.Material, x: number, z: number, h: number, r: number) => {
-    const n = 3 + Math.floor(rnd() * 4);
-    for (let i = 0; i < n; i++) {
-      const a = rnd() * Math.PI * 2, d = i ? r * (0.7 + rnd()) : 0, hh = i ? h * (0.3 + rnd() * 0.45) : h;
-      const tilt = i ? 0.18 + rnd() * 0.32 : rnd() * 0.06;
-      b.add(shard(r * (0.3 + rnd() * 0.25) * (0.5 + hh / h), hh, 3 + Math.floor(rnd() * 3)), m, x + Math.cos(a) * d, 0, z + Math.sin(a) * d, Math.sin(a) * tilt, 0, -Math.cos(a) * tilt);
-    }
-  };
-  const spire = (b: Batch, x: number, z: number, h: number, mats: THREE.Material[], seam: boolean) => {
-    const m = mats[Math.floor(rnd() * mats.length)], k = rnd(), ry = rnd() * 3;
-    const lx = (rnd() - 0.5) * 0.16, lz = (rnd() - 0.5) * 0.16;
-    if (k < 0.28) {
-      b.add(shard(h * (0.07 + rnd() * 0.06), h, 3 + Math.floor(rnd() * 2)), m, x, 0, z, lx, 0, lz);
-    } else if (k < 0.5) {
-      cluster(b, m, x, z, h, h * 0.09);
-    } else if (k < 0.72) {
-      const w = h * (0.12 + rnd() * 0.1), d = w * (0.3 + rnd() * 0.4);
-      b.add(blade(w, h, d, Math.min(h * 0.5, w * (1 + rnd() * 1.5))), m, x, 0, z, lx, ry, lz);
-      if (seam && rnd() > 0.35) b.add(facet(new THREE.BoxGeometry(w * 0.09, h * 0.45, d * 1.08)).translate(w * 0.18, h * 0.42, 0), mSeam, x, 0, z, lx, ry, lz);
-    } else if (k < 0.88) {
-      const w = h * (0.13 + rnd() * 0.08), d = w * (0.7 + rnd() * 0.4);
-      b.add(broken(w, h, d), m, x, 0, z, lx * 0.5, ry, lz * 0.5);
-      if (seam) for (let j = 0, nb = 1 + Math.floor(rnd() * 3); j < nb; j++) {
-        b.add(facet(new THREE.BoxGeometry(w * 1.05, 0.18 + h * 0.008, d * 1.05)).translate(0, h * (0.2 + rnd() * 0.45), 0), mSeam, x, 0, z, lx * 0.5, ry, lz * 0.5);
-      }
-    } else {
-      b.add(obelisk(h * 0.1, h), m, x, 0, z, lx * 0.4, ry, lz * 0.4);
-    }
-  };
-  // Waterline debris: slabs, cubes and beams half sunk, a ring rising out of the water,
-  // a door frame and a flight of stairs that lead nowhere, a toppled column.
-  const junk = (b: Batch, x: number, z: number, s: number) => {
-    const k = rnd(), m = rnd() > 0.7 ? mRust : mDebris, ry = rnd() * 3;
-    if (k < 0.22) b.add(box(s * 1.6, s * 2.2, s * 0.35), m, x, s * 0.5, z, (rnd() - 0.5) * 0.6, ry, (rnd() - 0.5) * 1.2);
-    else if (k < 0.4) b.add(box(s, s, s), m, x, s * 0.15, z, rnd() * 3, ry, rnd() * 3);
-    else if (k < 0.54) b.add(box(s * 0.25, s * 4, s * 0.25), m, x, s * 0.9, z, (rnd() - 0.5) * 0.8, ry, 0.5 + rnd() * 0.6);
-    else if (k < 0.66) b.add(facet(new THREE.TorusGeometry(s * 1.6, s * 0.18, 4, 14)).translate(0, s, 0), mDebris, x, 0, z, 0, ry, (rnd() - 0.5) * 0.3);
-    else if (k < 0.78) {
-      const door = mergeGeometries([
-        box(s * 0.3, s * 3, s * 0.3).translate(-s * 0.8, s * 1.5, 0),
-        box(s * 0.3, s * 3, s * 0.3).translate(s * 0.8, s * 1.5, 0),
-        box(s * 1.9, s * 0.3, s * 0.36).translate(0, s * 3.1, 0),
-      ])!;
-      b.add(door, m, x, -s * 0.2, z, 0, ry, (rnd() - 0.5) * 0.25);
-    } else if (k < 0.9) {
-      const steps: THREE.BufferGeometry[] = [];
-      for (let i = 0; i < 5; i++) steps.push(box(s * 0.7, s * 0.36 * (i + 1), s * 1.4).translate(i * s * 0.7, s * 0.18 * (i + 1), 0));
-      b.add(mergeGeometries(steps)!, mDebris, x, -s * 0.15, z, 0, ry, 0);
-    } else {
-      b.add(wallUV(facet(new THREE.CylinderGeometry(s * 0.45, s * 0.5, s * 3, 7)), 1 / 3), mDebris, x, s * 0.4, z, (rnd() - 0.5) * 0.4, ry, 1.1 + rnd() * 0.3);
-    }
-  };
-
-  /* ---- layers: each fills one tile S wide; three copies side by side slide past and wrap ---- */
-  const layers: { g: THREE.Group; S: number }[] = [];
-  const layer = (S: number, fill: (b: Batch) => void) => {
-    const tile = new THREE.Group(), b = batch();
-    fill(b);
-    b.flush(tile);
-    const g = new THREE.Group();
-    for (const k of [-1, 0, 1]) {
-      const c = k ? tile.clone() : tile;
-      c.position.x = k * S;
-      g.add(c);
-    }
-    above.add(g);
-    layers.push({ g, S });
-  };
-  const at = (S: number) => rnd() * S;
-  const between = (a: number, b: number) => a + rnd() * (b - a);
-  // Near: a few small pieces low in the water between the camera and the line.
-  layer(100, (b) => {
-    for (let i = 0; i < 7; i++) junk(b, at(100), between(16, 24), between(0.25, 0.55));
-  });
-  // Mid: spires behind the line and debris around their feet.
-  layer(260, (b) => {
-    for (let i = 0; i < 10; i++) spire(b, at(260), between(-30, -72), between(6, 22), [mSpire, mSpire2], true);
-    for (let i = 0; i < 20; i++) junk(b, at(260), between(-6, -60), between(0.6, 1.6));
-  });
-  // Far: a denser stand of towers, low cloud between them, small islands overhead.
-  layer(640, (b) => {
-    for (let i = 0; i < 30; i++) spire(b, at(640), between(-120, -300), between(18, 75), [mSpire, mSpire2, mGlass], true);
-    for (let i = 0; i < 5; i++) b.add(cloud(between(30, 60)), mCloud, at(640), between(8, 26), between(-160, -320));
-    for (let i = 0; i < 4; i++) b.add(island(between(4, 9)), mSpire, at(640), between(34, 80), between(-120, -260), 0, rnd() * 3, 0);
-  });
-  // Horizon: tall hazed silhouettes, the high cloud and the big islands.
-  layer(1600, (b) => {
-    for (let i = 0; i < 34; i++) spire(b, at(1600), between(-380, -680), between(50, 190), [mFar], false);
-    for (let i = 0; i < 10; i++) b.add(cloud(between(60, 160)), mCloud, at(1600), between(50, 200), between(-420, -700));
-    for (let i = 0; i < 6; i++) b.add(island(between(14, 38)), mFar, at(1600), between(90, 240), between(-360, -620), 0, rnd() * 3, 0);
-  });
-
-  /* ---- stone hanging in the air, turning slowly, never touching the water ---- */
-  const DSPAN = 300, DC = 10;
-  const floatGeo = [
-    box(1, 1, 1), box(1.6, 0.3, 1), facet(new THREE.TetrahedronGeometry(0.8)), facet(new THREE.OctahedronGeometry(0.7)),
-    facet(up(new THREE.ConeGeometry(0.35, 2.4, 4), 2.4).translate(0, -1.2, 0)),
-  ];
-  const floaters = Array.from({ length: 22 }, (_, i) => {
-    const s = between(0.5, 2.2), mat = i % 9 === 4 ? mSeam : [mDebris, mSpire2, mRust][i % 3];
-    const m = kit.mesh(floatGeo[i % floatGeo.length], mat, above);
-    m.scale.setScalar(s);
-    return {
-      m, x0: at(DSPAN), y: between(1.6, 9) + s, z: between(-50, -5), amp: between(0.2, 0.8),
-      ph: rnd() * 6.28, w1: between(-0.25, 0.25), w2: between(-0.2, 0.2),
-    };
-  });
-
-  /* ---- the train: four cars, cab at the right, running toward the sun ---- */
-  const CAR = 11, GAP = 1, D = 2.6, N = 4, PITCH = CAR + GAP;
-  const FRONT = ((N - 1) / 2) * PITCH + CAR / 2 + D / 2, REAR = -FRONT;
+  /* ---- the train: eight cars, cab leading to the right, running toward the sun ---- */
+  const CAR = 11, GAP = 1, D = 2.6, N = 8, PITCH = CAR + GAP;
+  const HALF = ((N - 1) / 2) * PITCH + CAR / 2 + D / 2;
+  // The line wraps out of sight at both ends, even with the view turned all the way.
+  const LOOP = 620;
   const train = new THREE.Group();
+  train.position.z = TZ;
   above.add(train);
   const bodies: THREE.Group[] = [], axles: THREE.Mesh[] = [], pax: THREE.Mesh[] = [], bogX: number[] = [];
   const wheel = (z: number) => facet(new THREE.CylinderGeometry(0.42, 0.42, 0.14, 8).rotateX(Math.PI / 2).translate(0, 0, z));
   const axleGeo = mergeGeometries([wheel(D / 2 - 0.22), wheel(-(D / 2 - 0.22)), facet(new THREE.CylinderGeometry(0.07, 0.07, D - 0.3, 4).rotateX(Math.PI / 2))])!;
-  // One bar across each wheel face, so the turning reads.
+  // One bar across each wheel face, so the turning reads up close.
   const spokeGeo = facet(new THREE.BoxGeometry(0.72, 0.08, D - 0.26));
   // Half-round end, bulging toward +x (dir 1) or -x (dir -1).
-  const end = (b: Batch, x: number, dir: number) => {
+  const end = (b: WasteBatch, x: number, dir: number) => {
     const t0 = dir > 0 ? 0 : Math.PI, phi = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
     b.add(facet(new THREE.CylinderGeometry(D / 2, D / 2, 1.25, 10, 1, false, t0, Math.PI)), mBody, x, 1.62, 0);
     b.add(facet(new THREE.CylinderGeometry(D / 2, D / 2, 1.35, 10, 1, false, t0, Math.PI)), mCream, x, 2.945, 0);
@@ -369,7 +227,7 @@ export function buildDrift(kit: PsxKit): SceneDef {
     car.add(body);
     bodies.push(body);
 
-    const b = batch();
+    const b = W.batch(0);
     b.add(box(CAR, 1.25, D), mBody, 0, 1.62, 0);
     b.add(box(CAR + 0.02, 0.08, D + 0.02), mIron, 0, 2.27, 0);
     b.add(box(CAR, 1.35, D), mCream, 0, 2.945, 0);
@@ -384,7 +242,7 @@ export function buildDrift(kit: PsxKit): SceneDef {
     b.flush(body);
 
     // Windows go right through the body, so both sides are lit; some have a figure against the light.
-    const wb = batch(), pb = batch();
+    const wb = W.batch(0), pb = W.batch(0);
     for (let j = 0; j < 7; j++) {
       const wx = -CAR / 2 + 1.1 + (j * (CAR - 2.2)) / 6;
       wb.add(box(0.9, 0.8, D + 0.04), mWin, wx, 2.95, 0);
@@ -399,7 +257,7 @@ export function buildDrift(kit: PsxKit): SceneDef {
     pax.push(...pb.flush(body));
 
     // Bogies hold the rails; the body rides a little above them.
-    const fb = batch();
+    const fb = W.batch(0);
     for (const bx of [-(CAR / 2 - 2.1), CAR / 2 - 2.1]) {
       bogX.push(cx + bx);
       fb.add(box(2.4, 0.28, D - 0.1), mIron, bx, 0.62, 0);
@@ -432,9 +290,9 @@ export function buildDrift(kit: PsxKit): SceneDef {
 
   /* ---- not mirrored: the sea, the rails under it, the lamp's beam, spray and motes ---- */
   const seaU = {
-    uTime: U.uTime, uScroll: { value: 0 }, uDeep: { value: new THREE.Color(P.deep) }, uFog: fogU, uFoam: { value: new THREE.Color(P.foam) },
+    uTime: U.uTime, uDeep: { value: new THREE.Color(P.deep) }, uFog: fogU, uFoam: { value: new THREE.Color(P.foam) },
     uLamp: { value: new THREE.Color(P.lamp) }, uGlow: { value: new THREE.Color(P.sunGlow) }, uFogNear: U.uFogNear, uFogFar: U.uFogFar,
-    uTrain: { value: new THREE.Vector2(REAR, FRONT) }, uHorn: { value: new THREE.Vector3(FRONT - 3, 0, -9) },
+    uTrain: { value: new THREE.Vector3(-HALF, HALF, TZ) }, uHorn: { value: new THREE.Vector3(0, TZ, -9) },
     uSunXZ: { value: new THREE.Vector2(SUN.x, SUN.z) }, uLampAmt: { value: 1 },
   };
   const sea = new THREE.Mesh(
@@ -445,44 +303,36 @@ export function buildDrift(kit: PsxKit): SceneDef {
   sea.frustumCulled = false;
   scene.add(sea);
 
-  const rail = facet(new THREE.BoxGeometry(400, 0.07, 0.09, 100, 1, 1));
-  for (const z of [-0.72, 0.72]) kit.mesh(rail, mIron, scene, 0, -0.12, z);
-  const SLEEP = 48, sleepers = new THREE.Group();
   {
-    const sb = kit.batcher();
-    for (let x = 0; x < SLEEP; x += 1.2) sb.add(facet(new THREE.BoxGeometry(0.22, 0.05, 1.9)), x % 6 < 1.2 ? mRust : mIron, x, -0.2, 0);
-    const tile = new THREE.Group();
-    sb.flush(tile);
-    for (const k of [-1, 0, 1]) {
-      const c = k ? tile.clone() : tile;
-      c.position.x = k * SLEEP;
-      sleepers.add(c);
-    }
-    scene.add(sleepers);
+    const rail = facet(new THREE.BoxGeometry(LOOP + 120, 0.07, 0.09, 180, 1, 1));
+    for (const z of [-0.72, 0.72]) kit.mesh(rail, mIron, scene, 0, -0.12, TZ + z);
+    const sb = kit.batcher(), sleeper = facet(new THREE.BoxGeometry(0.22, 0.05, 1.9));
+    for (let x = -LOOP / 2 - 60; x < LOOP / 2 + 60; x += 1.2) sb.add(sleeper, Math.abs(x % 6) < 1.2 ? mRust : mIron, x, -0.2, TZ);
+    sb.flush(scene);
   }
 
   const beamMat = additive(P.lamp, 0.1);
-  const beam = kit.mesh(new THREE.ConeGeometry(1.5, 16, 10, 1, true).rotateZ(Math.PI / 2), beamMat, scene, FRONT + 8, 1.75, 0);
+  const beam = kit.mesh(new THREE.ConeGeometry(1.5, 16, 10, 1, true).rotateZ(Math.PI / 2), beamMat, scene, 0, 1.75, TZ);
   beam.renderOrder = 2;
-  const lampGlow = kit.flare(scene, FRONT + 0.25, 1.75, 0, 0.45);
+  const lampGlow = kit.flare(scene, 0, 1.75, TZ, 0.8);
   lampGlow.mat.color.set(P.lamp);
   lampGlow.g.visible = true;
-  const tailGlow = kit.flare(scene, 0, 0, 0, 0.45);
+  const tailGlow = kit.flare(scene, 0, 0, 0, 0.55);
   tailGlow.mat.color.set(P.tail);
   tailGlow.g.visible = true;
   for (const f of [lampGlow, tailGlow]) f.g.children.forEach((c) => { c.renderOrder = 2; });
 
   // Spray thrown off the wheels, drifting back along the hull.
-  const NS = 176, sprayPos = new Float32Array(NS * 3), spraySeed = Array.from({ length: NS }, () => [rnd(), rnd(), rnd()]);
+  const NS = 128, sprayPos = new Float32Array(NS * 3), spraySeed = Array.from({ length: NS }, () => [rnd(), rnd(), rnd()]);
   const sprayGeo = new THREE.BufferGeometry();
   sprayGeo.setAttribute("position", new THREE.BufferAttribute(sprayPos, 3));
-  const spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ color: P.foam, size: 1.6, sizeAttenuation: false }));
+  const spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ color: P.foam, size: 1.4, sizeAttenuation: false }));
   spray.frustumCulled = false;
   scene.add(spray);
 
-  // Motes: slow, rising, fixed to the world so they stream past with it.
-  const NM = 110, MSPAN = 180, motePos = new Float32Array(NM * 3);
-  const moteSeed = Array.from({ length: NM }, () => [at(MSPAN), rnd() * 22, between(-40, 14), rnd() * 6.28]);
+  // Motes: slow, rising, drifting with the air.
+  const NM = 110, motePos = new Float32Array(NM * 3);
+  const moteSeed = Array.from({ length: NM }, () => [(rnd() - 0.5) * 150, rnd() * 22, between(-70, 20), rnd() * 6.28]);
   const moteGeo = new THREE.BufferGeometry();
   moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
   const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1.5, sizeAttenuation: false });
@@ -493,42 +343,38 @@ export function buildDrift(kit: PsxKit): SceneDef {
   /* ---- eggs ---- */
   let hornT = -99, lightsT = -99, lanternT = -99, sunT = -99, tNow = 0;
   const lampOn = new THREE.Color(P.lamp), lampOff = new THREE.Color("#2a2638"), winTint = mWin.uniforms.uTint.value as THREE.Color;
+  const onTrain = (v: THREE.Vector3, x: number, y: number) => v.set(train.position.x + x, y, TZ);
   const eggs: SceneDef["eggs"] = [
-    { id: "drift-horn", r: 46, at: (v) => { v.set(FRONT - 4, 3, 0); }, fire: (t) => { hornT = t; } },
-    { id: "drift-lights", r: 44, at: (v) => { v.set(-PITCH / 2, 3, 0); }, fire: (t) => { lightsT = t; } },
-    { id: "drift-lantern", r: 30, at: (v) => { lantern.getWorldPosition(v).y -= 0.45; }, fire: (t) => { lanternT = t; } },
+    { id: "drift-horn", r: 34, at: (v) => { onTrain(v, HALF - 5, 3); }, fire: (t) => { hornT = t; } },
+    { id: "drift-lights", r: 30, at: (v) => { onTrain(v, -PITCH / 2, 3); }, fire: (t) => { lightsT = t; } },
+    { id: "drift-lantern", r: 24, at: (v) => { lantern.getWorldPosition(v).y -= 0.45; }, fire: (t) => { lanternT = t; } },
     { id: "drift-sun", r: 50, at: (v) => { v.copy(SUN); }, fire: (t) => { sunT = t; } },
   ];
 
   const wrap = (v: number, s: number) => ((v % s) + s) % s;
-  const pivot = new THREE.Vector3(), tmp = new THREE.Vector3(), UP = THREE.Object3D.DEFAULT_UP;
 
   return {
     scene,
     cam,
     fog,
-    fov: [44, 64],
-    limits: { pitch: [-0.06, 0.4], zoom: [0.72, 2], yaw: 0.35 },
+    fov: [50, 66],
+    limits: { pitch: [-0.22, 0.3], zoom: [0.85, 3.2], yaw: 0.25 },
     labels: [
-      { name: "Train", sub: `${N} CARS, NO STOPS`, at: (v) => { v.set(FRONT - 6, 5.2, 0); } },
+      { name: "Train", sub: `${N} CARS, NO STOPS`, at: (v) => { onTrain(v, HALF - 6, 6); } },
       { name: "Sun", sub: "NOT SETTING", at: (v) => { v.copy(SUN).y += 60; } },
     ],
     eggs,
     moteMat,
     update(t) {
       tNow = t;
-      const scroll = V * t;
-      for (const L of layers) L.g.position.x = -wrap(scroll, L.S);
-      sleepers.position.x = -wrap(scroll, SLEEP);
-      seaU.uScroll.value = scroll;
+      hang(t);
 
-      for (const f of floaters) {
-        f.m.position.set(wrap(f.x0 - scroll, DSPAN) - DSPAN / 2 + DC, f.y + Math.sin(t * 0.5 + f.ph) * f.amp, f.z);
-        f.m.rotation.set(f.ph + t * f.w1, t * f.w2, f.ph * 0.5);
-      }
-
-      // The ride: wheels turning at line speed, each body rocking a little on its springs.
-      const spin = -(scroll / 0.42) % (Math.PI * 2);
+      // The ride: the train runs the line and wraps out of sight; wheels turn at line speed,
+      // each body rocks a little on its springs.
+      const tx = wrap(V * t, LOOP) - LOOP / 2;
+      train.position.x = tx;
+      seaU.uTrain.value.set(tx - HALF, tx + HALF, TZ);
+      const spin = -((V * t) / 0.42) % (Math.PI * 2);
       for (const a of axles) a.rotation.z = spin;
       bodies.forEach((b, i) => {
         b.position.y = 0.022 * (1 + Math.sin(t * 6.3 + i * 1.9));
@@ -537,10 +383,12 @@ export function buildDrift(kit: PsxKit): SceneDef {
 
       // Horn: two blasts of the lamp and rings out over the water.
       const eh = t - hornT, blast = pulse(eh, 0.5) + pulse(eh - 0.7, 0.5);
-      seaU.uHorn.value.z = eh;
-      lampGlow.mat.opacity = 0.45 + 0.9 * blast;
+      seaU.uHorn.value.set(tx + HALF - 3, TZ, eh);
+      lampGlow.g.position.set(tx + HALF + 0.25, 1.75, TZ);
+      lampGlow.mat.opacity = 0.5 + 0.9 * blast;
       lampGlow.g.lookAt(cam.position);
-      beamMat.opacity = 0.1 + 0.22 * blast;
+      beam.position.x = tx + HALF + 8;
+      beamMat.opacity = 0.12 + 0.22 * blast;
       seaU.uLampAmt.value = 1 + blast;
 
       // Lights: they flicker and go out; when they come back the seats are empty, for a while.
@@ -559,7 +407,7 @@ export function buildDrift(kit: PsxKit): SceneDef {
       lantern.rotation.z = et > 0 && et < 7 ? Math.sin(et * 5.5) * 0.7 * Math.exp(-et * 0.7) : 0;
       lantern.updateWorldMatrix(true, false);
       tailGlow.g.position.set(0, -0.45, 0).applyMatrix4(lantern.matrixWorld);
-      tailGlow.mat.opacity = 0.3 + 0.7 * pulse(et, 2.2);
+      tailGlow.mat.opacity = 0.35 + 0.7 * pulse(et, 2.2);
       tailGlow.g.lookAt(cam.position);
 
       const es = t - sunT;
@@ -568,31 +416,26 @@ export function buildDrift(kit: PsxKit): SceneDef {
 
       for (let i = 0; i < NS; i++) {
         const [a, b, c] = spraySeed[i];
-        const ph = (t * (1.1 + a * 0.6) + b) % 1, bow = i < 24;
-        const bx = bow ? FRONT - 0.4 : bogX[i % bogX.length], side = Math.floor(i / bogX.length) % 2 ? 1 : -1;
-        sprayPos[i * 3] = bx + 0.5 - ph * (bow ? 3.5 : 2.2 + c * 1.5);
+        const ph = (t * (1.1 + a * 0.6) + b) % 1, bow = i < 16;
+        const bx = bow ? HALF - 0.4 : bogX[i % bogX.length], side = Math.floor(i / bogX.length) % 2 ? 1 : -1;
+        sprayPos[i * 3] = tx + bx + 0.5 - ph * (bow ? 3.5 : 2.2 + c * 1.5);
         sprayPos[i * 3 + 1] = 0.04 + Math.sin(ph * Math.PI) * (bow ? 0.3 + c * 0.7 : 0.15 + c * 0.45);
-        sprayPos[i * 3 + 2] = side * (bow ? 0.3 + ph * (0.8 + a) : D / 2 - 0.1 + ph * (0.4 + a * 0.8));
+        sprayPos[i * 3 + 2] = TZ + side * (bow ? 0.3 + ph * (0.8 + a) : D / 2 - 0.1 + ph * (0.4 + a * 0.8));
       }
       sprayGeo.attributes.position.needsUpdate = true;
 
       for (let i = 0; i < NM; i++) {
         const [x0, y0, z, ph] = moteSeed[i];
-        motePos[i * 3] = wrap(x0 - scroll, MSPAN) - MSPAN / 2 + DC + Math.sin(t * 0.4 + ph) * 0.6;
+        motePos[i * 3] = x0 + Math.sin(t * 0.13 + ph) * 3;
         motePos[i * 3 + 1] = 0.6 + ((y0 + t * 0.35) % 22);
         motePos[i * 3 + 2] = z + Math.cos(t * 0.3 + ph) * 0.6;
       }
       moteGeo.attributes.position.needsUpdate = true;
 
-      // Riding alongside: the camera holds abreast of the cab end, drifting a little fore and aft.
-      const ang = view.yaw + Math.sin(t * 0.05) * 0.03 + view.px * 0.12;
-      pivot.set((cam.aspect < 1 ? 20 : 9) + Math.sin(t * 0.07) * 1.2, 2.4, 0);
-      tmp.set(0, 0.9, 34).applyAxisAngle(UP, ang);
-      cam.position.copy(pivot).add(tmp);
-      cam.position.y -= view.py * 0.6;
-      cam.lookAt(pivot);
-      kit.orbit(cam, pivot);
-      cam.position.y = Math.max(cam.position.y, 0.7);
+      // Standing at the water's edge, looking out at the line; drag turns the head, zoom is the lens.
+      cam.position.set(Math.sin(t * 0.05) * 2 + view.px * 1.5, 3.4 - view.py * 0.4, 34);
+      cam.lookAt(6 + view.px * 6 + Math.sin(t * 0.04) * 2, 4.6 - view.py * 3, TZ);
+      kit.look(cam);
       sky.position.copy(cam.position);
       sea.position.set(cam.position.x, 0, cam.position.z);
       sunDir.copy(SUN).sub(cam.position).normalize();
@@ -606,15 +449,12 @@ export function buildDrift(kit: PsxKit): SceneDef {
         b.visible = a.visible;
       }
     },
-    readout: () => {
-      const p = cam.position;
-      return [
-        ["LINE", "OPEN SEA"],
-        ["SPEED", `${Math.round(V * 3.6)} km/h`],
-        ["DEPTH", `${(0.12 + 0.03 * Math.sin(tNow * 0.4)).toFixed(2)} m`],
-        ["BRG", `${kit.pad(Math.round(kit.bearing(cam)), 3)}°`],
-        ["NEXT", p.y > 6 ? "NOT IN SIGHT" : "NONE"],
-      ];
-    },
+    readout: () => [
+      ["LINE", "OPEN SEA"],
+      ["SPEED", `${Math.round(V * 3.6)} km/h`],
+      ["DEPTH", `${(0.12 + 0.03 * Math.sin(tNow * 0.4)).toFixed(2)} m`],
+      ["BRG", `${kit.pad(Math.round(kit.bearing(cam)), 3)}°`],
+      ["TRAIN", Math.abs(train.position.x) < 200 ? "IN SIGHT" : "PAST"],
+    ],
   };
 }

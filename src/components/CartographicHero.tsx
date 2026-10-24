@@ -8,7 +8,7 @@ import { createCipherField, type CipherField } from "@/hero/cipher";
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 renderer (cipher / ocean / astral / ruins / drift / field / matrix / abyss / cliff). three.js is fetched
+ * the PS1 renderer (cipher / ocean / astral / ruins / drift / dunes / rift / frost / field / matrix / abyss / cliff). three.js is fetched
  * with a dynamic import on mount, so no other route downloads it. Without
  * WebGL the stage falls back to a CSS contour sheet.
  *
