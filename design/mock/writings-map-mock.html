@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Writings Survey Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=Silkscreen&display=swap">
+<style>
+/* Mock for /writings: proposals 1 (survey sheet), 2 (per-essay sigils), 5 (timeline strip).
+   The index is a contour map: each essay is a peak, x = date written, the region = theme,
+   peak height = read time. The timeline under the map shares its x scale. The plain list
+   below is the phone / screen-reader fallback. Tokens copied from src/index.css. */
+:root {
+  color-scheme: dark;
+  --bg: #111617; --bg-2: #161d1f; --sheet: #1a2224; --code: #0c1112;
+  --ink: #e0d9c8; --ink-2: #aab1a7; --ink-3: #75817b;
+  --rule: #2b3739; --rule-2: #3d4b4d;
+  --accent: #bcc77c; --accent-deep: #5d7a3a; --on-accent: #151a0e;
+  --f-pixel: "Silkscreen", "Courier New", monospace;
+  --f-body: "Literata", "Iowan Old Style", Palatino, Georgia, serif;
+  --f-mono: "Fragment Mono", ui-monospace, Menlo, Consolas, monospace;
+  --gutter: clamp(16px, 4vw, 48px);
+  --maxw: 1240px;
+}
+:root[data-accent="torch"] { --bg:#17121a; --bg-2:#1d1721; --sheet:#271e2a; --code:#110d14; --ink:#f0e1cd; --ink-2:#c1ae9f; --ink-3:#8b7a78; --rule:#342a38; --rule-2:#4b3d4c; --accent:#eaa24c; --accent-deep:#a24e1c; --on-accent:#1d1206; }
+:root[data-accent="astral"] { --bg:#0b1424; --bg-2:#0f1a2e; --sheet:#15233b; --code:#070d19; --ink:#d6e6f2; --ink-2:#9db4c8; --ink-3:#6a8199; --rule:#1f3250; --rule-2:#2f4a70; --accent:#86d3dc; --accent-deep:#2f6f9a; --on-accent:#08171b; }
+:root[data-accent="madder"] { --bg:#1a0f14; --bg-2:#21141a; --sheet:#2d1b23; --code:#130a0e; --ink:#f2dfdc; --ink-2:#c4a9ab; --ink-3:#8c6f75; --rule:#3a252d; --rule-2:#53363f; --accent:#e5787f; --accent-deep:#7e2638; --on-accent:#1f0a0d; }
+:root[data-accent="mono"] { --bg:#121212; --bg-2:#181818; --sheet:#1e1e1e; --code:#0c0c0c; --ink:#e2e2e2; --ink-2:#a8a8a8; --ink-3:#7c7c7c; --rule:#2e2e2e; --rule-2:#444444; --accent:#d4d4d4; --accent-deep:#6b6b6b; --on-accent:#111111; }
+:root[data-accent="manuscript"] { --bg:#1b1a17; --bg-2:#211f1b; --sheet:#2a2722; --code:#151411; --ink:#ebe6db; --ink-2:#b4aea2; --ink-3:#807a6f; --rule:#35322c; --rule-2:#4a463e; --accent:#e08a62; --accent-deep:#9a4524; --on-accent:#1d0f08; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0;
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--ink) 3.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--ink) 3.5%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  color: var(--ink);
+  font-family: var(--f-body);
+  line-height: 1.55;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+::selection { background: var(--accent); color: var(--on-accent); }
+kbd {
+  font-family: var(--f-mono); font-size: 0.85em; line-height: 1;
+  display: inline-block; padding: 0.2em 0.4em 0.16em; min-width: 1.6em; text-align: center;
+  color: var(--ink); background: var(--bg-2);
+  border: 1px solid var(--rule-2); border-bottom-width: 2px;
+}
+.eyebrow {
+  font-family: var(--f-pixel); font-size: 10.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent); margin: 0;
+}
+.mono { font-family: var(--f-mono); }
+
+/* ---------- nav stub (not part of the proposal) ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 24px;
+  padding: 14px var(--gutter);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom: 1px solid var(--rule);
+  backdrop-filter: blur(6px);
+}
+.wordmark { font-family: var(--f-pixel); font-size: 15px; text-decoration: none; }
+.wordmark i { font-family: var(--f-body); color: var(--accent); margin-left: 4px; }
+.nav__links { display: flex; gap: clamp(12px, 3vw, 40px); margin-left: auto; font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; }
+.nav__links a { text-decoration: none; color: var(--ink-2); }
+.nav__links a[aria-current] { color: var(--accent); }
+.swatches { display: flex; gap: 6px; }
+.swatches button {
+  width: 14px; height: 14px; padding: 0; cursor: pointer;
+  border: 1px solid var(--rule-2); background: var(--sw);
+}
+.swatches button[aria-pressed="true"] { outline: 1px solid var(--ink); outline-offset: 2px; }
+@media (max-width: 640px) { .nav__links { display: none; } .swatches { margin-left: auto; } }
+
+/* ---------- page ---------- */
+.shell { max-width: var(--maxw); margin: 0 auto; padding: 56px var(--gutter) 96px; }
+.head {
+  display: grid; grid-template-columns: 1fr auto; gap: 24px 48px; align-items: end;
+  padding-bottom: 28px; border-bottom: 1px solid var(--rule); margin-bottom: 28px;
+}
+.head h1 {
+  font-family: var(--f-body); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(3rem, 8vw, 5.5rem); line-height: 0.85; letter-spacing: -0.01em;
+  margin: 22px 0 14px;
+}
+.head p { margin: 0; font-size: clamp(1.05rem, 1.6vw, 1.25rem); max-width: 40ch; }
+.head__meta {
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-3); text-align: right; line-height: 2;
+}
+.head__meta b { color: var(--ink); font-weight: 400; }
+@media (max-width: 720px) { .head { grid-template-columns: 1fr; } .head__meta { text-align: left; } }
+
+/* ---------- the sheet: map + timeline ---------- */
+.sheet { position: relative; border: 1px solid var(--rule-2); background: color-mix(in srgb, var(--bg) 70%, transparent); }
+.map-wrap { position: relative; }
+.map { display: block; width: 100%; height: auto; cursor: crosshair; }
+.corner {
+  position: absolute; font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--ink-3); pointer-events: none;
+}
+.corner--tl { top: 10px; left: 12px; }
+.corner--tr { top: 10px; right: 12px; }
+.corner--bl { bottom: 10px; left: 12px; }
+
+.contours path { fill: none; stroke: color-mix(in srgb, var(--ink) 11%, transparent); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.contours path.index { stroke: color-mix(in srgb, var(--ink) 22%, transparent); }
+.month-line { stroke: var(--rule-2); stroke-dasharray: 2 6; vector-effect: non-scaling-stroke; }
+.region {
+  font-family: var(--f-body); font-style: italic; text-transform: uppercase;
+  font-size: 24px; letter-spacing: 0.38em;
+  fill: var(--ink-3); opacity: 0.6; pointer-events: none;
+  transition: fill .25s, opacity .25s;
+}
+.region.is-on { fill: var(--accent); opacity: 0.9; }
+.link { fill: none; stroke: var(--rule-2); stroke-width: 1; stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; transition: stroke .25s; }
+.link.is-on { stroke: var(--accent); }
+.reticle line { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 5; opacity: 0.55; vector-effect: non-scaling-stroke; }
+.reticle text { font-family: var(--f-mono); font-size: calc(10px * var(--k, 1)); fill: var(--accent); letter-spacing: 0.1em; }
+.reticle { opacity: 0; transition: opacity .2s; pointer-events: none; }
+.reticle.is-on { opacity: 1; }
+
+.pt { cursor: pointer; outline: none; }
+.pt__hit { fill: transparent; }
+.pt__halo {
+  fill: none; stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 4;
+  vector-effect: non-scaling-stroke; opacity: 0;
+  transform-box: fill-box; transform-origin: center;
+  transition: opacity .2s;
+}
+.pt.is-on .pt__halo { opacity: 1; animation: spin 9s linear infinite; }
+.pt__title, .pt__sub { font-family: var(--f-mono); text-transform: uppercase; letter-spacing: 0.12em; transition: fill .2s; }
+.pt__title { font-size: 11px; fill: var(--ink); }
+.pt__sub { font-size: 9.5px; fill: var(--ink-3); }
+.pt.is-on .pt__title { fill: var(--accent); }
+.pt.is-on .sg-ink { stroke: var(--accent); }
+.pt.is-dim { opacity: 0.45; }
+.pt, .link, .region { transition: opacity .25s; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 720px) { .pt__title, .pt__sub, .corner--tr, .corner--bl { display: none; } }
+
+/* readout: the legend until something is hovered, then the entry */
+.readout {
+  position: absolute; right: 2%; bottom: 4%; width: min(300px, 27%);
+  background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 2px solid var(--accent);
+  padding: 14px 16px 16px; font-size: 14px;
+}
+.readout h2 { font-family: var(--f-body); font-weight: 400; font-size: 1.3rem; line-height: 1.1; margin: 8px 0 6px; }
+.readout .meta { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.readout p.ex { margin: 10px 0 0; color: var(--ink-2); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.readout ul { list-style: none; padding: 0; margin: 10px 0 0; font-family: var(--f-mono); font-size: 11px; color: var(--ink-2); line-height: 1.9; }
+.readout ul span { display: inline-block; width: 26px; color: var(--accent); }
+.readout .keys { margin-top: 12px; font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.06em; }
+@media (max-width: 860px) {
+  .readout { position: static; width: auto; border-left: 0; border-right: 0; border-bottom: 0; }
+}
+
+.timeline-wrap { border-top: 1px solid var(--rule-2); background: var(--bg-2); }
+.timeline { display: block; width: 100%; height: auto; }
+.tl-base { stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tl-day { stroke: var(--rule-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tl-week { stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.tl-month { font-family: var(--f-pixel); fill: var(--accent); letter-spacing: 0.08em; }
+.tl-edge { font-family: var(--f-mono); fill: var(--ink-3); letter-spacing: 0.1em; }
+.tl-tick { cursor: pointer; }
+.tl-tick line { stroke: var(--ink-2); stroke-width: 1; vector-effect: non-scaling-stroke; transition: stroke .2s; }
+.tl-tick rect.cap { fill: var(--ink-2); transition: fill .2s; }
+.tl-tick text { font-family: var(--f-mono); fill: var(--ink-3); transition: fill .2s; }
+.tl-tick .hit { fill: transparent; }
+.tl-tick.is-on line { stroke: var(--accent); }
+.tl-tick.is-on rect.cap { fill: var(--accent); }
+.tl-tick.is-on text { fill: var(--accent); }
+
+/* ---------- index fallback ---------- */
+.index { margin-top: 72px; }
+.index__head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; border-bottom: 1px solid var(--rule); padding-bottom: 12px; }
+.index__head span { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase; }
+.row {
+  display: grid; grid-template-columns: 56px 44px 1fr 120px 110px 60px; gap: 20px; align-items: center;
+  padding: 18px 12px; border-bottom: 1px dashed var(--rule-2);
+  text-decoration: none; position: relative; transition: background .2s;
+}
+.row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); transform: scaleY(0); transform-origin: bottom; transition: transform .25s; }
+.row.is-on { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.row.is-on::before { transform: scaleY(1); }
+.row svg { width: 56px; height: 56px; display: block; }
+.row .no, .row .th, .row .dt, .row .mn { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.row .no { color: var(--accent); }
+.row h3 { font-weight: 400; font-size: 1.35rem; line-height: 1.1; margin: 0 0 4px; text-transform: uppercase; }
+.row.is-on h3 { color: var(--accent); }
+.row p { margin: 0; color: var(--ink-2); font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.row .mn { text-align: right; }
+@media (max-width: 860px) {
+  .row { grid-template-columns: 48px 1fr; gap: 6px 16px; padding: 16px 4px; }
+  .row svg { width: 48px; height: 48px; grid-row: span 2; }
+  .row .no, .row .th, .row .dt, .row .mn { display: none; }
+  .row .sub { display: block !important; }
+}
+.row .sub { display: none; grid-column: 2; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+
+/* sigils */
+.sg-bg { fill: var(--bg); }
+.sg-ink { fill: none; stroke: var(--ink-2); stroke-width: var(--sw, 1.15); vector-effect: non-scaling-stroke; stroke-linecap: square; transition: stroke .2s; }
+.sg-acc { fill: none; stroke: var(--accent); stroke-width: var(--sw, 1.15); vector-effect: non-scaling-stroke; stroke-linecap: square; }
+.sg-fill { fill: var(--accent); }
+.sg-wash { fill: var(--accent); opacity: 0.12; }
+
+/* entry sheet (what a click opens; on the site this is the route change) */
+dialog {
+  width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px);
+  padding: 0; border: 1px solid var(--rule-2); border-top: 2px solid var(--accent);
+  background: var(--bg-2); color: var(--ink);
+}
+dialog::backdrop { background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(2px); }
+.entry { display: grid; grid-template-columns: 168px 1fr; gap: 28px; padding: 32px; }
+.entry svg { width: 168px; height: 168px; --sw: 1.5; }
+.entry h2 { font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1; text-transform: uppercase; margin: 14px 0 12px; }
+.entry .meta { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); }
+.entry p { font-size: 1.1rem; line-height: 1.68; margin: 18px 0 22px; }
+.entry .actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 9px 14px; border: 1px solid var(--rule-2); background: transparent; color: var(--ink);
+  cursor: pointer; text-decoration: none;
+}
+.btn--primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.entry .route { margin-top: 18px; font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-3); }
+@media (max-width: 600px) { .entry { grid-template-columns: 1fr; padding: 24px; } .entry svg { width: 112px; height: 112px; } }
+
+/* mock notes */
+.notes { margin-top: 72px; border: 1px dashed var(--rule-2); padding: 20px 22px; }
+.notes ol { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+.notes li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; color: var(--ink-2); font-size: 0.98rem; }
+.notes li b { font-weight: 400; color: var(--ink); }
+.notes .tag {
+  font-family: var(--f-pixel); font-size: 10px; width: 20px; height: 20px; display: grid; place-items: center;
+  background: var(--accent); color: var(--on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Primary">
+  <a class="wordmark" href="#">NCA<i>Ventures</i></a>
+  <div class="nav__links">
+    <a href="#">Home</a>
+    <a href="#" aria-current="page">Writings</a>
+    <a href="#">Software</a>
+    <a href="#">CV</a>
+  </div>
+  <div class="swatches" role="group" aria-label="Theme"></div>
+</nav>
+
+<main class="shell">
+  <header class="head">
+    <div>
+      <p class="eyebrow">( 01 &mdash; WRITINGS )</p>
+      <h1>Writings</h1>
+      <p>Thoughts on the arts, engineering, the esoteric and the existential.</p>
+    </div>
+    <div class="head__meta">
+      Sheet <b>01</b> &middot; <b>9</b> entries<br>
+      Surveyed <b>26 Feb &ndash; 19 Apr 2026</b><br>
+      <b>3</b> regions &middot; <b>41</b> min of reading
+    </div>
+  </header>
+
+  <section class="sheet" aria-label="Map of essays">
+    <div class="map-wrap">
+      <svg class="map" id="map" viewBox="0 0 1200 640" role="group" aria-label="Contour map: one peak per essay; left to right is the date written, peak height is reading time">
+        <defs id="defs"></defs>
+        <g class="contours" id="contours"></g>
+        <g id="months"></g>
+        <g id="regions"></g>
+        <g id="links"></g>
+        <g class="reticle" id="reticle">
+          <line id="rv" y1="0" y2="640"></line>
+          <line id="rh" x1="0" x2="1200"></line>
+          <text id="rt" y="22"></text>
+        </g>
+        <g id="points"></g>
+      </svg>
+      <span class="corner corner--tl">Sheet 01 / Writings</span>
+      <span class="corner corner--tr">1 day = 16.6 u</span>
+      <span class="corner corner--bl">Contour interval: 1 min of reading</span>
+      <aside class="readout" id="readout" aria-live="polite"></aside>
+    </div>
+    <div class="timeline-wrap">
+      <svg class="timeline" id="timeline" role="group" aria-label="Timeline of essays by date written"></svg>
+    </div>
+  </section>
+
+  <section class="index" aria-labelledby="index-h">
+    <div class="index__head">
+      <p class="eyebrow" id="index-h">( INDEX &mdash; ALL NINE )</p>
+      <span>Same entries, as a list</span>
+    </div>
+    <div id="rows"></div>
+  </section>
+
+  <section class="notes" aria-label="Mock notes">
+    <p class="eyebrow">( MOCK NOTES )</p>
+    <ol>
+      <li><span class="tag">1</span><span><b>Survey sheet.</b> One peak per essay. Left to right is the date written, the region is the theme, and a peak's height (how many contour rings it has) is its reading time. Dashed lines join essays in the same region. Hover or focus a peak for its readout; click to zoom in and open it. The three regions are hand-picked themes that would replace the tag filter, since 8 of 9 essays fall back to "philosophy".</span></li>
+      <li><span class="tag">2</span><span><b>Sigils.</b> Generated from the slug, so an essay always gets the same mark. The tick marks inside the ring count its minutes of reading. The same sigil heads the list row, the entry sheet, and could head the essay page.</span></li>
+      <li><span class="tag">5</span><span><b>Timeline.</b> Shares the map's x scale, so each tick sits under its peak. Tick length is reading time. The empty stretch from mid-March to early April reads as a gap in the survey rather than missing data.</span></li>
+      <li><span class="tag">!</span><span><b>Excerpts.</b> They were cleaned by hand for this mock. The manifest's excerpts start with Notion headings ("Core Idea", "Thesis") and <code>[[wikilinks]]</code>, so the real page needs the build script to take the first prose paragraph.</span></li>
+    </ol>
+    <p class="mono" style="margin:18px 0 0;font-size:11px;color:var(--ink-3)"><kbd>[</kbd> <kbd>]</kbd> step through peaks &middot; <kbd>&#9166;</kbd> open &middot; <kbd>r</kbd> random essay &middot; <kbd>1</kbd>&ndash;<kbd>6</kbd> theme &middot; <kbd>Esc</kbd> close</p>
+  </section>
+</main>
+
+<dialog id="entry" aria-labelledby="entry-title"></dialog>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const W = 1200, H = 640, X0 = 70, X1 = 1130;
+  const START = Date.UTC(2026, 1, 20), RANGE = 64; // 20 Feb .. 25 Apr
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const REGIONS = {
+    systems: { name: "Systems", x: 560, y: 120 },
+    freedom: { name: "Freedom", x: 600, y: 330 },
+    self:    { name: "The Self", x: 640, y: 612 },
+  };
+
+  // Chronological. y is placed by hand inside the theme's region; side = label side.
+  const POSTS = [
+    { slug: "always-against", title: "Always Against", date: "2026-02-26", min: 5, theme: "systems", y: 110,
+      ex: "Every system built to free people from the previous system becomes, by virtue of its success and institutionalization, the next system people need freeing from." },
+    { slug: "the-price-of-progress", title: "The Price of Progress", date: "2026-02-26", min: 4, theme: "freedom", y: 390,
+      ex: "Freedom is not a right passively possessed. It is a currency: something citizens actively generate, circulate, and invest into the collective project of civilization." },
+    { slug: "the-game-of-democracy", title: "The Game of Democracy", date: "2026-02-27", min: 5, theme: "systems", y: 215,
+      ex: "Semper Contra established the pattern: every system built to liberate becomes the next cage. History has no destination." },
+    { slug: "outsourced-spirituality", title: "Outsourced Spirituality", date: "2026-03-07", min: 4, theme: "self", y: 470,
+      ex: "Humanity has surrendered its most personal responsibility, the confrontation with existence, to institutions built on the corpse of original insight." },
+    { slug: "conditioned-by-freedom", title: "Conditioned by Freedom", date: "2026-03-11", min: 3, theme: "freedom", y: 300,
+      ex: "Freedom is always relational, never absolute. You can be free from a job, a country, a social contract. But you can never be free from the thing doing the freeing." },
+    { slug: "the-perpetual-i", title: "The Perpetual I", date: "2026-03-11", min: 3, theme: "self", y: 560,
+      ex: "A free man can escape many things, but he cannot escape who he is. The same way a lamp cannot enlighten itself, you cannot transcend the limitations of your own design." },
+    { slug: "100m", title: "100M", date: "2026-04-05", min: 7, theme: "self", y: 480, side: "l",
+      ex: "10 seconds for the performance of a lifetime. I was a promising short distance runner. Natural born, insanely fast for my age." },
+    { slug: "thaumazein", title: "Thaumazein", date: "2026-04-15", min: 1, theme: "freedom", y: 335,
+      ex: "For a long while, I had been in pursuit of freedom, of the greatest life I could imagine for myself, redefining at every turn the very terms of victory so that the chase might never end." },
+    { slug: "a-philosophy-of-pragmatic-sovereignity", title: "A Philosophy of Pragmatic Sovereignity", date: "2026-04-19", min: 9, theme: "systems", y: 160, side: "l",
+      ex: "The state is not a moral good, but it operates as a gravitational inevitability. Complex societies generate hierarchies of power, and those hierarchies coalesce into states." },
+  ];
+  POSTS.forEach((p, i) => {
+    p.n = String(i + 1).padStart(2, "0");
+    p.day = (Date.parse(p.date) - START) / 864e5;
+    p.x = X0 + p.day * (X1 - X0) / RANGE;
+  });
+
+  const el = (tag, attrs = {}, parent) => {
+    const node = document.createElementNS(NS, tag);
+    for (const k in attrs) node.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(node);
+    return node;
+  };
+  const fmtDate = (iso) => new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+  const shortDate = (iso) => iso.slice(8, 10) + "." + iso.slice(5, 7);
+
+  /* ---------- sigils (2) ---------- */
+  const fnv = (s) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const mulberry = (a) => () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const polar = (r, deg) => { const a = (deg - 90) * Math.PI / 180; return [32 + r * Math.cos(a), 32 + r * Math.sin(a)]; };
+  const arc = (r, a0, a1) => { const [x0, y0] = polar(r, a0), [x1, y1] = polar(r, a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)}A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+
+  const defs = document.getElementById("defs");
+  function buildSigil(p) {
+    const rnd = mulberry(fnv(p.slug));
+    const sym = el("symbol", { id: "sg-" + p.slug, viewBox: "0 0 64 64" }, defs);
+    el("circle", { class: "sg-bg", cx: 32, cy: 32, r: 31 }, sym);
+    // outer ring, broken into 1-3 arcs
+    const gaps = 1 + Math.floor(rnd() * 3), gap = 16 + rnd() * 22, off = rnd() * 360, span = 360 / gaps;
+    for (let g = 0; g < gaps; g++) el("path", { class: "sg-ink", d: arc(28, off + g * span, off + (g + 1) * span - gap) }, sym);
+    // one tick per minute of reading
+    const t0 = rnd() * 360;
+    for (let k = 0; k < p.min; k++) {
+      const a = t0 + k * (360 / p.min), [ax, ay] = polar(20.5, a), [bx, by] = polar(24.5, a);
+      el("line", { class: "sg-acc", x1: ax, y1: ay, x2: bx, y2: by }, sym);
+    }
+    // polygon
+    const sides = 3 + Math.floor(rnd() * 4), rot = rnd() * 360, pts = [];
+    for (let k = 0; k < sides; k++) pts.push(polar(15, rot + k * 360 / sides).map((v) => v.toFixed(2)).join(","));
+    el("polygon", { class: "sg-wash", points: pts.join(" ") }, sym);
+    el("polygon", { class: "sg-ink", points: pts.join(" ") }, sym);
+    // a chord across the ring
+    if (rnd() > 0.35) {
+      const a = rnd() * 360, b = a + 110 + rnd() * 140, [ax, ay] = polar(28, a), [bx, by] = polar(28, b);
+      el("line", { class: "sg-ink", x1: ax, y1: ay, x2: bx, y2: by }, sym);
+    }
+    // core
+    const core = Math.floor(rnd() * 4);
+    if (core === 0) el("rect", { class: "sg-fill", x: 29, y: 29, width: 6, height: 6 }, sym);
+    else if (core === 1) el("circle", { class: "sg-fill", cx: 32, cy: 32, r: 2.6 }, sym);
+    else if (core === 2) { el("line", { class: "sg-acc", x1: 27, y1: 32, x2: 37, y2: 32 }, sym); el("line", { class: "sg-acc", x1: 32, y1: 27, x2: 32, y2: 37 }, sym); }
+    else el("circle", { class: "sg-acc", cx: 32, cy: 32, r: 5 }, sym);
+  }
+  POSTS.forEach(buildSigil);
+  const sigilSvg = (p, label) => `<svg viewBox="0 0 64 64" ${label ? `role="img" aria-label="Sigil for ${p.title}"` : 'aria-hidden="true"'}><use href="#sg-${p.slug}"/></svg>`;
+
+  /* ---------- contour field (1) ---------- */
+  const S = 10, COLS = W / S + 1, ROWS = H / S + 1;
+  const field = new Float32Array(COLS * ROWS);
+  for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+    const x = i * S, y = j * S;
+    let h = 0.18 * (Math.sin(x * 0.011 + 1.3) * Math.cos(y * 0.014 - 0.7) + 0.6 * Math.sin((x + y) * 0.006 + 2.1));
+    for (const p of POSTS) {
+      const s = 46 + p.min * 7, dx = x - p.x, dy = y - p.y;
+      h += p.min * Math.exp(-(dx * dx + dy * dy) / (2 * s * s));
+    }
+    field[j * COLS + i] = h;
+  }
+  // case -> edge pairs (0 top, 1 right, 2 bottom, 3 left)
+  const CASES = [[], [[3, 2]], [[2, 1]], [[3, 1]], [[0, 1]], [[0, 1], [3, 2]], [[0, 2]], [[0, 3]], [[0, 3]], [[0, 2]], [[0, 3], [1, 2]], [[0, 1]], [[3, 1]], [[1, 2]], [[3, 2]], []];
+  const contours = document.getElementById("contours");
+  for (let L = 0.5, n = 0; L < 14; L += 0.5, n++) {
+    let d = "";
+    for (let j = 0; j < ROWS - 1; j++) for (let i = 0; i < COLS - 1; i++) {
+      const a = field[j * COLS + i], b = field[j * COLS + i + 1], c = field[(j + 1) * COLS + i + 1], e = field[(j + 1) * COLS + i];
+      const idx = (a > L) << 3 | (b > L) << 2 | (c > L) << 1 | (e > L);
+      if (!idx || idx === 15) continue;
+      const x = i * S, y = j * S;
+      const pt = (edge) => edge === 0 ? [x + S * (L - a) / (b - a), y]
+        : edge === 1 ? [x + S, y + S * (L - b) / (c - b)]
+        : edge === 2 ? [x + S * (L - e) / (c - e), y + S]
+        : [x, y + S * (L - a) / (e - a)];
+      for (const [p, q] of CASES[idx]) {
+        const [px, py] = pt(p), [qx, qy] = pt(q);
+        d += `M${px.toFixed(1)} ${py.toFixed(1)}L${qx.toFixed(1)} ${qy.toFixed(1)}`;
+      }
+    }
+    // a heavier "index" contour at each whole minute
+    el("path", { d, class: Number.isInteger(L) ? "index" : "" }, contours);
+  }
+
+  /* ---------- map furniture ---------- */
+  const months = document.getElementById("months");
+  [9, 40].forEach((day) => { const x = X0 + day * (X1 - X0) / RANGE; el("line", { class: "month-line", x1: x, x2: x, y1: 0, y2: H }, months); });
+
+  const regionsG = document.getElementById("regions"), regionEls = {};
+  for (const key in REGIONS) {
+    const r = REGIONS[key];
+    regionEls[key] = el("text", { class: "region", x: r.x, y: r.y, "text-anchor": "middle" }, regionsG);
+    regionEls[key].textContent = r.name;
+  }
+
+  const linksG = document.getElementById("links"), linkEls = {};
+  for (const key in REGIONS) {
+    const pts = POSTS.filter((p) => p.theme === key);
+    linkEls[key] = el("path", { class: "link", d: pts.map((p, i) => (i ? "L" : "M") + p.x.toFixed(1) + " " + p.y).join("") }, linksG);
+  }
+
+  const pointsG = document.getElementById("points"), pointEls = [];
+  POSTS.forEach((p, i) => {
+    const g = el("g", { class: "pt", transform: `translate(${p.x.toFixed(1)} ${p.y})`, tabindex: 0, role: "link", "aria-label": `${p.title}, ${fmtDate(p.date)}, ${p.min} minute read` }, pointsG);
+    const mark = el("g", { class: "pt__mark" }, g);
+    el("circle", { class: "pt__hit", r: 30 }, mark);
+    el("circle", { class: "pt__halo", r: 24 }, mark);
+    el("use", { href: "#sg-" + p.slug, x: -17, y: -17, width: 34, height: 34 }, mark);
+    const left = p.side === "l", tx = left ? -26 : 26, anchor = left ? "end" : "start";
+    const t1 = el("text", { class: "pt__title", x: tx, y: -1, "text-anchor": anchor }, g); t1.textContent = p.title;
+    const t2 = el("text", { class: "pt__sub", x: tx, y: 13, "text-anchor": anchor }, g); t2.textContent = `${p.n} · ${p.min} min`;
+    g.addEventListener("mouseenter", () => setActive(i));
+    g.addEventListener("mouseleave", () => setActive(focusIdx()));
+    g.addEventListener("focus", () => setActive(i));
+    g.addEventListener("blur", () => setActive(null));
+    g.addEventListener("click", () => openEntry(i, true));
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEntry(i, true); } });
+    pointEls.push(g);
+  });
+  const focusIdx = () => { const k = pointEls.indexOf(document.activeElement); return k < 0 ? null : k; };
+
+  /* ---------- timeline (5) ---------- */
+  const tl = document.getElementById("timeline");
+  let tickEls = [];
+  function drawTimeline(k) {
+    tl.innerHTML = "";
+    const base = 30 * k, h = base + (8 + 9 * 5) * k + 38 * k;
+    tl.setAttribute("viewBox", `0 0 ${W} ${h.toFixed(1)}`);
+    el("line", { class: "tl-base", x1: X0, x2: X1, y1: base, y2: base }, tl);
+    for (let d = 0; d <= RANGE; d++) {
+      const x = X0 + d * (X1 - X0) / RANGE, date = new Date(START + d * 864e5);
+      const monday = date.getUTCDay() === 1;
+      el("line", { class: monday ? "tl-week" : "tl-day", x1: x, x2: x, y1: base - (monday ? 8 : 4) * k, y2: base }, tl);
+      if (date.getUTCDate() === 1 || d === 0) {
+        const t = el("text", { class: "tl-month", x: x, y: base - 12 * k, "font-size": 10 * k }, tl);
+        t.textContent = date.toLocaleDateString("en-GB", { month: "short", timeZone: "UTC" }).toUpperCase();
+      }
+    }
+    const e1 = el("text", { class: "tl-edge", x: X1, y: base - 12 * k, "text-anchor": "end", "font-size": 9.5 * k }, tl); e1.textContent = "25 APR 2026";
+    const byDay = {};
+    POSTS.forEach((p) => (byDay[p.day] = byDay[p.day] || []).push(p));
+    tickEls = POSTS.map((p, i) => {
+      const same = byDay[p.day], off = (same.indexOf(p) - (same.length - 1) / 2) * 10 * k;
+      const x = p.x + off, len = (8 + p.min * 5) * k;
+      const g = el("g", { class: "tl-tick" }, tl);
+      el("rect", { class: "hit", x: x - 7 * k, y: base, width: 14 * k, height: len + 36 * k }, g);
+      el("line", { x1: x, x2: x, y1: base, y2: base + len }, g);
+      el("rect", { class: "cap", x: x - 2.5 * k, y: base + len - 2.5 * k, width: 5 * k, height: 5 * k }, g);
+      // alternate label rows so essays a day apart do not overprint
+      const t = el("text", { x, y: base + len + (16 + (i % 2) * 12) * k, "text-anchor": "middle", "font-size": 9.5 * k }, g); t.textContent = p.n;
+      g.addEventListener("mouseenter", () => setActive(i));
+      g.addEventListener("mouseleave", () => setActive(focusIdx()));
+      g.addEventListener("click", () => openEntry(i, isMapVisible()));
+      return g;
+    });
+    if (activeIdx != null) tickEls[activeIdx].classList.add("is-on");
+  }
+
+  /* ---------- list fallback ---------- */
+  const rowsEl = document.getElementById("rows");
+  const rowEls = POSTS.map((p, i) => {
+    const a = document.createElement("a");
+    a.className = "row"; a.href = "#" + p.slug;
+    a.innerHTML = `${sigilSvg(p)}<span class="no">${p.n}</span><div><h3>${p.title}</h3><p>${p.ex}</p></div>
+      <span class="th">${REGIONS[p.theme].name}</span><span class="dt">${fmtDate(p.date)}</span><span class="mn">${p.min} min</span>
+      <span class="sub">${p.n} · ${REGIONS[p.theme].name} · ${p.min} min</span>`;
+    a.addEventListener("mouseenter", () => setActive(i));
+    a.addEventListener("mouseleave", () => setActive(null));
+    a.addEventListener("click", (e) => { e.preventDefault(); openEntry(i, false); });
+    rowsEl.appendChild(a);
+    return a;
+  });
+
+  /* ---------- active state ---------- */
+  const readout = document.getElementById("readout");
+  const legend = `<p class="eyebrow">( KEY )</p>
+    <ul>
+      <li><span>&#9678;</span>One peak per essay</li>
+      <li><span>&#8801;</span>More rings = longer read</li>
+      <li><span>- -</span>Same region of thought</li>
+      <li><span>&#9500;</span>Ticks below: date written</li>
+    </ul>
+    <div class="keys"><kbd>[</kbd> <kbd>]</kbd> step &nbsp;<kbd>&#9166;</kbd> open &nbsp;<kbd>r</kbd> random</div>`;
+  let activeIdx = null;
+  function setActive(i) {
+    if (i === activeIdx) return;
+    if (activeIdx != null) {
+      pointEls[activeIdx].classList.remove("is-on");
+      tickEls[activeIdx] && tickEls[activeIdx].classList.remove("is-on");
+      rowEls[activeIdx].classList.remove("is-on");
+    }
+    activeIdx = i;
+    const p = i == null ? null : POSTS[i];
+    for (const key in REGIONS) {
+      const on = p && p.theme === key;
+      regionEls[key].classList.toggle("is-on", !!on);
+      linkEls[key].classList.toggle("is-on", !!on);
+    }
+    pointEls.forEach((g, k) => g.classList.toggle("is-dim", !!p && POSTS[k].theme !== p.theme));
+    const ret = document.getElementById("reticle");
+    if (!p) { ret.classList.remove("is-on"); readout.innerHTML = legend; return; }
+    pointEls[i].classList.add("is-on");
+    tickEls[i] && tickEls[i].classList.add("is-on");
+    rowEls[i].classList.add("is-on");
+    document.getElementById("rv").setAttribute("x1", p.x); document.getElementById("rv").setAttribute("x2", p.x);
+    document.getElementById("rh").setAttribute("y1", p.y); document.getElementById("rh").setAttribute("y2", p.y);
+    const rt = document.getElementById("rt");
+    rt.setAttribute("x", p.x + 8); rt.textContent = `${shortDate(p.date)} / ELEV ${String(p.min).padStart(2, "0")}`;
+    ret.classList.add("is-on");
+    readout.innerHTML = `<p class="eyebrow">( ${p.n} &mdash; ${REGIONS[p.theme].name.toUpperCase()} )</p>
+      <h2>${p.title}</h2><div class="meta">${fmtDate(p.date)} &middot; ${p.min} min read</div>
+      <p class="ex">${p.ex}</p><div class="keys"><kbd>&#9166;</kbd> open</div>`;
+  }
+
+  /* ---------- zoom + entry sheet ---------- */
+  const map = document.getElementById("map"), dialog = document.getElementById("entry");
+  let vb = [0, 0, W, H], anim = 0;
+  function zoomTo(target, ms) {
+    return new Promise((done) => {
+      cancelAnimationFrame(anim);
+      if (reduce) { vb = target; map.setAttribute("viewBox", vb.join(" ")); return done(); }
+      const from = vb.slice(), t0 = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / ms), e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        vb = from.map((v, k) => v + (target[k] - v) * e);
+        map.setAttribute("viewBox", vb.map((v) => v.toFixed(2)).join(" "));
+        if (t < 1) anim = requestAnimationFrame(step); else done();
+      };
+      anim = requestAnimationFrame(step);
+    });
+  }
+  const isMapVisible = () => { const r = map.getBoundingClientRect(); return r.bottom > 80 && r.top < innerHeight - 80; };
+  async function openEntry(i, fromMap) {
+    const p = POSTS[i];
+    if (fromMap) { setActive(i); await zoomTo([p.x - 210, p.y - 112, 420, 224], 480); }
+    dialog.innerHTML = `<div class="entry">${sigilSvg(p, true)}<div>
+      <p class="eyebrow">( ENTRY ${p.n} &mdash; ${REGIONS[p.theme].name.toUpperCase()} )</p>
+      <h2 id="entry-title">${p.title}</h2>
+      <div class="meta">${fmtDate(p.date)} &middot; ${p.min} min read &middot; elev ${String(p.min).padStart(2, "0")}</div>
+      <p>${p.ex}</p>
+      <div class="actions"><a class="btn btn--primary" href="#${p.slug}">Read the essay &rarr;</a><button class="btn" value="close" formmethod="dialog" onclick="this.closest('dialog').close()">Back to the sheet <kbd>Esc</kbd></button></div>
+      <div class="route">On the site this routes to /writings/${p.slug}</div></div></div>`;
+    dialog.showModal();
+  }
+  dialog.addEventListener("close", () => { zoomTo([0, 0, W, H], 420); });
+  dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+
+  /* ---------- sizing: keep marks legible on narrow screens ---------- */
+  let k = 0;
+  function resize() {
+    const nk = Math.min(3, Math.max(1, 840 / map.clientWidth));
+    if (Math.abs(nk - k) < 0.01) return;
+    k = nk;
+    map.style.setProperty("--k", k);
+    tl.style.setProperty("--k", k);
+    pointEls.forEach((g) => g.querySelector(".pt__mark").setAttribute("transform", `scale(${k.toFixed(3)})`));
+    drawTimeline(k);
+  }
+  addEventListener("resize", resize);
+  resize();
+  setActive(null);
+  readout.innerHTML = legend;
+
+  /* ---------- themes + keys ---------- */
+  const THEMES = [["", "#bcc77c", "Lichen"], ["torch", "#eaa24c", "Amber"], ["astral", "#86d3dc", "Sky"], ["madder", "#e5787f", "Rose"], ["mono", "#d4d4d4", "Graphite"], ["manuscript", "#e08a62", "Manuscript"]];
+  const sw = document.querySelector(".swatches");
+  const setTheme = (n) => {
+    const [id] = THEMES[n];
+    if (id) document.documentElement.dataset.accent = id; else delete document.documentElement.dataset.accent;
+    sw.querySelectorAll("button").forEach((b, k2) => b.setAttribute("aria-pressed", String(k2 === n)));
+  };
+  THEMES.forEach(([, c, name], n) => {
+    const b = document.createElement("button");
+    b.style.setProperty("--sw", c); b.title = `${n + 1} · ${name}`; b.setAttribute("aria-label", name);
+    b.addEventListener("click", () => setTheme(n));
+    sw.appendChild(b);
+  });
+  setTheme(0);
+
+  addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey || dialog.open) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    if (e.key === "[" || e.key === "]") {
+      const cur = focusIdx() ?? activeIdx ?? (e.key === "]" ? -1 : 0);
+      const next = (cur + (e.key === "]" ? 1 : -1) + POSTS.length) % POSTS.length;
+      pointEls[next].focus({ preventScroll: !isMapVisible() ? false : true });
+    } else if (e.key === "r") {
+      openEntry(Math.floor(Math.random() * POSTS.length), isMapVisible());
+    } else if (/^[1-6]$/.test(e.key)) {
+      setTheme(Number(e.key) - 1);
+    }
+  });
+})();
+</script>
+</body>
+</html>
