@@ -15,7 +15,7 @@ import { SHEETS, type SheetMeta } from "../sheets";
 import { buildOcean } from "./ocean";
 import { buildAstral } from "./astral";
 import { buildRuins } from "./ruins";
-import { buildRail } from "./rail";
+import { buildTrain } from "./train";
 import { buildSea } from "./sea";
 import { buildField } from "./field";
 import { buildMatrix } from "./matrix";
@@ -83,7 +83,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const { U } = kit;
   /* Only scenes enabled in sheets.ts are built, in tab order. */
   const BUILD: Record<SheetMeta["id"], (k: PsxKit) => SceneDef> = {
-    cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, rail: buildRail,
+    cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, train: buildTrain,
     field: buildField, matrix: buildMatrix, abyss: buildAbyss, cliff: buildCliff,
   };
   const SC: SceneDef[] = SHEETS.map((s) => BUILD[s.id](kit));
