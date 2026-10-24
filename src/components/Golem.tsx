@@ -22,7 +22,7 @@ import { act, age, decay, parse, status, type GolemAction, type GolemState } fro
 // h/s/l stone (light/mid/shadow), o/c a gap or crack, m/M moss, r the rune, a its glow.
 type Px = { x: number; y: number; w: number; c: string };
 
-const TONE: Record<string, string> = { h: "hi", s: "mid", l: "lo", o: "gap", c: "gap", m: "moss", M: "lichen", r: "core", a: "glow" };
+const TONE: Record<string, string> = { h: "hi", s: "mid", l: "lo", o: "gap", c: "gap", m: "moss", M: "lichen", r: "core", a: "glow", e: "edge", g: "glint" };
 
 /** Turns a character map into one rect per horizontal run, offset to (ox, oy). */
 function sprite(rows: string[], ox: number, oy: number): Px[] {
@@ -71,6 +71,36 @@ const CRACKS_BAD = sprite(["o.", ".o", ".o"], 8, 11).concat(sprite(["oo"], 16, 3
 const TETHERS = [...sprite(["aa"], 12, 9)];
 const ARM_TETHER = sprite(["a"], 21, 13);
 const ZED = sprite(["aaa", ".a.", "aaa"], 0, 0);
+
+// Fine detail on a half-pixel grid (coordinates are art pixels × 2): bevels
+// catching the light (e), a brow over the eye slit, carved seams, moss drips,
+// and a bright rune glyph (g) in the chest. Drawn over the coarse sprite.
+const HEAD_FINE = [
+  ...sprite(["eeeeeeeeeeeeee"], 18, 6),
+  ...sprite(["e", "e", "e", "e"], 16, 8),
+  ...sprite(["llllllllllll"], 20, 9),
+  ...sprite(["m....m", "m....."], 22, 6),
+  ...sprite(["m.m", ".m."], 24, 7),
+  ...sprite(["l", "l"], 19, 12),
+  ...sprite(["l", "l"], 32, 12),
+  ...sprite(["o"], 25, 13),
+  ...sprite([".o", "o."], 23, 16),
+];
+const TORSO_FINE = [
+  ...sprite(["eeeeeeeeee"], 22, 20),
+  ...sprite(["eeee..eeeeee"], 18, 32),
+  ...sprite(["e", "e", "e", "e", "e", "e"], 4, 24),
+  ...sprite(["l.l.l"], 5, 33),
+];
+const RUNE_FINE = sprite(["g...g", ".g.g.", "..g..", "..g.."], 21, 26);
+const FOREARM_FINE = sprite(["l.l.l"], 43, 35);
+
+/** Half-pixel detail: the same rects at half scale. */
+const Fine = ({ px, className }: { px: Px[]; className?: string }) => (
+  <g transform="scale(0.5)" className={className}>
+    <Pixels px={px} />
+  </g>
+);
 
 const Pixels = ({ px }: { px: Px[] }) => (
   <>
@@ -620,6 +650,8 @@ export default function Golem() {
             <Pixels px={LEGS} />
             <Pixels px={ARM} />
             <Pixels px={TORSO} />
+            <Fine px={TORSO_FINE} />
+            {!dormant && <Fine px={RUNE_FINE} className="golem__rune" />}
             <Pixels px={STUB} />
             {s.form < 55 && <Pixels px={CRACKS_WORN} />}
             {fallen && <Pixels px={CRACKS_BAD} />}
@@ -632,6 +664,7 @@ export default function Golem() {
             {!fallen && (
               <g className="golem__arm">
                 <Pixels px={FOREARM} />
+                <Fine px={FOREARM_FINE} />
               </g>
             )}
             {!fallen &&
@@ -643,7 +676,13 @@ export default function Golem() {
             <g transform={`translate(${lean} 0)`}>
               <g className="golem__head">
                 <Pixels px={HEAD} />
-                {eye === "open" && <rect className="g-eye" x={ex} y={5} width={2} height={1} />}
+                <Fine px={HEAD_FINE} />
+                {eye === "open" && (
+                  <>
+                    <rect className="g-eye" x={ex} y={5} width={2} height={1} />
+                    <rect className="g-glint" x={ex} y={5} width={0.5} height={0.5} />
+                  </>
+                )}
                 {eye === "dim" && <rect className="g-eye g-eye--dim" x={ex} y={5} width={2} height={1} />}
                 {eye === "shut" && <rect className="g-eye g-eye--dim" x={11} y={5} width={4} height={1} />}
                 {eye === "joy" && (

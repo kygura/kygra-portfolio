@@ -2248,6 +2248,9 @@ kbd {
 .g-lichen { fill: var(--g-lichen); }
 .g-glow, .g-eye { fill: var(--accent); }
 .g-eye--dim { fill: var(--accent-deep); }
+.g-edge { fill: color-mix(in srgb, var(--ink) 72%, var(--bg)); }
+.g-glint { fill: color-mix(in srgb, var(--accent) 45%, var(--ink)); }
+.golem__rune { opacity: var(--core-a, 1); }
 .g-core { fill: var(--accent); opacity: var(--core-a, 1); animation: golemCore 2.2s steps(1) infinite; }
 .golem__shadow { fill: var(--code); opacity: 0.7; }
 
