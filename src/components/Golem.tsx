@@ -18,11 +18,31 @@ import { isTyping } from "@/theme/keymap";
 import { act, age, decay, parse, status, type GolemAction, type GolemState } from "@/companion/golem-state";
 
 // ── Sprite ──────────────────────────────────────────────────────────────
-// Each map is drawn on a 26×25 grid; one character is one pixel.
-// h/s/l stone (light/mid/shadow), o/c a gap or crack, m/M moss, r the rune, a its glow.
+// Each map is drawn on a 34×34 grid; one character is one art pixel. The
+// shading follows Hyper Light Drifter's fallen Titans: a dark cel-shaded mass
+// lit from the top left (H rim, h lit face, s mid, d shadow, k gaps and
+// cracks, e a bevel catching the light), an accent backlight on the shadow
+// edge (b), moss and vines (m/M/v), petals (f, F the centre), and the chest
+// rune (r, R its hot centre).
 type Px = { x: number; y: number; w: number; c: string };
 
-const TONE: Record<string, string> = { h: "hi", s: "mid", l: "lo", o: "gap", c: "gap", m: "moss", M: "lichen", r: "core", a: "glow", e: "edge", g: "glint" };
+const TONE: Record<string, string> = {
+  H: "rim",
+  h: "hi",
+  s: "mid",
+  d: "lo",
+  k: "gap",
+  e: "edge",
+  b: "back",
+  m: "moss",
+  M: "lichen",
+  r: "core",
+  R: "hot",
+  F: "hot",
+  f: "petal",
+  v: "vine",
+  a: "glow",
+};
 
 /** Turns a character map into one rect per horizontal run, offset to (ox, oy). */
 function sprite(rows: string[], ox: number, oy: number): Px[] {
@@ -38,69 +58,90 @@ function sprite(rows: string[], ox: number, oy: number): Px[] {
   return out;
 }
 
+// A masked helm under a crown of broken spikes, blades flaring from the
+// visor band the eye travels along, an angled brow, faceted cheeks meeting
+// in a ridge. It starts above the grid's top edge (y from -3, see TOP).
 const HEAD = sprite(
-  ["...MmMm...", ".hhhhhhhs.", "hhhhhhhssl", "hsoooooosl", "hsssssssll", "lssscslll.", ".llll.ll.."],
+  [
+    "........H.........",
+    "...H....Hd......b.",
+    "...Hd..Hhd.....bd.",
+    "....Hd.Hhd..H.bd..",
+    "....HhdHhhdHhdbd..",
+    "...Hhhhhhhhhhhddd.",
+    "...MmMhhhhhhssddk.",
+    "....Hmhhssssssddd.",
+    "...eehssssssskkdd.",
+    "H..hseessskkdddddb",
+    "Hkhkkkkkkkkkkkkbkd",
+    ".Hhkkkkkkkkkkkkbd.",
+    "..heeeeeeeessdddb.",
+    "...hsssssesdddddd.",
+    "....hsssseddddb...",
+    ".....hssedddk.....",
+    "......hseddd......",
+    ".......sed........",
+  ],
   8,
-  2,
+  -3,
 );
 const TORSO = sprite(
   [
-    "..MmMhhhhhss..",
-    ".hmhhhhhhhsssl",
-    "hhhoooooosssll",
-    "hhhorrrrosssml",
-    "hhsorrrrossmml",
-    "hssoooooossmml",
-    "lsssscsssssmll",
-    ".lssscclssslll",
-    "..llll..lllll.",
+    "...mMmHHHHHHHHhh....",
+    ".Hmhhhhhhhhhhhhhsd..",
+    "Hmhsssssssssssddddb.",
+    "Hsssssseskkdddddddb.",
+    "Hssssseskrrkddddddb.",
+    "HsssssskrRRrkddddmb.",
+    "HsssssskrRRrkddddmb.",
+    "Hssssssskrrkddddddb.",
+    "Hsssssssskkddkkkkkd.",
+    ".eeeeeeeesssdddddb..",
+    "..skssssssddddkdb...",
+    "..hsssd.....hsddd...",
   ],
-  6,
-  10,
+  7,
+  17,
 );
-const ARM = sprite([".hhs", "hhsl", "hhsl", "hsll", ".ol.", "hhss", "hhsl", "hssl", ".ll."], 2, 11);
-const STUB = sprite(["sl", "l."], 20, 11);
-const LEGS = [...sprite(["hhsl", "hssl", "hsml", "llll"], 7, 19), ...sprite(["hhsl", "hosl", "sssl", "llll"], 14, 19)];
-const FOREARM = sprite([".hs.", "hhsl", "hssl", "hhsl", "hssl", ".ll."], 21, 14);
-const FOREARM_DOWN = sprite([".hhhs.", "hhssll", ".llll."], 19, 21);
-const PEBBLES = [sprite(["hs", "sl"], 3, 6), sprite(["s"], 21, 4), sprite(["hl"], 23, 8)];
-const PEBBLES_DOWN = [sprite(["hs", "sl"], 2, 22), sprite(["s"], 5, 23), sprite(["l"], 25, 23)];
+const ARM = sprite(
+  ["..HHHh", ".Hhhhs", "Hhhsss", "esssdd", "esssdd", ".ssdd.", ".kkkk.", "..sdd.", ".hsddd", ".essdd", "Hhssdd", "hssddd", "hsskdd", ".dddd."],
+  1,
+  17,
+);
+const STUB = sprite(["sdd", "dd.", "k.."], 27, 17);
+const LEGS = [
+  ...sprite(["hssdd", "hssdd", "hsmdd", "Hhssdd"], 9, 29),
+  ...sprite(["hsddd", "hkddd", "ssddd", "hssddd"], 19, 29),
+];
+const FOREARM = sprite([".k.k.", ".hsd.", "hhsdb", "esddb", "esddb", "Hhsdb", "hssdb", "hsskb", "hsddd", ".ddd."], 28, 21);
+const FOREARM_DOWN = sprite([".hhssdd.", "ehhsssdb", ".dddddd."], 25, 30);
+const PEBBLES = [sprite(["Hh", "hd"], 4, 10), sprite(["hs", "sd"], 29, 8), sprite(["s"], 32, 13), sprite(["h"], 5, 5)];
+const PEBBLES_DOWN = [sprite(["hs", "sd"], 2, 31), sprite(["d"], 6, 32), sprite(["s"], 33, 32)];
 // Cracks that open as it wears down (form under 55), and more once it crumbles (under 30).
-const CRACKS_WORN = sprite(["o", ".o"], 15, 15).concat(sprite(["o"], 11, 7));
-const CRACKS_BAD = sprite(["o.", ".o", ".o"], 8, 11).concat(sprite(["oo"], 16, 3));
-const TETHERS = [...sprite(["aa"], 12, 9)];
-const ARM_TETHER = sprite(["a"], 21, 13);
+const CRACKS_WORN = sprite(["k", ".k", ".k"], 22, 19).concat(sprite(["k"], 14, 11));
+const CRACKS_BAD = sprite(["k.", ".k", ".k", "k."], 10, 20).concat(sprite(["kk"], 18, 4));
+// Overgrowth: moss on the helm, collar and pauldron, vines hanging from the
+// arm and belt, a flowering sprig rooted in the left shoulder, grass at the feet.
+const MOSS = [
+  ...sprite(["mMMm", "mmMmm"], 2, 16),
+  ...sprite(["MmM"], 10, 17),
+  ...sprite(["m", "m", "v"], 3, 23),
+  ...sprite(["m", ".", "m"], 2, 26),
+  ...sprite(["v", "m", "m", "v"], 24, 26),
+  ...sprite(["mM", "m."], 21, 6),
+  ...sprite(["M"], 14, 3),
+];
+const FOREARM_VINE = sprite(["m", "v"], 30, 31);
+const SPRIG = sprite(["..f.", ".fFf", "..fM", ".M.m", "Mm.m", ".mm.", "..m."], 7, 10);
+const GRASS = [
+  ...sprite(["M.m", "mMm"], 7, 31),
+  ...sprite(["m.M", ".mm"], 14, 31),
+  ...sprite(["M.", "mm"], 24, 31),
+  ...sprite(["f", "m"], 17, 30),
+];
+const TETHERS = sprite(["aa"], 16, 16);
+const ARM_TETHER = sprite(["a"], 29, 20);
 const ZED = sprite(["aaa", ".a.", "aaa"], 0, 0);
-
-// Fine detail on a half-pixel grid (coordinates are art pixels × 2): bevels
-// catching the light (e), a brow over the eye slit, carved seams, moss drips,
-// and a bright rune glyph (g) in the chest. Drawn over the coarse sprite.
-const HEAD_FINE = [
-  ...sprite(["eeeeeeeeeeeeee"], 18, 6),
-  ...sprite(["e", "e", "e", "e"], 16, 8),
-  ...sprite(["llllllllllll"], 20, 9),
-  ...sprite(["m....m", "m....."], 22, 6),
-  ...sprite(["m.m", ".m."], 24, 7),
-  ...sprite(["l", "l"], 19, 12),
-  ...sprite(["l", "l"], 32, 12),
-  ...sprite(["o"], 25, 13),
-  ...sprite([".o", "o."], 23, 16),
-];
-const TORSO_FINE = [
-  ...sprite(["eeeeeeeeee"], 22, 20),
-  ...sprite(["eeee..eeeeee"], 18, 32),
-  ...sprite(["e", "e", "e", "e", "e", "e"], 4, 24),
-  ...sprite(["l.l.l"], 5, 33),
-];
-const RUNE_FINE = sprite(["g...g", ".g.g.", "..g..", "..g.."], 21, 26);
-const FOREARM_FINE = sprite(["l.l.l"], 43, 35);
-
-/** Half-pixel detail: the same rects at half scale. */
-const Fine = ({ px, className }: { px: Px[]; className?: string }) => (
-  <g transform="scale(0.5)" className={className}>
-    <Pixels px={px} />
-  </g>
-);
 
 const Pixels = ({ px }: { px: Px[] }) => (
   <>
@@ -112,13 +153,13 @@ const Pixels = ({ px }: { px: Px[] }) => (
 
 // Sparks thrown out of (or drawn into) the rune.
 const SPARKS = [
-  [-6, -4],
-  [5, -6],
-  [8, 1],
-  [-8, 2],
-  [2, -9],
-  [-3, 7],
-  [7, 6],
+  [-8, -5],
+  [6, -8],
+  [10, 1],
+  [-10, 3],
+  [2, -12],
+  [-4, 9],
+  [9, 8],
 ];
 
 // ── Words ───────────────────────────────────────────────────────────────
@@ -181,7 +222,9 @@ type Reaction = "joy" | "charge" | "mend" | "thud" | "refuse";
 
 const DOZE_AFTER = 75_000;
 const COOLDOWN = 2500;
-const SIZE = { w: 26, h: 25 };
+const SIZE = { w: 34, h: 37 };
+/** Rows above y=0, where the helm's spikes rise. */
+const TOP = 3;
 
 /** Inline position for a dragged golem; a spot saved on a larger window is pulled back on screen. */
 const place = (q: GolemState["pos"]) =>
@@ -597,7 +640,7 @@ export default function Golem() {
   const joy = fx && (fx.kind === "joy" || fx.kind === "charge");
   const eye = joy ? "joy" : dormant ? "off" : resting ? "shut" : blink ? "off" : st === "sad" ? "dim" : "open";
   const lean = resting || dormant ? 0 : look >= 2 ? 1 : look <= -2 ? -1 : 0;
-  const ex = 12 + look;
+  const ex = 16 + look;
 
   return (
     <div
@@ -638,21 +681,26 @@ export default function Golem() {
       >
         <svg
           className="golem__svg"
-          viewBox={`0 0 ${SIZE.w} ${SIZE.h}`}
+          viewBox={`0 ${-TOP} ${SIZE.w} ${SIZE.h}`}
           shapeRendering="crispEdges"
           aria-hidden="true"
           style={{ ["--core-a" as string]: 0.35 + (s.core / 100) * 0.65 }}
         >
-          <rect className="golem__shadow" x={5} y={23} width={16} height={1} />
+          <rect className="golem__shadow" x={6} y={33} width={23} height={1} />
           {fallen && PEBBLES_DOWN.map((p, i) => <Pixels key={i} px={p} />)}
           {fallen && <Pixels px={FOREARM_DOWN} />}
+          <g className="golem__grass">
+            <Pixels px={GRASS} />
+          </g>
           <g className="golem__fig">
             <Pixels px={LEGS} />
             <Pixels px={ARM} />
             <Pixels px={TORSO} />
-            <Fine px={TORSO_FINE} />
-            {!dormant && <Fine px={RUNE_FINE} className="golem__rune" />}
             <Pixels px={STUB} />
+            <Pixels px={MOSS} />
+            <g className="golem__sprig">
+              <Pixels px={SPRIG} />
+            </g>
             {s.form < 55 && <Pixels px={CRACKS_WORN} />}
             {fallen && <Pixels px={CRACKS_BAD} />}
             {!dormant && (
@@ -664,7 +712,7 @@ export default function Golem() {
             {!fallen && (
               <g className="golem__arm">
                 <Pixels px={FOREARM} />
-                <Fine px={FOREARM_FINE} />
+                <Pixels px={FOREARM_VINE} />
               </g>
             )}
             {!fallen &&
@@ -676,20 +724,22 @@ export default function Golem() {
             <g transform={`translate(${lean} 0)`}>
               <g className="golem__head">
                 <Pixels px={HEAD} />
-                <Fine px={HEAD_FINE} />
+                {/* The visor carries a faint line of the eye's light from end to end. */}
+                {(eye === "open" || eye === "dim") && <rect className="g-visor" x={11} y={8} width={12} height={1} />}
                 {eye === "open" && (
                   <>
-                    <rect className="g-eye" x={ex} y={5} width={2} height={1} />
-                    <rect className="g-glint" x={ex} y={5} width={0.5} height={0.5} />
+                    <rect className="g-eye" x={ex - 1} y={8} width={4} height={1} />
+                    <rect className="g-hot" x={ex} y={8} width={2} height={1} />
+                    <rect className="g-eye g-eye--halo" x={ex} y={7} width={2} height={1} />
                   </>
                 )}
-                {eye === "dim" && <rect className="g-eye g-eye--dim" x={ex} y={5} width={2} height={1} />}
-                {eye === "shut" && <rect className="g-eye g-eye--dim" x={11} y={5} width={4} height={1} />}
+                {eye === "dim" && <rect className="g-eye g-eye--dim" x={ex} y={8} width={2} height={1} />}
+                {eye === "shut" && <rect className="g-eye g-eye--dim" x={13} y={8} width={7} height={1} />}
                 {eye === "joy" && (
                   <>
-                    <rect className="g-eye" x={11} y={5} width={1} height={1} />
-                    <rect className="g-eye" x={12} y={4} width={2} height={1} />
-                    <rect className="g-eye" x={14} y={5} width={1} height={1} />
+                    <rect className="g-eye" x={12} y={8} width={2} height={1} />
+                    <rect className="g-hot" x={14} y={7} width={6} height={1} />
+                    <rect className="g-eye" x={20} y={8} width={2} height={1} />
                   </>
                 )}
               </g>
@@ -697,12 +747,12 @@ export default function Golem() {
           </g>
           {resting && (
             <g className="golem__zz" aria-hidden="true">
-              <g transform="translate(18 0)">
+              <g transform="translate(27 0)">
                 <g className="golem__z">
                   <Pixels px={ZED} />
                 </g>
               </g>
-              <g transform="translate(21 -3)">
+              <g transform="translate(30 -4)">
                 <g className="golem__z golem__z--2">
                   <Pixels px={ZED} />
                 </g>
@@ -715,8 +765,8 @@ export default function Golem() {
                 <rect
                   key={i}
                   className="golem__spark"
-                  x={11.5}
-                  y={13.5}
+                  x={16}
+                  y={22}
                   width={1}
                   height={1}
                   style={{ ["--dx" as string]: `${dx}px`, ["--dy" as string]: `${dy}px`, animationDelay: `${i * 30}ms` }}
