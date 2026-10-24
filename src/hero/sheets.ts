@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "sea" | "astral" | "ruins" | "rail" | "field" | "matrix" | "abyss" | "cliff" | "cipher";
+  id: "ocean" | "sea" | "astral" | "ruins" | "train" | "field" | "matrix" | "abyss" | "cliff" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -38,10 +38,9 @@ const ALL_SHEETS: SheetMeta[] = [
     aria: "Animated low-poly scene: misty forest ruins, a mossy stone circle around a shrine with a floating glowing crystal, rune lights and drifting wisps.",
   },
   {
-    id: "rail",
-    enabled: false,
-    name: "Rail",
-    aria: "Animated low-poly scene: a lone station platform in an endless still sea, a train arriving along a causeway over the water, a city skyline on the horizon, under two suns.",
+    id: "train",
+    name: "Train",
+    aria: "Animated low-poly dream scene seen side on: a night train with lit windows runs on rails just under the surface of a still, glassy sea, past a drowned field of sharp, edged towers, leaning shards and blades, floating debris and shards hanging point-down in the air, through low mist under one pale sun on the horizon.",
   },
   {
     id: "field",

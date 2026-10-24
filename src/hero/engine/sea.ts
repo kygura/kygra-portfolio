@@ -1,4 +1,4 @@
-/** Rail without the rail: the shallow sea, the skyline and the two suns. The train, its track and catenary, the halt and the causeway are removed; the camera faces the city. */
+/** Sea: a shallow, near-still sea, a city skyline standing in it on the horizon and two suns; the camera faces the city. */
 import * as THREE from "three";
 import { pulse, type PsxKit, type SceneDef } from "./psx";
 
