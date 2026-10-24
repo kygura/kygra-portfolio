@@ -1,6 +1,9 @@
-/** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, the King of Red Lions moored at a pier, twin suns. */
+/** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, the King of Red Lions moored at a pier, twin suns.
+ *  Out past the islands the wasteland rings the horizon: mossed shard towers and blades, wreckage in the swell,
+ *  stone hanging around the spire and islands floating upside down. */
 import * as THREE from "three";
 import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
+import { createWaste } from "./wasteland";
 
 type Kind = "box" | "cyl" | "taper";
 
@@ -56,6 +59,8 @@ export function buildOcean(k: PsxKit): SceneDef {
     trunk: psx({ map: tex.tBark, tint: "#b8a488" }),
     frond: psx({ map: tex.tLeaf, tint: "#a8c47c", uv: 1.5 }),
     wood: psx({ map: tex.tBark, tint: "#9c8a74", uv: 2 }),
+    shard: psx({ map: tex.tPlain, tint: "#6d7a78", moss: 0.6, fogAmt: 0.8 }),
+    rust: psx({ map: tex.tBark, tint: "#a87a64" }),
   };
 
   const { add, flush } = k.batcher();
@@ -249,6 +254,31 @@ export function buildOcean(k: PsxKit): SceneDef {
   add(facet(new THREE.BoxGeometry(0.22, 0.22, 0.22)), M.glyph, 9, 3.45, PZ + 0.6);
   flush(scene);
 
+  /* ---- the wasteland on the horizon: a ring of mossed spires past the islands, wreckage in the
+     swell between them (clear of the pier and the moorings), islands upside down overhead ---- */
+  const W = createWaste(k, { debris: M.stone2, rust: mat.rust, seam: M.glyph });
+  {
+    const b = W.batch();
+    for (let i = 0; i < 46; i++) {
+      const a = rnd() * Math.PI * 2, r = W.between(82, 150);
+      W.spire(b, Math.cos(a) * r, -2, Math.sin(a) * r, W.between(14, 62) * (r / 110), [M.stone, mat.glass2, mat.shard], true, { lean: 1.6 });
+    }
+    for (let i = 0; i < 30; i++) {
+      const a = rnd() * Math.PI * 2, r = W.between(16, 60), x = Math.cos(a) * r, z = Math.sin(a) * r;
+      if (x > 4 && x < 19 && z > -16 && z < -6) continue;
+      W.junk(b, x, -0.3, z, W.between(0.4, 1.3));
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = rnd() * Math.PI * 2, r = W.between(70, 120);
+      b.add(W.island(W.between(4, 9)), M.stone2, Math.cos(a) * r, W.between(32, 58), Math.sin(a) * r, 0, rnd() * 3, 0);
+    }
+    b.flush(scene);
+  }
+  const hang = W.hanging(scene, 14, [M.stone2, mat.shard, mat.rust], (s) => {
+    const a = rnd() * Math.PI * 2, r = W.between(12, 36);
+    return [Math.cos(a) * r, W.between(9, 22) + s, Math.sin(a) * r];
+  });
+
   /* ---- King of Red Lions, moored alongside ---- */
   // After The Wind Waker: red hull with a cream gunwale, a banded neck curling up from the bow
   // into a lion's head (gold snout and horns, white curled mane), green mast, crest on the sail.
@@ -415,6 +445,7 @@ export function buildOcean(k: PsxKit): SceneDef {
       },
     ],
     update(t) {
+      hang(t);
       for (let i = 0; i < wpos.count; i++) wpos.setY(i, wave(wx[i], wz[i], t));
       wpos.needsUpdate = true;
       water.computeVertexNormals();

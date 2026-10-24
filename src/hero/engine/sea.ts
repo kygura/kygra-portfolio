@@ -1,6 +1,9 @@
-/** Rail without the rail: the shallow sea, the skyline and the two suns. The train, its track and catenary, the halt and the causeway are removed; the camera faces the city. */
+/** The shallow sea, the skyline and the two suns; the camera faces the city. In front of it the
+ *  wasteland has come in: shard towers and wreckage standing in the shallows, stone hanging over
+ *  the water, islands floating upside down above the skyline. */
 import * as THREE from "three";
 import { pulse, type PsxKit, type SceneDef } from "./psx";
+import { createWaste } from "./wasteland";
 
 export function buildSea(k: PsxKit): SceneDef {
   const { rnd, facet, wallUV, mesh, psx, M, tex, view } = k;
@@ -24,6 +27,9 @@ export function buildSea(k: PsxKit): SceneDef {
       psx({ map: tex.tGlass, tint: "#8f9eaa", amb: "#4a5862", sun: "#b8b09c", fogAmt: 0.62 }),
       psx({ map: tex.tStone, tint: "#a9aba4", amb: "#56646e", sun: "#c8c0aa", fogAmt: 0.62 }),
     ],
+    shard: psx({ map: tex.tPlain, tint: "#5c6672", amb: "#4a5862", sun: "#b8b09c", fogAmt: 0.7 }),
+    wreck: psx({ map: tex.tStone, tint: "#a4a69c", amb: "#56646e", sun: "#c8c0aa" }),
+    rust: psx({ map: tex.tBark, tint: "#a07462", amb: "#56646e", sun: "#c8c0aa" }),
   };
 
   /* ---- sea: a grid denser near the camera, displaced every frame ---- */
@@ -81,6 +87,22 @@ export function buildSea(k: PsxKit): SceneDef {
   }
   flush(scene);
 
+  /* ---- the wasteland come in: towers off the line of sight so they frame the city, wreckage
+     in the shallows, islands upside down above the skyline, stone hanging over the water ---- */
+  const W = createWaste(k, { debris: mat.wreck, rust: mat.rust, seam: M.glyph });
+  {
+    const b = W.batch();
+    const lineX = (z: number) => -3.6 + (13.6 * (18.5 - z)) / 348.5;
+    for (let i = 0; i < 28; i++) {
+      const z = W.between(-60, -250), side = rnd() > 0.5 ? 1 : -1;
+      W.spire(b, lineX(z) + side * W.between(22 + -z * 0.08, 230), -0.5, z, W.between(12, 70), [mat.city[2], mat.shard, mat.dark], true, { lean: 2 });
+    }
+    for (let i = 0; i < 24; i++) W.junk(b, (rnd() - 0.5) * 100, -0.15, W.between(-8, -95), W.between(0.4, 1.6));
+    for (let i = 0; i < 7; i++) b.add(W.island(W.between(8, 22)), mat.city[2], (rnd() - 0.5) * 420, W.between(110, 200), W.between(-260, -380), 0, rnd() * 3, 0);
+    b.flush(scene);
+  }
+  const hang = W.hanging(scene, 16, [mat.wreck, mat.dark, mat.rust], (s) => [(rnd() - 0.5) * 80, W.between(2, 12) + s, W.between(-14, -80)]);
+
   /* ---- two suns, high over the horizon ---- */
   const sunA = k.sunDisc(scene, 130, 205, -420, 22, "#fff3d2", "#ffc874");
   const sunB = k.sunDisc(scene, -70, 168, -435, 14, "#ffd8b8", "#ff9a68");
@@ -123,6 +145,7 @@ export function buildSea(k: PsxKit): SceneDef {
       },
     ],
     update(t) {
+      hang(t);
       for (let i = 0; i < wpos.count; i++) wpos.setY(i, wave(wx[i], wz[i], t));
       wpos.needsUpdate = true;
       water.computeVertexNormals();
