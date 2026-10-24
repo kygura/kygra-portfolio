@@ -16,10 +16,8 @@
   --rule-2: #3d4b4d;
   --grid: rgba(224, 217, 200, 0.035);
   /* Surface texture behind every sheet; a variant may replace both. */
-  --tex:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  --tex-size: 48px 48px;
+  --tex: none;
+  --tex-size: auto;
   --scrim: rgba(12, 17, 18, 0.86);
   --danger: #e5787f;
   /* Accent — default variant "Lichen"; [data-accent] variants below.
@@ -1114,7 +1112,7 @@
 
   html { background: var(--bg); }
 
-  /* Survey grid: a faint 48px hairline lattice behind every sheet. */
+  /* Optional surface texture behind every sheet (none by default). */
   body {
     background-color: var(--bg);
     background-image: var(--tex);

@@ -75,9 +75,6 @@ const Projects = () => {
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
       <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)]">
-        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
-          ( 02 &mdash; SOFTWARE )
-        </p>
         <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4">
           Software
         </h1>
