@@ -176,6 +176,13 @@ export default function CommandPalette({
                 <Item value="open keyboard shortcuts help" onSelect={() => run(() => pressKey("?"))} keys={["?"]}>
                   Keyboard shortcuts
                 </Item>
+                <Item
+                  value="open golem cairn companion pet"
+                  onSelect={() => run(() => pressKey("b"))}
+                  keys={["b"]}
+                >
+                  Golem
+                </Item>
                 <Item value="open cv pdf" onSelect={() => run(() => openTab("/CV_NCA.pdf"))} meta="PDF ↗">
                   CV
                 </Item>

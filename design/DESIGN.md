@@ -32,7 +32,7 @@ The surface texture is two tokens, `--tex` and `--tex-size`, which `body` reads;
 
 - **Literata** (opsz 7–72, 400/600, italic 400): body and every heading that used Instrument Serif or Newsreader (Tailwind `font-display`/`font-serif`/`font-body`/`font-sans` all map to it). Post body 19px / 1.68 with a 66ch cap; 17px under 560px.
 - **Fragment Mono**: code, data, nav links, buttons, terminal, labels (`font-mono`).
-- **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings, and the "NCA" of the wordmark. Nowhere else.
+- **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings (and the golem panel's, which copies the help sheet), and the "NCA" of the wordmark. Nowhere else.
 
 Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 800px the bar keeps only "NCA" (and from 640px to 1023px drops "©2026" and tightens link tracking) so the links fit unscrolled at every width. The space between links grows with the bar (from about 12px on a phone to 48px on a wide screen), sized per range from the room left once all four fit. Under 1024px the six accent squares fold into one swatch that opens the themes as a vertical list, and a `:` button beside it opens the command palette for touch screens.
 
@@ -76,8 +76,17 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
+| `b` | Golem: summon it, or open / close its panel |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
+
+## Companion
+
+Cairn, a small ruined survey golem, floats at the bottom right of every page (`src/components/Golem.tsx`, lazy-loaded from `App.tsx`; the simulation is `src/companion/golem-state.ts`, with tests). It is pixel art on a 26×25 grid drawn as SVG rects (`crispEdges`, 3px per art pixel, 2px under 640px), inked from the sheet's own tokens: stone from `--ink-2`/`--ink-3`/`--rule-2` mixed into the ground, moss in `--accent-deep`, the eye and chest rune in `--accent`, so every theme recolours it. Its head, broken forearm and a few stones float apart, held by flickering accent tethers; all motion moves whole art pixels (`steps()`), and reduced motion stills it.
+
+- **Stats**: Core (drains while awake, refills while resting; at 0 it goes dormant, pieces on the ground, until charged), Form (crumbles slowly; under 55 cracks open, under 30 the forearm and stones fall), Mood (petting raises it, neglect lowers it). Time passes while the visitor is away at the same rates. Stored in `localStorage["nca-golem"]` with the pet count, first-wake date and dragged position.
+- **Interaction**: click or `b` opens its panel (help-sheet panel: Silkscreen heading, segmented accent meters, a log line, Pet / Charge / Mend / Rest, Send away). Rubbing the mouse back and forth over it pets it (too many pets in a row and it objects). Dragging moves it anywhere on screen and it stays there; the panel and speech open toward the larger side of the window. `b` brings it back after Send away. The command palette lists it under Open.
+- **Behaviour**: the eye follows the pointer and the head leans; it blinks, dozes after 75 s of no input (wakes on any), greets first and returning visitors, says a line on the first visit to each page in a session, on theme changes and when a hero easter egg is found (`EGG_EVENT`), and murmurs now and then. Speech is a hairline caption on an accent leader line, Fragment Mono uppercase, like the hero's egg readout.
 
 ## Command palette
 

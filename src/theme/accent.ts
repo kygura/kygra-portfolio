@@ -33,6 +33,10 @@ export const SHEET_KEY = "nca-sheet-v2";
 /** Pre-reorder key: its index counted Cipher last, so it maps to the new order by shifting. */
 const LEGACY_SHEET_KEY = "nca-sheet";
 export const EGGS_KEY = "nca-eggs";
+/** The companion golem's stats and position (src/companion/golem-state.ts). */
+export const GOLEM_KEY = "nca-golem";
+/** Fired on window when a hero easter egg is found, so the golem can notice. */
+export const EGG_EVENT = "nca:egg";
 
 export function readStored(key: string): string | null {
   try {

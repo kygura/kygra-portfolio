@@ -2206,3 +2206,154 @@ kbd {
   transition: border-color 0.15s, color 0.15s;
 }
 .toc-tuner__actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─────────────────────────────────────────────
+   GOLEM — Cairn, the site companion (src/components/Golem.tsx). Pixel art
+   on a 26×25 grid, inked from the sheet's own tokens so every theme
+   recolours it; motion moves whole art pixels (steps) to stay on the grid.
+   ───────────────────────────────────────────── */
+.golem {
+  --golem-px: 3px; /* one art pixel */
+  --g-hi: color-mix(in srgb, var(--ink-2) 62%, var(--bg));
+  --g-mid: color-mix(in srgb, var(--ink-3) 72%, var(--bg));
+  --g-lo: color-mix(in srgb, var(--rule-2) 90%, var(--bg));
+  --g-gap: var(--code);
+  --g-moss: var(--accent-deep);
+  --g-lichen: color-mix(in srgb, var(--accent) 50%, var(--accent-deep));
+  position: fixed;
+  right: 20px;
+  bottom: 76px;
+  z-index: 99980;
+  width: calc(26 * var(--golem-px));
+  font-family: var(--f-mono);
+}
+@media (max-width: 639px) {
+  .golem { --golem-px: 2px; right: 12px; bottom: 96px; }
+}
+@media print {
+  .golem { display: none; }
+}
+
+.golem__btn {
+  display: block; width: 100%; padding: 0; background: transparent; border: 0;
+  touch-action: none; -webkit-tap-highlight-color: transparent; outline-offset: 4px;
+}
+.golem__svg { display: block; width: calc(26 * var(--golem-px)); height: calc(25 * var(--golem-px)); overflow: visible; }
+
+.g-hi { fill: var(--g-hi); }
+.g-mid { fill: var(--g-mid); }
+.g-lo { fill: var(--g-lo); }
+.g-gap { fill: var(--g-gap); }
+.g-moss { fill: var(--g-moss); }
+.g-lichen { fill: var(--g-lichen); }
+.g-glow, .g-eye { fill: var(--accent); }
+.g-eye--dim { fill: var(--accent-deep); }
+.g-core { fill: var(--accent); opacity: var(--core-a, 1); animation: golemCore 2.2s steps(1) infinite; }
+.golem__shadow { fill: var(--code); opacity: 0.7; }
+
+/* Idle: the loose pieces drift a pixel or two on their own beats. */
+.golem__head { animation: golemBob 2.8s steps(1) infinite; }
+.golem__arm { animation: golemDrift 3.4s steps(1) infinite; }
+.golem__peb--0 { animation: golemBob 3.1s steps(1) -0.7s infinite; }
+.golem__peb--1 { animation: golemDrift 2.6s steps(1) -1.3s infinite; }
+.golem__peb--2 { animation: golemBob 3.7s steps(1) -2s infinite; }
+.golem__tether { animation: golemFlicker 1.3s steps(1) infinite; }
+@keyframes golemBob { 50% { transform: translateY(-1px); } }
+@keyframes golemDrift { 25% { transform: translateY(-1px); } 50% { transform: translateY(-2px); } 75% { transform: translateY(-1px); } }
+@keyframes golemCore { 50% { opacity: calc(var(--core-a, 1) * 0.7); } }
+@keyframes golemFlicker { 40% { opacity: 0.35; } 55% { opacity: 0.9; } 80% { opacity: 0.5; } }
+
+/* Resting or dozing: the head settles onto the body, everything slows. */
+.golem[data-rest] .golem__head,
+.golem[data-status="dormant"] .golem__head { animation: none; transform: translateY(1px); }
+.golem[data-rest] .golem__arm,
+.golem[data-rest] [class*="golem__peb"] { animation-duration: 7s; }
+.golem[data-status="dormant"] .g-core { fill: var(--g-gap); animation: none; opacity: 1; }
+.golem__z .g-glow { fill: var(--ink-2); }
+.golem__z { animation: golemZ 2.8s steps(7) infinite; }
+.golem__z--2 { animation-delay: -1.4s; }
+@keyframes golemZ {
+  from { opacity: 0; transform: none; }
+  20% { opacity: 1; }
+  to { opacity: 0; transform: translate(2px, -7px); }
+}
+
+/* One-shot reactions (data-react): a hop, a landing, a refusal. */
+.golem[data-react="joy"] .golem__fig,
+.golem[data-react="charge"] .golem__fig { animation: golemHop 0.6s steps(1); }
+.golem[data-react="thud"] .golem__fig { animation: golemThud 0.3s steps(1); }
+.golem[data-react="refuse"] .golem__fig { animation: golemShake 0.4s steps(1); }
+.golem[data-react="charge"] .g-core { animation: none; opacity: 1; fill: color-mix(in srgb, var(--accent) 55%, var(--ink)); }
+.golem[data-drag] .golem__fig { transform: translateY(-1px); }
+@keyframes golemHop { 20% { transform: translateY(-2px); } 45% { transform: none; } 65% { transform: translateY(-1px); } 85% { transform: none; } }
+@keyframes golemThud { from { transform: translateY(-1px); } 33% { transform: translateX(1px); } 66% { transform: translateX(-1px); } }
+@keyframes golemShake { from { transform: translateX(1px); } 25% { transform: translateX(-1px); } 50% { transform: translateX(1px); } 75% { transform: translateX(-1px); } }
+
+/* Sparks: thrown out of the rune on joy, drawn into it on charge; stone chips fly in on mend. */
+.golem__spark { fill: var(--accent); animation: golemSpark 0.7s steps(7) both; }
+.golem__sparks--charge .golem__spark { animation-direction: reverse; }
+.golem__sparks--mend .golem__spark { fill: var(--g-hi); animation-direction: reverse; }
+@keyframes golemSpark {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translate(var(--dx), var(--dy)); }
+}
+
+/* Speech: a hairline caption on a leader line, like the hero's readouts. */
+.golem__say {
+  position: absolute; right: 0; bottom: calc(100% + 10px); margin: 0;
+  width: max-content; max-width: min(240px, calc(100vw - 24px));
+  padding: 5px 9px; font: 10.5px/1.5 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--ink); background: var(--code); border: 1px solid var(--accent);
+  pointer-events: none; animation: eggIn 0.25s steps(4) both;
+}
+.golem__say::after {
+  content: ""; position: absolute; top: 100%; right: calc(13 * var(--golem-px));
+  width: 1px; height: 10px; background: var(--accent);
+}
+
+/* Panel: the help sheet's survey panel, anchored to the golem. */
+.golem__panel {
+  position: absolute; right: 0; bottom: calc(100% + 10px); width: min(296px, calc(100vw - 24px));
+  padding: 14px 16px 12px; background: var(--bg-2); border: 1px solid var(--accent);
+  font-size: 12px; color: var(--ink-2); animation: themeFade 0.12s ease;
+}
+.golem[data-side="left"] .golem__say,
+.golem[data-side="left"] .golem__panel { right: auto; left: 0; }
+.golem[data-side="left"] .golem__say::after { right: auto; left: calc(13 * var(--golem-px)); }
+.golem[data-below] .golem__say,
+.golem[data-below] .golem__panel { bottom: auto; top: calc(100% + 10px); }
+.golem[data-below] .golem__say::after { top: auto; bottom: 100%; }
+
+.golem__top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
+.golem__top h2 { margin: 0; font-family: var(--f-pixel); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink); }
+.golem__top .help-close { padding: 3px 6px; }
+.golem__desc { margin: 0 0 12px; font-size: 11.5px; line-height: 1.5; color: var(--ink-3); }
+.golem__stats { margin: 0 0 10px; display: grid; gap: 6px; }
+.golem__stat { display: grid; grid-template-columns: 3.2rem 1fr; align-items: center; gap: 10px; }
+.golem__stat dt { font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); }
+.golem__stat dd { margin: 0; display: flex; align-items: center; gap: 10px; }
+.golem__bar { display: flex; flex: 1; gap: 2px; }
+.golem__bar i { flex: 1; height: 8px; background: var(--sheet); border: 1px solid var(--rule-2); }
+.golem__bar i[data-on] { background: var(--accent); border-color: var(--accent); }
+.golem__num { width: 2.2em; text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+.golem__log {
+  display: flex; flex-direction: column; gap: 2px; min-height: 3.3em; margin: 0 0 12px; padding: 7px 9px;
+  font-size: 11px; line-height: 1.45; background: var(--code); border-left: 2px solid var(--accent);
+}
+.golem__log span { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.golem__log q { color: var(--ink); quotes: none; animation: eggIn 0.25s steps(4) both; }
+.golem__acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.golem__act, .golem__away {
+  font: 11px var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink);
+  background: transparent; border: 1px solid var(--rule-2); padding: 7px 0;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.golem__act:hover, .golem__act:focus-visible { border-color: var(--accent); color: var(--accent); }
+.golem__act:active { background: var(--accent); color: var(--on-accent); }
+.golem__act:disabled { opacity: 0.4; pointer-events: none; }
+.golem__foot {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px;
+  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+}
+.golem__away { padding: 4px 8px; border-color: transparent; color: var(--ink-3); }
+.golem__away:hover, .golem__away:focus-visible { color: var(--danger); border-color: var(--rule-2); }

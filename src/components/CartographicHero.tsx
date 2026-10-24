@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedSheet, useAccent, writeStored } from "@/theme/accent";
+import { ACCENTS, EGG_EVENT, EGGS_KEY, SHEET_KEY, readStored, storedSheet, useAccent, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS, sheetNo } from "@/hero/sheets";
 import type { HeroEngine } from "@/hero/engine/hero-engine";
@@ -78,6 +78,7 @@ const CartographicHero = () => {
               writeStored(EGGS_KEY, JSON.stringify([...found.current]));
             }
             setEgg({ n: found.current.size, total, fresh, key: Date.now() });
+            window.dispatchEvent(new Event(EGG_EVENT));
             window.clearTimeout(eggTimer.current);
             eggTimer.current = window.setTimeout(() => setEgg(null), 5000);
           },

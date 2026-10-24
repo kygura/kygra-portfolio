@@ -26,6 +26,9 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
 const CV = lazy(() => import("./pages/CV"));
 
+// The companion golem appears once the page is up; it isn't needed for first paint.
+const Golem = lazy(() => import("./components/Golem"));
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -41,6 +44,9 @@ const App = () => (
         <TerminalHost />
         <CommandHost />
         <Keys />
+        <Suspense fallback={null}>
+          <Golem />
+        </Suspense>
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />

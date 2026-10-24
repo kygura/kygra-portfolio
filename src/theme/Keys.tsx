@@ -2,7 +2,7 @@
  * Additive keyboard layer: g-chords for the nav routes, `g g` to the top,
  * `n`/`p` for next/previous page, `1`–`6` and `t` for the theme, `j`/`k`/`G` to
  * scroll, `?` for the help sheet. Pages add their own keys
- * (the hero listens for `[` `]`). Nothing fires while typing in a field or
+ * (the hero listens for `[` `]`, the golem for `b`). Nothing fires while typing in a field or
  * with a modifier held, so the terminal's Ctrl+K and the backtick stay put.
  */
 import { useEffect, useRef, useState } from "react";
@@ -74,6 +74,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
               <div><dt><K k=":" /> <K k="⌘K" /></dt><dd>Commands</dd></div>
+              <div><dt><K k="b" /></dt><dd>Golem (summon, tend)</dd></div>
               <div><dt><K k="?" /></dt><dd>This sheet</dd></div>
               <div><dt><K k="Esc" /></dt><dd>Close, leave a field</dd></div>
             </dl>
