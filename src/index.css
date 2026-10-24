@@ -2209,8 +2209,8 @@ kbd {
 
 /* ─────────────────────────────────────────────
    TAPE DECK — the lofi player in the bottom-right corner
-   (src/components/player). The golem has the bottom-left; the post rail is
-   centred on the right edge, well above this. Drawn after Kentucky Route
+   (src/components/player). The post rail is centred on the right edge,
+   well above this. Drawn after Kentucky Route
    Zero: a black box of plain monospace text, flat hairline shapes, lots of
    dark, and one lit thing (the cassette window, in the accent).
    ───────────────────────────────────────────── */

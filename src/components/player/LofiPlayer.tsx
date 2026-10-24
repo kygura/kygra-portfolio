@@ -1,7 +1,6 @@
 /**
- * Tape deck: a small lofi player fixed to the bottom-right corner (the moss
- * golem has the bottom-left). Collapsed it is one square button with a level
- * meter; open, it plays the site's own CC0 tapes or tunes into a curated
+ * Tape deck: a small lofi player fixed to the bottom-right corner. Collapsed
+ * it is a cassette outline; open, it plays the site's own CC0 tapes or tunes into a curated
  * Spotify / YouTube embed. It sits outside the routes, so playback carries
  * across page changes. `m` plays and pauses the tapes. Colours are the theme
  * tokens, so it follows the 1–6 accent switch with no code of its own.
