@@ -76,12 +76,20 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
+| `m` | Play / pause the tape deck |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
 
 ## Command palette
 
 `:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 1024px a `:` button in the nav opens it (`openCommands` in `src/theme/keymap.ts`), for touch screens that can't press `:`.
+
+## Tape deck
+
+A minimal tape recorder fixed to the bottom-right corner (`src/components/player/`), mounted beside the routes so playback carries across pages. Drawn after Kentucky Route Zero: a near-black box of plain Fragment Mono, flat hairline shapes, lots of dark, and one lit thing. Collapsed it is a cassette outline; while anything plays its window lights in the accent and its reels turn. Open, `tapes` / `radio` switch like dialogue choices (`>` marks the current one). Tapes shows the cassette (`Cassette.tsx`) as hairlines with its window glowing in the accent while playing, the reels trading tape with progress and turning; then the title and credit, the seek line drawn as a road with an accent square travelling along it, the clock, and `rew play ff` as plain words. Radio lists the stations as numbered choices. Everything reads the theme tokens, so it follows the 1 to 6 switch; reduced motion stops the reels. The hero strip pads its right end so the scroll cue clears it.
+
+- **Tapes**: files the site serves from `public/lofi/`, listed in `public/lofi/playlist.json` and fetched on first open. `bun scripts/fetch-lofi.ts` fills it with Holizna's CC0 collections from OpenGameArt, re-encoded to 112k MP3. Only CC0 or CC-BY music belongs here, since serving a file is redistributing it (Pixabay's licence rules its tracks out).
+- **Radio**: curated official Spotify and YouTube (`youtube-nocookie.com`) embeds in `stations.ts`. The platform streams and licenses the audio; the iframe loads only after a click, and stays mounted when the panel closes so it keeps playing. Spotify plays 30-second previews to visitors not signed in to Spotify.
 
 ## Also fixed
 
